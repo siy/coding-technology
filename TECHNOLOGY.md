@@ -13,10 +13,10 @@ High‑Level Properties (optimization criteria)
 
 Core Rules
 - Return kinds (exactly one per function/method):
-  - `T` — sync, cannot fail, value always present.
-  - `Option<T>` — sync, cannot fail, value may be missing.
-  - `Result<T>` — sync, can fail (business/validation errors).
-  - `Promise<T>` — async, can fail (technical/business), same semantics as `Result<T>` but asynchronous.
+  - `T`  -  sync, cannot fail, value always present.
+  - `Option<T>`  -  sync, cannot fail, value may be missing.
+  - `Result<T>`  -  sync, can fail (business/validation errors).
+  - `Promise<T>`  -  async, can fail (technical/business), same semantics as `Result<T>` but asynchronous.
 - No business exceptions: represent business failures via `Result<T>` (and `Promise<T>` failures). Technical exceptions should not appear in business logic; if unavoidable in adapters, convert to Causes.
 - Parse, don’t validate: construct only valid domain/value objects. Factories enforce invariants before instance creation.
 - Single pattern per function: each method implements exactly one pattern (Sequencer, Fan‑Out‑Fan‑In, Condition, Iteration, Leaf). Exception: Aspects may be applied inline as decorators.
@@ -42,9 +42,9 @@ Validation Model (parse, don’t validate)
 
 Use Case Shape
 - Use case interface lives at `<base>.usecase.<barelowercase>.CamelCaseName` and defines nested API records:
-  - `CamelCaseName.Request` — raw input (records only).
-  - `CamelCaseName.Response` — output element (records only). The returned value may be `Response` or a collection of `Response`.
-- One entry method named consistently (execute/perform/call — TBD). Recommendation: `execute(...)`.
+  - `CamelCaseName.Request`  -  raw input (records only).
+  - `CamelCaseName.Response`  -  output element (records only). The returned value may be `Response` or a collection of `Response`.
+- One entry method named consistently (execute/perform/call  -  TBD). Recommendation: `execute(...)`.
 - Use `UseCase.WithPlain/WithOption/WithResult/WithPromise` variants optionally for clarity; technology works without them.
 - Construction via static factory named after the use case (lowerCamel): `userLogin(deps...) -> UserLogin`.
 
@@ -85,7 +85,7 @@ Testing Strategy
   2) Add validation tests (mostly negative/edge cases); implement only the validation path (per‑field + cross‑field) until green.
   3) Add behavior tests incrementally; replace stubs with real code step by step until complete.
 - Tests are black‑box at the use‑case boundary (inputs → outputs/errors). Prefer fakes over mocks; assert outcomes, not interactions.
-- Async tests: use real time with strict timeouts for now (deterministic schedulers — TBD).
+- Async tests: use real time with strict timeouts for now (deterministic schedulers  -  TBD).
 
 Guidance and Conventions
 - Factories: always named after the type with first letter lowercased, e.g., `artifactId(String) -> Result<ArtifactId>`.
@@ -102,21 +102,21 @@ Open Topics (TBD)
 - Error taxonomy unification vs per‑project freedom (validation detail exposure, codes).
 
 References (in repo)
-- Sources: `sources/articles` and `sources/patterns` — background on PFJ, patterns, and Promises.
-- Examples: `sources/code/input-validation` — value object factories and `Result.all(...)` usage.
-- Use case skeletons: `sources/code/use-case` — minimal examples of shape and flow.
-- Library backlog: `PL_IMPROVEMENTS.md` — Pragmatica Lite enhancements (aspects, helpers).
+- Sources: `sources/articles` and `sources/patterns`  -  background on PFJ, patterns, and Promises.
+- Examples: `sources/code/input-validation`  -  value object factories and `Result.all(...)` usage.
+- Use case skeletons: `sources/code/use-case`  -  minimal examples of shape and flow.
+- Library backlog: `PL_IMPROVEMENTS.md`  -  Pragmatica Lite enhancements (aspects, helpers).
 
 Example Patterns (quick map)
 - Use case with nested API + Sequencer
   - Sync: `examples/usecase-userlogin-sync/.../usecase/userlogin/UserLogin.java`
   - Async: `examples/usecase-userlogin-async/.../usecase/userlogin/UserLogin.java`
 - Parse, don’t validate (VO factories)
-  - Email: `examples/*/domain/shared/Email.java` — normalization + Verify.ensure/ensureFn
-  - Password: `examples/*/domain/shared/Password.java` — chained invariants + helpers
-  - ReferralCode: `examples/*/domain/shared/ReferralCode.java` — optional-with-validation via `Result<Option<T>>`
+  - Email: `examples/*/domain/shared/Email.java`  -  normalization + Verify.ensure/ensureFn
+  - Password: `examples/*/domain/shared/Password.java`  -  chained invariants + helpers
+  - ReferralCode: `examples/*/domain/shared/ReferralCode.java`  -  optional-with-validation via `Result<Option<T>>`
 - Cross-field validation
-  - `ValidRequest.validRequest(Email, Password, Option<ReferralCode>)` — combine via `Result.all(...)` and map to constructor only on success
+  - `ValidRequest.validRequest(Email, Password, Option<ReferralCode>)`  -  combine via `Result.all(...)` and map to constructor only on success
 - Lifting and async composition
   - Async `execute(...)` lifts sync validation to Promise, then chains async steps with `flatMap`
 

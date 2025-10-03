@@ -2,8 +2,8 @@ Examples (Java 25, Maven)
 
 Overview
 - Multi-module Maven project under `examples/` with two modules:
-  - `usecase-userlogin-sync` — synchronous use case implemented with `Result<T>`.
-  - `usecase-userlogin-async` — asynchronous use case implemented with `Promise<T>`.
+  - `usecase-userlogin-sync`  -  synchronous use case implemented with `Result<T>`.
+  - `usecase-userlogin-async`  -  asynchronous use case implemented with `Promise<T>`.
 - Code follows TECHNOLOGY.md conventions: nested Request/Response, parse‑don’t‑validate, per‑field VO factories, steps as single‑method interfaces, sequencer in execute().
 
 Notes
@@ -11,8 +11,8 @@ Notes
 - Java 25 is configured via Maven compiler properties. Adjust to your local JDK if needed.
 
 Layout
-- `com.example.app.usecase.userlogin.UserLogin` — use case with nested API and validated input.
-- `com.example.app.domain.shared.*` — shared value objects (Email, Password, ReferralCode) with static factories.
+- `com.example.app.usecase.userlogin.UserLogin`  -  use case with nested API and validated input.
+- `com.example.app.domain.shared.*`  -  shared value objects (Email, Password, ReferralCode) with static factories.
 
 Build
 - Ensure Pragmatica Lite Core `org.pragmatica-lite:core:0.7.23` is installed to your local Maven repo (from `../pragmatica-lite/core`).

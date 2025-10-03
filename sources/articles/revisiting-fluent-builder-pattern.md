@@ -1,6 +1,6 @@
 ### **Revisiting Fluent Builder Pattern**
 
-Some time ago, I wrote a couple of articles ([here](https://medium.com/codex/unleashing-power-of-java-interfaces-21a21989777b) and [here](https://medium.com/@sergiy-yevtushenko/simple-implementation-of-fluent-builder-safe-alternative-to-traditional-builder-41a46e6de45b)) which mentioned a convenient and concise approach to writing Fluent (also called “Staged”) Builder in Java. But there was a question which always popped in comments&nbsp;—&nbsp;how to write Fluent Builder when some fields could be set to default. This article is the detailed answer to this question.
+Some time ago, I wrote a couple of articles ([here](https://medium.com/codex/unleashing-power-of-java-interfaces-21a21989777b) and [here](https://medium.com/@sergiy-yevtushenko/simple-implementation-of-fluent-builder-safe-alternative-to-traditional-builder-41a46e6de45b)) which mentioned a convenient and concise approach to writing Fluent (also called “Staged”) Builder in Java. But there was a question which always popped in comments&nbsp; - &nbsp;how to write Fluent Builder when some fields could be set to default. This article is the detailed answer to this question.
 
 Let’s start from the beginning: what is the Fluent Builder pattern? It’s the specific variant of the Builder pattern, which “guides” the developer through the process of building an object, enabling setting of one field at a time. This approach has several benefits:
 
@@ -18,9 +18,9 @@ Review of possible use cases shows that there is a whole range of combinations o
 * Most fields mandatory, few fields optional
 * All fields mandatory
 
-Regular Builder is the best choice for the first case&nbsp;—&nbsp;all fields optional.
+Regular Builder is the best choice for the first case&nbsp; - &nbsp;all fields optional.
 
-For the second case&nbsp;—&nbsp;where only a few fields mandatory, the best choice is the Regular Builder with `build()` method accepting mandatory parameters. Adding a new optional field in this case is safe, while adding a new mandatory field affects the signature of the `build()` method and enforces updating all places where it’s called. The only inconvenience of this pattern is the fact that mandatory parameters passed without names.
+For the second case&nbsp; - &nbsp;where only a few fields mandatory, the best choice is the Regular Builder with `build()` method accepting mandatory parameters. Adding a new optional field in this case is safe, while adding a new mandatory field affects the signature of the `build()` method and enforces updating all places where it’s called. The only inconvenience of this pattern is the fact that mandatory parameters passed without names.
 
 For the last case, when all fields mandatory, Fluent Builder obviously is the best choice.
 

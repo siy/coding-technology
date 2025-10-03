@@ -21,9 +21,9 @@ public interface UserLogin {
     Promise<Response> execute(Request request);
 
     // Internal validated input (not part of public API)
-    // Pattern: Parse, don't validate — factories return Result<ValidRequest>
+    // Pattern: Parse, don't validate  -  factories return Result<ValidRequest>
     record ValidRequest(Email email, Password password, Option<ReferralCode> referral) {
-        // Pattern: Composite validation — Result.all accumulates per-field errors (CompositeCause)
+        // Pattern: Composite validation  -  Result.all accumulates per-field errors (CompositeCause)
         public static Result<ValidRequest> validRequest(Request raw) {
             return Result.all(Email.email(raw.email()),
                               Password.password(raw.password()),

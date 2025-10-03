@@ -6,7 +6,7 @@ While this style can be used even with Java 8, with Java 11 it looks much cleane
 
 But PFJ is not a free lunch, it requires significant changes in developers’ habits and approaches. Changing habits is not easy, traditional imperative ones are especially hard to tackle.
 
-Is it worth it? Definitely\! PFJ code is concise, expressive and reliable, easy to read and maintain. In most cases, if code compiles — it works\!
+Is it worth it? Definitely\! PFJ code is concise, expressive and reliable, easy to read and maintain. In most cases, if code compiles  -  it works\!
 
 (This text is an integral part of the [Pragmatica](https://github.com/siy/pragmatica) library).
 
@@ -33,7 +33,7 @@ Below, each key rule is explored in more details:
 
 #### **Avoid `null` As Much As Possible (ANAMAP rule)**
 
-Nullability of variables is one of the [Special States](https://dev.to/siy/leveraging-java-type-system-to-represent-special-states-688). They are a well-known source of run-time errors and boilerplate code. To eliminate these issues and represent values which can be missing, PFJ uses the Option container. This covers all cases when such a value may appear — return values, input parameters or fields.
+Nullability of variables is one of the [Special States](https://dev.to/siy/leveraging-java-type-system-to-represent-special-states-688). They are a well-known source of run-time errors and boilerplate code. To eliminate these issues and represent values which can be missing, PFJ uses the Option container. This covers all cases when such a value may appear  -  return values, input parameters or fields.
 
 In some cases, for example, for performance or compatibility with existing frameworks reasons, classes may use `null` internally. These cases must be clearly documented and invisible to class users, i.e., all class APIs should use `Option<T>`.
 
@@ -49,7 +49,7 @@ PFJ uses exceptions only to represent cases of fatal, unrecoverable (technical) 
 
 Business exceptions are another case of [Special States](https://dev.to/siy/leveraging-java-type-system-to-represent-special-states-688). For propagation and handling of business level errors, PFJ uses [Result](https://github.com/siy/pragmatica/blob/main/core/src/main/java/org/pfj/lang/Result.java) container.
 
-Again, this covers all cases when error may appear — return values, input parameters or fields. Practice shows that fields rarely (if ever) need to use this container.
+Again, this covers all cases when error may appear  -  return values, input parameters or fields. Practice shows that fields rarely (if ever) need to use this container.
 
 There are no justified cases when business level exceptions can be used. Interfacing with existing Java libraries and legacy code performed via dedicated wrapping methods. The [Result](https://github.com/siy/pragmatica/blob/main/core/src/main/java/org/pfj/lang/Result.java) container contains an implementation of these wrapping methods.
 
@@ -58,8 +58,8 @@ The `No Business Exceptions` rule provides the following advantages:
 * Methods which can return error are immediately visible in code. No need to read documentation/check source code/analyze call tree to check which exceptions can be thrown and under which conditions.
 * The compiler enforces proper error handling and propagation.
 * Virtually zero boilerplate for error handling and propagation.
-* Code can be written for *happy day scenarios* and errors handled at the point where this is most convenient — the original intent of exceptions, which was never actually achieved.
-* Code remains composable, easy to read and reason about, no hidden breaks or unexpected transitions in the execution flow — *what you read is what will be executed*.
+* Code can be written for *happy day scenarios* and errors handled at the point where this is most convenient  -  the original intent of exceptions, which was never actually achieved.
+* Code remains composable, easy to read and reason about, no hidden breaks or unexpected transitions in the execution flow  -  *what you read is what will be executed*.
 
 #### **Transforming Legacy Code Into PFJ Style Code**
 
@@ -114,7 +114,7 @@ public interface UserProfileRepository {
    Option<UserProfile> findById(User.Id userId);  
 }
 ```
-Now, there is no need to make any guesses — the API explicitly tells us that the returned value may not be present.
+Now, there is no need to make any guesses  -  the API explicitly tells us that the returned value may not be present.
 
 Now let’s take a look into the`getUserWithProfilethe⁣` method again. The second thing to note is that the method may return a value or may throw an exception. This is a business exception, so we can apply *NBE* rule. The main goal of the change \- make the fact that a method may return value *OR* error explicit:
 ```java
@@ -152,7 +152,7 @@ public Result<UserWithProfile> getUserWithProfile(User.Id userId) {
 ```
 Here comes the catch: details and user are stored inside `Option<T>` containers, so to assemble `UserWithProfile` we need to somehow extract values. Here could be different approaches, for example, use `Option.fold()` method. The resulting code will definitely not be pretty, and most likely will violate *ANAMAP* rule.
 
-There is another approach — use the fact that `Option<T>` is a container with special properties. In particular, it is possible to transform value inside `Option<T>` using `Option.map()` and `Option.flatMap()` methods. Also, we know that the`details` value will be, either, provided by the repository or replaced with default. For this, we can use `Option.or()` a method to extract details from container. Let's try these approaches:
+There is another approach  -  use the fact that `Option<T>` is a container with special properties. In particular, it is possible to transform value inside `Option<T>` using `Option.map()` and `Option.flatMap()` methods. Also, we know that the`details` value will be, either, provided by the repository or replaced with default. For this, we can use `Option.or()` a method to extract details from container. Let's try these approaches:
 ```java
 public Result<UserWithProfile> getUserWithProfile(User.Id userId) {  
    Option<User> user = userRepository.findById(userId);  
@@ -166,7 +166,7 @@ public Result<UserWithProfile> getUserWithProfile(User.Id userId) {
    Option<UserWithProfile> userWithProfile =  user.map(userValue -> UserWithProfile.of(userValue, details));  
 }
 ```
-Now we need to write a final step — transform `userWithProfile` container from `Option<T>` to `Result<T>`:
+Now we need to write a final step  -  transform `userWithProfile` container from `Option<T>` to `Result<T>`:
 ```java
 public Result<UserWithProfile> getUserWithProfile(User.Id userId) {  
    Option<User> user = userRepository.findById(userId);  
@@ -265,13 +265,13 @@ public static Result<URI> createURI(String uri) {
 ```
 #### **Handling `null` Value Returns**
 
-This case is rather straightforward — if the API can return `null`, just wrap it into`Option<T>` using the`Option.option()` method.
+This case is rather straightforward  -  if the API can return `null`, just wrap it into`Option<T>` using the`Option.option()` method.
 
 #### **Providing Legacy API**
 
 Sometimes it is necessary to allow legacy code call code written in PFJ style. In particular, this often happens when some smaller subsystem is converted to PFJ style, but the rest of the system remains written in the old style and the API needs to be preserved.
 
-The most convenient way to do this is to split the implementation into two parts — PFJ style API and an adapter, which only adapts new API to old API. Here could be a very useful simple helper method like one shown below:
+The most convenient way to do this is to split the implementation into two parts  -  PFJ style API and an adapter, which only adapts new API to old API. Here could be a very useful simple helper method like one shown below:
 ```java
 public static <T> T unwrap(Result<T> value) {  
    return value.fold(  
@@ -337,7 +337,7 @@ return Result.all(
          function3(...)  
        ).map(MyObject::new);
 ```
-Besides being compact and *flat*, this approach has a few more advantages. First, it explicitly expresses intent — calculate all values before use. Imperative code does this sequentially, hiding original intent. Second advantage — this code explicitly shows that the calculation of each value is independent. This preserves useful knowledge and reduces the context necessary to understand and reason about each function invocation.
+Besides being compact and *flat*, this approach has a few more advantages. First, it explicitly expresses intent  -  calculate all values before use. Imperative code does this sequentially, hiding original intent. Second advantage  -  this code explicitly shows that the calculation of each value is independent. This preserves useful knowledge and reduces the context necessary to understand and reason about each function invocation.
 
 #### **Alternative Scopes**
 
@@ -361,7 +361,7 @@ try {
    }  
 }
 ```
-The code is somewhat contrived because nested cases usually hidden inside other methods. Nevertheless, overall logic is far from simple, mostly because beside choosing the value, we also need to handle errors. Error handling clutters the code and makes initial intent — choose first available alternative — buried inside error handling.
+The code is somewhat contrived because nested cases usually hidden inside other methods. Nevertheless, overall logic is far from simple, mostly because beside choosing the value, we also need to handle errors. Error handling clutters the code and makes initial intent  -  choose first available alternative  -  buried inside error handling.
 
 Transformation into the PFJ style makes intent crystal clear:
 ```java

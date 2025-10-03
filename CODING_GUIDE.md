@@ -2,13 +2,13 @@
 
 ## Introduction: Code in a New Era
 
-Software development is changing faster than ever. AI-powered code generation tools have moved from experimental novelty to daily workflow staple in just a few years. We now write code alongside—and increasingly with—intelligent assistants that can generate entire functions, refactor modules, and suggest architectural patterns. This shift creates new challenges that traditional coding practices weren't designed to handle.
+Software development is changing faster than ever. AI-powered code generation tools have moved from experimental novelty to daily workflow staple in just a few years. We now write code alongside - and increasingly with - intelligent assistants that can generate entire functions, refactor modules, and suggest architectural patterns. This shift creates new challenges that traditional coding practices weren't designed to handle.
 
-Historically, code has carried a heavy burden of personal style. Every developer brings preferences about naming, structure, error handling, and abstraction. Teams spend countless hours in code review debating subjective choices. Style guides help, but they can't capture the deeper structural decisions that make code readable or maintainable. When AI generates code, it inherits these same inconsistencies—we just don't know whose preferences it's channeling or why it made particular choices.
+Historically, code has carried a heavy burden of personal style. Every developer brings preferences about naming, structure, error handling, and abstraction. Teams spend countless hours in code review debating subjective choices. Style guides help, but they can't capture the deeper structural decisions that make code readable or maintainable. When AI generates code, it inherits these same inconsistencies - we just don't know whose preferences it's channeling or why it made particular choices.
 
-This creates a context problem. When you read AI-generated code, you're reverse-engineering decisions made by a model trained on millions of examples with conflicting styles. When AI reads your code to suggest changes, it must infer your intentions from structure that may not clearly express them. The cognitive overhead compounds: developers burn mental cycles translating between their mental model, the code's structure, and what the AI "thinks" the code means.
+This creates a context problem. When you read AI-generated code, you're reverse-engineering decisions made by a model trained on millions of examples with conflicting styles. When AI reads your code to suggest changes, it must infer your intentions from the structure that may not clearly express them. The cognitive overhead compounds: developers burn mental cycles translating between their mental model, the code's structure, and what the AI "thinks" the code means.
 
-Meanwhile, technical debt accumulates silently. Small deviations from good structure—a validation check here, an exception there, a bit of mixed abstraction levels—seem harmless in isolation. But they compound. Refactoring becomes risky. Testing becomes difficult. The codebase becomes a collection of special cases rather than a coherent system. 
+Meanwhile, technical debt accumulates silently. Small deviations from the good structure - a validation check here, an exception there, a bit of mixed abstraction levels - seem harmless in isolation. But they compound. Refactoring becomes risky. Testing becomes difficult. The codebase becomes a collection of special cases rather than a coherent system. 
 
 > Traditional approaches don't provide clear, mechanical rules for when to refactor or how to structure new code, so these decisions remain subjective and inconsistent.
 
@@ -22,19 +22,19 @@ The benefits compound:
 
 **Close business modeling** happens when you're not fighting technical noise. Value objects enforce domain invariants at construction time. Use cases read like business processes because each step does one thing. Errors are domain concepts, not stack traces. Product owners can read the code structure and recognize their requirements.
 
-**Requirements discovery** becomes systematic. When you structure code as validation → steps → composition, gaps become obvious. Missing validation rules surface when you define value objects. Unclear business logic reveals itself when you can't name a step clearly. Edge cases emerge when you model errors as explicit types. The structure itself asks the right questions: What can fail here? What invariants must hold? What happens when this is missing? Validating answers for compatibility is mechanical—if a new requirement doesn't fit the existing step structure, you know immediately whether it's a new concern or a modification to existing logic.
+**Requirement discovery** becomes systematic. When you structure code as validation → steps → composition, gaps become obvious. Missing validation rules surface when you define value objects. Unclear business logic reveals itself when you can't name a step clearly. Edge cases emerge when you model errors as explicit types. The structure itself asks the right questions: What can fail here? What invariants must hold? What happens when this is missing? Validating answers for compatibility is mechanical - if a new requirement doesn't fit the existing step structure, you know immediately whether it's a new concern or a modification to existing logic.
 
-**Asking correct questions** becomes easy because the technology provides a framework for inquiry. When discussing requirements with domain experts, you can ask: "What validation rules apply to this field?" (maps to value object factories). "What happens if this step fails?" (maps to error types). "Can these operations run in parallel?" (maps to Fork-Join vs Sequencer). "Is this value optional or required?" (maps to `Option<T>` vs `T`). The questions are grounded in structure, not abstraction, so answers are concrete and immediately implementable.
+**Asking correct questions** becomes easy because the technology provides a framework for inquiry. When discussing requirements with domain experts, you can ask: "What validation rules apply to this field?" (maps to value object factories). "What happens if this step fails?" (maps to error types). "Can these operations run in parallel?" (maps to Fork-Join vs. Sequencer). "Is this value optional or required?" (maps to `Option<T>` vs `T`). The questions are grounded in structure, not abstraction, so answers are concrete and immediately implementable.
 
-**Business logic as a readable language** happens when patterns become vocabulary. The four return types, parse-don't-validate, and the fixed pattern catalog form a Business Logic Expression Language—a consistent way to express domain concepts in code. When you use the same patterns everywhere, business logic becomes immediately apparent in all necessary details. The structure itself tells the story: a Sequencer shows process steps, Fork-Join reveals parallel operations, `Result<Option<T>>` declares "optional but must be valid when present." Anyone who somewhat understands the domain can pick up a new codebase virtually instantly. No more narrow specializations where only one developer understands "their" module. A large part of the code becomes universally readable. Fresh onboarding happens in days, not months—developers spend time learning the domain, not deciphering structural choices.
+**Business logic as a readable language** happens when patterns become vocabulary. The four return types, parse-don't-validate, and the fixed pattern catalog form a Business Logic Expression Language - a consistent way to express domain concepts in code. When you use the same patterns everywhere, business logic becomes immediately apparent in all necessary details. The structure itself tells the story: a Sequencer shows process steps, Fork-Join reveals parallel operations, `Result<Option<T>>` declares "optional but must be valid when present." Anyone who somewhat understands the domain can pick up a new codebase virtually instantly. No more narrow specializations where only one developer understands "their" module. A large part of the code becomes universally readable. Fresh onboarding happens in days, not months - developers spend time learning the domain, not deciphering structural choices.
 
-**Tooling and automation** become dramatically simpler when structure is predictable. Code generators don't need to infer patterns—there's one pattern for validation, one for composition, one for error handling. Static analysis can verify properties mechanically: does this function return exactly one of the four allowed types? Does validation happen before construction? Are errors properly typed? AI assistants can generate more accurate code because the target structure is well-defined and consistent.
+**Tooling and automation** become dramatically simpler when the structure is predictable. Code generators don't need to infer patterns - there's one pattern for validation, one for composition, one for error handling. Static analysis can verify properties mechanically: does this function return exactly one of the four allowed types? Does validation happen before construction? Are errors properly typed? AI assistants can generate more accurate code because the target structure is well-defined and consistent.
 
-**Deterministic code generation** becomes possible when the mapping from requirements to code is mechanical. Given a use case specification—inputs, outputs, validation rules, steps—there's essentially one correct structure. Different developers (or AI assistants) should produce nearly identical implementations. This isn't about stifling creativity; it's about channeling creativity into business logic rather than structural decisions.
+**Deterministic code generation** becomes possible when the mapping from requirements to code is mechanical. Given a use case specification - inputs, outputs, validation rules, steps - there's essentially one correct structure. Different developers (or AI assistants) should produce nearly identical implementations. This isn't about stifling creativity; it's about channeling creativity into business logic rather than structural decisions.
 
-This guide presents the complete technology: the rules, the patterns, the rationale, and the practices. It's framework-agnostic by design—these principles work whether you're building REST APIs with Spring, message processors with plain Java, or anything in between. The framework lives at the edges; the business logic remains pure, testable, and independent.
+This guide presents the complete technology: the rules, the patterns, the rationale, and the practices. It's framework-agnostic by design - these principles work whether you're building REST APIs with Spring, message processors with plain Java, or anything in between. The framework lives at the edges; the business logic remains pure, testable, and independent.
 
-We'll start with core concepts—the building blocks that make everything else possible. Then we'll explore the pattern catalog that covers almost every situation you'll encounter. A detailed use case walkthrough shows how the pieces fit together. Framework integration demonstrates how to bridge this functional core to the imperative world of web frameworks and databases. Finally, we'll examine common mistakes and how to avoid them.
+We'll start with core concepts - the building blocks that make everything else possible. Then we'll explore the pattern catalog that covers almost every situation you'll encounter. A detailed use case walkthrough shows how the pieces fit together. Framework integration demonstrates how to bridge this functional core to the imperative world of web frameworks and databases. Finally, we'll examine common mistakes and how to avoid them.
 
 The goal isn't to give you more tools. It's to give you fewer decisions to make, so you can focus on the problems that actually matter.
 
@@ -42,7 +42,7 @@ The goal isn't to give you more tools. It's to give you fewer decisions to make,
 
 ## Core Concepts
 
-> **Note:** This section uses Pragmatica Lite Core library as an underlying functional style library.
+> **Note:** This section uses **Pragmatica Lite Core** library as an underlying functional style library.
 > The library is available on Maven Central: https://central.sonatype.com/artifact/org.pragmatica-lite/core
 > 
 > ```xml
@@ -55,9 +55,9 @@ The goal isn't to give you more tools. It's to give you fewer decisions to make,
 
 ### The Four Return Kinds
 
-Every function in this technology returns exactly one of four types. Not "usually" or "preferably"—exactly one, always. This isn't arbitrary restriction; it's intentional compression of complexity into type signatures.
+Every function in this technology returns exactly one of four types. Not "usually" or "preferably" - exactly one, always. This isn't arbitrary restriction; it's intentional compression of complexity into type signatures.
 
-**`T`** — Synchronous, cannot fail, value always present.
+**`T`**  - Synchronous, cannot fail, value always present.
 
 Use this when the operation is pure computation with no possibility of failure or missing data. Mathematical calculations, transformations of valid data, simple getters. If you can't think of a way this function could fail or return nothing, it returns `T`.
 
@@ -72,9 +72,9 @@ public record FullName(String value) {
 }
 ```
 
-**`Option<T>`** — Synchronous, cannot fail, value may be missing.
+**`Option<T>`**  - Synchronous, cannot fail, value may be missing.
 
-Use this when absence is a valid outcome but failure isn't possible. Lookups that might not find anything, optional configuration, nullable database columns when null is semantically meaningful (not just "we don't know"). The key: missing data is normal business behavior, not an error.
+Use this when absence is a valid outcome, but failure isn't possible. Lookups that might not find anything, optional configuration, nullable database columns when null is semantically meaningful (not just "we don't know"). The key: missing data is normal business behavior, not an error.
 
 ```java
 // Finding an optional user preference
@@ -83,7 +83,7 @@ public interface PreferenceRepository {
 }
 ```
 
-**`Result<T>`** — Synchronous, can fail, represents business or validation errors.
+**`Result<T>`**  - Synchronous, can fail, represents business or validation errors.
 
 Use this when an operation might fail for business or validation reasons. Parsing input, enforcing invariants, business rules that can be violated. Failures are represented as typed `Cause` objects, not exceptions. Every failure path is explicit in the return type.
 
@@ -101,9 +101,9 @@ public record Email(String value) {
 }
 ```
 
-**`Promise<T>`** — Asynchronous, can fail, represents eventual success or failure.
+**`Promise<T>`**  - Asynchronous, can fail, represents eventual success or failure.
 
-Use this for any I/O operation, external service call, or computation that might block. `Promise<T>` is semantically equivalent to `Result<T>` but asynchronous—failures are carried in the Promise itself, not nested inside it. This is Java's answer to Rust's `Future<Result<T>>` without the nesting problem.
+Use this for any I/O operation, external service call, or computation that might block. `Promise<T>` is semantically equivalent to `Result<T>` but asynchronous - failures are carried in the Promise itself, not nested inside it. This is Java's answer to Rust's `Future<Result<T>>` without the nesting problem.
 
 ```java
 public interface AccountRepository {
@@ -114,19 +114,19 @@ public interface AccountRepository {
 **Why exactly four?**
 
 These four types form a complete basis for composition. You can lift "up" when needed (`Option` to `Result` to `Promise`), but you never nest the same concern twice (`Promise<Result<T>>` is forbidden). Each type represents one orthogonal concern:
-- Synchronous vs asynchronous (now vs later)
+- Synchronous vs. asynchronous (now vs. later)
 - Can fail vs cannot fail (error channel present or absent)
 - Value vs optional value (presence guaranteed or not)
 
 Traditional Java mixes these concerns. A method returning `User` might throw exceptions (hidden error channel), return null (hidden optionality), or block on I/O (hidden asynchrony). You can't tell from the signature. With these four types, the signature tells you everything about the function's behavior before you read a line of implementation.
 
-This clarity is what makes AI-assisted development tractable. When generating code, an AI doesn't need to infer whether error handling is needed—the return type declares it. When reading code, a human doesn't need to trace execution paths to find hidden failure modes—they're in the type signature.
+This clarity is what makes AI-assisted development tractable. When generating code, an AI doesn't need to infer whether error handling is needed - the return type declares it. When reading code, a human doesn't need to trace execution paths to find hidden failure modes - they're in the type signature.
 
 ### Parse, Don't Validate
 
 Most Java code validates data after construction. You create an object with raw values, then call a `validate()` method that might throw exceptions or return error lists. This is backwards.
 
-**The principle:** Make invalid states unrepresentable. If construction succeeds, the object is valid by definition. Validation is parsing—converting untyped or weakly-typed input into strongly-typed domain objects that enforce invariants at the type level.
+**The principle:** Make invalid states unrepresentable. If construction succeeds, the object is valid by definition. Validation is parsing - converting untyped or weakly-typed input into strongly typed domain objects that enforce invariants at the type level.
 
 Traditional validation:
 ```java
@@ -138,7 +138,7 @@ public class Email {
         this.value = value;  // accepts anything
     }
 
-    public boolean isValid() {  // caller must remember to check
+    public boolean isValid() {  // The caller must remember to check
         return value != null && value.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$");
     }
 }
@@ -167,22 +167,22 @@ public record Email(String value) {
     }
 }
 
-// Client code gets Result:
+// Client code gets the Result:
 Result<Email> result = Email.email(input);
 // If this is a Success, the Email is valid. Guaranteed.
 ```
 
-The constructor is private (or package-private). The only way to get an `Email` is through the static factory `email()`, which returns `Result<Email>`. If you have an `Email` instance, it's valid—no separate check needed. The type system enforces this.
+The constructor is private (or package-private). The only way to get an `Email` is through the static factory `email()`, which returns `Result<Email>`. If you have an `Email` instance, it's valid - no separate check needed. The type system enforces this.
 
-**Note:** As of current Java versions, records do not support declaring the canonical constructor as private. This limitation means the constructor remains accessible within the same package. Future Java versions may address this. Until then, rely on team discipline and code review to ensure value objects are only constructed through their factory methods. The good news: violations are highly visible in code—since all components are normally constructed via factory methods, any direct `new Email(...)` call stands out immediately. This makes the issue easy to catch using automated static analysis checks or by instructing AI code review tools to flag direct constructor usage for value objects.
+**Note:** As of current Java versions, records do not support declaring the canonical constructor as private. This limitation means the constructor remains accessible within the same package. Future Java versions may address this. Until then, rely on team discipline and code review to ensure value objects are only constructed through their factory methods. The good news: violations are highly visible in code - since all components are normally constructed via factory methods, any direct `new Email(...)` call stands out immediately. This makes the issue easy to catch using automated static analysis checks or by instructing AI code review tools to flag direct constructor usage for value objects.
 
-**Naming convention:** Factories are always named after their type, lowercase-first (camelCase). This creates a natural, readable call site: `Email.email(...)`, `Password.password(...)`, `AccountId.accountId(...)`. It's slightly redundant but unambiguous and grep-friendly. The intentional redundancy enables conflict-free static imports—`import static Email.email` allows you to write `email(raw)` at call sites while preserving context, since the factory name itself indicates what's being created.
+**Naming convention:** Factories are always named after their type, lowercase-first (camelCase). This creates a natural, readable call site: `Email.email(...)`, `Password.password(...)`, `AccountId.accountId(...)`. It's slightly redundant but unambiguous and grep-friendly. The intentional redundancy enables conflict-free static imports - `import static Email.email` allows you to write `email(raw)` at call sites while preserving context, since the factory name itself indicates what's being created.
 
 **Optional fields with validation:**
 
 What if a field is optional but must be valid when present? For example, a referral code that's not required but must match a pattern if provided.
 
-Use `Result<Option<T>>`—validation can fail (Result), and if it succeeds, the value might be absent (Option).
+Use `Result<Option<T>>` - validation can fail (Result), and if it succeeds, the value might be absent (Option).
 
 ```java
 public record ReferralCode(String value) {
@@ -214,7 +214,7 @@ If `raw` is null or empty, we succeed with `Option.none()`. If it's present, we 
 
 ### No Business Exceptions
 
-Business failures are not exceptional—they're expected outcomes of business rules. An invalid email isn't an exception; it's a normal case of bad input. An account being locked isn't an exception; it's a business state.
+Business failures are not exceptional - they're expected outcomes of business rules. An invalid email isn't an exception; it's a normal case of bad input. An account being locked isn't an exception; it's a business state.
 
 **The rule:** Business logic never throws exceptions for business failures. All failures flow through `Result` or `Promise` as typed `Cause` objects.
 
@@ -250,7 +250,7 @@ public User loginUser(String email, String password) throws
 }
 ```
 
-Problems: Checked exceptions pollute signatures and force callers to handle or rethrow. Unchecked exceptions are invisible in signatures—you can't tell what might fail without reading implementation. Exception hierarchies create coupling. Stack traces are expensive and often irrelevant for business failures. Testing requires catching exceptions and inspecting types.
+Problems: Checked exceptions pollute signatures and force callers to handle or rethrow. Unchecked exceptions are invisible in signatures - you can't tell what might fail without reading implementation. Exception hierarchies create coupling. Stack traces are expensive and often irrelevant for business failures. Testing requires catching exceptions and inspecting types.
 
 Result-based code:
 ```java
@@ -284,7 +284,7 @@ private Result<User> checkAccountStatus(User user) {
 }
 ```
 
-Every failure is a `Cause`. `LoginError` is a sealed interface defining the failure modes:
+Every failure is a `Cause`. The `LoginError` is a sealed interface defining the failure modes:
 
 ```java
 public sealed interface LoginError extends Cause {
@@ -322,32 +322,29 @@ class JpaUserRepository implements UserRepository {
     public Promise<Option<User>> findByEmail(Email email) {
         return Promise.lift(
             RepositoryError::fromDatabaseException,
-            () -> {
-                return entityManager.createQuery(
-                        "SELECT u FROM User u WHERE u.email = :email", UserEntity.class)
-                    .setParameter("email", email.value())
-                    .getResultList()
-                    .stream()
-                    .findFirst()
-                    .map(this::toDomain)
-                    .orElse(Option.none());
-            }
+            () -> entityManager.createQuery("SELECT u FROM User u WHERE u.email = :email", UserEntity.class)
+                               .setParameter("email", email.value())
+                               .getResultList()
+                               .stream()
+                               .findFirst()
+                               .map(this::toDomain)
+                               .orElse(Option.none())
         );
     }
 }
 ```
 
-The `lift()` methods handle try-catch boilerplate and exception-to-Cause conversion automatically or via provided exception to cause mapping function. Each monad type provides its own `lift()` method: `Option.lift()`, `Result.lift()`, and `Promise.lift()`. The adapter wraps checked `PersistenceException` in a domain `Cause` (`RepositoryError.DatabaseFailure`). Business logic never sees `PersistenceException`—only domain errors.
+The `lift()` methods handle try-catch boilerplate and exception-to-Cause conversion automatically or via provided exception-to-cause mapping function. Each monad type provides its own `lift()` method: `Option.lift()`, `Result.lift()`, and `Promise.lift()`. The adapter wraps checked `PersistenceException` in a domain `Cause` (`RepositoryError.DatabaseFailure`). Business logic never sees `PersistenceException` - only domain errors.
 
-**Why this matters:** Errors are just data. You compose them with `map`, `flatMap`, and `all()` like any other value. Testing is easy—assert on `Cause` types without catching exceptions. AI can generate error handling mechanically because the pattern is always the same: `SomeCause.INSTANCE.result()` or `SomeCause.INSTANCE.promise()`.
+**Why this matters:** Errors are just data. You compose them with `map`, `flatMap`, and `all()` like any other value. Testing is easy - assert on `Cause` types without catching exceptions. AI can generate error handling mechanically because the pattern is always the same: `SomeCause.INSTANCE.result()` or `SomeCause.INSTANCE.promise()`.
 
 ### Single Pattern Per Function
 
-Every function implements exactly one pattern from a fixed catalog: Leaf, Sequencer, Fork-Join, Condition, or Iteration. (Aspects are the exception—they decorate other patterns.)
+Every function implements exactly one pattern from a fixed catalog: Leaf, Sequencer, Fork-Join, Condition, or Iteration. (Aspects are the exception - they decorate other patterns.)
 
 **Why?** Cognitive load. When reading a function, you should recognize its shape immediately. If it's a Sequencer, you know it chains dependent steps linearly. If it's Fork-Join, you know it runs independent operations and combines results. Mixing patterns within a function creates mixed abstraction levels and forces readers to hold multiple mental models simultaneously.
 
-This rule has a mechanical benefit: it makes refactoring deterministic. When a function grows beyond one pattern, you extract the second pattern into its own function. There's no subjective judgment about "is this too complex?"—if you're doing two patterns, split it.
+This rule has a mechanical benefit: it makes refactoring deterministic. When a function grows beyond one pattern, you extract the second pattern into its own function. There's no subjective judgment about "is this too complex?" - if you're doing two patterns, split it.
 
 ### Single Level of Abstraction
 
@@ -355,7 +352,7 @@ This rule has a mechanical benefit: it makes refactoring deterministic. When a f
 - Method references (e.g., `Email::new`, `this::processUser`)
 - Single method calls with parameter forwarding (e.g., `param -> someMethod(outerParam, param)`)
 
-**Why?** Lambdas are composition points, not implementation locations. When you bury logic inside a lambda, you hide abstraction levels and make the code harder to read, test, and reuse. Extract complex logic to named functions—the name documents intent, the function becomes testable in isolation, and the composition chain stays flat and readable.
+**Why?** Lambdas are composition points, not implementation locations. When you bury logic inside a lambda, you hide abstraction levels and make the code harder to read, test, and reuse. Extract complex logic to named functions - the name documents intent, the function becomes testable in isolation, and the composition chain stays flat and readable.
 
 **Anti-pattern:**
 ```java
@@ -440,7 +437,7 @@ No ternaries (they are the Condition pattern, violates Single Pattern per Functi
     ? applyPremiumDiscount(user)
     : applyStandardDiscount(user))
 
-// DO: Extract to named function
+// DO: Extract to the named function
 .flatMap(this::applyApplicableDiscount)
 
 private Result<Discount> applyApplicableDiscount(User user) {
@@ -461,11 +458,11 @@ No conditionals whatsoever:
     }
 })
 
-// DO: Extract to named function
+// DO: Extract to the named function
 .flatMap(this::applyApplicableDiscount)
 ```
 
-**Why this matters for AI:** Single level of abstraction makes code generation deterministic. When an AI sees a `flatMap`, it knows to generate either a method reference or a simple parameter-forwarding lambda—nothing else. No decisions about "is this ternary simple enough?" When reading code, the AI can parse the top-level structure without descending into nested lambda logic. Humans benefit identically: scan the chain to understand flow, dive into named functions only when needed.
+**Why this matters for AI:** Single level of abstraction makes code generation deterministic. When an AI sees a `flatMap`, it knows to generate either a method reference or a simple parameter-forwarding lambda - nothing else. No decisions about "is this ternary simple enough?" When reading code, the AI can parse the top-level structure without descending into nested lambda logic. Humans benefit identically: scan the chain to understand flow, dive into named functions only when needed.
 
 **Example violation:**
 ```java
@@ -533,7 +530,7 @@ public Promise<Response> execute(Request request) {
 }
 ```
 
-**Forbidden nesting:** `Promise<Result<T>>` is not allowed. `Promise<T>` already carries failures—nesting `Result` inside creates two error channels and forces callers to unwrap twice. If a function is async and can fail, it returns `Promise<T>`, period.
+**Forbidden nesting:** `Promise<Result<T>>` is not allowed. `Promise<T>` already carries failures - nesting `Result` inside creates two error channels and forces callers to unwrap twice. If a function is async and can fail, it returns `Promise<T>`, period.
 
 Wrong:
 ```java
@@ -566,7 +563,7 @@ Result<Option<ReferralCode>> refCode = ReferralCode.referralCode(input);
 // Failure(cause) = provided but invalid
 ```
 
-Avoid `Option<Result<T>>`—it means "maybe there's a result, and that result might have failed," which is backwards. Just use `Result<Option<T>>`.
+Avoid `Option<Result<T>>` - it means "maybe there's a result, and that result might have failed," which is backwards. Just use `Result<Option<T>>`.
 
 **Aggregation:** Use `Result.all(...)` or `Promise.all(...)` to combine multiple independent operations:
 
@@ -590,7 +587,7 @@ Promise<Report> report = Promise.all(userRepo.findById(userId),
 
 If any input fails, `all()` fails immediately (fail-fast for Promise) or collects failures (CompositeCause for Result).
 
-**Why these rules?** They prevent complexity explosion. With exactly four return types and clear composition rules, you can always tell how to combine two functions by looking at their signatures. AI code generation becomes mechanical—given input and output types, there's one obvious way to compose.
+**Why these rules?** They prevent complexity explosion. With exactly four return types and clear composition rules, you can always tell how to combine two functions by looking at their signatures. AI code generation becomes mechanical - given input and output types, there's one obvious way to compose.
 
 ---
 
@@ -598,7 +595,7 @@ If any input fails, `all()` fails immediately (fail-fast for Promise) or collect
 
 ### Leaf
 
-**Definition:** A Leaf is the smallest unit of processing—a function that does one thing and has no internal steps. It's either a business leaf (pure computation) or an adapter leaf (I/O or side effects).
+**Definition:** A Leaf is the smallest unit of processing - a function that does one thing and has no internal steps. It's either a business leaf (pure computation) or an adapter leaf (I/O or side effects).
 
 **Business leaves** are pure functions that transform data or enforce business rules. Common examples:
 
@@ -663,7 +660,7 @@ class PostgresUserRepository implements UserRepository {
 
 The adapter catches `SQLException` and wraps it in `RepositoryError.DatabaseFailure`, a domain `Cause`. Callers never see `SQLException`.
 
-**Placement:** If a leaf is only used by one caller, keep it nearby (same file, same package). If it's reused, move it immediately to the nearest `shared` package. Don't defer—tech debt accumulates when shared code stays in wrong locations.
+**Placement:** If a leaf is only used by one caller, keep it nearby (same file, same package). If it's reused, move it immediately to the nearest `shared` package. Don't defer - tech debt accumulates when shared code stays in wrong locations.
 
 **Anti-patterns:**
 
@@ -715,11 +712,11 @@ Linear flow, clear responsibility, no side effects, foreign errors properly wrap
 
 **Definition:** A Sequencer chains dependent steps linearly using `map` and `flatMap`. Each step's output feeds the next step's input. This is the primary pattern for use case implementation.
 
-**The 2-5 rule:** A Sequencer should have 2 to 5 steps. Fewer than 2, and it's probably just a Leaf. More than 5, and it needs decomposition—extract sub-sequencers or group steps.
+**The 2-5 rule:** A Sequencer should have 2 to 5 steps. Fewer than 2, and it's probably just a Leaf. More than 5, and it needs decomposition - extract sub-sequencers or group steps.
 
 > The rule is intended to limit local complexity. It is derived from the average size of short-term memory - 7 +- 2 elements.
 
-**Domain requirements take precedence:** Some functions inherently require more steps because the domain demands it. Value object factories may need multiple validation and normalization steps to ensure invariants—this is correct because the validation logic must be concentrated in one place. Fork-Join patterns may need to aggregate 6+ independent results because that's what the domain requires. Don't artificially fit domain logic into numeric rules. The 2-5 guideline helps you recognize when to consider refactoring, but domain semantics always win. 
+**Domain requirements take precedence:** Some functions inherently require more steps because the domain demands it. Value object factories may need multiple validation and normalization steps to ensure invariants - this is correct because the validation logic must be concentrated in one place. Fork-Join patterns may need to aggregate 6+ independent results because that's what the domain requires. Don't artificially fit domain logic into numeric rules. The 2-5 guideline helps you recognize when to consider refactoring, but domain semantics always win. 
 
 Sync example:
 ```java
@@ -783,7 +780,7 @@ Validation is synchronous (returns `Result`), so we lift it to `Promise` using `
 
 **When to extract sub-sequencers:**
 
-If a step grows complex internally, extract it to its own interface with a nested structure. Suppose `processPayment` actually needs to: authorize card → capture funds → record transaction. That's three dependent steps—a Sequencer. Extract:
+If a step grows complex internally, extract it to its own interface with a nested structure. Suppose `processPayment` actually needs to: authorize card → capture funds → record transaction. That's three dependent steps - a Sequencer. Extract:
 
 ```java
 // Original step interface
@@ -827,7 +824,7 @@ return validate.apply(request)
 The conditional logic is hidden inside the lambda. Extract it:
 
 ```java
-// DO: Extract to named function (Single Level of Abstraction)
+// DO: Extract to the named function (Single Level of Abstraction)
 return validate.apply(request)
     .flatMap(this::applyDiscountIfEligible)
     .flatMap(reserve::apply)
@@ -885,7 +882,7 @@ return validate.apply(request)
 
 **Two flavors:**
 
-1. **Result.all(...)** — Synchronous aggregation (not concurrent, just collects multiple Results):
+1. **Result.all(...)**  -  Synchronous aggregation (not concurrent, just collects multiple Results):
 ```java
 // Validating multiple independent fields
 Result<ValidRequest> validated = Result.all(Email.email(raw.email()),
@@ -898,7 +895,7 @@ Result<ValidRequest> validated = Result.all(Email.email(raw.email()),
 
 If all succeed, you get a tuple of values to pass to the combiner. If any fail, you get a `CompositeCause` containing all failures (not just the first).
 
-2. **Promise.all(...)** — Parallel async execution:
+2. **Promise.all(...)**  -  Parallel async execution:
 ```java
 // Running independent I/O operations in parallel
 Promise<Dashboard> buildDashboard(UserId userId) {
@@ -915,15 +912,15 @@ private Dashboard createDashboard(Profile profile,
 }
 ```
 
-All three fetches run concurrently. The Promise completes when all inputs complete (or fails immediately if any input fails).
+All three fetches run concurrently. The Promise completes when all inputs complete successfully or fails immediately if any input fails.
 
 **Special Fork-Join cases:**
 
 Beyond the standard `Result.all()` and `Promise.all()`, there are specialized fork-join methods for specific aggregation needs. The parallel execution pattern remains the same, but the outcome differs:
 
-1. **Promise.allOf(Collection<Promise<T>>)** — Parallel execution with resilient collection:
+1. **Promise.allOf(Collection<Promise<T>>)** - Parallel execution with the resilient collection:
 ```java
-// Fetching data from dynamic number of sources, collecting all outcomes
+// Fetching data from the dynamic number of sources, collecting all outcomes
 Promise<Report> generateSystemReport(List<ServiceId> services) {
     var healthChecks = services.stream()
                                .map(healthCheckService::check)
@@ -946,11 +943,11 @@ private Report createReport(List<Result<HealthStatus>> results) {
 }
 ```
 
-Returns `Promise<List<Result<T>>>` — unlike `Promise.all()` which fails fast, `allOf()` waits for all promises to complete and collects both successes and failures. Use when you need comprehensive results even if some operations fail (monitoring, reporting, batch processing).
+Returns `Promise<List<Result<T>>>`  -  unlike `Promise.all()` which fails fast, `allOf()` waits for all promises to complete and collects both successes and failures. Use when you need comprehensive results even if some operations fail (monitoring, reporting, batch processing).
 
-2. **Promise.any(Promise<T>...)** — Parallel execution with first-success wins:
+2. **Promise.any(Promise<T>...)** - Parallel execution with first-success wins:
 ```java
-// Racing multiple data sources, using first successful response
+// Racing multiple data sources, using the first successful response
 Promise<ExchangeRate> fetchRate(Currency from, Currency to) {
     return Promise.any(
         primaryRateProvider.getRate(from, to),
@@ -993,10 +990,10 @@ Promise.all(
 
 The dependency reveals that `UserPreferences` should either:
 1. Be fetched together with `User` (they're part of the same aggregate)
-2. Not need `User.timezone` (incorrect data organization—timezone should be stored with preferences)
+2. Not need `User.timezone` (incorrect data organization - timezone should be stored with preferences)
 3. Accept `timezone` as explicit input (surfacing the dependency in the type signature)
 
-When Fork-Join feels forced or unnatural, trust that instinct—it's often exposing a design problem that should be fixed, not worked around.
+When Fork-Join feels forced or unnatural, trust that instinct - it's often exposing a design problem that should be fixed, not worked around.
 
 **Anti-patterns:**
 
@@ -1020,7 +1017,7 @@ Promise.all(
 ).flatMap((primary, secondary) -> /* ... */);
 ```
 
-If both fail, the combiner gets two `none()` values with no indication that anything went wrong. Let failures propagate, or model the "best-effort" case explicitly:
+If both fail, the combiner gets two `none()` values with no indication that anything went wrong. Let failures propagate or model the "best-effort" case explicitly:
 
 ```java
 // DO: Model best-effort explicitly
@@ -1086,7 +1083,7 @@ Result<ShippingCost> calculateShipping(Order order, ShippingMethod method) {
 
 Each case returns `Result<ShippingCost>`. The switch expression evaluates to a single result.
 
-**Nested conditions:** Avoid deep nesting by extracting sub-decisions into named functions:
+**Nested conditions:** Avoid deep nesting by extracting subdecisions into named functions:
 
 ```java
 // DON'T: Nested ternaries
@@ -1123,7 +1120,7 @@ private Result<Discount> standardDiscount(Order order) {
 
 Now each function has one level of branching. Much clearer.
 
-**Condition with monads:** Use `map`, `flatMap`, and `filter` to keep types consistent. Never use ternaries in lambdas—they violate Single Pattern per Function.
+**Condition with monads:** Use `map`, `flatMap`, and `filter` to keep types consistent. Never use ternaries in lambdas - they violate Single Pattern per Function.
 
 ```java
 // DON'T: Ternary in lambda (violates Single Pattern per Function)
@@ -1180,7 +1177,7 @@ private Result<Discount> calculateStandardDiscount(User user) {
 
 DON'T use conditionals to hide missing error handling:
 ```java
-// DON'T: Silently returning empty result
+// DON'T: Silently returning the empty result
 Result<Data> fetchData(Source source) {
     return source.isAvailable()
         ? source.getData()
@@ -1273,7 +1270,7 @@ Use parallel when operations are independent and order doesn't matter.
 
 DON'T mix side effects into stream operations:
 ```java
-// DON'T: Side effect in map
+// DON'T: Side effect in the map
 users.stream()
     .map(user -> {
         logger.info("Processing user: {}", user.id());  // Side effect!
@@ -1322,7 +1319,7 @@ private OrderSummary toOrderSummary(Order order) {
 
 ### Aspects (Decorators)
 
-**Definition:** Aspects are higher-order functions that wrap steps or use cases to add cross-cutting concerns—retry, timeout, logging, metrics—without changing business semantics.
+**Definition:** Aspects are higher-order functions that wrap steps or use cases to add cross-cutting concerns - retry, timeout, logging, metrics - without changing business semantics.
 
 **Placement:**
 - **Local concerns:** Wrap individual steps when the aspect applies to just that step. Example: retry only on external API calls.
@@ -1343,7 +1340,7 @@ class UserServiceClient implements FetchUserProfile {
     }
 }
 
-// Applying retry aspect at construction:
+// Applying a retry aspect at construction:
 static ProcessUserData processUserData(..., UserServiceClient userServiceClient, ...) { {
     // Values also can come from passed config
     var retryPolicy = RetryPolicy.builder()
@@ -1361,7 +1358,7 @@ static ProcessUserData processUserData(..., UserServiceClient userServiceClient,
 }
 ```
 
-The retry aspect wraps the `UserServiceClient` step. If it fails, the aspect retries according to the policy. The rest of the use case is unaware—it just calls `fetchUserProfile.apply(userId)`.
+The retry aspect wraps the `UserServiceClient` step. If it fails, the aspect retries, according to the policy. The rest of the use case is unaware - it just calls `fetchUserProfile.apply(userId)`.
 
 **Example: Metrics aspect on use case**
 
@@ -1383,9 +1380,9 @@ The `withMetrics` decorator wraps the entire use case. It records execution time
 **Composing multiple aspects:**
 
 Order matters. Typical ordering (outermost to innermost):
-1. Metrics/Logging (outermost—observe everything)
+1. Metrics/Logging (outermost - observe everything)
 2. Timeout (global deadline)
-3. CircuitBreaker (fail-fast if system is degraded)
+3. CircuitBreaker (fail-fast if the system is degraded)
 4. Retry (per-attempt)
 5. RateLimit (throttle requests)
 6. Business logic (innermost)
@@ -1413,13 +1410,13 @@ var decoratedStep = composeAspects(
 );
 ```
 
-**Testing:** Test aspects in isolation with synthetic steps. Use case tests remain aspect-agnostic—they test business logic, not retry behavior or metrics.
+**Testing:** Test aspects in isolation with synthetic steps. Use case tests remain aspect-agnostic - they test business logic, not retry behavior or metrics.
 
 ```java
 // Aspect test (isolated)
 @Test
 void retryAspect_retriesOnFailure() {
-    var failingStep = new FlakyStep(failTimes: 2);
+    var failingStep = new FlakyStep(2); //Fail times
     var retryPolicy = RetryPolicy.maxAttempts(3);
     var decorated = withRetry(retryPolicy, failingStep);
 
@@ -1527,11 +1524,9 @@ void execute_succeeds_forValidInput() {
     var request = new Request("data");
 
     useCase.execute(request)
-           .await()                     // Convert Promise<T> to Result<T>
+           .await()                     // Wait for operation
            .onFailure(Assertions::fail)
-           .onSuccess(response -> {
-               assertEquals("expected", response.value());
-           });
+           .onSuccess(response -> assertEquals("expected", response.value()));
 }
 ```
 
@@ -1593,13 +1588,13 @@ Let's build a complete use case from scratch: `RegisterUser`. We'll follow the t
 - Referral code: optional; if present, must be exactly 6 uppercase alphanumeric characters
 
 **Cross-field rules:**
-- Email must not already be registered
+- Email must not be registered yet
 
 **Steps:**
 1. Validate input
 2. Check email uniqueness (async, database)
 3. Hash password (sync, expensive computation)
-4. Save user to database (async)
+4. Save the user to the database (async)
 5. Generate confirmation token (async, calls external service)
 
 **Async flow:** Steps 2, 4, 5 are async. Use `Promise<Response>`.
@@ -1809,12 +1804,12 @@ public interface HashPassword {
     Result<HashedPassword> apply(Password password);
 }
 
-// Step 3: Save user
+// Step 3: Save the user
 public interface SaveUser {
     Promise<UserId> apply(ValidatedUser user);
 }
 
-// Step 4: Generate confirmation token
+// Step 4: Generate a confirmation token
 public interface GenerateToken {
     Promise<Response> apply(UserId userId);
 }
@@ -2045,7 +2040,7 @@ This technology is framework-agnostic, but you still need to connect it to the r
 
 ### Complete Example: Spring REST → Use Case → JOOQ
 
-**Use Case:** `GetUserProfile` — fetch a user profile by ID.
+**Use Case:** `GetUserProfile`  - fetch a user profile by ID.
 
 **Layers:**
 1. REST controller (adapter in)
@@ -2212,17 +2207,17 @@ Spring autowires the repository into the use case factory. The use case is a bea
 - **Use case:** Functional, pure business logic. No framework dependencies.
 - **Repository:** Imperative, thin adapter. Converts JOOQ → domain types, exceptions → `Cause`.
 
-The functional core (use case + domain types) is framework-independent. You could swap Spring for Micronaut, Ktor, or plain Servlets—just rewrite the adapters, not the business logic.
+The functional core (use case + domain types) is framework-independent. You could swap Spring for Micronaut, Ktor, or plain Servlets - just rewrite the adapters, not the business logic.
 
 ---
 
 ## Conclusion
 
-This technology isn't about learning new tools or frameworks. It's about reducing the number of decisions you make so you can focus on the decisions that matter—the business logic.
+This technology isn't about learning new tools or frameworks. It's about reducing the number of decisions you make so you can focus on the decisions that matter - the business logic.
 
 By constraining return types to exactly four kinds, enforcing parse-don't-validate, eliminating business exceptions, and mandating one pattern per function, we compress the design space. There's essentially one good way to structure a use case, one good way to validate input, one good way to handle errors, one good way to compose async operations.
 
-This compression has compound benefits. Code becomes predictable—you recognize patterns at a glance. Refactoring becomes mechanical—the rules tell you when and how to split functions. Technical debt becomes rare—prevention is built into the structure. Business logic becomes clear—domain concepts aren't buried in framework ceremony or mixed abstraction levels.
+This compression has compound benefits. Code becomes predictable - you recognize patterns at a glance. Refactoring becomes mechanical - the rules tell you when and how to split functions. Technical debt becomes rare - prevention is built into the structure. Business logic becomes clear - domain concepts aren't buried in framework ceremony or mixed abstraction levels.
 
 In the AI era, this matters more than ever. When AI generates code, it needs a well-defined target structure. When humans read AI-generated code, they need to recognize patterns instantly. When teams collaborate across humans and AI, they need a shared vocabulary that both understand without translation overhead.
 

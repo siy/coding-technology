@@ -8,9 +8,9 @@ Collaboration Protocol
 - Ask clarifying questions first; only produce output when explicitly requested.
 
 Context
-- `sources/` — raw materials: articles, patterns, and code snippets used to shape the technology.
-- `PL_IMPROVEMENTS.md` — backlog for Pragmatica Lite utilities (aspects, helpers).
-- `examples/` — Java 25 Maven modules showing synchronous and asynchronous use cases.
+- `sources/`  -  raw materials: articles, patterns, and code snippets used to shape the technology.
+- `PL_IMPROVEMENTS.md`  -  backlog for Pragmatica Lite utilities (aspects, helpers).
+- `examples/`  -  Java 25 Maven modules showing synchronous and asynchronous use cases.
 
 Notes
 - This repo focuses on business‑logic methodology; framework integration lives at the edges and is out of scope.

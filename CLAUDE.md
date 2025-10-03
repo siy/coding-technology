@@ -77,76 +77,76 @@ This section documents the actual API methods available in Pragmatica Lite Core 
 ## Type Conversions
 
 ### Option conversions:
-- `Option<T>` → `Result<T>` — **`.toResult(Cause cause)`** or **`.await(Cause cause)`** (aliases)
-- `Option<T>` → `Result<T>` — **`.toResult()`** or **`.await()`** (uses CoreError.emptyOption)
-- `Option<T>` → `Promise<T>` — **`.async(Cause cause)`**
-- `Option<T>` → `Promise<T>` — **`.async()`** (uses CoreError.emptyOption)
-- `Option<T>` → `Optional<T>` — **`.toOptional()`**
+- `Option<T>` → `Result<T>`  -  **`.toResult(Cause cause)`** or **`.await(Cause cause)`** (aliases)
+- `Option<T>` → `Result<T>`  -  **`.toResult()`** or **`.await()`** (uses CoreError.emptyOption)
+- `Option<T>` → `Promise<T>`  -  **`.async(Cause cause)`**
+- `Option<T>` → `Promise<T>`  -  **`.async()`** (uses CoreError.emptyOption)
+- `Option<T>` → `Optional<T>`  -  **`.toOptional()`**
 
 ### Result conversions:
-- `Result<T>` → `Option<T>` — **`.option()`** (loses error information)
-- `Result<T>` → `Promise<T>` — **`.async()`**
+- `Result<T>` → `Option<T>`  -  **`.option()`** (loses error information)
+- `Result<T>` → `Promise<T>`  -  **`.async()`**
 
 ### Promise conversions:
-- `Promise<T>` → `Promise<T>` — **`.async()`** (identity, for API consistency)
-- `Promise<T>` → `Result<T>` — **`.await()`** (blocks current thread)
-- `Promise<T>` → `Result<T>` — **`.await(TimeSpan timeout)`** (with timeout)
+- `Promise<T>` → `Promise<T>`  -  **`.async()`** (identity, for API consistency)
+- `Promise<T>` → `Result<T>`  -  **`.await()`** (blocks current thread)
+- `Promise<T>` → `Result<T>`  -  **`.await(TimeSpan timeout)`** (with timeout)
 
 ### Cause conversions:
-- `Cause` → `Result<T>` — **`.result()`** (prefer over `Result.failure(cause)`)
-- `Cause` → `Promise<T>` — **`.promise()`** (prefer over `Promise.failure(cause)`)
+- `Cause` → `Result<T>`  -  **`.result()`** (prefer over `Result.failure(cause)`)
+- `Cause` → `Promise<T>`  -  **`.promise()`** (prefer over `Promise.failure(cause)`)
 
 ### Factories (creating instances):
-- `Option.option(T value)` — wraps nullable value (null → empty)
-- `Option.some(T value)` / `Option.present(T value)` — create present option
-- `Option.none()` / `Option.empty()` — create empty option
-- `Result.success(T value)` / `Result.ok(T value)` — create success
-- `Result.failure(Cause cause)` / `Result.err(Cause cause)` — create failure (prefer `cause.result()`)
-- `Promise.success(T value)` / `Promise.ok(T value)` — resolved promise (success)
-- `Promise.failure(Cause cause)` / `Promise.err(Cause cause)` — resolved promise (failure) (prefer `cause.promise()`)
-- `Promise.resolved(Result<T> result)` — resolved promise
-- `Promise.promise()` — unresolved promise
-- `Promise.promise(Consumer<Promise<T>>)` — unresolved, runs consumer async
-- `Promise.promise(Supplier<Result<T>>)` — async execution of supplier
+- `Option.option(T value)`  -  wraps nullable value (null → empty)
+- `Option.some(T value)` / `Option.present(T value)`  -  create present option
+- `Option.none()` / `Option.empty()`  -  create empty option
+- `Result.success(T value)` / `Result.ok(T value)`  -  create success
+- `Result.failure(Cause cause)` / `Result.err(Cause cause)`  -  create failure (prefer `cause.result()`)
+- `Promise.success(T value)` / `Promise.ok(T value)`  -  resolved promise (success)
+- `Promise.failure(Cause cause)` / `Promise.err(Cause cause)`  -  resolved promise (failure) (prefer `cause.promise()`)
+- `Promise.resolved(Result<T> result)`  -  resolved promise
+- `Promise.promise()`  -  unresolved promise
+- `Promise.promise(Consumer<Promise<T>>)`  -  unresolved, runs consumer async
+- `Promise.promise(Supplier<Result<T>>)`  -  async execution of supplier
 
 ## Exception Handling (lift methods)
 
 ### Option.lift* methods:
-- **`Option.lift(Fn0<R> function)`** — wraps function that may return null or throw
-- **`Option.lift1(Fn1<R, T> function, T value)`** — invoke unary function, wrap result
-- **`Option.lift2(Fn2<R, T1, T2> function, T1 v1, T2 v2)`** — invoke binary function
-- **`Option.lift3(Fn3<R, T1, T2, T3> function, ...)`** — invoke ternary function
+- **`Option.lift(Fn0<R> function)`**  -  wraps function that may return null or throw
+- **`Option.lift1(Fn1<R, T> function, T value)`**  -  invoke unary function, wrap result
+- **`Option.lift2(Fn2<R, T1, T2> function, T1 v1, T2 v2)`**  -  invoke binary function
+- **`Option.lift3(Fn3<R, T1, T2, T3> function, ...)`**  -  invoke ternary function
 
 ### Result.lift* methods:
 All liftN methods accept optional `exceptionMapper: Fn1<Cause, Throwable>` as first parameter (defaults to `Causes::fromThrowable`)
 
-- **`Result.lift(ThrowingFn0<U> supplier)`** — wrap throwing supplier
+- **`Result.lift(ThrowingFn0<U> supplier)`**  -  wrap throwing supplier
 - **`Result.lift(Fn1<Cause, Throwable> mapper, ThrowingFn0<U> supplier)`**
-- **`Result.lift(ThrowingRunnable runnable)`** — returns `Result<Unit>`
-- **`Result.lift(Cause cause, ThrowingFn0<U> supplier)`** — fixed cause on failure
-- **`Result.lift1(ThrowingFn1<R, T1> fn, T1 value)`** — direct invocation
-- **`Result.lift1(Fn1<Cause, Throwable> mapper, ThrowingFn1<R, T1> fn, T1 value)`** — with custom mapper
-- **`Result.lift2(ThrowingFn2<R, T1, T2> fn, T1 v1, T2 v2)`** — direct invocation
-- **`Result.lift2(Fn1<Cause, Throwable> mapper, ThrowingFn2<R, T1, T2> fn, T1 v1, T2 v2)`** — with custom mapper
-- **`Result.lift3(ThrowingFn3<R, T1, T2, T3> fn, ...)`** — direct invocation
-- **`Result.lift3(Fn1<Cause, Throwable> mapper, ThrowingFn3<R, T1, T2, T3> fn, ...)`** — with custom mapper
-- **`Result.liftFn1(ThrowingFn1<R, T1> fn)`** — returns `Fn1<Result<R>, T1>` (function factory)
-- **`Result.liftFn2(ThrowingFn2<R, T1, T2> fn)`** — returns `Fn2<Result<R>, T1, T2>`
-- **`Result.liftFn3(ThrowingFn3<R, T1, T2, T3> fn)`** — returns `Fn3<Result<R>, T1, T2, T3>`
+- **`Result.lift(ThrowingRunnable runnable)`**  -  returns `Result<Unit>`
+- **`Result.lift(Cause cause, ThrowingFn0<U> supplier)`**  -  fixed cause on failure
+- **`Result.lift1(ThrowingFn1<R, T1> fn, T1 value)`**  -  direct invocation
+- **`Result.lift1(Fn1<Cause, Throwable> mapper, ThrowingFn1<R, T1> fn, T1 value)`**  -  with custom mapper
+- **`Result.lift2(ThrowingFn2<R, T1, T2> fn, T1 v1, T2 v2)`**  -  direct invocation
+- **`Result.lift2(Fn1<Cause, Throwable> mapper, ThrowingFn2<R, T1, T2> fn, T1 v1, T2 v2)`**  -  with custom mapper
+- **`Result.lift3(ThrowingFn3<R, T1, T2, T3> fn, ...)`**  -  direct invocation
+- **`Result.lift3(Fn1<Cause, Throwable> mapper, ThrowingFn3<R, T1, T2, T3> fn, ...)`**  -  with custom mapper
+- **`Result.liftFn1(ThrowingFn1<R, T1> fn)`**  -  returns `Fn1<Result<R>, T1>` (function factory)
+- **`Result.liftFn2(ThrowingFn2<R, T1, T2> fn)`**  -  returns `Fn2<Result<R>, T1, T2>`
+- **`Result.liftFn3(ThrowingFn3<R, T1, T2, T3> fn)`**  -  returns `Fn3<Result<R>, T1, T2, T3>`
 
 ### Promise.lift* methods:
 All accept optional `exceptionMapper: Fn1<Cause, Throwable>` (defaults to `Causes::fromThrowable`)
 
-- **`Promise.lift(ThrowingFn0<U> supplier)`** — async execution, wraps exceptions
+- **`Promise.lift(ThrowingFn0<U> supplier)`**  -  async execution, wraps exceptions
 - **`Promise.lift(Fn1<Cause, Throwable> mapper, ThrowingFn0<U> supplier)`**
-- **`Promise.lift(ThrowingRunnable runnable)`** — returns `Promise<Unit>`
-- **`Promise.lift(Cause cause, ThrowingFn0<U> supplier)`** — fixed cause on failure
-- **`Promise.lift1(ThrowingFn1<R, T1> fn, T1 value)`** — direct invocation
-- **`Promise.lift2(ThrowingFn2<R, T1, T2> fn, T1 v1, T2 v2)`** — direct invocation
-- **`Promise.lift3(ThrowingFn3<R, T1, T2, T3> fn, ...)`** — direct invocation
-- **`Promise.liftFn1(ThrowingFn1<R, T1> fn)`** — returns `Fn1<Promise<R>, T1>` (function factory)
-- **`Promise.liftFn2(ThrowingFn2<R, T1, T2> fn)`** — returns `Fn2<Promise<R>, T1, T2>`
-- **`Promise.liftFn3(ThrowingFn3<R, T1, T2, T3> fn)`** — returns `Fn3<Promise<R>, T1, T2, T3>`
+- **`Promise.lift(ThrowingRunnable runnable)`**  -  returns `Promise<Unit>`
+- **`Promise.lift(Cause cause, ThrowingFn0<U> supplier)`**  -  fixed cause on failure
+- **`Promise.lift1(ThrowingFn1<R, T1> fn, T1 value)`**  -  direct invocation
+- **`Promise.lift2(ThrowingFn2<R, T1, T2> fn, T1 v1, T2 v2)`**  -  direct invocation
+- **`Promise.lift3(ThrowingFn3<R, T1, T2, T3> fn, ...)`**  -  direct invocation
+- **`Promise.liftFn1(ThrowingFn1<R, T1> fn)`**  -  returns `Fn1<Promise<R>, T1>` (function factory)
+- **`Promise.liftFn2(ThrowingFn2<R, T1, T2> fn)`**  -  returns `Fn2<Promise<R>, T1, T2>`
+- **`Promise.liftFn3(ThrowingFn3<R, T1, T2, T3> fn)`**  -  returns `Fn3<Promise<R>, T1, T2, T3>`
 
 **Note**: There are NO `Promise.liftOption()` or `Promise.liftResult()` methods. Use `Promise.lift()` for exception handling in adapters.
 
@@ -171,34 +171,34 @@ All accept optional `exceptionMapper: Fn1<Cause, Throwable>` (defaults to `Cause
 - `Promise.allOf(Collection<Promise<T>>)` → `Promise<List<Result<T>>>`
 
 ### any methods:
-- `Option.any(Option<T>...)` — first present option
-- `Result.any(Result<T>...)` — first success result
-- `Promise.any(Promise<T>...)` — first success promise, cancels others
+- `Option.any(Option<T>...)`  -  first present option
+- `Result.any(Result<T>...)`  -  first success result
+- `Promise.any(Promise<T>...)`  -  first success promise, cancels others
 
 ## Common Methods
 
 ### map/flatMap (all types):
-- `.map(Fn1<U, T> mapper)` — transform success/present value
-- `.map(Supplier<U> supplier)` — replace success/present value
-- `.flatMap(Fn1<M<U>, T> mapper)` — chain monadic operations
-- `.flatMap(Supplier<M<U>> supplier)` — replace with monadic value
+- `.map(Fn1<U, T> mapper)`  -  transform success/present value
+- `.map(Supplier<U> supplier)`  -  replace success/present value
+- `.flatMap(Fn1<M<U>, T> mapper)`  -  chain monadic operations
+- `.flatMap(Supplier<M<U>> supplier)`  -  replace with monadic value
 
 ### filter (Result and Promise):
-- `.filter(Cause cause, Predicate<T> predicate)` — filter by predicate
-- `.filter(Fn1<Cause, T> causeMapper, Predicate<T> predicate)` — dynamic cause
+- `.filter(Cause cause, Predicate<T> predicate)`  -  filter by predicate
+- `.filter(Fn1<Cause, T> causeMapper, Predicate<T> predicate)`  -  dynamic cause
 
 ### Callback methods:
-- `.onPresent(Consumer<T>)` — Option only
-- `.onEmpty(Runnable)` — Option only
-- `.onSuccess(Consumer<T>)` — Result and Promise
-- `.onFailure(Consumer<Cause>)` — Result and Promise
-- `.onResult(Consumer<Result<T>>)` — Result and Promise
+- `.onPresent(Consumer<T>)`  -  Option only
+- `.onEmpty(Runnable)`  -  Option only
+- `.onSuccess(Consumer<T>)`  -  Result and Promise
+- `.onFailure(Consumer<Cause>)`  -  Result and Promise
+- `.onResult(Consumer<Result<T>>)`  -  Result and Promise
 
 ### Recovery:
-- `.or(T replacement)` — provide fallback value
-- `.or(Supplier<T> supplier)` — lazy fallback value
-- `.orElse(M<T> replacement)` — fallback monadic value
-- `.recover(Fn1<T, Cause> mapper)` — Result/Promise: recover from failure
+- `.or(T replacement)`  -  provide fallback value
+- `.or(Supplier<T> supplier)`  -  lazy fallback value
+- `.orElse(M<T> replacement)`  -  fallback monadic value
+- `.recover(Fn1<T, Cause> mapper)`  -  Result/Promise: recover from failure
 
 ## Example Usage Patterns
 

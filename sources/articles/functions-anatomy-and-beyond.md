@@ -44,10 +44,10 @@ The part of the function between lines 2 and 12 performs routine parameter check
 
 Let's call these parts "phases" and give them names according to ***what they implement inside this function*** (this is a crucial moment, I'll return to it shortly). In total, we have 3+ phases:
 
-* The first phase is ***Validation*** — it is responsible for checking function arguments. It also defines function contract (in math, we would say that it defines function domain).
-* The second phase is ***Consolidation*** — it is responsible for preparing necessary intermediate data, i.e. creating new objects, calculating or retrieving necessary data from external sources, etc., etc. This phase uses validated function parameters. For convenience, let's call prepared/retrieved/calculated data and validated function parameters ***Data Dependencies***.
-* The third phase is ***Action*** — it is responsible for performing things for which the function was created in the first place.
-* The last (3+) phase is ***Reaction*** — its purpose is to adapt value(s) or knowledge which exists inside the function to the contract. This phase usually is spread across the function body and usually has two forms — for successful response and for error reporting. For this reason, I'm somewhat reluctant to call it a full-fledged phase, hence the "+" in the number of phases above.
+* The first phase is ***Validation***  -  it is responsible for checking function arguments. It also defines function contract (in math, we would say that it defines function domain).
+* The second phase is ***Consolidation***  -  it is responsible for preparing necessary intermediate data, i.e. creating new objects, calculating or retrieving necessary data from external sources, etc., etc. This phase uses validated function parameters. For convenience, let's call prepared/retrieved/calculated data and validated function parameters ***Data Dependencies***.
+* The third phase is ***Action***  -  it is responsible for performing things for which the function was created in the first place.
+* The last (3+) phase is ***Reaction***  -  its purpose is to adapt value(s) or knowledge which exists inside the function to the contract. This phase usually is spread across the function body and usually has two forms  -  for successful response and for error reporting. For this reason, I'm somewhat reluctant to call it a full-fledged phase, hence the "+" in the number of phases above.
 
 With these names in mind, we are almost ready to write a more formal definition of the function structure. The last necessary element is the understanding that not every function contains all phases. So, *Function Structure* consists of:
 
@@ -88,7 +88,7 @@ But independence of data dependencies useful not only for design issues detectio
 
 Another typical case of design issue manifests itself as "continuous Consolidation":
 
-Basically, it's not so much different from the issue above, but usually, it is observed at the edge between ***Consolidation*** and ***Action***. This issue makes it difficult to draw a boundary between phases and exposes a hidden design issue — mixing different layers of abstraction.
+Basically, it's not so much different from the issue above, but usually, it is observed at the edge between ***Consolidation*** and ***Action***. This issue makes it difficult to draw a boundary between phases and exposes a hidden design issue  -  mixing different layers of abstraction.
 
 #### **Writing New Code**
 
@@ -101,15 +101,15 @@ Of course, this is not a strict rule, [there are always different cases and diff
 
 #### **Switch To Functional Code**
 
-The code above is a typical imperative code, with all issues specific to such code, including the main one — [loss of context](https://medium.com/codex/we-should-write-java-code-differently-c32212152af1#:~:text=is%20getting%20lost%3F-,Context%20Eaters,-Context%20Eaters%20are). The code above could be written in functional style, which is much better at the preserving context. A direct rewrite of the example above (using the core part of [Pragmatica library](https://github.com/siy/pragmatica)) results in the following code:
+The code above is a typical imperative code, with all issues specific to such code, including the main one  -  [loss of context](https://medium.com/codex/we-should-write-java-code-differently-c32212152af1#:~:text=is%20getting%20lost%3F-,Context%20Eaters,-Context%20Eaters%20are). The code above could be written in functional style, which is much better at the preserving context. A direct rewrite of the example above (using the core part of [Pragmatica library](https://github.com/siy/pragmatica)) results in the following code:
 
-Perhaps not ideal, although the lack of typical null-checking noise makes code much more concise. Obviously, direct rewrite didn't change the structure of the function, so it suffers from the same issue as the imperative version — mixed phases (and responsibilities). Simple refactoring addresses this issue:
+Perhaps not ideal, although the lack of typical null-checking noise makes code much more concise. Obviously, direct rewrite didn't change the structure of the function, so it suffers from the same issue as the imperative version  -  mixed phases (and responsibilities). Simple refactoring addresses this issue:
 
 The refactored version remains concise enough, but now it's much cleaner.
 
 Few important observations of functional version:
 
-* It preserves much more context — it is clear, from the method signature, that it accepts potentially missing values and may return error
+* It preserves much more context  -  it is clear, from the method signature, that it accepts potentially missing values and may return error
 * There is basically no way to accidentally omit checking input, the resulting code just does not compile
 * The functional version explicitly relies on the fact of independence of data dependencies
 

@@ -1,6 +1,6 @@
 ### **Unleashing Power of Java Interfaces**
 
-Java interfaces, for a very long time, were just that — interfaces, an anemic set of function prototypes. Even then, there were non-standard uses of interfaces (for example, marker interfaces), but that's it.
+Java interfaces, for a very long time, were just that  -  interfaces, an anemic set of function prototypes. Even then, there were non-standard uses of interfaces (for example, marker interfaces), but that's it.
 
 But since Java 8 there were substantial changes in the interfaces. Additions of default and static methods enabled many new possibilities. For example, enabled adding of new functionality to existing interfaces without breaking old code. Or hiding all implementations behind factory methods, enforcing “code against interface” policy. Addition of sealed interfaces enabled creation of true sum types and expressing in code design intents. Together, these changes made Java interfaces a powerful, concise and expressive tool. Let’s take a look at some non-traditional applications of Java interfaces
 
@@ -102,7 +102,7 @@ For a long time, if we did need multiple implementations of the same interface, 
 
 With default methods, abstract classes are no longer necessary, common functionality can be written directly in the interface, reducing boilerplate, eliminating coupling and improving maintainability.
 
-But what if we go further? Sometimes it is possible to express all necessary functionality using only very few implementation-specific methods. Ideally — just one. This makes implementation classes very compact, easy to reason about and maintain. Let’s for example, implement *Maybe\<T\>* monad (yet another name for *Optional\<T\>*/*Option\<T\>*). No matter how rich and diverse API we’re planning to implement, it still could be expressed as a call to a single method, let’s call it *fold():*
+But what if we go further? Sometimes it is possible to express all necessary functionality using only very few implementation-specific methods. Ideally  -  just one. This makes implementation classes very compact, easy to reason about and maintain. Let’s for example, implement *Maybe\<T\>* monad (yet another name for *Optional\<T\>*/*Option\<T\>*). No matter how rich and diverse API we’re planning to implement, it still could be expressed as a call to a single method, let’s call it *fold():*
 ```java
 <R> R fold(Supplier<? extends R> nothingMapper, Function<? super T, ? extends R> justMapper)
 ```
@@ -116,7 +116,7 @@ This method accepts two functions, one is called when value is present and anoth
        return fold(Maybe::nothing, mapper);  
    }
 ```
-These implementations are universal and applicable to both variants. Note that since we have exactly two implementations, it makes perfect sense to make the interface sealed. And to even further reduce the amount of boilerplate — use records:
+These implementations are universal and applicable to both variants. Note that since we have exactly two implementations, it makes perfect sense to make the interface sealed. And to even further reduce the amount of boilerplate  -  use records:
 ```java
 public sealed interface Maybe<T> {  
    default <U> Maybe<U> map(Function<? super T, U> mapper) {  
@@ -158,9 +158,9 @@ public sealed interface Maybe<T> {
    }  
 }
 ```
-Although this is not strictly necessary for demonstration, this implementation uses shared constant for the implementation of *Nothing\<T\>*, reducing allocation. Another interesting property of this implementation — it uses no if statement (nor ternary operator) for the logic. This improves performance and enables better optimization by the Java compiler.
+Although this is not strictly necessary for demonstration, this implementation uses shared constant for the implementation of *Nothing\<T\>*, reducing allocation. Another interesting property of this implementation  -  it uses no if statement (nor ternary operator) for the logic. This improves performance and enables better optimization by the Java compiler.
 
-Another useful property of this implementation — it is convenient for the pattern matching (unlike Java *Optional\<T\>*, for example):
+Another useful property of this implementation  -  it is convenient for the pattern matching (unlike Java *Optional\<T\>*, for example):
 ```java
 var result = switch (maybe) {  
    case Just\<String\>(var value) -> value;  

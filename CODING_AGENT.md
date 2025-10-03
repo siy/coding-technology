@@ -1,4 +1,4 @@
-# Coding Agent Instructions — Java Backend with Pragmatica Lite
+# Coding Agent Instructions  -  Java Backend with Pragmatica Lite
 
 ## Purpose
 

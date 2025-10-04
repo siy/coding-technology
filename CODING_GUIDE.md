@@ -1,5 +1,7 @@
 # Java Backend Coding Technology: Writing Code in the Era of AI
 
+**Version:** [1.0.0](#changelog)
+
 ## Introduction: Code in a New Era
 
 Software development is changing faster than ever. AI-powered code generation tools have moved from experimental novelty to daily workflow staple in just a few years. We now write code alongside - and increasingly with - intelligent assistants that can generate entire functions, refactor modules, and suggest architectural patterns. This shift creates new challenges that traditional coding practices weren't designed to handle.
@@ -2230,3 +2232,19 @@ The goal isn't perfect code. It's code that's easy to understand, easy to change
 Write code that explains itself. Let structure carry intent. Focus on business logic, not technical ceremony.
 
 That's the technology.
+
+---
+
+## Changelog
+
+### Version 1.0.0 (2025-10-04)
+
+**Initial Release**
+
+- Complete coding technology guide for Java backend development
+- Core concepts: Four Return Kinds, Parse-Don't-Validate, No Business Exceptions
+- Pattern catalog: Leaf, Sequencer, Fork-Join, Condition, Iteration, Aspects
+- Complete use case example (UserLogin with sync and async variants)
+- Testing patterns with functional assertions
+- Framework integration guide (Spring Boot controllers and JOOQ repositories)
+- Based on Pragmatica Lite Core 0.8.0

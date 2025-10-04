@@ -58,3 +58,4 @@ Docs & Examples
 Open Questions
 - Config discovery: local explicit policy vs environment (Context) injection.
 - Idempotency: where to host utilities (dedup aspect vs domain pattern guidance).
+

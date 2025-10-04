@@ -1,6 +1,6 @@
 # Java Backend Coding Technology: Writing Code in the Era of AI
 
-**Version:** [1.0.1](#changelog) | **Repository:** [github.com/siy/coding-technology](https://github.com/siy/coding-technology)
+**Version:** [1.1.0](#changelog) | **Repository:** [github.com/siy/coding-technology](https://github.com/siy/coding-technology)
 
 ## Introduction: Code in a New Era
 
@@ -1571,6 +1571,146 @@ This makes the code cleaner and leverages type inference properly.
 
 ---
 
+## Project Structure & Package Organization
+
+### Vertical Slicing Philosophy
+
+This technology organizes code around **vertical slices** - each use case is self-contained with its own business logic, validation, and error handling. Unlike architectures that centralize all business logic into one functional core, we **isolate business logic within each use case package**. This creates clear boundaries and prevents coupling between unrelated features.
+
+### Package Structure
+
+The standard package layout follows this pattern:
+
+```
+com.example.app/
+├── usecase/
+│   ├── registeruser/              # Use case 1 (vertical slice)
+│   │   ├── RegisterUser.java      # Use case interface + factory
+│   │   ├── RegistrationError.java # Sealed error interface
+│   │   └── [internal types]       # ValidRequest, intermediate records
+│   │
+│   └── getuserprofile/            # Use case 2 (vertical slice)
+│       ├── GetUserProfile.java
+│       ├── ProfileError.java
+│       └── [internal types]
+│
+├── domain/
+│   └── shared/                    # Reusable value objects only
+│       ├── Email.java
+│       ├── Password.java
+│       ├── UserId.java
+│       └── [other VOs]
+│
+├── adapter/
+│   ├── rest/                      # Inbound adapters (HTTP)
+│   │   ├── UserController.java
+│   │   └── [other controllers]
+│   │
+│   └── persistence/               # Outbound adapters (DB, external APIs)
+│       ├── JooqUserRepository.java
+│       └── [other repositories]
+│
+└── config/                        # Framework configuration
+    ├── UseCaseConfig.java
+    └── [other configs]
+```
+
+### Package Placement Rules
+
+**Use Case Packages** (`com.example.app.usecase.<usecasename>`):
+- Use case interface and factory method
+- Error types specific to this use case (sealed interface)
+- Step interfaces (nested in use case interface)
+- Internal validation types (ValidRequest, intermediate records)
+- **Rule**: If a type is used only by this use case, it stays here
+
+**Domain Shared** (`com.example.app.domain.shared`):
+- Value objects reused across multiple use cases
+- **Rule**: Move here immediately when a second use case needs the same value object
+- **Anti-pattern**: Don't create this upfront - let reuse drive the move
+
+**Adapter Packages** (`com.example.app.adapter.*`):
+- `adapter.rest` - HTTP controllers, request/response DTOs
+- `adapter.persistence` - Database repositories, ORM entities
+- `adapter.messaging` - Message queue consumers/producers
+- `adapter.external` - HTTP clients for external services
+- **Rule**: Adapters implement step interfaces from use cases
+
+**Config Package** (`com.example.app.config`):
+- Spring/framework configuration
+- Bean wiring, dependency injection setup
+- **Rule**: No business logic, only infrastructure configuration
+
+### Module Organization (Optional)
+
+For larger systems, split into Gradle/Maven modules:
+
+```
+:domain          # Pure Java - value objects, no framework deps
+:application     # Use cases and step interfaces
+:adapters        # All adapter implementations
+:bootstrap       # Main class, configuration, framework setup
+```
+
+**When to use modules:**
+- Team size > 5 developers
+- Multiple deployment units from same codebase
+- Enforcing compile-time dependency boundaries
+- Independent library publication
+
+**For smaller systems:**
+- Single module with packages is sufficient
+- Simpler build, faster iteration
+- Package discipline enforces boundaries
+
+### Key Principles
+
+**1. Vertical Slicing:**
+Each use case package is a vertical slice containing everything needed for that feature. Business logic doesn't leak across use case boundaries.
+
+**2. Minimal Sharing:**
+Only share value objects when truly reusable. Premature sharing creates coupling.
+
+**3. Framework at Edges:**
+Business logic (use cases, domain) has zero framework dependencies. Adapters and config handle framework integration.
+
+**4. Clear Dependencies:**
+- Use cases depend on: domain.shared
+- Adapters depend on: use cases (implement step interfaces)
+- Config depends on: use cases + adapters (wires them together)
+- **Never**: use case depending on adapter, adapter depending on another adapter
+
+**5. Adapter Isolation:**
+All I/O operations live in adapters. This enables framework swapping (Spring → Micronaut, JDBC → JOOQ) without touching business logic.
+
+### Example: Where Things Go
+
+**Creating a new Email value object:**
+- First use case: Put in `usecase.registeruser` package
+- Second use case needs it: Move to `domain.shared`
+
+**Creating a new use case:**
+```
+com.example.app.usecase.updateprofile/
+├── UpdateProfile.java       # Interface + factory
+├── UpdateError.java         # Errors
+└── ValidUpdateRequest.java  # Internal validation
+```
+
+**Implementing database access:**
+```
+com.example.app.adapter.persistence/
+└── JooqProfileRepository.java  # implements UpdateProfile.SaveProfile
+```
+
+**Wiring in Spring:**
+```
+com.example.app.config/
+└── ProfileConfig.java  # @Bean methods connecting pieces
+```
+
+---
+
 ## Use Case Walkthrough
 
 Let's build a complete use case from scratch: `RegisterUser`. We'll follow the technology step-by-step, showing validation, steps, error handling, and testing.
@@ -2240,6 +2380,22 @@ That's the technology.
 ---
 
 ## Changelog
+
+### Version 1.1.0 (2025-10-04)
+
+**New Sections**
+
+- Add comprehensive "Project Structure & Package Organization" section
+- Explain vertical slicing philosophy - business logic isolated per use case
+- Define clear package placement rules (usecase, domain.shared, adapter, config)
+- Provide module organization guidance for larger systems
+- Clarify key principles: vertical slicing, minimal sharing, framework at edges
+- Include practical examples of where different types belong
+
+**Clarifications**
+
+- Emphasize that this technology uses vertical slicing, not centralized functional core
+- Remove hexagonal architecture references to avoid confusion
 
 ### Version 1.0.1 (2025-10-04)
 

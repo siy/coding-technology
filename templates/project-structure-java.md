@@ -1,16 +1,17 @@
-Project Structure (Java, Hexagonal)
+Project Structure (Java Backend Coding Technology)
 
 Build Tool
 - Prefer Gradle Kotlin DSL. Maven acceptable if org standards require it.
 
 Modules (optional, but recommended for larger systems)
-- `:domain`  -  pure Java (no Spring), business rules, unit tests only.
-- `:application`  -  use cases, ports, orchestrations.
-- `:adapters`  -  inbound (web), outbound (persistence, messaging, clients).
-- `:bootstrap`  -  Spring Boot app, configuration, main class.
+- `:domain`  -  pure Java, value objects, no framework dependencies
+- `:application`  -  use cases (vertical slices), step interfaces
+- `:adapters`  -  inbound (web), outbound (persistence, messaging, clients)
+- `:bootstrap`  -  Spring Boot app, configuration, main class
 
-Single‑module Alternative
-- Use packages mirroring the layers (see docs/03-architecture.md Packaging).
+Single‑module Alternative (recommended for smaller systems)
+- Use packages for organization: `usecase`, `domain.shared`, `adapter`, `config`
+- Simpler build, faster iteration, package discipline enforces boundaries
 
 Baseline Dependencies
 - Spring Boot starter web/validation/actuator; persistence (JPA/jOOQ) as needed.

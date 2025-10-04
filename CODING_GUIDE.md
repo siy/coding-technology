@@ -1,6 +1,6 @@
 # Java Backend Coding Technology: Writing Code in the Era of AI
 
-**Version:** [1.0.0](#changelog) | **Repository:** [github.com/siy/coding-technology](https://github.com/siy/coding-technology)
+**Version:** [1.0.1](#changelog) | **Repository:** [github.com/siy/coding-technology](https://github.com/siy/coding-technology)
 
 ## Introduction: Code in a New Era
 
@@ -690,6 +690,10 @@ Promise<Option<User>> findByEmail(Email email) throws SQLException {
 ```
 
 Wrap all foreign exceptions in domain Causes within the adapter.
+
+**Framework independence:** Adapter leaves form the bridge between business logic and framework-specific code. This isolation is critical for maintaining framework-agnostic business logic. Strongly prefer adapter leaves for all I/O operations (database access, HTTP calls, file system operations, message queues). This ensures you can swap frameworks (Spring → Micronaut, JDBC → JOOQ) without touching business logic - only rewrite the adapters.
+
+However, dependencies on specific libraries for business functionality (encryption libraries, complex mathematical computations, specialized algorithms) are acceptable within business logic when they're essential to the domain. The key distinction: I/O adapters isolate infrastructure choices; domain libraries implement business requirements.
 
 DO keep leaves focused:
 ```java
@@ -2236,6 +2240,14 @@ That's the technology.
 ---
 
 ## Changelog
+
+### Version 1.0.1 (2025-10-04)
+
+**Enhancements**
+
+- Add explicit recommendation for adapter leaves as framework-business logic bridge
+- Clarify that adapter isolation is strongly recommended for all I/O operations
+- Note that domain-specific library dependencies (encryption, algorithms) are acceptable in business logic
 
 ### Version 1.0.0 (2025-10-04)
 

@@ -1,6 +1,6 @@
 # Java Backend Coding Technology: Writing Code in the Era of AI
 
-**Version:** [1.0.0](#changelog)
+**Version:** [1.0.0](#changelog) | **Repository:** [github.com/siy/coding-technology](https://github.com/siy/coding-technology)
 
 ## Introduction: Code in a New Era
 

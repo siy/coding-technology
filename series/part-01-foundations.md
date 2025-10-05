@@ -114,12 +114,17 @@ Why this matters: composition lets you **build complex logic from simple pieces*
 
 You've probably heard "monads" described in scary mathematical terms. Forget that. Here's the practical understanding:
 
-**A monad is a wrapper type that lets you chain operations while handling a specific concern automatically.**
+**A monad is a wrapper that controls when and if your operations run.**
 
-Think of it like a **pipeline with built-in error handling**:
+#### The Key Insight: Inversion of Control
+
+Traditional code: **you** decide when to do something.
+Monadic code: **the wrapper** decides when to do something.
+
+Think: "Do this operation, **if/when the value is available**."
 
 ```java
-// Without monad: manual error checking at every step
+// Traditional: YOU check, YOU decide
 String result;
 if (email != null) {
     String trimmed = email.trim();
@@ -135,41 +140,73 @@ if (email != null) {
     // Error: null input
 }
 
-// With monad: errors propagate automatically
+// Monad: WRAPPER checks, WRAPPER decides
 Result<String> result = Result.success(email)
-    .map(String::trim)
-    .flatMap(this::validate)  // Returns Result<String>
-    .flatMap(this::save);     // Returns Result<String>
+    .map(String::trim)          // "Trim, if value is present"
+    .flatMap(this::validate)    // "Validate, if trim succeeded"
+    .flatMap(this::save);       // "Save, if validate succeeded"
 ```
 
-If any step fails, **the rest of the chain short-circuits** and the error flows through. You don't write if-checks at each step.
+You're saying: "Here's what to do with the value... **if** you have one and **when** you're ready."
 
-The monad **handles the concern** (error propagation, optionality, async execution) so you **focus on the transformation logic**.
+The monad decides:
+- **Option**: "I'll apply your operation **if** the value is present"
+- **Result**: "I'll apply your operation **if** there's no error so far"
+- **Promise**: "I'll apply your operation **when** the async result arrives"
 
-Common monads you'll use:
-- **Option<T>**: Handles "might be missing" automatically
-- **Result<T>**: Handles "might fail" automatically
-- **Promise<T>**: Handles "happens later" automatically
-
-Each monad has:
-- **map**: Transform the wrapped value (if present/successful)
-- **flatMap**: Chain another monadic operation
+#### The "Do, If/When Available" Mental Model
 
 ```java
-// Option: handle "might be missing"
-Option<User> user = findUser(id);  // Might not find
-Option<String> email = user.map(User::email);  // Safely extract email
+// Option: "Do this, IF value is present"
+Option<User> user = findUser(id);
+Option<String> email = user.map(User::email);
+// You: "Extract email"
+// Option: "OK, I'll do that IF I have a user. I don't? Then I won't."
 
-// Result: handle "might fail"
-Result<Email> email = Email.email(raw);  // Might be invalid
-Result<User> user = email.flatMap(this::findByEmail);  // Might not exist
+// Result: "Do this, IF no error yet"
+Result<Email> email = Email.email(raw);
+Result<User> user = email.flatMap(this::findByEmail);
+// You: "Find user by email"
+// Result: "OK, I'll do that IF email is valid. It failed? Then I skip this."
 
-// Promise: handle "happens later"
-Promise<User> user = fetchUser(id);  // Async operation
-Promise<Profile> profile = user.flatMap(this::loadProfile);  // Chain async
+// Promise: "Do this, WHEN result arrives"
+Promise<User> user = fetchUser(id);
+Promise<Profile> profile = user.flatMap(this::loadProfile);
+// You: "Load profile"
+// Promise: "OK, I'll do that WHEN the user fetch completes. Not done? I'll wait."
 ```
 
-**Key insight**: Monads let you write **linear code that handles edge cases automatically**. You describe the happy path; the monad handles failure, absence, or async execution.
+#### Why This Matters
+
+Without monads, **you** write control flow:
+```java
+if (email != null) {
+    if (isValid(email)) {
+        if (save(email) != null) {
+            // success
+        }
+    }
+}
+```
+
+With monads, **you describe transformations**, the wrapper handles control flow:
+```java
+Result.success(email)
+    .flatMap(this::validate)
+    .flatMap(this::save);
+// "Validate, then save - but only if each step succeeds"
+```
+
+**Key insight**: Monads invert control. Instead of you checking conditions and deciding what to run, you give the monad a chain of operations and it decides when/if to run them based on its rules (presence, success, completion).
+
+Common monads you'll use:
+- **Option<T>**: Runs operations **if** value is present (handles "might be missing")
+- **Result<T>**: Runs operations **if** no error yet (handles "might fail")
+- **Promise<T>**: Runs operations **when** result arrives (handles "happens later")
+
+Each monad has:
+- **map**: "Transform the value, if/when available"
+- **flatMap**: "Chain another monadic operation, if/when the current one succeeds"
 
 ### Why "Functional" Composition?
 

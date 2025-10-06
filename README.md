@@ -145,3 +145,5 @@ You are free to:
 ---
 
 **Version:** 1.2.0 | **Last Updated:** 2025-01-06 | **[Full Changelog](CHANGELOG.md)**
+
+**Copyright © 2025 Sergiy Yevtushenko. Released under the [MIT License](LICENSE).**

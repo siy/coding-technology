@@ -2551,3 +2551,9 @@ That's the technology.
 ## Version History
 
 For detailed changelog of all versions, see [CHANGELOG.md](https://github.com/siy/coding-technology/blob/main/CHANGELOG.md).
+
+---
+
+**Copyright © 2025 Sergiy Yevtushenko**
+
+This work is licensed under the [MIT License](https://github.com/siy/coding-technology/blob/main/LICENSE). You are free to use, modify, and distribute this content in commercial and non-commercial projects.

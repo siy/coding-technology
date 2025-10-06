@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - MIT License file for the project
 - License section in README.md with usage permissions
+- Copyright notices in README.md and CODING_GUIDE.md footers
 
 ### Changed
 - Comprehensive rewrite of README.md with user-friendly navigation guide

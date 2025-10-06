@@ -134,7 +134,13 @@ This repository documents a methodology, not a software project. Contributions w
 
 ## 📄 License
 
-Documentation is freely available for use. Examples and code snippets are provided as-is for reference and adaptation.
+This project is licensed under the [MIT License](LICENSE) - see the LICENSE file for details.
+
+You are free to:
+- Use this methodology in commercial and non-commercial projects
+- Modify and adapt the documentation and examples
+- Distribute and share the content
+- Create derivative works
 
 ---
 

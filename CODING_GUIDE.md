@@ -2,6 +2,8 @@
 
 **Version:** [1.1.0](#changelog) | **Repository:** [github.com/siy/coding-technology](https://github.com/siy/coding-technology)
 
+**NOTE:** This version is substantiantly updated. Check [CHANGELOG.md](https://github.com/siy/coding-technology/blob/main/CHANGELOG.md).
+
 ## Introduction: Code in a New Era
 
 Software development is changing faster than ever. AI-powered code generation tools have moved from experimental novelty to daily workflow staple in just a few years. We now write code alongside - and increasingly with - intelligent assistants that can generate entire functions, refactor modules, and suggest architectural patterns. This shift creates new challenges that traditional coding practices weren't designed to handle.

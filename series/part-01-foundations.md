@@ -273,6 +273,29 @@ This mental model makes code structure **visual and predictable**:
 
 ---
 
+## Why This Technology Works: The Evaluation Framework
+
+Before diving into patterns, understand how we evaluate every decision in this technology. Traditional "best practices" rely on subjective "readability" - but what does that mean? This technology uses five objective criteria:
+
+1. **Mental Overhead** - "Don't forget to..." and "Keep in mind..." items you must track. Lower is better.
+
+2. **Business/Technical Ratio** - Domain concepts vs framework/infrastructure noise. Higher domain visibility is better.
+
+3. **Design Impact** - Does an approach enforce good patterns or allow bad ones? Improves consistency or breaks it?
+
+4. **Reliability** - Does the compiler catch mistakes, or must you remember? Type safety eliminates bug classes.
+
+5. **Complexity** - Number of elements, connections, and hidden coupling. Fewer moving parts are better.
+
+These aren't preferences - they're measurable. When we say "don't use business exceptions," we prove it:
+- **Mental Overhead**: Checked exceptions pollute signatures; unchecked are invisible (+2 for Result)
+- **Reliability**: Exceptions bypass type checker; Result makes failures explicit (+1 for Result)
+- **Complexity**: Exception hierarchies create coupling (+1 for Result)
+
+Throughout the series, major rules reference these criteria. They replace endless "best practices" with five measurable standards.
+
+---
+
 ## What You'll Learn in This Series
 
 This series teaches you a complete technology for writing backend Java code. By the end, you'll know:

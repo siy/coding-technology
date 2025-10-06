@@ -472,6 +472,12 @@ void execute_fails_whenEmailAlreadyExists() {
 
 This technology organizes code around **vertical slices** - each use case is self-contained with its own business logic, validation, and error handling. Unlike architectures that centralize all business logic into one functional core, we **isolate business logic within each use case package**. This creates clear boundaries and prevents coupling between unrelated features.
 
+**Why vertical slicing (by criteria):**
+- **Complexity**: Minimizes coupling between unrelated features - each slice independent (+3).
+- **Business/Technical Ratio**: Package names reflect domain use cases, not technical layers (+2).
+- **Mental Overhead**: All related code in one place - less navigation across packages (+2).
+- **Design Impact**: Forces proper boundaries - business logic cannot leak between use cases (+2).
+
 ### Package Structure
 
 The standard package layout:

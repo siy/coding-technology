@@ -24,6 +24,11 @@ These principles compress design decisions into mechanical rules. Master them, a
 
 Every function in this technology returns exactly one of four types. Not "usually" or "preferably" - exactly one, always. This isn't arbitrary restriction; it's intentional compression of complexity into type signatures.
 
+**Why by criteria:**
+- **Mental Overhead**: Hidden error channels (exceptions), hidden optionality (null), hidden asynchrony (blocking I/O) force remembering behavior not in signatures. Explicit types eliminate this (+3).
+- **Reliability**: Compiler verifies error handling, null safety, and async boundaries when encoded in types (+3).
+- **Complexity**: Four types cover all scenarios - no guessing about combinations (+2).
+
 ### `T` - Synchronous, Cannot Fail, Value Always Present
 
 Use this when the operation is pure computation with no possibility of failure or missing data. Mathematical calculations, transformations of valid data, simple getters. If you can't think of a way this function could fail or return nothing, it returns `T`.
@@ -136,6 +141,12 @@ This clarity is what makes AI-assisted development tractable. When generating co
 Most Java code validates data after construction. You create an object with raw values, then call a `validate()` method that might throw exceptions or return error lists. This is backwards.
 
 **The principle:** Make invalid states unrepresentable. If construction succeeds, the object is valid by definition. Validation is parsing - converting untyped or weakly-typed input into strongly typed domain objects that enforce invariants at the type level.
+
+**Why by criteria:**
+- **Mental Overhead**: No "remember to validate" - type system guarantees validity (+2).
+- **Reliability**: Compiler enforces that invalid objects cannot be constructed (+3).
+- **Design Impact**: Business invariants concentrated in factories, not scattered (+2).
+- **Complexity**: Single validation point per type eliminates redundant checks (+1).
 
 ### The Traditional (Wrong) Approach
 
@@ -276,6 +287,12 @@ No guessing about where validation happens or how errors are reported. The AI le
 Business failures are not exceptional - they're expected outcomes of business rules. An invalid email isn't an exception; it's a normal case of bad input. An account being locked isn't an exception; it's a business state.
 
 **The rule:** Business logic never throws exceptions for business failures. All failures flow through `Result` or `Promise` as typed `Cause` objects.
+
+**Why by criteria:**
+- **Mental Overhead**: Checked exceptions pollute signatures (+1 for Result). Unchecked are invisible - must read implementation (+2 for Result).
+- **Business/Technical Ratio**: Stack traces are technical noise; typed Causes are domain concepts (+2 for Result).
+- **Reliability**: Exceptions bypass type checker; Result makes all failures explicit and compiler-verified (+3 for Result).
+- **Complexity**: Exception hierarchies create cross-package coupling (+1 for Result).
 
 ### The Traditional (Wrong) Approach
 

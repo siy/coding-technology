@@ -24,6 +24,12 @@ These patterns compose the basic building blocks you learned in Part 3. Together
 
 **Definition:** A Sequencer chains dependent steps linearly using `map` and `flatMap`. Each step's output feeds the next step's input. This is the primary pattern for use case implementation.
 
+**Rationale (by criteria):**
+- **Mental Overhead**: Linear flow, 2-5 steps fits short-term memory capacity - predictable structure (+3).
+- **Business/Technical Ratio**: Steps mirror business process language - reads like requirements (+3).
+- **Complexity**: Fail-fast semantics, each step isolated and testable (+2).
+- **Design Impact**: Forces proper step decomposition, prevents monolithic functions (+2).
+
 ### The 2-5 Rule
 
 A Sequencer should have 2 to 5 steps. Fewer than 2, and it's probably just a Leaf. More than 5, and it needs decomposition - extract sub-sequencers or group steps.
@@ -199,6 +205,12 @@ return validate.apply(request)
 ## Pattern: Fork-Join
 
 **Definition:** Fork-Join (also known as Fan-Out-Fan-In) executes independent operations concurrently and combines their results. Use it when you have parallel work with no dependencies between branches.
+
+**Rationale (by criteria):**
+- **Mental Overhead**: Parallel execution explicit in structure - no hidden concurrency (+2).
+- **Complexity**: Independence constraint acts as design validator - forces proper data organization (+3).
+- **Reliability**: Type system prevents dependent operations from being parallelized (+2).
+- **Design Impact**: Reveals coupling issues - dependencies surface as compile errors (+3).
 
 ### Two Primary Flavors
 
@@ -385,6 +397,12 @@ public Promise<Report> generateReport(ReportRequest request) {
 ## Pattern: Aspects (Decorators)
 
 **Definition:** Aspects are higher-order functions that wrap steps or use cases to add cross-cutting concerns - retry, timeout, logging, metrics - without changing business semantics.
+
+**Rationale (by criteria):**
+- **Mental Overhead**: Cross-cutting concerns separated from business logic - clear responsibilities (+3).
+- **Business/Technical Ratio**: Business logic stays pure; technical concerns isolated in decorators (+3).
+- **Complexity**: Composable aspects via higher-order functions - no framework magic (+2).
+- **Design Impact**: Business logic independent of retry/metrics/logging - testable separately (+3).
 
 ### Placement
 

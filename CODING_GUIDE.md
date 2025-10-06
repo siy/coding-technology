@@ -42,6 +42,34 @@ The goal isn't to give you more tools. It's to give you fewer decisions to make,
 
 ---
 
+## Why This Technology Works: The Evaluation Framework
+
+Every rule and pattern in this technology is evaluated against five objective criteria. These replace subjective "readability" arguments with measurable comparisons:
+
+1. **Mental Overhead** - "Don't forget to..." and "Keep in mind..." items you must track. This appears as things developers must remember because the compiler can't catch them. Lower is better.
+
+2. **Business/Technical Ratio** - Balance between domain concepts and framework/infrastructure noise. Higher domain visibility with less technical boilerplate is better.
+
+3. **Design Impact** - Whether an approach improves design consistency or breaks it. Does it enforce good patterns or allow bad ones?
+
+4. **Reliability** - Does the compiler catch mistakes, or must you remember? Type safety that makes invalid states unrepresentable eliminates entire classes of bugs.
+
+5. **Complexity** - Number of elements, connections, and especially hidden coupling. Fewer moving parts and explicit dependencies are better.
+
+These criteria aren't preferences - they're measurable attributes. When we say "don't use business exceptions," we can prove why:
+- **Mental Overhead**: Checked exceptions force signature pollution; unchecked are invisible (+2 for Result-based)
+- **Reliability**: Exception paths are hidden from type checker; Result makes them explicit (+1 for Result-based)
+- **Complexity**: Exception hierarchies create cross-package coupling (+1 for Result-based)
+
+Similarly, "parse don't validate":
+- **Mental Overhead**: No "remember to validate" - invalid states are unrepresentable (+1)
+- **Reliability**: Compiler enforces validity through types, not runtime checks (+1)
+- **Design Impact**: Business invariants encoded in type system, not scattered (+1)
+
+Throughout this guide, major rules reference these criteria. The goal: replace endless "best practices" with five measurable standards.
+
+---
+
 ## Core Concepts
 
 > **Note:** This section uses **Pragmatica Lite Core** library as an underlying functional style library.
@@ -58,6 +86,11 @@ The goal isn't to give you more tools. It's to give you fewer decisions to make,
 ### The Four Return Kinds
 
 Every function in this technology returns exactly one of four types. Not "usually" or "preferably" - exactly one, always. This isn't arbitrary restriction; it's intentional compression of complexity into type signatures.
+
+**Why by criteria:**
+- **Mental Overhead**: Hidden error channels (exceptions), hidden optionality (null), hidden asynchrony (blocking I/O) all force developers to remember behavior not expressed in signatures. Explicit return types eliminate this (+3).
+- **Reliability**: Compiler verifies error handling, null safety, and async boundaries when encoded in types (+3).
+- **Complexity**: Four types cover all scenarios - no guessing about combinations or special cases (+2).
 
 **`T`**  - Synchronous, cannot fail, value always present.
 
@@ -129,6 +162,12 @@ This clarity is what makes AI-assisted development tractable. When generating co
 Most Java code validates data after construction. You create an object with raw values, then call a `validate()` method that might throw exceptions or return error lists. This is backwards.
 
 **The principle:** Make invalid states unrepresentable. If construction succeeds, the object is valid by definition. Validation is parsing - converting untyped or weakly-typed input into strongly typed domain objects that enforce invariants at the type level.
+
+**Why by criteria:**
+- **Mental Overhead**: No "remember to validate" - type system guarantees validity (+2).
+- **Reliability**: Compiler enforces that invalid objects cannot be constructed (+3).
+- **Design Impact**: Business invariants concentrated in factories, not scattered across codebase (+2).
+- **Complexity**: Single validation point per type eliminates redundant checks (+1).
 
 Traditional validation:
 ```java
@@ -219,6 +258,12 @@ If `raw` is null or empty, we succeed with `Option.none()`. If it's present, we 
 Business failures are not exceptional - they're expected outcomes of business rules. An invalid email isn't an exception; it's a normal case of bad input. An account being locked isn't an exception; it's a business state.
 
 **The rule:** Business logic never throws exceptions for business failures. All failures flow through `Result` or `Promise` as typed `Cause` objects.
+
+**Why by criteria:**
+- **Mental Overhead**: Checked exceptions pollute signatures (+1 for Result). Unchecked exceptions are invisible - must read implementation (+2 for Result).
+- **Business/Technical Ratio**: Exception stack traces are technical noise; typed Causes are domain concepts (+2 for Result).
+- **Reliability**: Exceptions bypass type checker; Result makes all failures explicit and compiler-verified (+3 for Result).
+- **Complexity**: Exception hierarchies create cross-package coupling (+1 for Result).
 
 Traditional exception-based code:
 ```java
@@ -348,6 +393,11 @@ Every function implements exactly one pattern from a fixed catalog: Leaf, Sequen
 
 This rule has a mechanical benefit: it makes refactoring deterministic. When a function grows beyond one pattern, you extract the second pattern into its own function. There's no subjective judgment about "is this too complex?" - if you're doing two patterns, split it.
 
+**Why by criteria:**
+- **Mental Overhead**: One pattern per function means immediate recognition - no mental model switching (+2).
+- **Complexity**: Mechanical refactoring rule eliminates subjective debates about "too complex" (+2).
+- **Design Impact**: Forces proper abstraction layers - no mixing orchestration with computation (+2).
+
 ### Single Level of Abstraction
 
 **The rule:** No complex logic inside lambdas. Lambdas passed to `map`, `flatMap`, and similar combinators may contain only:
@@ -355,6 +405,11 @@ This rule has a mechanical benefit: it makes refactoring deterministic. When a f
 - Single method calls with parameter forwarding (e.g., `param -> someMethod(outerParam, param)`)
 
 **Why?** Lambdas are composition points, not implementation locations. When you bury logic inside a lambda, you hide abstraction levels and make the code harder to read, test, and reuse. Extract complex logic to named functions - the name documents intent, the function becomes testable in isolation, and the composition chain stays flat and readable.
+
+**Why by criteria:**
+- **Mental Overhead**: Flat composition chains scan linearly - no descending into nested logic (+2).
+- **Business/Technical Ratio**: Named functions document intent; anonymous lambdas hide it (+2).
+- **Complexity**: Each function testable in isolation; buried lambda logic requires testing through container (+2).
 
 **Anti-pattern:**
 ```java
@@ -574,17 +629,13 @@ Avoid `Option<Result<T>>` - it means "maybe there's a result, and that result mi
 Result<ValidRequest> validated = Result.all(Email.email(raw.email()),
                                              Password.password(raw.password()),
                                              ReferralCode.referralCode(raw.referralCode()))
-                                        .flatMap((email, password, refCode) ->
-                                            ValidRequest.create(email, password, refCode)
-                                        );
+                                       .flatMap(ValidRequest::new);
 
 // Async: run independent queries in parallel
 Promise<Report> report = Promise.all(userRepo.findById(userId),
-                                      orderRepo.findByUser(userId),
-                                      inventoryService.getAvailableItems())
-                                 .flatMap((user, orders, inventory) ->
-                                     generateReport(user, orders, inventory)
-                                 );
+                                     orderRepo.findByUser(userId),
+                                     inventoryService.getAvailableItems())
+                                .flatMap(this::generateReport);
 ```
 
 If any input fails, `all()` fails immediately (fail-fast for Promise) or collects failures (CompositeCause for Result).
@@ -598,6 +649,12 @@ If any input fails, `all()` fails immediately (fail-fast for Promise) or collect
 ### Leaf
 
 **Definition:** A Leaf is the smallest unit of processing - a function that does one thing and has no internal steps. It's either a business leaf (pure computation) or an adapter leaf (I/O or side effects).
+
+**Rationale (by criteria):**
+- **Mental Overhead**: Atomic operations have no internal steps to track - immediate comprehension (+2).
+- **Business/Technical Ratio**: Business leaves are pure domain logic; adapter leaves isolate technical concerns (+2).
+- **Complexity**: Single responsibility per leaf - no hidden interactions (+2).
+- **Reliability**: Pure business leaves are deterministic and easily testable (+1).
 
 **Business leaves** are pure functions that transform data or enforce business rules. Common examples:
 
@@ -717,6 +774,12 @@ Linear flow, clear responsibility, no side effects, foreign errors properly wrap
 ### Sequencer
 
 **Definition:** A Sequencer chains dependent steps linearly using `map` and `flatMap`. Each step's output feeds the next step's input. This is the primary pattern for use case implementation.
+
+**Rationale (by criteria):**
+- **Mental Overhead**: Linear flow, 2-5 steps fits short-term memory capacity - predictable structure (+3).
+- **Business/Technical Ratio**: Steps mirror business process language - reads like requirements (+3).
+- **Complexity**: Fail-fast semantics, each step isolated and testable (+2).
+- **Design Impact**: Forces proper step decomposition, prevents monolithic functions (+2).
 
 **The 2-5 rule:** A Sequencer should have 2 to 5 steps. Fewer than 2, and it's probably just a Leaf. More than 5, and it needs decomposition - extract sub-sequencers or group steps.
 
@@ -885,6 +948,12 @@ return validate.apply(request)
 ### Fork-Join
 
 **Definition:** Fork-Join (also known as Fan-Out-Fan-In) executes independent operations concurrently and combines their results. Use it when you have parallel work with no dependencies between branches.
+
+**Rationale (by criteria):**
+- **Mental Overhead**: Parallel execution explicit in structure - no hidden concurrency (+2).
+- **Complexity**: Independence constraint acts as design validator - forces proper data organization (+3).
+- **Reliability**: Type system prevents dependent operations from being parallelized (+2).
+- **Design Impact**: Reveals coupling issues - dependencies surface as compile errors (+3).
 
 **Two flavors:**
 
@@ -1064,6 +1133,12 @@ public Promise<Report> generateReport(ReportRequest request) {
 
 **Definition:** Condition represents branching logic based on data. The key: express conditions as values, not control-flow side effects. Keep branches at the same abstraction level.
 
+**Rationale (by criteria):**
+- **Mental Overhead**: Conditions as expressions - evaluates to single value, not control flow scatter (+2).
+- **Business/Technical Ratio**: Branch logic mirrors domain rules, not imperative jumps (+2).
+- **Complexity**: Same abstraction level per branch - prevents tangled logic (+2).
+- **Reliability**: Type-checked branches ensure all cases return compatible types (+2).
+
 Simple conditional:
 ```java
 // DO: Condition as expression returning the monad
@@ -1206,6 +1281,12 @@ Result<Data> fetchData(Source source) {
 
 **Definition:** Iteration processes collections, streams, or recursive structures. Prefer functional combinators over explicit loops. Keep transformations pure.
 
+**Rationale (by criteria):**
+- **Mental Overhead**: Declarative combinators state intent; imperative loops require tracing (+2).
+- **Business/Technical Ratio**: map/filter express business logic; loops are iteration mechanics (+2).
+- **Complexity**: Functional composition eliminates index management and loop state (+2).
+- **Reliability**: Pure transformations have no side effects - deterministic and testable (+2).
+
 Mapping collections:
 ```java
 // Transforming a list of raw inputs to domain objects
@@ -1270,7 +1351,7 @@ Promise<List<Receipt>> processOrders(List<Order> orders) {
 }
 ```
 
-Use parallel when operations are independent and order doesn't matter.
+Use parallel when operations are independent. The order in the returned List corresponds to the order of the input list of Promises.
 
 **Anti-patterns:**
 
@@ -1326,6 +1407,12 @@ private OrderSummary toOrderSummary(Order order) {
 ### Aspects (Decorators)
 
 **Definition:** Aspects are higher-order functions that wrap steps or use cases to add cross-cutting concerns - retry, timeout, logging, metrics - without changing business semantics.
+
+**Rationale (by criteria):**
+- **Mental Overhead**: Cross-cutting concerns separated from business logic - clear responsibilities (+3).
+- **Business/Technical Ratio**: Business logic stays pure; technical concerns isolated in decorators (+3).
+- **Complexity**: Composable aspects via higher-order functions - no framework magic (+2).
+- **Design Impact**: Business logic independent of retry/metrics/logging - testable separately (+3).
 
 **Placement:**
 - **Local concerns:** Wrap individual steps when the aspect applies to just that step. Example: retry only on external API calls.
@@ -1577,6 +1664,12 @@ This makes the code cleaner and leverages type inference properly.
 
 This technology organizes code around **vertical slices** - each use case is self-contained with its own business logic, validation, and error handling. Unlike architectures that centralize all business logic into one functional core, we **isolate business logic within each use case package**. This creates clear boundaries and prevents coupling between unrelated features.
 
+**Why vertical slicing (by criteria):**
+- **Complexity**: Minimizes coupling between unrelated features - each slice independent (+3).
+- **Business/Technical Ratio**: Package names reflect domain use cases, not technical layers (+2).
+- **Mental Overhead**: All related code in one place - less navigation across packages (+2).
+- **Design Impact**: Forces proper boundaries - business logic cannot leak between use cases (+2).
+
 ### Package Structure
 
 The standard package layout follows this pattern:
@@ -1813,7 +1906,7 @@ record ValidRequest(Email email, Password password, Option<ReferralCode> referra
 }
 ```
 
-If we had cross-field rules (e.g., "premium referral codes require 10+ char passwords"), we'd add them in the second factory:
+If we had cross-field rules (e.g., "premium referral codes require 10+ char passwords"), we'd add them in the second factory, with the same name but accepting already valid individual fields:
 
 ```java
 public static Result<ValidRequest> validRequest(

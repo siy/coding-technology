@@ -28,6 +28,11 @@ Every function implements exactly one pattern from a fixed catalog: Leaf, Sequen
 
 This rule has a mechanical benefit: it makes refactoring deterministic. When a function grows beyond one pattern, you extract the second pattern into its own function. There's no subjective judgment about "is this too complex?" - if you're doing two patterns, split it.
 
+**Why by criteria:**
+- **Mental Overhead**: One pattern per function means immediate recognition - no mental model switching (+2).
+- **Complexity**: Mechanical refactoring rule eliminates subjective debates about "too complex" (+2).
+- **Design Impact**: Forces proper abstraction layers - no mixing orchestration with computation (+2).
+
 ### Example Violation
 
 ```java
@@ -85,6 +90,11 @@ If you're writing a Sequencer and realize step 3 needs to do a Fork-Join interna
 - Single method calls with parameter forwarding (e.g., `param -> someMethod(outerParam, param)`)
 
 **Why?** Lambdas are composition points, not implementation locations. When you bury logic inside a lambda, you hide abstraction levels and make the code harder to read, test, and reuse. Extract complex logic to named functions - the name documents intent, the function becomes testable in isolation, and the composition chain stays flat and readable.
+
+**Why by criteria:**
+- **Mental Overhead**: Flat composition chains scan linearly - no descending into nested logic (+2).
+- **Business/Technical Ratio**: Named functions document intent; anonymous lambdas hide it (+2).
+- **Complexity**: Each function testable in isolation; buried lambda logic requires testing through container (+2).
 
 ### Anti-Pattern
 
@@ -205,6 +215,12 @@ Single level of abstraction makes code generation deterministic. When an AI sees
 ## Pattern: Leaf
 
 **Definition:** A Leaf is the smallest unit of processing - a function that does one thing and has no internal steps. It's either a business leaf (pure computation) or an adapter leaf (I/O or side effects).
+
+**Rationale (by criteria):**
+- **Mental Overhead**: Atomic operations have no internal steps to track - immediate comprehension (+2).
+- **Business/Technical Ratio**: Business leaves are pure domain logic; adapter leaves isolate technical concerns (+2).
+- **Complexity**: Single responsibility per leaf - no hidden interactions (+2).
+- **Reliability**: Pure business leaves are deterministic and easily testable (+1).
 
 ### Business Leaves
 
@@ -342,6 +358,12 @@ Linear flow, clear responsibility, no side effects, foreign errors properly wrap
 ## Pattern: Condition
 
 **Definition:** Condition represents branching logic based on data. The key: express conditions as values, not control-flow side effects. Keep branches at the same abstraction level.
+
+**Rationale (by criteria):**
+- **Mental Overhead**: Conditions as expressions - evaluates to single value, not control flow scatter (+2).
+- **Business/Technical Ratio**: Branch logic mirrors domain rules, not imperative jumps (+2).
+- **Complexity**: Same abstraction level per branch - prevents tangled logic (+2).
+- **Reliability**: Type-checked branches ensure all cases return compatible types (+2).
 
 ### Simple Conditional
 
@@ -494,6 +516,12 @@ Result<Data> fetchData(Source source) {
 ## Pattern: Iteration
 
 **Definition:** Iteration processes collections, streams, or recursive structures. Prefer functional combinators over explicit loops. Keep transformations pure.
+
+**Rationale (by criteria):**
+- **Mental Overhead**: Declarative combinators state intent; imperative loops require tracing (+2).
+- **Business/Technical Ratio**: map/filter express business logic; loops are iteration mechanics (+2).
+- **Complexity**: Functional composition eliminates index management and loop state (+2).
+- **Reliability**: Pure transformations have no side effects - deterministic and testable (+2).
 
 ### Mapping Collections
 

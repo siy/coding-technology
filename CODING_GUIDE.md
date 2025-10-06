@@ -1,8 +1,12 @@
+---
+tags: [AI, Java, coding-technology]
+published: true
+description: "Revolutionary technology for writing deterministic, AI-friendly, high quality Java backend code using functional patterns, vertical slicing, and minimal set of rules."
+---
+
 # Java Backend Coding Technology: Writing Code in the Era of AI
 
-**Version:** [1.1.0](#changelog) | **Repository:** [github.com/siy/coding-technology](https://github.com/siy/coding-technology)
-
-**NOTE:** This version is substantiantly updated. Check [CHANGELOG.md](https://github.com/siy/coding-technology/blob/main/CHANGELOG.md).
+**Version:** 1.2.0 | **Repository:** [github.com/siy/coding-technology](https://github.com/siy/coding-technology) | **Changelog:** [CHANGELOG.md](https://github.com/siy/coding-technology/blob/main/CHANGELOG.md)
 
 ## Introduction: Code in a New Era
 
@@ -219,7 +223,7 @@ The constructor is private (or package-private). The only way to get an `Email` 
 
 **Note:** As of current Java versions, records do not support declaring the canonical constructor as private. This limitation means the constructor remains accessible within the same package. Future Java versions may address this. Until then, rely on team discipline and code review to ensure value objects are only constructed through their factory methods. The good news: violations are highly visible in code - since all components are normally constructed via factory methods, any direct `new Email(...)` call stands out immediately. This makes the issue easy to catch using automated static analysis checks or by instructing AI code review tools to flag direct constructor usage for value objects.
 
-**Naming convention:** Factories are always named after their type, lowercase-first (camelCase). This creates a natural, readable call site: `Email.email(...)`, `Password.password(...)`, `AccountId.accountId(...)`. It's slightly redundant but unambiguous and grep-friendly. The intentional redundancy enables conflict-free static imports - `import static Email.email` allows you to write `email(raw)` at call sites while preserving context, since the factory name itself indicates what's being created.
+**Naming convention:** Factories are always named after their type, lowercase-first (camelCase). This creates a natural, readable call site: `Email.email(...)`, `Password.password(...)`, `AccountId.accountId(...)`. It's slightly redundant but unambiguous and grep-friendly. The intentional redundancy enables conflict-free static imports - `import static Email.email` allows you to write `email(raw)` at call sites while preserving context, since the factory name itself indicates what's being created. (See [Naming Conventions](#naming-conventions) for complete naming guidelines.)
 
 **Optional fields with validation:**
 
@@ -1632,16 +1636,7 @@ void execute_succeeds_forValidInput() {
 3. **Method references**: Use `Assertions::fail` instead of `() -> Assertions.fail()`
 4. **Clear intent**: The test structure mirrors the functional flow
 
-### Test Naming Convention
-
-Follow the pattern: `methodName_outcome_condition`
-
-```java
-void validRequest_succeeds_forValidInput()
-void validRequest_fails_forInvalidEmail()
-void execute_succeeds_forValidInput()
-void execute_fails_whenEmailAlreadyExists()
-```
+See [Naming Conventions](#naming-conventions) for test naming patterns.
 
 ### Testing with Stubs
 
@@ -1657,6 +1652,85 @@ var checkEmail = (CheckEmailUniqueness) req -> Promise.success(req);
 ```
 
 This makes the code cleaner and leverages type inference properly.
+
+---
+
+## Naming Conventions
+
+Consistent naming reduces cognitive overhead and improves readability. This technology uses specific conventions that make code scannable and predictable.
+
+### Factory Method Naming
+
+Factories are always named after their type, lowercase-first (camelCase). This creates a natural, readable call site:
+
+```java
+Email.email("user@example.com")
+Password.password("Secret123")
+AccountId.accountId("ACC-001")
+```
+
+The intentional redundancy (`Email.email`) enables conflict-free static imports:
+```java
+import static com.example.domain.Email.email;
+
+// At call site:
+var result = email(raw);  // Clear what's being created
+```
+
+This pattern is grep-friendly and unambiguous - searching for `Email.email` finds all email construction sites.
+
+### Acronym Naming
+
+Treat acronyms as normal words using camelCase, not all-uppercase. This improves readability by making acronyms blend naturally into identifiers.
+
+**Rationale:** Code is read far more often than it's written. Optimize for reading by making text flow smoothly.
+
+**Examples:**
+```java
+// DO: Treat acronyms as words
+HttpClient client;
+XmlParser parser;
+sendJsonRequest(data);
+setRestApiUrl(url);
+validateHtmlContent(html);
+
+// DON'T: All-caps acronyms break readability
+HTTPClient client;
+XMLParser parser;
+sendJSONRequest(data);
+setRESTAPIURL(url);
+validateHTMLContent(html);
+```
+
+**Why by criteria:**
+- **Mental Overhead**: Smooth camelCase reads faster than mixed case breaks (+2).
+- **Complexity**: Consistent casing rules - no special cases for acronyms (+1).
+
+**Edge case - Two-letter acronyms:** Use lowercase for better flow:
+```java
+// DO
+IoException
+IdGenerator
+
+// DON'T
+IOException  // Harder to scan in mixed context
+IDGenerator
+```
+
+> **Source:** [Daniel Moka on LinkedIn](https://www.linkedin.com/posts/danielmoka_clean-code-tip-name-acronyms-as-normal-words-activity-7380843966650474496-vNzK)
+
+### Test Naming
+
+Follow the pattern: `methodName_outcome_condition`
+
+```java
+void validRequest_succeeds_forValidInput()
+void validRequest_fails_forInvalidEmail()
+void execute_succeeds_forValidInput()
+void execute_fails_whenEmailAlreadyExists()
+```
+
+This makes test intent immediately clear: what's being tested, expected outcome, and condition triggering that outcome.
 
 ---
 
@@ -2474,40 +2548,6 @@ That's the technology.
 
 ---
 
-## Changelog
+## Version History
 
-### Version 1.1.0 (2025-10-04)
-
-**New Sections**
-
-- Add comprehensive "Project Structure & Package Organization" section
-- Explain vertical slicing philosophy - business logic isolated per use case
-- Define clear package placement rules (usecase, domain.shared, adapter, config)
-- Provide module organization guidance for larger systems
-- Clarify key principles: vertical slicing, minimal sharing, framework at edges
-- Include practical examples of where different types belong
-
-**Clarifications**
-
-- Emphasize that this technology uses vertical slicing, not centralized functional core
-- Remove hexagonal architecture references to avoid confusion
-
-### Version 1.0.1 (2025-10-04)
-
-**Enhancements**
-
-- Add explicit recommendation for adapter leaves as framework-business logic bridge
-- Clarify that adapter isolation is strongly recommended for all I/O operations
-- Note that domain-specific library dependencies (encryption, algorithms) are acceptable in business logic
-
-### Version 1.0.0 (2025-10-04)
-
-**Initial Release**
-
-- Complete coding technology guide for Java backend development
-- Core concepts: Four Return Kinds, Parse-Don't-Validate, No Business Exceptions
-- Pattern catalog: Leaf, Sequencer, Fork-Join, Condition, Iteration, Aspects
-- Complete use case example (UserLogin with sync and async variants)
-- Testing patterns with functional assertions
-- Framework integration guide (Spring Boot controllers and JOOQ repositories)
-- Based on Pragmatica Lite Core 0.8.0
+For detailed changelog of all versions, see [CHANGELOG.md](https://github.com/siy/coding-technology/blob/main/CHANGELOG.md).

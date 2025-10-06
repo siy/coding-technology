@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2025-01-06
+
+### Added
+- Comprehensive "Naming Conventions" section consolidating all naming guidelines
+- Acronym naming convention: treat acronyms as normal words using camelCase (e.g., `HttpClient` not `HTTPClient`)
+- Factory method naming guidelines consolidated in dedicated section
+- Test naming pattern consolidated in dedicated section
+- Cross-references between sections for better navigation
+- Attribution to Daniel Moka's LinkedIn post for acronym naming convention
+
+### Changed
+- Replaced inline changelog in CODING_GUIDE.md with reference to CHANGELOG.md file
+- Improved document structure by consolidating scattered naming conventions
+
 ## [1.1.0] - 2025-01-06
 
 ### Added

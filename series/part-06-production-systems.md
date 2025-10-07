@@ -1,8 +1,8 @@
-# Part 5: Building Production Systems
+# Part 6: Building Production Systems
 
-**Series:** [Java Backend Coding Technology](INDEX.md) | **Part:** 5 of 5
+**Series:** [Java Backend Coding Technology](INDEX.md) | **Part:** 6 of 6
 
-**Previous:** [Part 4: Advanced Patterns & Testing](part-04-advanced-patterns.md) | **Complete Series:** [Index](INDEX.md)
+**Previous:** [Part 5: Testing Strategy](part-05-testing-strategy.md) | **Complete Series:** [Index](INDEX.md)
 
 ---
 
@@ -379,6 +379,8 @@ public sealed interface RegistrationError extends Cause {
 Sealed interface ensures exhaustive pattern matching. Each error is a typed value, not an exception.
 
 ### Step 7: Testing
+
+> **Note:** This section shows basic test examples. For comprehensive testing strategy including evolutionary testing, test organization, and utilities, see **[Part 5: Testing Strategy](part-05-testing-strategy.md)**.
 
 **Validation tests:**
 ```java

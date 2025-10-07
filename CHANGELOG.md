@@ -7,17 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.0] - 2025-01-07
+
 ### Added
-- MIT License file for the project
-- License section in README.md with usage permissions
-- Copyright notices in README.md and CODING_GUIDE.md footers
+- **New Part 5: Testing Strategy & Evolutionary Approach** in learning series (~3000 lines)
+  - Comprehensive evolutionary testing strategy
+  - Integration-first philosophy (test composition, not components)
+  - Test organization patterns (nested classes, builders, canonical vectors, parameterized tests)
+  - Handling complex input objects with test data builders
+  - Managing large test counts without drowning in complexity
+  - What to Test Where guidelines (value objects, leaves, use cases, adapters)
+  - Test utilities and helpers (ResultAssertions, StubBuilders, PromiseTestUtils)
+  - Complete worked example (RegisterUser evolutionary testing)
+  - Comparison to traditional unit testing
+  - Migration guide from traditional to evolutionary testing
+- Former Part 5 "Production Systems" is now Part 6
+- Cross-references between Part 4, 5, and 6 for testing content
 
 ### Changed
-- Comprehensive rewrite of README.md with user-friendly navigation guide
-- Added clear entry points for different audiences (developers, managers, AI collaboration)
-- Added visual repository structure diagram
-- Added "Quick Start" section with learning path recommendations
-- Added "Key Concepts at a Glance" for quick reference
+- Series expanded from 5 to 6 parts
+- Updated INDEX.md with Part 5 description and 6-part structure
+- Updated README.md Quick Start with Part 5 link
+- Updated all series parts to reflect "X of 6" instead of "X of 5"
+- Part 6 testing section now references detailed Part 5 content
+- Part 4 "What's Next" now points to Part 5 (Testing Strategy)
+
+### Documentation
+- Series version bumped to 1.1.0
+- INDEX.md version history updated
 
 ## [1.2.0] - 2025-01-06
 

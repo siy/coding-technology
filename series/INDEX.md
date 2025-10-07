@@ -1,10 +1,10 @@
 # Java Backend Coding Technology: Complete Learning Series
 
-**Version:** 1.0.0 | **Based on:** [CODING_GUIDE.md](../CODING_GUIDE.md) v1.1.0
+**Version:** 1.1.0 | **Based on:** [CODING_GUIDE.md](../CODING_GUIDE.md) v1.3.0
 
 ## About This Series
 
-This five-part series teaches you how to write backend Java code that's predictable, testable, and optimized for human-AI collaboration. Whether you're a junior developer learning functional composition or a senior engineer evaluating architectural approaches, this series provides a complete, progressive education in structural standardization.
+This six-part series teaches you how to write backend Java code that's predictable, testable, and optimized for human-AI collaboration. Whether you're a junior developer learning functional composition or a senior engineer evaluating architectural approaches, this series provides a complete, progressive education in structural standardization.
 
 **Who this is for:**
 - Junior developers learning backend development
@@ -86,7 +86,24 @@ Compose basic patterns into sophisticated workflows and learn how to test functi
 
 ---
 
-### [Part 5: Building Production Systems](part-05-production-systems.md)
+### [Part 5: Testing Strategy & Evolutionary Approach](part-05-testing-strategy.md)
+**~50 min read** | *Master comprehensive testing for functional composition*
+
+Learn the evolutionary testing strategy that grows tests alongside implementation, testing composition rather than isolated components.
+
+**Topics:**
+- Evolutionary Testing Process: from stubs to production-ready
+- Integration-First Philosophy: why test assembled use cases
+- Test Organization: nested classes, builders, canonical vectors
+- Handling Complex Inputs: test data builders and factories
+- What to Test Where: value objects, leaves, use cases, adapters
+- Migration Guide: from traditional unit testing
+
+**Key takeaway:** Test behavior end-to-end, not components in isolation. Integration tests with only adapters stubbed provide highest confidence with least brittleness.
+
+---
+
+### [Part 6: Building Production Systems](part-06-production-systems.md)
 **~50 min read** | *From patterns to production-ready code*
 
 Build a complete use case from requirements to deployment and learn how to integrate with real frameworks.
@@ -107,7 +124,7 @@ Build a complete use case from requirements to deployment and learn how to integ
 Already familiar with functional programming? Skip Part 1 and start with [Part 2: Core Principles](part-02-core-principles.md).
 
 ### Complete Learning (Recommended)
-New to functional composition or want comprehensive understanding? Read sequentially from Part 1 through Part 5.
+New to functional composition or want comprehensive understanding? Read sequentially from Part 1 through Part 6.
 
 ### Reference Use
 Looking for specific patterns? Jump directly to the relevant part using the topic list above, then follow cross-references as needed.
@@ -125,6 +142,13 @@ Looking for specific patterns? Jump directly to the relevant part using the topi
 - **Feedback**: [GitHub Issues](https://github.com/siy/coding-technology/issues)
 
 ## Series Version
+
+**Version 1.1.0** (2025-01-07)
+- Added Part 5: Testing Strategy & Evolutionary Approach
+- Series expanded from 5 to 6 parts
+- Comprehensive testing strategy with integration-first philosophy
+- Evolutionary testing process documentation
+- Former Part 5 is now Part 6
 
 **Version 1.0.0** (2025-10-05)
 - Initial series split from CODING_GUIDE.md v1.1.0

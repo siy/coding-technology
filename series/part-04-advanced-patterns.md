@@ -1,8 +1,8 @@
 # Part 4: Advanced Patterns & Testing
 
-**Series:** [Java Backend Coding Technology](INDEX.md) | **Part:** 4 of 5
+**Series:** [Java Backend Coding Technology](INDEX.md) | **Part:** 4 of 6
 
-**Previous:** [Part 3: Basic Patterns & Structure](part-03-basic-patterns.md) | **Next:** [Part 5: Building Production Systems](part-05-production-systems.md)
+**Previous:** [Part 3: Basic Patterns & Structure](part-03-basic-patterns.md) | **Next:** [Part 5: Testing Strategy](part-05-testing-strategy.md)
 
 ---
 
@@ -683,20 +683,24 @@ With these patterns, you can structure any backend use case:
 
 ## What's Next?
 
-In [Part 5: Building Production Systems](part-05-production-systems.md), we'll bring everything together:
+You've learned the patterns and basic testing approach. Now it's time to dive deep into testing strategy.
 
-- **Complete Use Case Walkthrough**: RegisterUser from requirements to tests
-- **Project Structure & Package Organization**: Vertical slicing, placement rules
-- **Framework Integration**: Connecting to Spring Boot and JOOQ
-- **Conclusion**: Where to go next
+In **[Part 5: Testing Strategy & Evolutionary Approach →](part-05-testing-strategy.md)**, you'll learn:
 
-Part 5 shows you how patterns compose into complete, production-ready systems.
+- **Evolutionary Testing**: How to grow tests alongside implementation
+- **Integration-First Testing**: Why test composition, not components
+- **Test Organization**: Managing large test suites without drowning
+- **Test Utilities**: Eliminating boilerplate with builders and helpers
+- **What to Test Where**: Value objects vs leaves vs use cases
+- **Migration Guide**: From traditional unit testing to this approach
+
+Part 5 completes your testing knowledge before we build production systems in Part 6.
 
 ---
 
 **Series Navigation**
 
-[← Part 3: Basic Patterns & Structure](part-03-basic-patterns.md) | [Index](INDEX.md) | [Part 5: Building Production Systems →](part-05-production-systems.md)
+[← Part 3: Basic Patterns & Structure](part-03-basic-patterns.md) | [Index](INDEX.md) | [Part 5: Testing Strategy →](part-05-testing-strategy.md)
 
 ---
 

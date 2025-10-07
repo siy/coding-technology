@@ -6,12 +6,13 @@ A framework-agnostic methodology for writing predictable, testable Java backend 
 
 **New to this technology?** Start with the learning series:
 
-1. **[Series Index](series/INDEX.md)** - Overview and navigation for the 5-part learning series
+1. **[Series Index](series/INDEX.md)** - Overview and navigation for the 6-part learning series
 2. **[Part 1: Foundations](series/part-01-foundations.md)** - Mental model and core ideas
 3. **[Part 2: Core Principles](series/part-02-core-principles.md)** - Four return types, parse-don't-validate, no business exceptions
 4. **[Part 3: Basic Patterns](series/part-03-basic-patterns.md)** - Leaf, Condition, Iteration
-5. **[Part 4: Advanced Patterns](series/part-04-advanced-patterns.md)** - Sequencer, Fork-Join, Aspects, Testing
-6. **[Part 5: Production Systems](series/part-05-production-systems.md)** - Complete use case walkthrough, project structure, framework integration
+5. **[Part 4: Advanced Patterns](series/part-04-advanced-patterns.md)** - Sequencer, Fork-Join, Aspects, Testing basics
+6. **[Part 5: Testing Strategy](series/part-05-testing-strategy.md)** - Evolutionary testing, integration-first approach, test organization
+7. **[Part 6: Production Systems](series/part-06-production-systems.md)** - Complete use case walkthrough, project structure, framework integration
 
 **Need the complete reference?** See **[CODING_GUIDE.md](CODING_GUIDE.md)** - comprehensive technical documentation with all patterns, principles, and examples.
 
@@ -26,7 +27,8 @@ A framework-agnostic methodology for writing predictable, testable Java backend 
   - Naming conventions, testing patterns, project structure
   - Complete use case walkthrough with Spring Boot and JOOQ integration
 
-- **[series/](series/)** - Progressive learning path (5 parts, ~25 pages each)
+- **[series/](series/)** - Progressive learning path (6 parts, ~25 pages each)
+  - Part 5 covers comprehensive testing strategy
   - Designed for sequential reading
   - Builds concepts incrementally
   - Ideal for onboarding and teaching
@@ -144,6 +146,6 @@ You are free to:
 
 ---
 
-**Version:** 1.2.0 | **Last Updated:** 2025-01-06 | **[Full Changelog](CHANGELOG.md)**
+**Version:** 1.3.0 | **Last Updated:** 2025-01-07 | **[Full Changelog](CHANGELOG.md)**
 
 **Copyright © 2025 Sergiy Yevtushenko. Released under the [MIT License](LICENSE).**

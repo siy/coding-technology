@@ -1,0 +1,20 @@
+{
+  "name": "pragmatica-dev-website",
+  "version": "1.0.0",
+  "description": "Static website for pragmatica.dev",
+  "scripts": {
+    "build": "node build.js",
+    "clean": "rm -rf dist && mkdir dist",
+    "dev": "npm run build && python3 -m http.server 8000 -d dist",
+    "prebuild": "npm run clean"
+  },
+  "dependencies": {
+    "markdown-it": "^14.0.0",
+    "markdown-it-anchor": "^9.0.1",
+    "front-matter": "^4.0.2"
+  },
+  "devDependencies": {},
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

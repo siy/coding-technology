@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.0] - 2025-01-07
+
+### Added
+- **Static website for pragmatica.dev**
+  - Build script to convert markdown to HTML
+  - Professional, responsive CSS design
+  - HTML templates with navigation
+  - Sitemap generation for SEO
+  - GitHub Actions CI/CD for automatic deployment
+  - Netlify configuration for hosting
+  - Complete deployment documentation
+  - Local development server support
+
+### Infrastructure
+- GitHub Actions workflow for automated deployment to Netlify
+- Netlify configuration with security headers and caching
+- Cloudflare DNS setup instructions for custom domain
+
 ## [1.3.0] - 2025-01-07
 
 ### Added

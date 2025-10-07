@@ -29,3 +29,8 @@ buildNumber.properties
 *.jar
 *.war
 *.ear
+
+# Website
+website/node_modules/
+website/dist/
+website/package-lock.json

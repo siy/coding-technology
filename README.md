@@ -147,6 +147,6 @@ You are free to:
 
 ---
 
-**Version:** 1.3.0 | **Last Updated:** 2025-01-07 | **[Full Changelog](CHANGELOG.md)**
+**Version:** 1.4.0 | **Last Updated:** 2025-01-07 | **[Full Changelog](CHANGELOG.md)**
 
 **Copyright © 2025 Sergiy Yevtushenko. Released under the [MIT License](LICENSE).**

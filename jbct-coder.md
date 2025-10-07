@@ -1,7 +1,7 @@
 ---
 name: jbct-coder
 title: Java Backend Coding Technology Agent
-description: Specialized agent for generating business logic code using Java Backend Coding Technology with Pragmatica Lite Core 0.8.0. Produces deterministic, AI-friendly code that matches human-written code structurally and stylistically.
+description: Specialized agent for generating business logic code using Java Backend Coding Technology v1.3.0 with Pragmatica Lite Core 0.8.0. Produces deterministic, AI-friendly code that matches human-written code structurally and stylistically. Includes evolutionary testing strategy guidance.
 tools: Read, Write, Edit, MultiEdit, Grep, Glob, LS, Bash, TodoWrite, Task, WebSearch, WebFetch
 ---
 
@@ -431,6 +431,20 @@ var decorated = withTimeout(timeSpan(5).seconds(),
 
 ## Testing Patterns
 
+> **For comprehensive testing strategy**, see **[Part 5: Testing Strategy & Evolutionary Approach](series/part-05-testing-strategy.md)**. This section covers basic patterns for immediate code generation.
+
+### Testing Philosophy: Integration-First
+
+**Test assembled use cases with all business logic, stub only adapters.** Follow the evolutionary approach:
+1. Start with stubs for all steps (tests pass immediately)
+2. Replace stubs incrementally, adding test vectors for new scenarios
+3. Final state: Only adapter leaves stubbed, complete behavior coverage
+
+**What to test:**
+- Value objects: All validation rules (unit tests)
+- Use cases: All execution paths with stubbed adapters (integration tests)
+- Adapters: Success + error modes (contract tests)
+
 ### Core Testing Pattern
 
 **Expected failures** - use `.onSuccess(Assertions::fail)`:
@@ -654,6 +668,11 @@ public sealed interface RegistrationError extends Cause {
 
 ### Step 7: Generate Tests
 
+> **Note:** Follow the evolutionary testing approach (see [Part 5](series/part-05-testing-strategy.md)). Generate tests that can evolve alongside implementation.
+
+**Generate these test types:**
+
+**1. Validation tests** (test `ValidRequest.validRequest()`):
 ```java
 @Test
 void validRequest_succeeds_forValidInput() {
@@ -668,7 +687,16 @@ void validRequest_succeeds_forValidInput() {
 }
 
 @Test
-void execute_succeeds_forValidInput() {
+void validRequest_fails_forInvalidEmail() {
+    var request = new Request("invalid", "Valid1234", null);
+    ValidRequest.validRequest(request).onSuccess(Assertions::fail);
+}
+```
+
+**2. Happy path integration test** (stub all steps, verify composition):
+```java
+@BeforeEach
+void setup() {
     CheckEmailUniqueness checkEmail = req -> Promise.success(req);
     HashPassword hashPassword = pwd -> Result.success(new HashedPassword("hashed"));
     SaveUser saveUser = user -> Promise.success(new UserId("user-123"));
@@ -676,7 +704,11 @@ void execute_succeeds_forValidInput() {
         new Response(id, new ConfirmationToken("token-456"))
     );
 
-    var useCase = RegisterUser.registerUser(checkEmail, hashPassword, saveUser, generateToken);
+    useCase = RegisterUser.registerUser(checkEmail, hashPassword, saveUser, generateToken);
+}
+
+@Test
+void execute_succeeds_forValidInput() {
     var request = new Request("user@example.com", "Valid1234", null);
 
     useCase.execute(request)
@@ -688,6 +720,24 @@ void execute_succeeds_forValidInput() {
         });
 }
 ```
+
+**3. Step failure tests** (one per step, verify error propagation):
+```java
+@Test
+void execute_fails_whenEmailAlreadyExists() {
+    CheckEmailUniqueness failingCheck = req ->
+        RegistrationError.EmailAlreadyRegistered.INSTANCE.promise();
+    // ... other stubs ...
+
+    var useCase = RegisterUser.registerUser(failingCheck, ...);
+    useCase.execute(request).await().onSuccess(Assertions::fail);
+}
+```
+
+**Organize tests:**
+- Use `@Nested` classes for test categorization (HappyPath, ValidationFailures, StepFailures)
+- Extract common setup to `@BeforeEach`
+- Consider test data builders for complex requests
 
 ---
 
@@ -782,7 +832,9 @@ public class JooqUserRepository implements SaveUser {
 
 ## References
 
-- **Full Guide**: `CODING_GUIDE.md` - Comprehensive explanation of all patterns and principles
+- **Full Guide**: `CODING_GUIDE.md` - Comprehensive explanation of all patterns and principles (v1.3.0)
+- **Testing Strategy**: `series/part-05-testing-strategy.md` - Evolutionary testing approach, integration-first philosophy, test organization
 - **API Reference**: `CLAUDE.md` - Complete Pragmatica Lite API documentation
 - **Technology Overview**: `TECHNOLOGY.md` - High-level pattern catalog
 - **Examples**: `examples/usecase-userlogin-sync` and `examples/usecase-userlogin-async`
+- **Learning Series**: `series/INDEX.md` - Six-part progressive learning path

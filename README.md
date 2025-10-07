@@ -63,13 +63,14 @@ A framework-agnostic methodology for writing predictable, testable Java backend 
 ```
 coding-technology/
 ├── CODING_GUIDE.md              # Complete technical reference
-├── series/                       # 5-part learning series
+├── series/                       # 6-part learning series
 │   ├── INDEX.md                 # Series overview and navigation
 │   ├── part-01-foundations.md
 │   ├── part-02-core-principles.md
 │   ├── part-03-basic-patterns.md
 │   ├── part-04-advanced-patterns.md
-│   └── part-05-production-systems.md
+│   ├── part-05-testing-strategy.md
+│   └── part-06-production-systems.md
 ├── MANAGEMENT_PERSPECTIVE.md    # Business case and ROI
 ├── CHANGELOG.md                 # Version history
 ├── CLAUDE.md                    # AI collaboration protocol

@@ -209,6 +209,12 @@ main {
     font-style: italic;
 }
 
+.content blockquote strong {
+    color: var(--primary-color);
+    font-style: normal;
+    font-weight: 600;
+}
+
 /* Tables */
 .content table {
     width: 100%;

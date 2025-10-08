@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.0] - 2025-01-07
+
+### Added
+- **EXECUTIVE_SUMMARY.md** - Executive brief for CTOs/VPs (2-3 pages)
+  - Diagnostic checklist with 5 friction signals
+  - Visual proof with side-by-side code comparisons and cognitive load analysis
+  - Observable outcomes with 3 proxy metrics (review efficiency, onboarding speed, structural consistency)
+  - Academic foundations (Brooks's Law, Dijkstra's Structured Programming, Miller's Law, Google's consistency findings)
+  - Inevitability narrative (AI code generation, distributed teams, rising team sizes)
+  - Evidence-based adoption path with micro-evidence collection framework
+
+### Changed
+- **Factory pattern clarifications** in CODING_GUIDE.md and TECHNOLOGY.md
+  - Value objects (records): serializable data structures
+  - Use cases and steps (lambdas): behavioral components created at assembly time
+- All EXECUTIVE_SUMMARY links point to pragmatica.dev
+- README updated with executive summary reference
+- Website build includes EXECUTIVE_SUMMARY.md
+
 ## [1.4.0] - 2025-01-07
 
 ### Added

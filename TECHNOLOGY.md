@@ -89,6 +89,9 @@ Testing Strategy
 
 Guidance and Conventions
 - Factories: always named after the type with first letter lowercased, e.g., `artifactId(String) -> Result<ArtifactId>`.
+- Factory implementations:
+  - Value objects (records): use records for serializable data (Request, Response, domain types).
+  - Use cases and steps (lambdas): return lambdas for behavioral components created at assembly time (no serialization needed).
 - Constructors: prefer static factories; use private constructors for records if/when the language allows.
 - Normalization: may be performed inside factories if domain requires (trim, case‑folding, canonicalization).
 - Collections: return immutable collections when feasible. Create defensive copies only when returning internal collections.

@@ -26,6 +26,7 @@ const STYLES_DIR = path.join(__dirname, 'styles');
 const MARKDOWN_FILES = [
   'README.md',
   'CODING_GUIDE.md',
+  'EXECUTIVE_SUMMARY.md',
   'MANAGEMENT_PERSPECTIVE.md',
   'CHANGELOG.md',
   'TECHNOLOGY.md',

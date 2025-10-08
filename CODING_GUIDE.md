@@ -1679,6 +1679,34 @@ var result = email(raw);  // Clear what's being created
 
 This pattern is grep-friendly and unambiguous - searching for `Email.email` finds all email construction sites.
 
+**Implementation patterns:**
+
+**Value objects** (records) — Always use records for serializable data types:
+```java
+record Email(String value) {
+    public static Result<Email> email(String raw) {
+        return Verify.ensure(raw, Verify.Is::notNull)
+            .map(String::trim)
+            .map(Email::new);
+    }
+}
+```
+
+**Use cases and steps** (lambdas) — Return lambdas for behavioral components that don't require serialization:
+```java
+public interface RegisterUser extends UseCase.WithPromise<Response, Request> {
+    // Factory returns lambda implementing the interface
+    static RegisterUser registerUser(CheckEmail checkEmail, CreateUser createUser) {
+        return request -> ValidRequest.validRequest(request)
+                                      .async()
+                                      .flatMap(checkEmail::apply)
+                                      .flatMap(createUser::apply);
+    }
+}
+```
+
+**Rationale:** Value objects (Request, Response, domain records) need serialization for API contracts and persistence. Use cases and steps are created at assembly time and never serialized—lambdas are sufficient and lighter-weight than record implementations.
+
 ### Acronym Naming
 
 Treat acronyms as normal words using camelCase, not all-uppercase. This improves readability by making acronyms blend naturally into identifiers.

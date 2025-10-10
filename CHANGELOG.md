@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.6.0] - 2025-01-10
+
+### Added
+- **Conversation style guidelines** in both CLAUDE.md files
+  - Extreme brevity principle (no conversational fluff)
+  - Action-first execution pattern
+  - Question asking guidelines with clear thresholds
+  - Read → Act → Verify execution pattern
+  - Proactive todo tracking rules
+  - Structured response formats with examples
+- **Website favicon** generated from pragmatica.png
+  - 32x32, 16x16 PNG favicons
+  - 180x180 Apple touch icon
+  - Integrated into HTML template
+- **EXECUTIVE_SUMMARY_SHORT.md** - Condensed 865-word version for publication
+  - Maintains structure of full executive summary
+  - Includes diagnostic checklist, code example, metrics
+  - Suitable for magazine/journal submission (InformationWeek)
+
+### Changed
+- Updated website build script to copy image directory to dist
+- Updated conversation style from "ask first" to "execute when clear, ask when necessary"
+
 ## [1.5.0] - 2025-01-07
 
 ### Added

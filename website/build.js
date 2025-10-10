@@ -127,6 +127,24 @@ function copyStyles() {
   }
 }
 
+function copyImages() {
+  console.log('Copying images...');
+  const imageSource = path.join(__dirname, 'image');
+  const imageDest = path.join(DIST_DIR, 'image');
+
+  if (fs.existsSync(imageSource)) {
+    ensureDir(imageDest);
+    const files = fs.readdirSync(imageSource);
+    files.forEach(file => {
+      const src = path.join(imageSource, file);
+      const dest = path.join(imageDest, file);
+      fs.copyFileSync(src, dest);
+    });
+  } else {
+    console.warn('Warning: image directory not found');
+  }
+}
+
 function buildMainPages() {
   console.log('Building main pages...');
 
@@ -226,6 +244,7 @@ function build() {
 
   // Copy assets
   copyStyles();
+  copyImages();
 
   // Generate sitemap
   generateSitemap();

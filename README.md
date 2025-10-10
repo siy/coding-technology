@@ -1,6 +1,6 @@
 # Java Backend Coding Technology
 
-> **Version 1.5.0** | [Full Changelog](CHANGELOG.md)
+> **Version 1.6.0** | [Full Changelog](CHANGELOG.md)
 
 A framework-agnostic methodology for writing predictable, testable Java backend code optimized for human-AI collaboration.
 
@@ -155,6 +155,6 @@ You are free to:
 
 ---
 
-**Version:** 1.5.0 | **Last Updated:** 2025-01-07 | **[Full Changelog](CHANGELOG.md)**
+**Version:** 1.6.0 | **Last Updated:** 2025-01-10 | **[Full Changelog](CHANGELOG.md)**
 
 **Copyright © 2025 Sergiy Yevtushenko. Released under the [MIT License](LICENSE).**

@@ -1,6 +1,6 @@
 # Restoring Predictability in Engineering Delivery
 
-**Version:** 1.5.0 | **Target Audience:** CTOs, VPs of Engineering, Engineering Managers | **Word Count:** 865
+**Version:** 1.6.0 | **Target Audience:** CTOs, VPs of Engineering, Engineering Managers | **Word Count:** 865
 
 ---
 

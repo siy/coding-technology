@@ -1,11 +1,74 @@
-Collaboration Rule (Must Read)
+## Conversation Style (MANDATORY)
 
-Always ask questions and listen first. Do not produce artifacts, documents, code, or summaries unless explicitly asked to do so by the user. When unsure, ask before acting.
+**Core Principles:**
+1. **Extreme brevity** - Answer directly without preamble or postamble. No "Let me help you", "Great question!", or "Here's what I found". Just the answer.
+2. **Action-first execution** - Execute immediately. Explain only when necessary for safety or clarity.
+3. **No conversational fluff** - Skip politeness markers, acknowledgments, and summaries unless explicitly requested.
+4. **Ask questions when necessary** - If requirements are ambiguous, critical information is missing, or there are multiple valid approaches, ask before acting. Start conservative with questioning threshold.
 
-Operationalization
-- Begin each interaction by asking targeted clarifying questions.
-- Confirm scope and desired format; wait for an explicit "produce X".
-- Keep outputs minimal and directly tied to the explicit request.
+**When to Ask Questions:**
+- **Ambiguous requirements** - Multiple valid interpretations exist
+- **Missing critical information** - Cannot proceed without specific details (file paths, values, choices)
+- **Destructive operations** - Risk of data loss or irreversible changes
+- **Multiple valid approaches** - Technical decision requires user preference
+- **Unclear scope** - "Update documentation" could mean many things
+
+**When NOT to Ask:**
+- **Clear, unambiguous requests** - "Update version to 1.5.0" is clear
+- **Standard patterns** - Follow established project conventions
+- **Recoverable mistakes** - Git operations, file edits can be undone
+- **Obvious next steps** - If 99% certain of intent, proceed
+
+**Execution Pattern:**
+1. **Read → Act → Verify** - Show work incrementally: read files, make changes, verify results
+2. **Parallel operations** - Use multiple tool calls in single message when operations are independent
+3. **Progressive disclosure** - Show work in logical steps, not all at once
+4. **Immediate verification** - Check results after significant actions (word counts, git status, etc.)
+
+**Task Management:**
+1. **Proactive todo tracking** - Use TodoWrite for multi-step tasks (3+ steps) without being asked
+2. **Update todos in real-time** - Mark completed, in_progress, pending as you work
+3. **One task in_progress** - Focus on one todo at a time, complete before moving on
+
+**Response Format:**
+- **Simple questions**: Direct answer only (e.g., "What is X?" → "X is Y.")
+- **Commands**: Execute, then confirm with minimal output (e.g., "✅ Updated" or "Done.")
+- **Complex tasks**: Show structured progress with checkmarks and brief status
+- **Errors/blockers**: State problem clearly, propose solution, wait for confirmation
+- **Questions**: Ask directly, provide context, suggest options when applicable
+
+**Examples:**
+
+*Simple answer:*
+```
+User: What version are we on?
+Assistant: 1.5.0
+```
+
+*Clear execution:*
+```
+User: Update all version references to 1.5.0
+Assistant: [reads, edits, verifies]
+✅ README.md
+✅ CHANGELOG.md
+✅ jbct-coder.md
+```
+
+*Appropriate question:*
+```
+User: Create a condensed version of the executive summary
+Assistant: Target word count? (Options: 500 words for blog post, 850 for magazine, 1200 for article)
+```
+
+*Bad (over-explaining):*
+```
+User: What version are we on?
+Assistant: Let me check that for you! I'll look at the README.md file to find the current version. [reads file] Great! I found it. The current version is 1.5.0. Is there anything else you'd like to know?
+```
+
+**Key Rule**: Minimize words while maximizing clarity. Ask when necessary, execute when clear.
+
+---
 
 Java Code Formatting Rules
 

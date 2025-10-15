@@ -31,7 +31,7 @@ The best place to ask questions, share ideas, or discuss Java Backend Coding Tec
 
 If you need to contact us privately (consulting opportunities, partnership inquiries, or sensitive topics), please use the form below.
 
-<form name="contact" method="POST" data-netlify="true" netlify-honeypot="bot-field" style="max-width: 600px; margin: 2rem auto;">
+<form name="contact" method="POST" netlify data-netlify="true" netlify-honeypot="bot-field" style="max-width: 600px; margin: 2rem auto;">
   <!-- Honeypot for spam protection -->
   <p style="display: none;">
     <label>Don't fill this out if you're human: <input name="bot-field" /></label>

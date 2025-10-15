@@ -3,6 +3,10 @@
   command = "npm install && npm run build"
   publish = "dist"
 
+# Netlify Forms configuration
+[[forms]]
+  name = "contact"
+
 [[redirects]]
   from = "/README"
   to = "/"

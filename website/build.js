@@ -31,7 +31,8 @@ const MARKDOWN_FILES = [
   'CHANGELOG.md',
   'TECHNOLOGY.md',
   'PL_IMPROVEMENTS.md',
-  'jbct-coder.md'
+  'jbct-coder.md',
+  'CONTACT.md'
 ];
 
 // Series files

@@ -133,9 +133,9 @@ When writing Java code examples, follow these formatting conventions strictly:
 
 ---
 
-# Pragmatica Lite Core 0.8.0 API Reference
+# Pragmatica Lite Core 0.8.3 API Reference
 
-This section documents the actual API methods available in Pragmatica Lite Core 0.8.0.
+This section documents the actual API methods available in Pragmatica Lite Core 0.8.3.
 
 ## Type Conversions
 
@@ -171,6 +171,8 @@ This section documents the actual API methods available in Pragmatica Lite Core 
 - `Promise.promise()`  -  unresolved promise
 - `Promise.promise(Consumer<Promise<T>>)`  -  unresolved, runs consumer async
 - `Promise.promise(Supplier<Result<T>>)`  -  async execution of supplier
+- `Promise.promise(TimeSpan delay, Consumer<Promise<T>>)`  -  unresolved, runs consumer after delay
+- `Promise.promise(TimeSpan delay, Supplier<Result<T>>)`  -  async execution after delay
 
 ## Exception Handling (lift methods)
 
@@ -194,6 +196,7 @@ All liftN methods accept optional `exceptionMapper: Fn1<Cause, Throwable>` as fi
 - **`Result.lift3(ThrowingFn3<R, T1, T2, T3> fn, ...)`**  -  direct invocation
 - **`Result.lift3(Fn1<Cause, Throwable> mapper, ThrowingFn3<R, T1, T2, T3> fn, ...)`**  -  with custom mapper
 - **`Result.liftFn1(ThrowingFn1<R, T1> fn)`**  -  returns `Fn1<Result<R>, T1>` (function factory)
+- **`Result.liftFn1(Fn1<Cause, Throwable> mapper, ThrowingFn1<R, T1> fn)`**  -  with custom exception mapper
 - **`Result.liftFn2(ThrowingFn2<R, T1, T2> fn)`**  -  returns `Fn2<Result<R>, T1, T2>`
 - **`Result.liftFn3(ThrowingFn3<R, T1, T2, T3> fn)`**  -  returns `Fn3<Result<R>, T1, T2, T3>`
 
@@ -204,10 +207,15 @@ All accept optional `exceptionMapper: Fn1<Cause, Throwable>` (defaults to `Cause
 - **`Promise.lift(Fn1<Cause, Throwable> mapper, ThrowingFn0<U> supplier)`**
 - **`Promise.lift(ThrowingRunnable runnable)`**  -  returns `Promise<Unit>`
 - **`Promise.lift(Cause cause, ThrowingFn0<U> supplier)`**  -  fixed cause on failure
+- **`Promise.async(Runnable action)`**  -  async execution returning `Promise<Unit>`
 - **`Promise.lift1(ThrowingFn1<R, T1> fn, T1 value)`**  -  direct invocation
+- **`Promise.lift1(Fn1<Cause, Throwable> mapper, ThrowingFn1<R, T1> fn, T1 value)`**  -  with custom mapper
 - **`Promise.lift2(ThrowingFn2<R, T1, T2> fn, T1 v1, T2 v2)`**  -  direct invocation
+- **`Promise.lift2(Fn1<Cause, Throwable> mapper, ThrowingFn2<R, T1, T2> fn, T1 v1, T2 v2)`**  -  with custom mapper
 - **`Promise.lift3(ThrowingFn3<R, T1, T2, T3> fn, ...)`**  -  direct invocation
+- **`Promise.lift3(Fn1<Cause, Throwable> mapper, ThrowingFn3<R, T1, T2, T3> fn, ...)`**  -  with custom mapper
 - **`Promise.liftFn1(ThrowingFn1<R, T1> fn)`**  -  returns `Fn1<Promise<R>, T1>` (function factory)
+- **`Promise.liftFn1(Fn1<Cause, Throwable> mapper, ThrowingFn1<R, T1> fn)`**  -  with custom exception mapper
 - **`Promise.liftFn2(ThrowingFn2<R, T1, T2> fn)`**  -  returns `Fn2<Promise<R>, T1, T2>`
 - **`Promise.liftFn3(ThrowingFn3<R, T1, T2, T3> fn)`**  -  returns `Fn3<Promise<R>, T1, T2, T3>`
 
@@ -245,17 +253,31 @@ All accept optional `exceptionMapper: Fn1<Cause, Throwable>` (defaults to `Cause
 - `.map(Supplier<U> supplier)`  -  replace success/present value
 - `.flatMap(Fn1<M<U>, T> mapper)`  -  chain monadic operations
 - `.flatMap(Supplier<M<U>> supplier)`  -  replace with monadic value
+- `.flatMap2(Fn2<M<U>, T, I> mapper, I parameter2)`  -  Result/Promise only: flatMap with additional parameter
+- `.mapToUnit()`  -  Result/Promise only: transform to Result<Unit>/Promise<Unit>
 
 ### filter (Result and Promise):
 - `.filter(Cause cause, Predicate<T> predicate)`  -  filter by predicate
 - `.filter(Fn1<Cause, T> causeMapper, Predicate<T> predicate)`  -  dynamic cause
+- `.filter(Cause cause, Promise<Boolean> predicate)`  -  Promise only: async predicate
+- `.filter(Fn1<Cause, T> causeMapper, Promise<Boolean> predicate)`  -  Promise only: async predicate with dynamic cause
 
 ### Callback methods:
 - `.onPresent(Consumer<T>)`  -  Option only
-- `.onEmpty(Runnable)`  -  Option only
+- `.onPresentRun(Runnable)`  -  Option only: run action when present
+- `.onEmpty(Runnable)`  -  Option only (alias: `.onEmptyRun(Runnable)`)
 - `.onSuccess(Consumer<T>)`  -  Result and Promise
+- `.onSuccessRun(Runnable)`  -  Result and Promise: run action on success
+- `.onSuccessAsync(Consumer<T>)`  -  Promise only: async version of onSuccess
+- `.onSuccessRunAsync(Runnable)`  -  Promise only: async run action on success
 - `.onFailure(Consumer<Cause>)`  -  Result and Promise
+- `.onFailureRun(Runnable)`  -  Result and Promise: run action on failure
+- `.onFailureAsync(Consumer<Cause>)`  -  Promise only: async version of onFailure
+- `.onFailureRunAsync(Runnable)`  -  Promise only: async run action on failure
 - `.onResult(Consumer<Result<T>>)`  -  Result and Promise
+- `.onResultRun(Runnable)`  -  Result and Promise: run action regardless of outcome
+- `.onResultAsync(Consumer<Result<T>>)`  -  Promise only: async version of onResult
+- `.onResultRunAsync(Runnable)`  -  Promise only: async run action regardless of outcome
 
 ### Recovery:
 - `.or(T replacement)`  -  provide fallback value

@@ -14,11 +14,53 @@
     --bg-secondary: #f9fafb;
     --border-color: #e5e7eb;
     --code-bg: #f3f4f6;
+    --code-text: #e11d48;
     --header-bg: #ffffff;
+    --header-shadow: rgba(0, 0, 0, 0.05);
     --footer-bg: #111827;
     --footer-text: #d1d5db;
     --link-color: #2563eb;
     --link-hover: #1d4ed8;
+}
+
+/* Dark mode colors */
+[data-theme="dark"] {
+    --primary-color: #3b82f6;
+    --primary-hover: #60a5fa;
+    --text-color: #e5e7eb;
+    --text-secondary: #9ca3af;
+    --bg-color: #0f172a;
+    --bg-secondary: #1e293b;
+    --border-color: #334155;
+    --code-bg: #1e293b;
+    --code-text: #fb7185;
+    --header-bg: #1e293b;
+    --header-shadow: rgba(0, 0, 0, 0.3);
+    --footer-bg: #020617;
+    --footer-text: #cbd5e1;
+    --link-color: #60a5fa;
+    --link-hover: #93c5fd;
+}
+
+/* System preference dark mode */
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+        --primary-color: #3b82f6;
+        --primary-hover: #60a5fa;
+        --text-color: #e5e7eb;
+        --text-secondary: #9ca3af;
+        --bg-color: #0f172a;
+        --bg-secondary: #1e293b;
+        --border-color: #334155;
+        --code-bg: #1e293b;
+        --code-text: #fb7185;
+        --header-bg: #1e293b;
+        --header-shadow: rgba(0, 0, 0, 0.3);
+        --footer-bg: #020617;
+        --footer-text: #cbd5e1;
+        --link-color: #60a5fa;
+        --link-hover: #93c5fd;
+    }
 }
 
 html {
@@ -46,7 +88,7 @@ header {
     position: sticky;
     top: 0;
     z-index: 1000;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 2px 4px var(--header-shadow);
 }
 
 .header-content {
@@ -180,7 +222,7 @@ main {
     border-radius: 3px;
     font-family: "SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, "Courier New", monospace;
     font-size: 0.875em;
-    color: #e11d48;
+    color: var(--code-text);
 }
 
 .content pre {
@@ -371,4 +413,33 @@ footer {
         border: 1px solid #000;
         page-break-inside: avoid;
     }
+}
+
+/* Theme Toggle Button */
+.theme-toggle {
+    background: none;
+    border: 2px solid var(--border-color);
+    border-radius: 6px;
+    padding: 0.5rem 0.75rem;
+    cursor: pointer;
+    font-size: 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    color: var(--text-color);
+}
+
+.theme-toggle:hover {
+    background-color: var(--bg-secondary);
+    border-color: var(--primary-color);
+}
+
+.theme-toggle:active {
+    transform: scale(0.95);
+}
+
+.theme-icon {
+    width: 20px;
+    height: 20px;
 }

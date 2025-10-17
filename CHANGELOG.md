@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.6.1] - 2025-01-17
+
+### Added
+- **INVISIBLE_MIDDLE_LAYER.md** - New article explaining architectural philosophy behind the Coding Technology
+  - Explains how coordination mechanics disappear into the type system
+  - Three-layer architecture model (Business Domain, Coordination, Language/Runtime)
+  - Concrete examples comparing traditional, intermediate, and Coding Technology implementations
+  - Pattern demonstrations showing how each pattern eliminates middle layer code
+  - Business logic visibility analysis with line count comparisons
+  - Compiler as coordination engine concept
+  - Composability, type-driven coordination, and pattern-combinator mapping explanations
+- **usecase-internal-service example** demonstrating internal service patterns
+
+### Changed
+- **CLAUDE.md API Reference** updated from Pragmatica Lite Core 0.8.0 to 0.8.3
+  - Added new convenience methods: `flatMap2()`, `mapToUnit()`
+  - Added Run variants: `onPresentRun()`, `onEmptyRun()`, `onSuccessRun()`, `onFailureRun()`, `onResultRun()`
+  - Added async variants for Promise: `onSuccessAsync()`, `onSuccessRunAsync()`, etc.
+  - Added async predicate filtering for Promise: `filter(Cause, Promise<Boolean>)`
+  - Added lift method variants with custom exception mappers
+  - Added delayed Promise factory methods: `promise(TimeSpan delay, ...)`
+- **jbct-coder.md** updated to v1.6.1
+  - Refined lambda constructor rules: prefer `::new`, inline only with captured parameters
+  - Added Condition pattern critical rule: routing only, no transformation
+  - Clarified Single Level of Abstraction with constructor reference guidelines
+  - Updated version references (v1.5.0 → v1.6.1, 0.8.0 → 0.8.3)
+
 ## [1.6.0] - 2025-01-10
 
 ### Added

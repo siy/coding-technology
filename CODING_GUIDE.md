@@ -6,7 +6,7 @@ description: "Revolutionary technology for writing deterministic, AI-friendly, h
 
 # Java Backend Coding Technology: Writing Code in the Era of AI
 
-**Version:** 1.6.0 | **Repository:** [github.com/siy/coding-technology](https://github.com/siy/coding-technology) | **Changelog:** [CHANGELOG.md](https://github.com/siy/coding-technology/blob/main/CHANGELOG.md)
+**Version:** 1.6.1 | **Repository:** [github.com/siy/coding-technology](https://github.com/siy/coding-technology) | **Changelog:** [CHANGELOG.md](https://github.com/siy/coding-technology/blob/main/CHANGELOG.md)
 
 ## Introduction: Code in a New Era
 
@@ -80,12 +80,12 @@ Throughout this guide, major rules reference these criteria. The goal: replace e
 
 > **Note:** This section uses **Pragmatica Lite Core** library as an underlying functional style library.
 > The library is available on Maven Central: https://central.sonatype.com/artifact/org.pragmatica-lite/core
-> 
+>
 > ```xml
 > <dependency>
 >    <groupId>org.pragmatica-lite</groupId>
 >    <artifactId>core</artifactId>
->    <version>0.8.0</version>
+>    <version>0.8.3</version>
 > </dependency>
 > ```
 
@@ -1747,6 +1747,31 @@ IDGenerator
 
 > **Source:** [Daniel Moka on LinkedIn](https://www.linkedin.com/posts/danielmoka_clean-code-tip-name-acronyms-as-normal-words-activity-7380843966650474496-vNzK)
 
+### Validated Input Naming
+
+Use the `Valid` prefix (not `Validated`) for types representing validated inputs or intermediate data after validation:
+
+```java
+// DO: Use Valid prefix
+record ValidRequest(Email email, Password password, Option<ReferralCode> refCode) {
+    static Result<ValidRequest> validRequest(Request raw) { ... }
+}
+
+record ValidUser(Email email, HashedPassword hashed, Option<ReferralCode> refCode) {}
+record ValidCredentials(Email email, HashedPassword hashed) {}
+
+// DON'T: Use Validated prefix (too verbose, no additional semantics)
+record ValidatedRequest(...)  // ❌
+record ValidatedUser(...)      // ❌
+record ValidatedCredentials(...)  // ❌
+```
+
+**Rationale:** `Valid` is concise and conveys the same meaning as `Validated`. The past-tense form adds no semantic value—both indicate the data has passed validation. Shorter names reduce line length and cognitive overhead.
+
+**Why by criteria:**
+- **Mental Overhead**: Shorter, clearer naming reduces scanning time (+2).
+- **Complexity**: One consistent prefix pattern—no ambiguity about when to use which form (+1).
+
 ### Test Naming
 
 Follow the pattern: `methodName_outcome_condition`
@@ -1978,14 +2003,14 @@ public interface RegisterUser {
                     .flatMap(generateToken::apply);
             }
 
-            private Promise<ValidatedUser> hashPasswordForUser(ValidRequest request) {
+            private Promise<ValidUser> hashPasswordForUser(ValidRequest request) {
                 return hashPassword.apply(request.password())
                     .async()
-                    .map(hashed -> toValidatedUser(request, hashed));
+                    .map(hashed -> toValidUser(request, hashed));
             }
 
-            private ValidatedUser toValidatedUser(ValidRequest request, HashedPassword hashed) {
-                return new ValidatedUser(request.email(), hashed, request.referralCode());
+            private ValidUser toValidUser(ValidRequest request, HashedPassword hashed) {
+                return new ValidUser(request.email(), hashed, request.referralCode());
             }
         }
         return new registerUser(checkEmail, hashPassword, saveUser, generateToken);
@@ -2149,7 +2174,7 @@ public interface HashPassword {
 
 // Step 3: Save the user
 public interface SaveUser {
-    Promise<UserId> apply(ValidatedUser user);
+    Promise<UserId> apply(ValidUser user);
 }
 
 // Step 4: Generate a confirmation token
@@ -2160,7 +2185,7 @@ public interface GenerateToken {
 
 Supporting types:
 ```java
-record ValidatedUser(Email email, HashedPassword hashed, Option<ReferralCode> refCode) {}
+record ValidUser(Email email, HashedPassword hashed, Option<ReferralCode> refCode) {}
 record HashedPassword(String value) {}
 record UserId(String value) {}
 record ConfirmationToken(String value) {}
@@ -2206,7 +2231,7 @@ class BcryptPasswordHasher implements HashPassword {
 class JooqUserRepository implements SaveUser {
     private final DSLContext dsl;
 
-    public Promise<UserId> apply(ValidatedUser user) {
+    public Promise<UserId> apply(ValidUser user) {
         return Promise.lift(
             RepositoryError.DatabaseFailure::cause,
             () -> {

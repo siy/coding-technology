@@ -202,14 +202,28 @@ The constructor is private (or package-private). The only way to get an `Email` 
 
 **Note:** As of current Java versions, records do not support declaring the canonical constructor as private. This limitation means the constructor remains accessible within the same package. Future Java versions may address this. Until then, rely on team discipline and code review to ensure value objects are only constructed through their factory methods. The good news: violations are highly visible in code - since all components are normally constructed via factory methods, any direct `new Email(...)` call stands out immediately. This makes the issue easy to catch using automated static analysis checks or by instructing AI code review tools to flag direct constructor usage for value objects.
 
-### Naming Convention
+### Naming Conventions
 
-Factories are always named after their type, lowercase-first (camelCase). This creates a natural, readable call site: `Email.email(...)`, `Password.password(...)`, `AccountId.accountId(...)`.
+**Factory naming**: Factories are always named after their type, lowercase-first (camelCase). This creates a natural, readable call site: `Email.email(...)`, `Password.password(...)`, `AccountId.accountId(...)`.
 
 It's slightly redundant but:
 - **Unambiguous**: You know exactly what's being created
 - **Grep-friendly**: Searching for "Email.email" finds all construction sites
 - **Allows static imports**: `import static Email.email` lets you write `email(raw)` while preserving context
+
+**Validated input naming**: Use the `Valid` prefix (not `Validated`) for types representing validated inputs or intermediate data:
+
+```java
+// DO: Use Valid prefix
+record ValidRequest(Email email, Password password) { ... }
+record ValidUser(Email email, HashedPassword hashed) { ... }
+
+// DON'T: Use Validated prefix (too verbose, no additional semantics)
+record ValidatedRequest(...)
+record ValidatedUser(...)
+```
+
+The `Valid` prefix is concise and conveys the same meaning. The past-tense `Validated` adds no semantic value - both indicate data has passed validation
 
 ```java
 // Usage examples

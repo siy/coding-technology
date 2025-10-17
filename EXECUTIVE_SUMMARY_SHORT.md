@@ -1,6 +1,6 @@
 # Restoring Predictability in Engineering Delivery
 
-**Version:** 1.6.0 | **Target Audience:** CTOs, VPs of Engineering, Engineering Managers | **Word Count:** 865
+**Version:** 1.6.1 | **Target Audience:** CTOs, VPs of Engineering, Engineering Managers | **Word Count:** 865
 
 ---
 
@@ -139,5 +139,5 @@ Adopt incrementally without rewriting existing code:
 
 ---
 
-**Document Version:** 1.5.0 (2025-01-07)
+**Document Version:** 1.6.1 (2025-01-17)
 **Copyright © 2025 Sergiy Yevtushenko. Released under the MIT License.**

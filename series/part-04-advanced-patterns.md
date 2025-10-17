@@ -624,15 +624,27 @@ void execute_succeeds_forValidInput() {
 3. **Method references**: Use `Assertions::fail` instead of `() -> Assertions.fail()`
 4. **Clear intent**: The test structure mirrors the functional flow
 
-### Test Naming Convention
+### Naming Conventions
 
-Follow the pattern: `methodName_outcome_condition`
+**Test naming**: Follow the pattern: `methodName_outcome_condition`
 
 ```java
 void validRequest_succeeds_forValidInput()
 void validRequest_fails_forInvalidEmail()
 void execute_succeeds_forValidInput()
 void execute_fails_whenEmailAlreadyExists()
+```
+
+**Validated input naming**: Use the `Valid` prefix (not `Validated`) for types representing validated data:
+
+```java
+// DO
+record ValidRequest(Email email, Password password) { ... }
+record ValidUser(Email email, HashedPassword hashed) { ... }
+
+// DON'T
+record ValidatedRequest(...)  // Too verbose
+record ValidatedUser(...)      // No additional semantics
 ```
 
 ### Testing with Stubs

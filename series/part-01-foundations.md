@@ -403,13 +403,13 @@ Add to your `pom.xml`:
 <dependency>
    <groupId>org.pragmatica-lite</groupId>
    <artifactId>core</artifactId>
-   <version>0.8.0</version>
+   <version>0.8.3</version>
 </dependency>
 ```
 
 Or Gradle:
 ```gradle
-implementation 'org.pragmatica-lite:core:0.8.0'
+implementation 'org.pragmatica-lite:core:0.8.3'
 ```
 
 Library documentation: https://central.sonatype.com/artifact/org.pragmatica-lite/core

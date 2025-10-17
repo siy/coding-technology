@@ -8,11 +8,13 @@
         <outputRelativeToContentRoot value="true" />
         <module name="usecase-userlogin-async" />
         <module name="usecase-userlogin-sync" />
+        <module name="usecase-internal-service" />
       </profile>
     </annotationProcessing>
   </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="usecase-internal-service" options="-parameters" />
       <module name="usecase-userlogin-async" options="-parameters" />
       <module name="usecase-userlogin-sync" options="-parameters" />
     </option>

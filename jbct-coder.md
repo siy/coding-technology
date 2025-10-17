@@ -1,7 +1,7 @@
 ---
 name: jbct-coder
 title: Java Backend Coding Technology Agent
-description: Specialized agent for generating business logic code using Java Backend Coding Technology v1.5.0 with Pragmatica Lite Core 0.8.0. Produces deterministic, AI-friendly code that matches human-written code structurally and stylistically. Includes evolutionary testing strategy guidance.
+description: Specialized agent for generating business logic code using Java Backend Coding Technology v1.6.1 with Pragmatica Lite Core 0.8.3. Produces deterministic, AI-friendly code that matches human-written code structurally and stylistically. Includes evolutionary testing strategy guidance.
 tools: Read, Write, Edit, MultiEdit, Grep, Glob, LS, Bash, TodoWrite, Task, WebSearch, WebFetch
 ---
 
@@ -59,7 +59,7 @@ You are a Java Backend Coding Technology developer with deep knowledge of Java, 
 
 ## Purpose
 
-This guide provides **deterministic instructions** for generating business logic code using Pragmatica Lite Core 0.8.0. Follow these rules precisely to ensure AI-generated code matches human-written code structurally and stylistically.
+This guide provides **deterministic instructions** for generating business logic code using Pragmatica Lite Core 0.8.3. Follow these rules precisely to ensure AI-generated code matches human-written code structurally and stylistically.
 
 ---
 
@@ -143,15 +143,21 @@ Every function implements **exactly one** pattern:
 ### 5. Single Level of Abstraction
 
 **Lambdas may contain ONLY**:
-- Method references: `Email::new`, `this::processUser`
+- Method references: `Email::new`, `this::processUser`, `HashedPassword::new`
 - Simple parameter forwarding: `param -> someMethod(outerParam, param)`
+- Simple constructors with captured parameters: `hashed -> new ValidatedCredentials(email, hashed)` (only when mixing lambda parameters with outer scope variables)
+
+**Use constructor references when all parameters come from lambda:**
+- DO: `.map(Email::new)` instead of `.map(value -> new Email(value))`
+- DO: `.map(Pair::new)` instead of `.map((a, b) -> new Pair(a, b))`
 
 **Forbidden in lambdas**:
-- Ternaries
+- Ternaries (use `filter()` or extract to named function)
 - if/switch statements
 - Nested maps/flatMaps
-- Object construction
+- Complex object construction (multiple fields, logic, nested objects)
 - Stream processing
+- Any logic beyond simple forwarding
 
 **Extract complex logic to named functions.**
 
@@ -336,6 +342,8 @@ Promise<ExchangeRate> fetchRate(Currency from, Currency to) {
 **Design Validation**: Fork-Join branches must be truly independent. Hidden dependencies often reveal design issues (data redundancy, incorrect data organization, or missing abstractions).
 
 ### Condition Pattern
+
+**Critical rule:** Condition performs **routing only** - it selects which function to call based on input data, then forwards data **untouched** to that function and returns its result. No data transformation happens in the conditional itself - all transformation is delegated to the called functions.
 
 **Simple ternary** (extract complex conditions):
 ```java
@@ -832,7 +840,7 @@ public class JooqUserRepository implements SaveUser {
 
 ## References
 
-- **Full Guide**: `CODING_GUIDE.md` - Comprehensive explanation of all patterns and principles (v1.3.0)
+- **Full Guide**: `CODING_GUIDE.md` - Comprehensive explanation of all patterns and principles (v1.6.1)
 - **Testing Strategy**: `series/part-05-testing-strategy.md` - Evolutionary testing approach, integration-first philosophy, test organization
 - **API Reference**: `CLAUDE.md` - Complete Pragmatica Lite API documentation
 - **Technology Overview**: `TECHNOLOGY.md` - High-level pattern catalog

@@ -2,16 +2,19 @@
 
 ## Preface
 
-The previous article, [Java Backend Coding Technology](CODING_GUIDE.md), is a technical description and reference, it's densely packed with information but omits 
-general considerations behind the approach. This article is a complementary part, which explains the technology from higher level.
+The previous article, [Java Backend Coding Technology](CODING_GUIDE.md), is a technical description and reference. Being densely packed with
+technical details it deliberately omits higher level considerations behind the approach. Let's fill this gap.
 
 ## Introduction
 
-Business processes have natural structure. "Register a user" means: validate email, validate password, hash the password, check if email exists, save to database. Five steps, executed in sequence, where each step must succeed before the next begins.
+Business processes have a natural structure. "Register a user" means: validate email, validate password, hash the password, check if email exists, save to database. Five steps, executed in sequence, where each step must succeed before the next begins.
 
 Traditional code buries this structure. Between "validate email" and "hash password," you write try-catch blocks, null checks, if-else scaffolding, error accumulation logic, thread synchronization. The business process disappears under layers of coordination mechanics.
+This inevitable makes business/technical ratio low: technical details dilute business logic, extraction and reconstruction requires significant effort.
+The Coding Technology focuses on reduction and standardization of technical details, shifting as much work as possible to compiler, type system, and underlying functional library. 
+Consequences? The technical coordination layer virtually disappears. The code reads like the business requirement: validate, then hash, then check, then save. No scaffolding. No wiring. The middle layer becomes invisible.
 
-Pattern-based architecture makes this coordination disappear. The code reads like the business requirement: validate, then hash, then check, then save. No scaffolding. No wiring. The middle layer becomes invisible.
+**Note:** The brevity is not the goal, but the consequence. 
 
 ## What is the Middle Layer?
 
@@ -94,9 +97,9 @@ public Promise<RegistrationResult> registerUser(String emailRaw, String password
     return Result.all(Email.email(emailRaw),
                       Password.password(passwordRaw))
                  .flatMap(this::hashPassword)
+                 .async()
                  .flatMap(this::checkEmailNotExists)
-                 .flatMap(this::saveUser)
-                 .async();
+                 .flatMap(this::saveUser);
 }
 ```
 
@@ -130,9 +133,11 @@ This is mechanical work. It follows patterns. It's predictable. It should be inv
 - Monads: Option, Result, Promise
 - Language features: classes, interfaces, generics
 
-This is the foundation. You can't eliminate it. But you can hide it behind domain types.
+This is the foundation. You can't eliminate it entirely. Part of it (collections and monads) holds important business semantics. Another part (primitive types)
+can and should be hidden behind domain-specific Value Objects.
 
 **The goal**: Make middle layer disappear so top layer (business domain) sits directly on bottom layer (types and monads). When successful, code reads as pure business logic.
+
 
 ## Concrete Example: User Registration Process
 
@@ -267,7 +272,7 @@ public class UserRegistrationService {
 
 **Still visible:** Manual error checking after every step. Explicit unwrapping. Error threading logic.
 
-### Pattern-Based Implementation (Invisible Middle Layer)
+### Coding Technology Implementation (Invisible Middle Layer)
 
 ```java
 public class UserRegistrationService {
@@ -280,24 +285,24 @@ public class UserRegistrationService {
                      .flatMap(this::saveUser);
     }
 
-    private Result<ValidatedCredentials> hashPassword(Email email, Password password) {
+    private Result<ValidCredentials> hashPassword(Email email, Password password) {
         return passwordHasher.hash(password)
-                             .map(hashed -> new ValidatedCredentials(email, hashed));
+                             .map(hashed -> new ValidCredentials(email, hashed));
     }
 
-    private Promise<ValidatedCredentials> checkEmailNotExists(ValidatedCredentials creds) {
-        return userRepository.existsByEmail(creds.email())
-                             .flatMap(exists -> checkNotExists(exists, creds));
+    private Promise<ValidCredentials> checkEmailNotExists(ValidCredentials credentials) {
+        return userRepository.existsByEmail(credentials.email())
+                             .flatMap(exists -> checkNotExists(exists, credentials));
     }
 
-    private Result<ValidatedCredentials> checkNotExists(boolean exists, ValidatedCredentials creds) {
+    private Result<ValidCredentials> checkNotExists(boolean exists, ValidCredentials credentials) {
         return exists
             ? EmailAlreadyExistsError.INSTANCE.result()
-            : Result.success(creds);
+            : Result.success(credentials);
     }
 
-    private Promise<User> saveUser(ValidatedCredentials creds) {
-        return userRepository.save(new User(creds.email(), creds.hashed()));
+    private Promise<User> saveUser(ValidCredentials credentials) {
+        return userRepository.save(new User(credentials.email(), credentials.hashed()));
     }
 }
 ```
@@ -308,7 +313,7 @@ public class UserRegistrationService {
 - **Middle layer lines:** 0
 - **Ratio:** 4:1 (helper methods improve readability)
 
-**What you see:** The business process structure directly: validate both inputs together (`all`), then hash, then check, then save.
+**What you see:** The business process structure directly: validate both inputs together (`all`), then hash, then check, then save. Methods are naturally named after business logic steps and help preserve context.
 
 **What's invisible:** Error accumulation in `all()`. Error threading through `flatMap()`. Short-circuiting on first failure. Type-safe value passing between steps.
 
@@ -334,7 +339,7 @@ if (stepC.isFailure()) return Result.failure(stepC.error());
 return stepC;
 ```
 
-**Pattern-based version (invisible):**
+**Coding Technology version (invisible):**
 ```java
 return doStepA()
     .flatMap(this::doStepB)
@@ -365,11 +370,12 @@ if (!errors.isEmpty()) {
 return processResults(resultA.unwrap(), resultB.unwrap(), resultC.unwrap());
 ```
 
-**Pattern-based version (invisible):**
+**Coding Technology version (invisible):**
 ```java
 return Result.all(doTaskA(), doTaskB(), doTaskC())
              .map(this::processResults);
 ```
+**What you see:** Explicitly expressed independence of all tasks from logic- and data-wise.
 
 **What disappeared:** Manual error collection. Explicit failure checking. Unwrapping logic. Composite error construction. Data transformation (A, B, C → Result) is explicit in `processResults`, not scattered in variable declarations.
 
@@ -396,7 +402,7 @@ if (user.hasPermission(permission)) {
 }
 ```
 
-**Pattern-based version (invisible) - using filter:**
+**Coding Technology version (invisible) - using filter:**
 ```java
 return findUser(id)
     .filter(UserInactiveError::new, User::isActive)
@@ -405,7 +411,7 @@ return findUser(id)
     .flatMap(this::performAction);
 ```
 
-**Pattern-based version (invisible) - using ternary operator:**
+**Coding Technology version (invisible) - using ternary operator:**
 ```java
 Result<Discount> calculateDiscount(Order order) {
     return order.isPremiumUser()
@@ -414,7 +420,7 @@ Result<Discount> calculateDiscount(Order order) {
 }
 ```
 
-**Pattern-based version (invisible) - using switch expression:**
+**Coding Technology version (invisible) - using switch expression:**
 ```java
 Result<ShippingCost> calculateShipping(ShippingMethod method, Order order) {
     return switch (method) {
@@ -459,7 +465,7 @@ if (!errors.isEmpty()) {
 return Result.success(results);
 ```
 
-**Pattern-based version (invisible):**
+**Coding Technology version (invisible):**
 ```java
 return Result.allOf(getUsers().stream()
                               .map(this::validateUser)
@@ -567,14 +573,14 @@ public OrderResult processOrder(OrderRequest request) {
 
 ```java
 public Promise<Order> processOrder(OrderRequest request) {
-    return ValidatedOrderRequest.validate(request)
-                                 .async()
-                                 .flatMap(this::reserveInventory)
-                                 .flatMap(this::chargeCustomer)
-                                 .flatMap(this::saveOrder);
+    return ValidOrderRequest.validate(request)
+                            .async()
+                            .flatMap(this::reserveInventory)
+                            .flatMap(this::chargeCustomer)
+                            .flatMap(this::saveOrder);
 }
 
-private Promise<ReservedOrder> reserveInventory(ValidatedOrderRequest request) {
+private Promise<ReservedOrder> reserveInventory(ValidOrderRequest request) {
     return Promise.allOf(request.items()
                                .stream()
                                .map(inventoryService::checkAndReserve)
@@ -598,7 +604,7 @@ private Promise<Order> saveOrder(ChargedOrder charged) {
 
 **Line count:** ~20 lines. Business steps: 4. Ratio: 5:1.
 
-**Business logic visibility:** In the pattern-based version, you can read the top-level method and immediately understand the business process. Each helper method has a single responsibility that matches a business concept. Technical mechanics (async, error handling) are encoded in types.
+**Business logic visibility:** In the Coding Technology version, you can read the top-level method and immediately understand the business process. Each helper method has a single responsibility that matches a business concept. Technical mechanics (async, error handling) are encoded in types.
 
 ## The Compiler as Coordination Engine
 
@@ -625,7 +631,7 @@ public User registerUser(String email, String password) {
 **Coordination code:** try-catch structure, exception wrapping, logging.
 
 ```java
-// Pattern-based: type signature encodes error handling
+// Coding Technology: type signature encodes error handling
 public Result<User> registerUser(String email, String password) {
     return Result.all(Email.email(email),
                       Password.password(password))
@@ -658,15 +664,17 @@ public CompletableFuture<User> findUser(UserId id) {
 **Coordination code:** executor setup, exception conversion, null checking, CompletionException wrapping.
 
 ```java
-// Pattern-based: type signature encodes async coordination
+// Coding Technology: type signature encodes async coordination
 public Promise<User> findUser(UserId id) {
-    return Promise.lift(
-        DatabaseError::from,
-        () -> database.findById(id.value())
-    ).flatMap(entity -> entity
-        .toResult(UserNotFoundError.of(id))
-        .map(this::mapToUser)
-        .async());
+    return Promise.lift(DatabaseError::cause,
+                        () -> database.findById(id.value()))
+                  .flatMap(entity -> toUser(entity, id));
+}
+
+private Promise<User> toUser(Option<UserEntity> entity, UserId id) {
+    return entity.toResult(new UserNotFoundError(id))
+                 .map(this::mapToUser)
+                 .async();
 }
 ```
 
@@ -727,7 +735,7 @@ The invisible middle layer is achieved clarity. When coordination mechanics disa
 
 **Three-layer collapse:** Business domain sits directly on language primitives. Middle layer (error handling, async, null safety, control flow) becomes type-driven. Code reads as pure business logic.
 
-**Visibility inversion:** Traditional code shows HOW (try-catch, null checks, threading). Pattern-based code shows WHAT (validate, hash, save). Business process structure becomes the primary visible element.
+**Visibility inversion:** Traditional code shows HOW (try-catch, null checks, threading). Coding Technology shows WHAT (validate, hash, save). Business process structure becomes the primary visible element.
 
 **Compiler as coordinator:** Type signatures encode coordination patterns. `Result.all()` encodes error accumulation. `flatMap()` encodes sequential error threading. The compiler generates wiring from types.
 

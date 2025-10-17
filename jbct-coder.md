@@ -448,9 +448,120 @@ var decorated = withTimeout(timeSpan(5).seconds(),
 
 ---
 
+## Testing Requirements
+
+> **For comprehensive testing strategy**, see **[Part 5: Testing Strategy & Evolutionary Approach](series/part-05-testing-strategy.md)**. This section defines mandatory testing requirements for code generation.
+
+### What Must Be Tested
+
+**Mandatory:**
+
+1. **Value Object Validation** (unit tests):
+   - **All validation rules** must have corresponding tests
+   - Both success and failure cases for each rule
+   - Example: If `Email` validates format and length, test both valid/invalid format AND valid/invalid length
+
+2. **Use Case Happy Path** (integration test):
+   - **Every use case** must have at least one happy path test
+   - Test with all steps stubbed initially
+   - Verifies composition and data flow through all steps
+
+3. **Use Case Critical Failures** (integration tests):
+   - **Each step failure** must be tested
+   - Verifies error propagation through the chain
+   - Example: If use case has 4 steps, test 4 failure scenarios (one per step)
+
+**Recommended:**
+
+4. **Adapter Contract Tests**:
+   - Test adapter success path
+   - Test adapter error handling (exceptions → Cause)
+   - Verifies adapter implements step interface correctly
+
+5. **Cross-Field Validation**:
+   - If ValidRequest has cross-field rules, test them explicitly
+   - Example: "Premium users must have strong passwords"
+
+### Test Organization
+
+**Use `@Nested` classes** to organize large test suites:
+
+```java
+class RegisterUserTest {
+    @Nested
+    class ValidationTests {
+        @Test void validRequest_succeeds_forValidInput() { }
+        @Test void validRequest_fails_forInvalidEmail() { }
+        // ... more validation tests
+    }
+
+    @Nested
+    class HappyPath {
+        @Test void execute_succeeds_forValidInput() { }
+    }
+
+    @Nested
+    class StepFailures {
+        @Test void execute_fails_whenEmailAlreadyExists() { }
+        @Test void execute_fails_whenPasswordHashingFails() { }
+        // ... one per step
+    }
+}
+```
+
+**Extract common setup** to `@BeforeEach`:
+```java
+private RegisterUser useCase;
+
+@BeforeEach
+void setup() {
+    CheckEmail checkEmail = req -> Promise.success(req);
+    HashPassword hashPassword = pwd -> Result.success(new HashedPassword("hashed"));
+    SaveUser saveUser = user -> Promise.success(new UserId("user-123"));
+
+    useCase = RegisterUser.registerUser(checkEmail, hashPassword, saveUser);
+}
+```
+
+**Use test data builders** for complex inputs:
+```java
+class RequestBuilder {
+    private String email = "user@example.com";
+    private String password = "Valid1234";
+    private String referralCode = null;
+
+    RequestBuilder withEmail(String email) {
+        this.email = email;
+        return this;
+    }
+
+    Request build() {
+        return new Request(email, password, referralCode);
+    }
+}
+
+// In tests
+var request = new RequestBuilder()
+    .withEmail("invalid")
+    .build();
+```
+
+### Coverage Expectations
+
+**Minimum acceptable coverage:**
+- Value objects: 100% of validation rules tested
+- Use cases: Happy path + all step failures
+- Adapters: Success case + error handling
+
+**What NOT to test:**
+- Getters/setters on records
+- Factory methods that only call constructors
+- Framework configuration code
+- Private helper methods (test through public API)
+
 ## Testing Patterns
 
-> **For comprehensive testing strategy**, see **[Part 5: Testing Strategy & Evolutionary Approach](series/part-05-testing-strategy.md)**. This section covers basic patterns for immediate code generation.
+> **Note:** This section covers basic patterns for immediate code generation. See [Part 5](series/part-05-testing-strategy.md) for evolutionary testing approach.
 
 ### Testing Philosophy: Integration-First
 
@@ -458,11 +569,6 @@ var decorated = withTimeout(timeSpan(5).seconds(),
 1. Start with stubs for all steps (tests pass immediately)
 2. Replace stubs incrementally, adding test vectors for new scenarios
 3. Final state: Only adapter leaves stubbed, complete behavior coverage
-
-**What to test:**
-- Value objects: All validation rules (unit tests)
-- Use cases: All execution paths with stubbed adapters (integration tests)
-- Adapters: Success + error modes (contract tests)
 
 ### Core Testing Pattern
 
@@ -757,6 +863,104 @@ void execute_fails_whenEmailAlreadyExists() {
 - Use `@Nested` classes for test categorization (HappyPath, ValidationFailures, StepFailures)
 - Extract common setup to `@BeforeEach`
 - Consider test data builders for complex requests
+
+---
+
+## Project Structure & Package Organization
+
+> **For complete details**, see **[CODING_GUIDE.md: Project Structure](CODING_GUIDE.md#project-structure--package-organization)**. This section summarizes key rules for code generation.
+
+### Vertical Slicing Philosophy
+
+Organize code around **vertical slices** - each use case is self-contained with its own business logic, validation, and error handling. Business logic is **isolated within each use case package**, not centralized.
+
+### Standard Package Layout
+
+```
+com.example.app/
+├── usecase/
+│   ├── registeruser/              # Use case 1 (vertical slice)
+│   │   ├── RegisterUser.java      # Use case interface + factory
+│   │   ├── RegistrationError.java # Sealed error interface
+│   │   └── [internal types]       # ValidRequest, intermediate records
+│   │
+│   └── getuserprofile/            # Use case 2 (vertical slice)
+│       ├── GetUserProfile.java
+│       ├── ProfileError.java
+│       └── [internal types]
+│
+├── domain/
+│   └── shared/                    # Reusable value objects ONLY
+│       ├── Email.java
+│       ├── Password.java
+│       └── UserId.java
+│
+├── adapter/
+│   ├── rest/                      # Inbound adapters (HTTP)
+│   │   └── UserController.java
+│   │
+│   └── persistence/               # Outbound adapters (DB, external APIs)
+│       └── JooqUserRepository.java
+│
+└── config/                        # Framework configuration
+    └── UseCaseConfig.java
+```
+
+### Placement Rules
+
+**Use Case Packages** (`usecase.<usecasename>`):
+- Use case interface and factory
+- Error types (sealed interface)
+- Step interfaces (nested in use case)
+- Internal types (ValidRequest, intermediate records)
+- **Rule**: If used only by this use case, keep it here
+
+**Domain Shared** (`domain.shared`):
+- Value objects reused across multiple use cases
+- **Rule**: Move here when a second use case needs it
+- **Anti-pattern**: Don't create upfront - let reuse drive the move
+
+**Adapter Packages** (`adapter.*`):
+- `adapter.rest` - HTTP controllers, DTOs
+- `adapter.persistence` - Database repositories
+- `adapter.messaging` - Message queue consumers/producers
+- `adapter.external` - HTTP clients for external services
+- **Rule**: Adapters implement step interfaces from use cases
+
+**Config Package** (`config`):
+- Framework configuration, bean wiring
+- **Rule**: No business logic, only infrastructure
+
+### Key Principles
+
+1. **Vertical Slicing**: Each use case package is self-contained
+2. **Minimal Sharing**: Only share value objects when truly reusable
+3. **Framework at Edges**: Business logic has zero framework dependencies
+4. **Clear Dependencies**:
+   - Use cases depend on: `domain.shared`
+   - Adapters depend on: use cases (implement step interfaces)
+   - Config depends on: use cases + adapters (wires them together)
+   - **Never**: use case → adapter, adapter → adapter
+
+### Example: Package Placement
+
+**First use of Email value object:**
+```
+usecase.registeruser/
+└── Email.java  // Keep it here
+```
+
+**Second use case needs Email:**
+```
+domain.shared/
+└── Email.java  // Move it here now
+```
+
+**Database access for use case:**
+```
+adapter.persistence/
+└── JooqUserRepository.java  // implements RegisterUser.SaveUser
+```
 
 ---
 

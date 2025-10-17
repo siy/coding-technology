@@ -90,14 +90,14 @@ public interface RegisterUser {
                     .flatMap(generateToken::apply);
             }
 
-            private Promise<ValidatedUser> hashPasswordForUser(ValidRequest request) {
+            private Promise<ValidUser> hashPasswordForUser(ValidRequest request) {
                 return hashPassword.apply(request.password())
                     .async()
-                    .map(hashed -> toValidatedUser(request, hashed));
+                    .map(hashed -> toValidUser(request, hashed));
             }
 
-            private ValidatedUser toValidatedUser(ValidRequest request, HashedPassword hashed) {
-                return new ValidatedUser(request.email(), hashed, request.referralCode());
+            private ValidUser toValidUser(ValidRequest request, HashedPassword hashed) {
+                return new ValidUser(request.email(), hashed, request.referralCode());
             }
         }
         return new registerUser(checkEmail, hashPassword, saveUser, generateToken);

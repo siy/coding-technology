@@ -374,3 +374,4 @@ void execute_succeeds_forValidInput() {
 - CODING_GUIDE.md is the main document we're working on. Usually if I'm mentioning document I mean CODING_GUIDE.md unless we're discussing in specific context dedicated to other document.
 - Tag version only after explicit command. Sometimes we will be making more than one change.
 - Preserve header during changes in jbct-coder.md. You're free to update decription if necessary, for example, version change or clarifications/updates in the description. If you think that other fields need to be changed, ask firts.
+- If I inform that PR is merged, then check current branch. If it is not main, switch to main. Then pull changes.

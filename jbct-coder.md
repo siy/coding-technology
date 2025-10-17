@@ -98,6 +98,17 @@ public record Email(String value) {
 
 **Factory Naming**: Always `TypeName.typeName(...)` (lowercase-first)
 
+**Validated Input Naming**: Use `Valid` prefix (not `Validated`) for post-validation types:
+```java
+// DO
+record ValidRequest(Email email, Password password) { ... }
+record ValidUser(Email email, HashedPassword hashed) { ... }
+
+// DON'T
+record ValidatedRequest(...)  // Too verbose
+record ValidatedUser(...)      // No additional semantics
+```
+
 ### 3. No Business Exceptions
 
 Business logic **never** throws exceptions. All failures flow through `Result` or `Promise` as typed `Cause` objects.
@@ -145,7 +156,7 @@ Every function implements **exactly one** pattern:
 **Lambdas may contain ONLY**:
 - Method references: `Email::new`, `this::processUser`, `HashedPassword::new`
 - Simple parameter forwarding: `param -> someMethod(outerParam, param)`
-- Simple constructors with captured parameters: `hashed -> new ValidatedCredentials(email, hashed)` (only when mixing lambda parameters with outer scope variables)
+- Simple constructors with captured parameters: `hashed -> new ValidCredentials(email, hashed)` (only when mixing lambda parameters with outer scope variables)
 
 **Use constructor references when all parameters come from lambda:**
 - DO: `.map(Email::new)` instead of `.map(value -> new Email(value))`
@@ -291,7 +302,7 @@ public Promise<Response> execute(Request request) {
     return ValidRequest.validRequest(request)  // Result<ValidRequest>
         .async()                               // Lift to Promise
         .flatMap(checkEmail::apply)            // Promise<ValidRequest>
-        .flatMap(this::hashPasswordForUser)    // Promise<ValidatedUser>
+        .flatMap(this::hashPasswordForUser)    // Promise<ValidUser>
         .flatMap(saveUser::apply)              // Promise<UserId>
         .flatMap(generateToken::apply);        // Promise<Response>
 }
@@ -573,7 +584,7 @@ public interface RegisterUser {
     }
 
     interface SaveUser {
-        Promise<UserId> apply(ValidatedUser user);
+        Promise<UserId> apply(ValidUser user);
     }
 
     interface GenerateToken {
@@ -602,14 +613,14 @@ public interface RegisterUser {
                     .flatMap(generateToken::apply);
             }
 
-            private Promise<ValidatedUser> hashPasswordForUser(ValidRequest request) {
+            private Promise<ValidUser> hashPasswordForUser(ValidRequest request) {
                 return hashPassword.apply(request.password())
                     .async()
-                    .map(hashed -> toValidatedUser(request, hashed));
+                    .map(hashed -> toValidUser(request, hashed));
             }
 
-            private ValidatedUser toValidatedUser(ValidRequest request, HashedPassword hashed) {
-                return new ValidatedUser(request.email(), hashed, request.referralCode());
+            private ValidUser toValidUser(ValidRequest request, HashedPassword hashed) {
+                return new ValidUser(request.email(), hashed, request.referralCode());
             }
         }
         return new registerUser(checkEmail, hashPassword, saveUser, generateToken);
@@ -817,7 +828,7 @@ public class UserController {
 public class JooqUserRepository implements SaveUser {
     private final DSLContext dsl;
 
-    public Promise<UserId> apply(ValidatedUser user) {
+    public Promise<UserId> apply(ValidUser user) {
         return Promise.lift(
             RepositoryError.DatabaseFailure::cause,
             () -> {

@@ -12,11 +12,13 @@
         <maven.compiler.target>25</maven.compiler.target>
         <maven.compiler.release>25</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <pragmatica.version>0.8.3</pragmatica.version>
     </properties>
 
     <modules>
         <module>usecase-userlogin-sync</module>
         <module>usecase-userlogin-async</module>
+        <module>usecase-internal-service</module>
     </modules>
 
     <dependencyManagement>
@@ -24,7 +26,12 @@
             <dependency>
                 <groupId>org.pragmatica-lite</groupId>
                 <artifactId>core</artifactId>
-                <version>0.8.0</version>
+                <version>${pragmatica.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.pragmatica-lite</groupId>
+                <artifactId>jackson</artifactId>
+                <version>${pragmatica.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

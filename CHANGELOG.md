@@ -7,20 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Changed
-- **Naming convention standardization**: Replaced `Validated` prefix with `Valid` prefix throughout all documentation
-  - `ValidatedUser` → `ValidUser`
-  - `ValidatedCredentials` → `ValidCredentials`
-  - `ValidatedRequest` → `ValidRequest` (where applicable)
-  - Rationale: `Valid` is concise and conveys the same meaning; `Validated` adds no semantic value
-- **All version references updated** from 1.6.0 to 1.6.1
-- **Pragmatica Lite Core version** updated from 0.8.0 to 0.8.3 in all examples
-- **Documentation of Valid prefix naming convention** added to:
-  - CODING_GUIDE.md (new "Validated Input Naming" section)
-  - jbct-coder.md (added to factory naming section)
-  - series/part-02-core-principles.md (expanded naming conventions)
-  - series/part-04-advanced-patterns.md (added to naming conventions)
-
 ## [1.6.1] - 2025-01-17
 
 ### Added
@@ -35,6 +21,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **usecase-internal-service example** demonstrating internal service patterns
 
 ### Changed
+- **Naming convention standardization**: Replaced `Validated` prefix with `Valid` prefix throughout all documentation
+  - `ValidatedUser` → `ValidUser`
+  - `ValidatedCredentials` → `ValidCredentials`
+  - `ValidatedRequest` → `ValidRequest` (where applicable)
+  - Rationale: `Valid` is concise and conveys the same meaning; `Validated` adds no semantic value
+- **Documentation of Valid prefix naming convention** added to:
+  - CODING_GUIDE.md (new "Validated Input Naming" section)
+  - jbct-coder.md (added to factory naming section)
+  - series/part-02-core-principles.md (expanded naming conventions)
+  - series/part-04-advanced-patterns.md (added to naming conventions)
+- **All version references updated** from 1.6.0 to 1.6.1
+- **Pragmatica Lite Core version** updated from 0.8.0 to 0.8.3 in all examples
 - **CLAUDE.md API Reference** updated from Pragmatica Lite Core 0.8.0 to 0.8.3
   - Added new convenience methods: `flatMap2()`, `mapToUnit()`
   - Added Run variants: `onPresentRun()`, `onEmptyRun()`, `onSuccessRun()`, `onFailureRun()`, `onResultRun()`

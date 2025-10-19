@@ -1,6 +1,6 @@
 # Java Backend Coding Technology
 
-> **Version 1.6.1** | [Full Changelog](CHANGELOG.md)
+> **Version 1.6.2** | [Full Changelog](CHANGELOG.md)
 
 A framework-agnostic methodology for writing predictable, testable Java backend code optimized for human-AI collaboration.
 
@@ -52,7 +52,7 @@ A framework-agnostic methodology for writing predictable, testable Java backend 
 ### Changelog & Versioning
 
 - **[CHANGELOG.md](CHANGELOG.md)** - Version history following [Keep a Changelog](https://keepachangelog.com/)
-  - Current version: 1.6.1
+  - Current version: 1.6.2
   - Semantic versioning for documentation releases
 
 ## 🔧 For AI Collaboration

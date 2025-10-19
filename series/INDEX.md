@@ -1,6 +1,6 @@
 # Java Backend Coding Technology: Complete Learning Series
 
-**Based on:** [CODING_GUIDE.md](../CODING_GUIDE.md) v1.6.1
+**Based on:** [CODING_GUIDE.md](../CODING_GUIDE.md) v1.6.2
 
 ## About This Series
 

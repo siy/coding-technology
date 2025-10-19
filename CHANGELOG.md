@@ -7,6 +7,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.6.2] - 2025-01-17
+
+### Added
+- **jbct-reviewer.md** - Claude Code subagent for JBCT-specialized code review
+  - Reviews code for JBCT compliance (Four Return Kinds, Parse Don't Validate, No Business Exceptions)
+  - Checks structural patterns (Leaf, Sequencer, Fork-Join, Condition, Iteration, Aspects)
+  - Validates project structure and naming conventions
+  - Enforces testing requirements
+  - Provides actionable feedback with severity levels and examples
+- **Unit type guidance** in CODING_GUIDE.md, jbct-coder.md, and Critical Rules Checklist
+  - Explicit prohibition of `Void` type usage
+  - Mandatory use of `Result<Unit>` or `Promise<Unit>` for operations without meaningful return values
+  - Use `Result.unitResult()` for successful `Result<Unit>` creation
+- **Project Structure & Package Organization** section in jbct-coder.md
+  - Vertical slicing architecture guidelines
+  - Package naming conventions and placement rules
+  - Layer responsibilities (domain, usecase, adapter)
+  - Value object, cause, and step placement rules
+- **Testing Requirements** section in jbct-coder.md
+  - Mandatory tests (value objects, use cases with end-to-end stubs)
+  - Recommended tests (complex leaves, adapters)
+  - Functional assertion patterns with onSuccess/onFailure
+  - Test organization guidelines
+- **Website dark mode feature**
+  - Manual theme toggle button with localStorage persistence
+  - System preference detection via prefers-color-scheme
+  - No-flash initialization script
+  - Dark mode CSS variables and styles
+
+### Changed
+- **README.md AI collaboration section** replaced with Claude Code Subagents section
+  - Added download links for jbct-coder.md and jbct-reviewer.md
+  - Installation instructions for subagents (~/.claude/agents/)
+  - Usage guidance for invoking subagents
+- **All version references updated** from 1.6.1 to 1.6.2
+
 ## [1.6.1] - 2025-01-17
 
 ### Added

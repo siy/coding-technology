@@ -152,6 +152,37 @@ public interface AccountRepository {
 }
 ```
 
+**Special case: Unit type for no-value results**
+
+When an operation succeeds but doesn't produce a meaningful value, use `Result<Unit>` or `Promise<Unit>`. **Never use `Void` type.**
+
+```java
+// DO: Use Result<Unit> for validation with no return value
+public static Result<Unit> checkInventory(Product product, Quantity requested) {
+    return product.availableQuantity().isGreaterThanOrEqual(requested)
+        ? Result.unitResult()
+        : InsufficientInventory.cause(product.id(), requested).result();
+}
+
+// DO: Use Promise<Unit> for async operations with no return value
+public Promise<Unit> sendNotification(UserId userId, Message message) {
+    return Promise.lift(
+        NotificationError.SendFailure::cause,
+        () -> notificationService.send(userId, message)
+    ).mapToUnit();
+}
+
+// DON'T: Never use Void - it has no instances and doesn't compose
+Result<Void> checkInventory(...) { }     // ❌ FORBIDDEN
+Promise<Void> sendNotification(...) { }  // ❌ FORBIDDEN
+```
+
+**Why Unit, not Void:**
+- `Void` has no instances - you cannot create a value of type `Void`
+- `Unit` is a proper singleton type that composes naturally
+- `Unit` makes "no meaningful value" explicit in the type system
+- Use `Result.unitResult()` for successful operations with no return value
+
 **Why exactly four?**
 
 These four types form a complete basis for composition. You can lift "up" when needed (`Option` to `Result` to `Promise`), but you never nest the same concern twice (`Promise<Result<T>>` is forbidden). Each type represents one orthogonal concern:

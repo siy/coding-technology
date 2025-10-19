@@ -57,14 +57,20 @@ A framework-agnostic methodology for writing predictable, testable Java backend 
 
 ## 🔧 For AI Collaboration
 
-- **[CLAUDE.md](CLAUDE.md)** - Collaboration protocol for AI assistants
-  - Request-response patterns
-  - Output format guidelines
-  - Testing conventions with examples
+**Claude Code Subagents** - Ready-to-use configurations for specialized code assistance:
 
-- **[jbct-coder.md](jbct-coder.md)** - AI coding assistant configuration
-  - Specialized prompts for code generation
-  - Pattern enforcement rules
+- **[jbct-coder.md](https://raw.githubusercontent.com/siy/coding-technology/main/jbct-coder.md)** - Code generation subagent
+  - Generates JBCT-compliant code from requirements
+  - Enforces Four Return Kinds, Parse Don't Validate, structural patterns
+  - **Installation**: Download and place in `~/.claude/agents/jbct-coder.md`
+
+- **[jbct-reviewer.md](https://raw.githubusercontent.com/siy/coding-technology/main/jbct-reviewer.md)** - Code review subagent
+  - Reviews code for JBCT compliance and best practices
+  - Checks patterns, naming conventions, project structure
+  - Provides actionable feedback with examples
+  - **Installation**: Download and place in `~/.claude/agents/jbct-reviewer.md`
+
+**Usage**: After installation, Claude Code will automatically use these subagents when appropriate, or invoke explicitly: `"Use jbct-coder to implement..."` or `"Use jbct-reviewer to check..."`
 
 ## 📂 Repository Structure
 
@@ -81,8 +87,8 @@ coding-technology/
 │   └── part-06-production-systems.md
 ├── MANAGEMENT_PERSPECTIVE.md    # Business case and ROI
 ├── CHANGELOG.md                 # Version history
-├── CLAUDE.md                    # AI collaboration protocol
-├── jbct-coder.md               # AI coding assistant config
+├── jbct-coder.md                # Claude Code subagent: code generation
+├── jbct-reviewer.md             # Claude Code subagent: code review
 ├── examples/                    # Java code examples
 │   └── [Maven projects demonstrating patterns]
 ├── sources/                     # Research materials

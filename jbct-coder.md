@@ -196,6 +196,47 @@ Option.none()                     // Create empty Option
 Option.option(nullable)           // Convert nullable
 ```
 
+### Unit Type for No-Value Results
+
+**CRITICAL: Never use `Void` type. Always use `Unit` for operations that don't return meaningful values.**
+
+When an operation succeeds but doesn't produce a value (validation, side effects, void operations), use `Result<Unit>` or `Promise<Unit>`:
+
+```java
+// DO: Use Result<Unit> for validation that doesn't produce a value
+public static Result<Unit> checkInventory(Product product, Quantity requested) {
+    return product.availableQuantity().isGreaterThanOrEqual(requested)
+        ? Result.unitResult()
+        : InsufficientInventory.cause(product.id(), requested).result();
+}
+
+// DO: Use Promise<Unit> for async operations with no return value
+public Promise<Unit> sendEmail(Email to, String subject, String body) {
+    return Promise.lift(
+        EmailError.SendFailure::cause,
+        () -> emailClient.send(to, subject, body)
+    ).mapToUnit();
+}
+
+// DON'T: Never use Void type
+Result<Void> checkInventory(...) { }     // ❌ FORBIDDEN
+Promise<Void> sendEmail(...) { }         // ❌ FORBIDDEN
+```
+
+**Creating Unit results:**
+```java
+Result.unitResult()           // Success with no value
+Result.lift(runnable)         // Lift void operation to Result<Unit>
+promise.mapToUnit()           // Transform any Promise<T> to Promise<Unit>
+result.mapToUnit()            // Transform any Result<T> to Result<Unit>
+```
+
+**Why Unit, not Void:**
+- `Void` has no instances - cannot create values of type `Void`
+- `Unit` is a proper type with a singleton instance
+- `Unit` composes naturally with monadic operations
+- `Unit` makes "no value" explicit and type-safe
+
 ### Error Handling in Adapters
 
 ```java
@@ -970,6 +1011,7 @@ Before generating code, verify:
 
 - [ ] Every function returns one of four kinds: `T`, `Option<T>`, `Result<T>`, `Promise<T>`
 - [ ] No `Promise<Result<T>>` - failures flow through Promise directly
+- [ ] **Never use `Void` type - always use `Unit` for no-value results** (`Result<Unit>`, `Promise<Unit>`)
 - [ ] All value objects validate during construction (parse, don't validate)
 - [ ] Factory methods named after type (lowercase-first)
 - [ ] No business exceptions thrown - use `Result`/`Promise` with `Cause`

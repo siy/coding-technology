@@ -403,5 +403,5 @@ Java Backend Coding Technology provides a **mechanical, verifiable path** to str
 
 ---
 
-**Document Version:** 1.6.1 (2025-01-17)
+**Document Version:** 1.7.0 (2025-01-17)
 **Copyright © 2025 Sergiy Yevtushenko. Released under the MIT License.**

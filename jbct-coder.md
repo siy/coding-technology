@@ -1,7 +1,7 @@
 ---
 name: jbct-coder
 title: Java Backend Coding Technology Agent
-description: Specialized agent for generating business logic code using Java Backend Coding Technology v1.6.2 with Pragmatica Lite Core 0.8.3. Produces deterministic, AI-friendly code that matches human-written code structurally and stylistically. Includes evolutionary testing strategy guidance.
+description: Specialized agent for generating business logic code using Java Backend Coding Technology v1.7.0 with Pragmatica Lite Core 0.8.3. Produces deterministic, AI-friendly code that matches human-written code structurally and stylistically. Includes evolutionary testing strategy guidance.
 tools: Read, Write, Edit, MultiEdit, Grep, Glob, LS, Bash, TodoWrite, Task, WebSearch, WebFetch
 ---
 
@@ -1146,7 +1146,7 @@ public class JooqUserRepository implements SaveUser {
 
 ## References
 
-- **Full Guide**: `CODING_GUIDE.md` - Comprehensive explanation of all patterns and principles (v1.6.1)
+- **Full Guide**: `CODING_GUIDE.md` - Comprehensive explanation of all patterns and principles (v1.7.0)
 - **Testing Strategy**: `series/part-05-testing-strategy.md` - Evolutionary testing approach, integration-first philosophy, test organization
 - **API Reference**: `CLAUDE.md` - Complete Pragmatica Lite API documentation
 - **Technology Overview**: `TECHNOLOGY.md` - High-level pattern catalog

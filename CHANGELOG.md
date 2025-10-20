@@ -7,6 +7,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.7.0] - 2025-01-19
+
+### Added
+- **proposals/private-record-constructors.md** - JEP proposal for enabling private canonical constructors in records
+  - Complete JEP following OpenJDK JEP 2.0 format
+  - Motivation: Enable parse-don't-validate pattern with records
+  - Examples comparing current workarounds vs proposed feature
+  - Integration with value object patterns
+- **Factory method anti-pattern guidance** across all documentation
+  - Explicit prohibition of nested record implementations in use case factories
+  - Clear examples showing wrong (nested record) vs correct (lambda) patterns
+  - Added to jbct-coder.md, CODING_GUIDE.md, jbct-reviewer.md
+  - Rule: "Records are for data, lambdas are for behavior"
+
+### Changed
+- **Use case factory examples** - All examples now use lambda returns instead of nested records
+  - jbct-coder.md RegisterUser example fixed
+  - CODING_GUIDE.md RegisterUser and GetUserProfile examples fixed
+  - series/part-06-production-systems.md RegisterUser and GetUserProfile examples fixed
+  - Reduces verbosity from 10+ lines to 5 lines per factory
+- **jbct-coder.md Maven preference** - Added explicit instruction to prefer Maven over Gradle
+  - Maven marked as "(preferred)"
+  - Gradle marked as "(only if explicitly requested)"
+- **jbct-reviewer.md build configuration checks**
+  - Added Pragmatica Lite Core dependency verification
+  - Check for correct groupId, artifactId, version
+  - Build configuration added as Critical priority
+  - New review section for dependency issues
+- **Pragmatica Lite Core dependency specification** - Added Gradle coordinates alongside Maven in all docs
+  - README.md, CODING_GUIDE.md, CLAUDE.md, EXECUTIVE_SUMMARY.md
+  - Full artifact coordinates: `org.pragmatica-lite:core:0.8.3`
+  - Both Maven and Gradle examples provided
+
+### Fixed
+- **Terminology consistency** - "Validated Request" → "Valid Request" in CODING_GUIDE.md
+- **Grammar improvements** - "the factory method which builds" → "factory method that builds"
+- **All version references updated** from 1.6.2 to 1.7.0
+
 ## [1.6.2] - 2025-01-17
 
 ### Added

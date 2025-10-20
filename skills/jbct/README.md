@@ -19,6 +19,34 @@ A comprehensive Claude Code skill for designing, implementing, and reviewing Jav
    ls ~/.claude/skills/jbct/SKILL.md
    ```
 
+## Structure
+
+The skill is organized by topic for progressive detalization:
+
+```
+jbct/
+├── SKILL.md                      # Entry point with quick reference
+├── README.md                     # This file
+├── fundamentals/                 # Core principles
+│   ├── four-return-kinds.md     # T, Option, Result, Promise
+│   ├── parse-dont-validate.md   # Value object patterns
+│   └── no-business-exceptions.md # Typed failures with Cause
+├── patterns/                     # Six structural patterns
+│   ├── leaf.md                  # Atomic operations
+│   ├── sequencer.md             # Sequential composition
+│   ├── fork-join.md             # Parallel operations
+│   ├── condition.md             # Branching logic
+│   ├── iteration.md             # Collection processing
+│   └── aspects.md               # Cross-cutting concerns
+├── use-cases/                    # Use case design
+│   ├── structure.md             # Anatomy and conventions
+│   └── complete-example.md      # RegisterUser walkthrough
+├── testing/                      # Testing strategies
+│   └── patterns.md              # Functional assertions, test organization
+└── project-structure/            # Project organization
+    └── organization.md          # Vertical slicing, package layout
+```
+
 ## What This Skill Provides
 
 The JBCT skill gives Claude Code deep understanding of:
@@ -44,12 +72,13 @@ No explicit invocation needed - the skill activates based on context.
 
 ## Progressive Detalization
 
-The skill is structured with three tiers of information:
-1. **Quick Reference** - Essential patterns and rules
-2. **Detailed Guidance** - Complete examples and explanations
-3. **Advanced Topics** - Edge cases, testing, project organization
+The skill uses a three-tier structure:
 
-Claude Code retrieves only what's needed for each task, optimizing context usage.
+1. **SKILL.md** - Quick reference with essential patterns and rules
+2. **Topic files** - Detailed explanations with full examples (fundamentals/, patterns/, use-cases/)
+3. **Advanced topics** - Testing strategies, project organization, complete examples
+
+Claude Code navigates to specific files as needed, optimizing context usage.
 
 ## Related Resources
 

@@ -343,12 +343,35 @@ Library documentation: https://central.sonatype.com/artifact/org.pragmatica-lite
 ❌ Complex logic in lambdas (extract to methods)
 ❌ `Validated` prefix (use `Valid`)
 
-## Resources
+## Detailed Resources
 
-For deeper understanding, refer to:
-- **CODING_GUIDE.md** - Complete technical reference (2600+ lines)
-- **series/** - 6-part learning series with progressive education
-- **jbct-coder.md** - Subagent for code generation
-- **jbct-reviewer.md** - Subagent for code review
+This skill contains comprehensive guidance organized by topic:
+
+### Fundamentals
+- [fundamentals/four-return-kinds.md](fundamentals/four-return-kinds.md) - T, Option, Result, Promise in depth
+- [fundamentals/parse-dont-validate.md](fundamentals/parse-dont-validate.md) - Value object patterns
+- [fundamentals/no-business-exceptions.md](fundamentals/no-business-exceptions.md) - Typed failures with Cause
+
+### Patterns
+- [patterns/leaf.md](patterns/leaf.md) - Atomic operations
+- [patterns/sequencer.md](patterns/sequencer.md) - Sequential composition
+- [patterns/fork-join.md](patterns/fork-join.md) - Parallel operations
+- [patterns/condition.md](patterns/condition.md) - Branching logic
+- [patterns/iteration.md](patterns/iteration.md) - Collection processing
+- [patterns/aspects.md](patterns/aspects.md) - Cross-cutting concerns
+
+### Use Cases
+- [use-cases/structure.md](use-cases/structure.md) - Anatomy and conventions
+- [use-cases/complete-example.md](use-cases/complete-example.md) - Full RegisterUser walkthrough
+
+### Testing & Organization
+- [testing/patterns.md](testing/patterns.md) - Test strategies and assertions
+- [project-structure/organization.md](project-structure/organization.md) - Vertical slicing
+
+### External Resources
+- **../../CODING_GUIDE.md** - Complete technical reference (100+ pages)
+- **../../series/** - 6-part progressive learning series
+- **../../jbct-coder.md** - Code generation subagent
+- **../../jbct-reviewer.md** - Code review subagent
 
 Repository: https://github.com/siy/coding-technology

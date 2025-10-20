@@ -2067,39 +2067,24 @@ public interface RegisterUser {
         SaveUser saveUser,
         GenerateToken generateToken
     ) {
-        record registerUser(
-            CheckEmailUniqueness checkEmail,
-            HashPassword hashPassword,
-            SaveUser saveUser,
-            GenerateToken generateToken
-        ) implements RegisterUser {
-            public Promise<Response> execute(Request request) {
-                return ValidRequest.validRequest(request)
-                    .async()
-                    .flatMap(checkEmail::apply)
-                    .flatMap(this::hashPasswordForUser)
-                    .flatMap(saveUser::apply)
-                    .flatMap(generateToken::apply);
-            }
-
-            private Promise<ValidUser> hashPasswordForUser(ValidRequest request) {
-                return hashPassword.apply(request.password())
-                    .async()
-                    .map(hashed -> toValidUser(request, hashed));
-            }
-
-            private ValidUser toValidUser(ValidRequest request, HashedPassword hashed) {
-                return new ValidUser(request.email(), hashed, request.referralCode());
-            }
-        }
-        return new registerUser(checkEmail, hashPassword, saveUser, generateToken);
+        return request -> ValidRequest.validRequest(request)
+                                      .async()
+                                      .flatMap(checkEmail::apply)
+                                      .flatMap(valid -> hashPassword.apply(valid.password())
+                                                                    .async()
+                                                                    .map(hashed -> new ValidUser(
+                                                                        valid.email(),
+                                                                        hashed,
+                                                                        valid.referralCode())))
+                                      .flatMap(saveUser::apply)
+                                      .flatMap(generateToken::apply);
     }
 }
 ```
 
-### Step 2: Validated Request
+### Step 2: Valid Request
 
-Nested record with the factory method which builds `ValidRequest` from raw `Request`.
+Nested record with factory method that builds `ValidRequest` from raw `Request`.
 
 ```java
 record ValidRequest(Email email, Password password, Option<ReferralCode> referralCode) {

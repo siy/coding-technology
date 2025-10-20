@@ -51,7 +51,20 @@ A framework-agnostic methodology for writing predictable, testable Java backend 
 
 ## 🔧 For AI Collaboration
 
-**Claude Code Subagents** - Ready-to-use configurations for specialized code assistance:
+### Claude Code Skill
+
+**[skills/jbct/](skills/jbct/)** - Comprehensive JBCT skill for Claude Code:
+- Design, implement, and review JBCT code
+- Progressive detalization: quick reference → detailed patterns → advanced topics
+- Covers Four Return Kinds, Parse Don't Validate, all six structural patterns
+- Project structure, naming conventions, testing patterns
+- **Installation**: `cp -r skills/jbct ~/.claude/skills/`
+
+**Usage**: Claude Code will automatically activate the skill when working with Result/Option/Promise types, value objects, use cases, or JBCT patterns.
+
+### Claude Code Subagents
+
+Ready-to-use configurations for specialized code assistance:
 
 - **[jbct-coder.md](https://raw.githubusercontent.com/siy/coding-technology/main/jbct-coder.md)** - Code generation subagent
   - Generates JBCT-compliant code from requirements
@@ -81,6 +94,10 @@ coding-technology/
 │   └── part-06-production-systems.md
 ├── MANAGEMENT_PERSPECTIVE.md    # Business case and ROI
 ├── CHANGELOG.md                 # Version history
+├── skills/                      # Claude Code skills
+│   └── jbct/                    # JBCT skill
+│       ├── SKILL.md             # Skill definition
+│       └── README.md            # Installation instructions
 ├── jbct-coder.md                # Claude Code subagent: code generation
 ├── jbct-reviewer.md             # Claude Code subagent: code review
 ├── examples/                    # Java code examples

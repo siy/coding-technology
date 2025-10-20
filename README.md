@@ -37,13 +37,7 @@ A framework-agnostic methodology for writing predictable, testable Java backend 
 
 ### For Managers & Decision Makers
 
-- **[EXECUTIVE_SUMMARY.md](EXECUTIVE_SUMMARY.md)** - Executive brief: Restoring predictability in engineering delivery (2-3 pages)
-  - Diagnostic checklist: 5 friction signals
-  - Observable outcomes with proxy metrics
-  - Side-by-side code comparisons with cognitive load analysis
-  - Evidence-based adoption path
-
-- **[MANAGEMENT_PERSPECTIVE.md](MANAGEMENT_PERSPECTIVE.md)** - Detailed business case for structural standardization
+- **[MANAGEMENT_PERSPECTIVE.md](MANAGEMENT_PERSPECTIVE.md)** - Business case for structural standardization
   - ROI of predictable code structure
   - Risk reduction through mechanical refactoring rules
   - Team velocity improvements with reduced subjective debates

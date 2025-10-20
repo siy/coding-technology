@@ -36,7 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Build configuration added as Critical priority
   - New review section for dependency issues
 - **Pragmatica Lite Core dependency specification** - Added Gradle coordinates alongside Maven in all docs
-  - README.md, CODING_GUIDE.md, CLAUDE.md, EXECUTIVE_SUMMARY.md
+  - README.md, CODING_GUIDE.md, CLAUDE.md
   - Full artifact coordinates: `org.pragmatica-lite:core:0.8.3`
   - Both Maven and Gradle examples provided
 

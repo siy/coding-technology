@@ -1,0 +1,354 @@
+---
+name: JBCT
+description: Java Backend Coding Technology skill for designing, implementing, and reviewing functional Java backend code. Use when working with Result, Option, Promise types, value objects, use cases, or when asked about JBCT patterns, monadic composition, parse-don't-validate, structural patterns (Leaf, Sequencer, Fork-Join), or functional Java backend architecture.
+---
+
+# Java Backend Coding Technology (JBCT)
+
+A methodology for writing predictable, testable Java backend code optimized for human-AI collaboration.
+
+## When to Use This Skill
+
+Activate this skill when:
+- Implementing Java backend features with functional patterns
+- Reviewing code for JBCT compliance
+- Designing use cases, value objects, or domain models
+- Working with `Result<T>`, `Option<T>`, `Promise<T>` types
+- Questions about monadic composition, error handling, or validation patterns
+- Structuring backend applications with vertical slicing
+- Converting imperative code to functional composition
+
+## Core Philosophy
+
+JBCT reduces the space of valid choices to one good way to do most things through:
+- **Four Return Kinds**: Every function returns exactly one of `T`, `Option<T>`, `Result<T>`, `Promise<T>`
+- **Parse, Don't Validate**: Make invalid states unrepresentable
+- **No Business Exceptions**: Business failures are typed `Cause` values
+- **Six Structural Patterns**: All code fits one pattern (Leaf, Sequencer, Fork-Join, Condition, Iteration, Aspects)
+
+## Quick Reference
+
+### The Four Return Kinds
+
+```java
+// T - Pure computation, cannot fail, always present
+public String initials() { return ...; }
+
+// Option<T> - May be absent, cannot fail
+public Option<Theme> findTheme(UserId id) { return ...; }
+
+// Result<T> - Can fail (validation/business errors)
+public static Result<Email> email(String raw) { return ...; }
+
+// Promise<T> - Asynchronous, can fail
+public Promise<User> loadUser(UserId id) { return ...; }
+```
+
+**Critical Rules:**
+- ❌ Never `Promise<Result<T>>` - Promise already handles failures
+- ❌ Never `Void` type - always use `Unit` (`Result<Unit>`, `Promise<Unit>`)
+- ✅ Use `Result.unitResult()` for successful `Result<Unit>`
+
+### Parse, Don't Validate Pattern
+
+```java
+// ✅ CORRECT: Validation = Construction
+public record Email(String value) {
+    private static final Fn1<Cause, String> INVALID_EMAIL =
+        Causes.forValue("Invalid email: {}");
+
+    public static Result<Email> email(String raw) {
+        return Verify.ensure(raw, Verify.Is::notNull)
+            .map(String::trim)
+            .flatMap(Verify.ensureFn(INVALID_EMAIL, Verify.Is::matches, PATTERN))
+            .map(Email::new);
+    }
+}
+
+// ❌ WRONG: Separate validation
+public record Email(String value) {
+    public Result<Email> validate() { ... }  // Don't do this
+}
+```
+
+**Key Points:**
+- Factory method named after type (lowercase): `Email.email(...)`
+- Constructor private or package-private
+- If instance exists, it's valid
+
+### Use Case Structure
+
+```java
+public interface RegisterUser extends UseCase.WithPromise<Response, Request> {
+    record Request(String email, String password) {}
+    record Response(UserId userId, ConfirmationToken token) {}
+
+    // Nested API: steps as single-method interfaces
+    interface CheckEmail { Promise<ValidRequest> apply(ValidRequest valid); }
+    interface SaveUser { Promise<User> apply(ValidRequest valid); }
+
+    // Validated input with Valid prefix (not Validated)
+    record ValidRequest(Email email, Password password) {
+        static Result<ValidRequest> validRequest(Request raw) {
+            return Result.all(Email.email(raw.email()),
+                              Password.password(raw.password()))
+                         .map(ValidRequest::new);
+        }
+    }
+
+    // ✅ CORRECT: Factory returns lambda directly
+    static RegisterUser registerUser(CheckEmail checkEmail, SaveUser saveUser) {
+        return request -> ValidRequest.validRequest(request)
+                                      .async()
+                                      .flatMap(checkEmail::apply)
+                                      .flatMap(saveUser::apply);
+    }
+}
+```
+
+**❌ ANTI-PATTERN: Nested Record Implementation**
+
+NEVER create factories with nested record implementations:
+
+```java
+// ❌ WRONG - Verbose, no benefit
+static RegisterUser registerUser(CheckEmail check, SaveUser save) {
+    record registerUser(CheckEmail check, SaveUser save) implements RegisterUser {
+        @Override
+        public Promise<Response> execute(Request request) { ... }
+    }
+    return new registerUser(check, save);
+}
+```
+
+**Rule:** Records are for data (value objects), lambdas are for behavior (use cases, steps).
+
+## Structural Patterns
+
+### 1. Leaf Pattern
+Atomic unit - single responsibility, no composition:
+```java
+public Promise<User> findUser(UserId id) {
+    return Promise.lift(
+        DatabaseError::cause,
+        () -> jdbcTemplate.queryForObject(...)
+    );
+}
+```
+
+### 2. Sequencer Pattern
+Linear dependent steps (most common use case pattern):
+```java
+return ValidRequest.validRequest(request)
+    .async()
+    .flatMap(checkEmail::apply)
+    .flatMap(hashPassword::apply)
+    .flatMap(saveUser::apply)
+    .flatMap(sendEmail::apply);
+```
+
+### 3. Fork-Join Pattern
+Parallel independent operations:
+```java
+return Promise.all(fetchProfile.apply(userId),
+                   fetchPreferences.apply(userId),
+                   fetchOrders.apply(userId))
+    .map((profile, prefs, orders) ->
+        new Dashboard(profile, prefs, orders));
+```
+
+### 4. Condition Pattern
+Branching as values (no mutation):
+```java
+return userType.equals("premium")
+    ? processPremium.apply(request)
+    : processBasic.apply(request);
+```
+
+### 5. Iteration Pattern
+Functional collection processing:
+```java
+var results = items.stream()
+    .map(Item::validate)
+    .toList();
+
+return Result.allOf(results)
+    .map(validItems -> process(validItems));
+```
+
+### 6. Aspects Pattern
+Cross-cutting concerns without mixing:
+```java
+return withRetry(
+    retryPolicy,
+    withMetrics(metricsPolicy, coreOperation)
+);
+```
+
+## Type Conversions
+
+```java
+// Option → Result/Promise
+option.toResult(cause)    // or .await(cause)
+option.async(cause)
+
+// Result → Promise
+result.async()
+
+// Promise → Result (blocking)
+promise.await()
+promise.await(timeout)
+
+// Cause → Result/Promise (prefer over failure constructors)
+cause.result()
+cause.promise()
+```
+
+## Aggregation Operations
+
+```java
+// Result.all - Accumulates all failures
+Result.all(result1, result2, result3)
+    .map((v1, v2, v3) -> combine(v1, v2, v3));
+
+// Promise.all - Fail-fast on first failure
+Promise.all(promise1, promise2, promise3)
+    .map((v1, v2, v3) -> combine(v1, v2, v3));
+
+// Option.all - Fail-fast on first empty
+Option.all(opt1, opt2, opt3)
+    .map((v1, v2, v3) -> combine(v1, v2, v3));
+```
+
+## Exception Handling
+
+```java
+// Lift exceptions in adapters
+Promise.lift(
+    DatabaseError::cause,
+    () -> jdbcTemplate.queryForObject(...)
+);
+
+// With custom exception mapper
+Result.lift(
+    e -> CustomError.from(e),
+    () -> riskyOperation()
+);
+```
+
+## Naming Conventions
+
+- **Factory methods**: `TypeName.typeName(...)` (lowercase-first)
+- **Validated inputs**: `Valid` prefix (not `Validated`): `ValidRequest`, `ValidUser`
+- **Error types**: Past tense verbs: `EmailNotFound`, `AccountLocked`, `PaymentFailed`
+- **Test names**: `methodName_outcome_condition`
+- **Acronyms**: Treat as words (camelCase): `httpClient`, `apiKey` not `HTTPClient`, `APIKey`
+
+## Project Structure (Vertical Slicing)
+
+```
+com.example.app/
+├── usecase/
+│   ├── registeruser/         # Self-contained vertical slice
+│   │   ├── RegisterUser.java # Use case interface + factory
+│   │   └── [internal types]  # ValidRequest, etc.
+│   └── loginuser/
+│       └── LoginUser.java
+├── domain/
+│   └── shared/               # Reusable value objects ONLY
+│       ├── Email.java
+│       ├── Password.java
+│       └── UserId.java
+└── adapter/
+    ├── rest/                 # Inbound (HTTP)
+    ├── persistence/          # Outbound (DB)
+    └── messaging/            # Outbound (queues)
+```
+
+**Placement Rules:**
+- Value objects used by single use case → inside use case package
+- Value objects used by 2+ use cases → `domain/shared/`
+- Steps (interfaces) → always inside use case
+- Errors → sealed interface inside use case
+
+## Testing Patterns
+
+```java
+// Test failures - use .onSuccess(Assertions::fail)
+@Test
+void validation_fails_forInvalidInput() {
+    ValidRequest.validRequest(new Request("invalid", "bad"))
+        .onSuccess(Assertions::fail);
+}
+
+// Test successes - chain onFailure then onSuccess
+@Test
+void validation_succeeds_forValidInput() {
+    ValidRequest.validRequest(new Request("valid@example.com", "Valid1234"))
+        .onFailure(Assertions::fail)
+        .onSuccess(valid -> {
+            assertEquals("valid@example.com", valid.email().value());
+        });
+}
+
+// Async tests - use .await() first
+@Test
+void execute_succeeds_forValidInput() {
+    useCase.execute(request)
+        .await()
+        .onFailure(Assertions::fail)
+        .onSuccess(response -> {
+            assertEquals("expected", response.value());
+        });
+}
+```
+
+## Pragmatica Lite Core Library
+
+JBCT uses **Pragmatica Lite Core 0.8.3** for functional types.
+
+**Maven (preferred):**
+```xml
+<dependency>
+   <groupId>org.pragmatica-lite</groupId>
+   <artifactId>core</artifactId>
+   <version>0.8.3</version>
+</dependency>
+```
+
+**Gradle (only if explicitly requested):**
+```gradle
+implementation 'org.pragmatica-lite:core:0.8.3'
+```
+
+Library documentation: https://central.sonatype.com/artifact/org.pragmatica-lite/core
+
+## Implementation Workflow
+
+1. **Define use case interface** with Request, Response, and execute signature
+2. **Create validated request** with static factory using `Result.all()`
+3. **Define steps** as single-method interfaces (nested in use case)
+4. **Create value objects** with validation in static factories
+5. **Implement factory method** returning lambda with composition chain
+6. **Write tests** starting with validation, then happy path, then failure cases
+
+## Common Mistakes to Avoid
+
+❌ Using business exceptions instead of `Result`/`Promise`
+❌ Nested records in use case factories (use lambdas)
+❌ `Void` type (use `Unit`)
+❌ `Promise<Result<T>>` (redundant nesting)
+❌ Separate validation methods (parse at construction)
+❌ Public constructors on value objects
+❌ Complex logic in lambdas (extract to methods)
+❌ `Validated` prefix (use `Valid`)
+
+## Resources
+
+For deeper understanding, refer to:
+- **CODING_GUIDE.md** - Complete technical reference (2600+ lines)
+- **series/** - 6-part learning series with progressive education
+- **jbct-coder.md** - Subagent for code generation
+- **jbct-reviewer.md** - Subagent for code review
+
+Repository: https://github.com/siy/coding-technology

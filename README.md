@@ -149,6 +149,20 @@ This repository documents a methodology, not a software project. Contributions w
 
 - **[Pragmatica Lite Core](https://central.sonatype.com/artifact/org.pragmatica-lite/core)** - The foundational library providing `Option`, `Result`, `Promise`, and functional utilities
 
+**Maven:**
+```xml
+<dependency>
+   <groupId>org.pragmatica-lite</groupId>
+   <artifactId>core</artifactId>
+   <version>0.8.3</version>
+</dependency>
+```
+
+**Gradle:**
+```gradle
+implementation 'org.pragmatica-lite:core:0.8.3'
+```
+
 ## 📄 License
 
 This project is licensed under the [MIT License](LICENSE) - see the LICENSE file for details.

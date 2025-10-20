@@ -81,12 +81,18 @@ Throughout this guide, major rules reference these criteria. The goal: replace e
 > **Note:** This section uses **Pragmatica Lite Core** library as an underlying functional style library.
 > The library is available on Maven Central: https://central.sonatype.com/artifact/org.pragmatica-lite/core
 >
+> **Maven:**
 > ```xml
 > <dependency>
 >    <groupId>org.pragmatica-lite</groupId>
 >    <artifactId>core</artifactId>
 >    <version>0.8.3</version>
 > </dependency>
+> ```
+>
+> **Gradle:**
+> ```gradle
+> implementation 'org.pragmatica-lite:core:0.8.3'
 > ```
 
 ### The Four Return Kinds
@@ -1738,6 +1744,48 @@ public interface RegisterUser extends UseCase.WithPromise<Response, Request> {
 
 **Rationale:** Value objects (Request, Response, domain records) need serialization for API contracts and persistence. Use cases and steps are created at assembly time and never serialized—lambdas are sufficient and lighter-weight than record implementations.
 
+**❌ ANTI-PATTERN: Nested Record Implementation**
+
+NEVER create use case factories that return nested record implementations:
+
+```java
+// ❌ WRONG - Verbose nested record
+static RegisterUser registerUser(CheckEmail checkEmail, SaveUser saveUser) {
+    record registerUser(CheckEmail checkEmail, SaveUser saveUser) implements RegisterUser {
+        @Override
+        public Promise<Response> execute(Request request) {
+            return ValidRequest.validRequest(request)
+                .async()
+                .flatMap(checkEmail::apply)
+                .flatMap(saveUser::apply);
+        }
+    }
+    return new registerUser(checkEmail, saveUser);
+}
+```
+
+**Why this is wrong:**
+- Unnecessary verbosity (doubles the code length)
+- Requires `@Override` annotation
+- Creates record class when lambda suffices
+- No benefit: use cases are never serialized
+- Violates Single Level of Abstraction if private helper methods added
+- Harder to read and maintain
+
+**✅ CORRECT: Direct Lambda Return**
+
+```java
+// ✅ CORRECT - Concise lambda
+static RegisterUser registerUser(CheckEmail checkEmail, SaveUser saveUser) {
+    return request -> ValidRequest.validRequest(request)
+                                  .async()
+                                  .flatMap(checkEmail::apply)
+                                  .flatMap(saveUser::apply);
+}
+```
+
+**Rule:** Use case and step factories always return lambdas directly. Records are for data (value objects), lambdas are for behavior (use cases, steps).
+
 ### Acronym Naming
 
 Treat acronyms as normal words using camelCase, not all-uppercase. This improves readability by making acronyms blend naturally into identifiers.
@@ -2462,23 +2510,14 @@ public interface GetUserProfile {
     interface FetchUser { Promise<User> apply(UserId userId); }
 
     static GetUserProfile getUserProfile(FetchUser fetchUser) {
-        record getUserProfile(FetchUser fetchUser) implements GetUserProfile {
-            public Promise<Response> execute(Request request) {
-                return UserId.userId(request.userId())
-                    .async()
-                    .flatMap(fetchUser::apply)
-                    .map(this::toResponse);
-            }
-
-            private Response toResponse(User user) {
-                return new Response(
-                    user.id().value(),
-                    user.email().value(),
-                    user.displayName()
-                );
-            }
-        }
-        return new getUserProfile(fetchUser);
+        return request -> UserId.userId(request.userId())
+                                .async()
+                                .flatMap(fetchUser::apply)
+                                .map(user -> new Response(
+                                    user.id().value(),
+                                    user.email().value(),
+                                    user.displayName()
+                                ));
     }
 }
 ```

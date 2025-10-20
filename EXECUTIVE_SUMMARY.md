@@ -349,7 +349,10 @@ Java Backend Coding Technology is **not** a big-bang rewrite. Adopt incrementall
 - [MANAGEMENT_PERSPECTIVE.md](https://pragmatica.dev/MANAGEMENT_PERSPECTIVE.html) — Detailed business case and ROI analysis
 
 **Library:**
-- [Pragmatica Lite Core](https://github.com/siy/pragmatica-lite) — Open-source implementation of `Option`, `Result`, `Promise` (Maven Central)
+- [Pragmatica Lite Core](https://github.com/siy/pragmatica-lite) — Open-source implementation of `Option`, `Result`, `Promise`
+  - Maven: `org.pragmatica-lite:core:0.8.3`
+  - Gradle: `implementation 'org.pragmatica-lite:core:0.8.3'`
+  - Maven Central: https://central.sonatype.com/artifact/org.pragmatica-lite/core
 
 **Community:**
 - [GitHub Discussions](https://github.com/siy/coding-technology/discussions) — Q&A, experience sharing, pattern clarifications

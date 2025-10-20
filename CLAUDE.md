@@ -137,6 +137,22 @@ When writing Java code examples, follow these formatting conventions strictly:
 
 This section documents the actual API methods available in Pragmatica Lite Core 0.8.3.
 
+**Maven:**
+```xml
+<dependency>
+   <groupId>org.pragmatica-lite</groupId>
+   <artifactId>core</artifactId>
+   <version>0.8.3</version>
+</dependency>
+```
+
+**Gradle:**
+```gradle
+implementation 'org.pragmatica-lite:core:0.8.3'
+```
+
+Library documentation: https://central.sonatype.com/artifact/org.pragmatica-lite/core
+
 ## Type Conversions
 
 ### Option conversions:

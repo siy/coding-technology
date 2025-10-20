@@ -61,6 +61,26 @@ You are a Java Backend Coding Technology developer with deep knowledge of Java, 
 
 This guide provides **deterministic instructions** for generating business logic code using Pragmatica Lite Core 0.8.3. Follow these rules precisely to ensure AI-generated code matches human-written code structurally and stylistically.
 
+**Pragmatica Lite Core 0.8.3:**
+
+**IMPORTANT: Always use Maven unless the user explicitly requests Gradle.**
+
+**Maven (preferred):**
+```xml
+<dependency>
+   <groupId>org.pragmatica-lite</groupId>
+   <artifactId>core</artifactId>
+   <version>0.8.3</version>
+</dependency>
+```
+
+**Gradle (only if explicitly requested):**
+```gradle
+implementation 'org.pragmatica-lite:core:0.8.3'
+```
+
+Library documentation: https://central.sonatype.com/artifact/org.pragmatica-lite/core
+
 ---
 
 ## Core Principles (Non-Negotiable)
@@ -739,41 +759,70 @@ public interface RegisterUser {
     }
 
     // Factory method (same name as interface, lowercase-first)
+    // CRITICAL: Return lambda, NOT nested record implementation
     static RegisterUser registerUser(
         CheckEmailUniqueness checkEmail,
         HashPassword hashPassword,
         SaveUser saveUser,
         GenerateToken generateToken
     ) {
-        record registerUser(  // Implementation record named same as factory
-            CheckEmailUniqueness checkEmail,
-            HashPassword hashPassword,
-            SaveUser saveUser,
-            GenerateToken generateToken
-        ) implements RegisterUser {
-            public Promise<Response> execute(Request request) {
-                return ValidRequest.validRequest(request)
-                    .async()
-                    .flatMap(checkEmail::apply)
-                    .flatMap(this::hashPasswordForUser)
-                    .flatMap(saveUser::apply)
-                    .flatMap(generateToken::apply);
-            }
-
-            private Promise<ValidUser> hashPasswordForUser(ValidRequest request) {
-                return hashPassword.apply(request.password())
-                    .async()
-                    .map(hashed -> toValidUser(request, hashed));
-            }
-
-            private ValidUser toValidUser(ValidRequest request, HashedPassword hashed) {
-                return new ValidUser(request.email(), hashed, request.referralCode());
-            }
-        }
-        return new registerUser(checkEmail, hashPassword, saveUser, generateToken);
+        return request -> ValidRequest.validRequest(request)
+                                      .async()
+                                      .flatMap(checkEmail::apply)
+                                      .flatMap(valid -> hashPassword.apply(valid.password())
+                                                                    .async()
+                                                                    .map(hashed -> new ValidUser(
+                                                                        valid.email(),
+                                                                        hashed,
+                                                                        valid.referralCode())))
+                                      .flatMap(saveUser::apply)
+                                      .flatMap(generateToken::apply);
     }
 }
 ```
+
+**❌ ANTI-PATTERN: Nested Record Implementation**
+
+**NEVER** create a nested record implementing the interface:
+
+```java
+// ❌ WRONG - Nested record with explicit implementation
+static RegisterUser registerUser(CheckEmail checkEmail, SaveUser saveUser) {
+    record registerUser(CheckEmail checkEmail, SaveUser saveUser) implements RegisterUser {
+        @Override
+        public Promise<Response> execute(Request request) {
+            return ValidRequest.validRequest(request)
+                .async()
+                .flatMap(checkEmail::apply)
+                .flatMap(saveUser::apply);
+        }
+    }
+    return new registerUser(checkEmail, saveUser);
+}
+```
+
+**Why this is wrong:**
+- Unnecessary verbosity (10+ lines vs 5 lines)
+- Requires `@Override` annotation
+- Creates record class when lambda suffices
+- No serialization benefit (use cases never serialized)
+- Violates Single Level of Abstraction if you add private helper methods
+
+**✅ CORRECT - Direct lambda return:**
+
+```java
+// ✅ CORRECT - Return lambda directly
+static RegisterUser registerUser(CheckEmail checkEmail, SaveUser saveUser) {
+    return request -> ValidRequest.validRequest(request)
+                                  .async()
+                                  .flatMap(checkEmail::apply)
+                                  .flatMap(saveUser::apply);
+}
+```
+
+**Rule:** Use cases and steps are behavioral components created at assembly time - always return lambdas, NEVER nested record implementations.
+
+---
 
 ### Step 4: Generate Validated Request
 
@@ -1028,7 +1077,7 @@ Before generating code, verify:
 - [ ] Use `cause.result()` and `cause.promise()` instead of `Result.failure()` and `Promise.failure()`
 - [ ] Use `result.async()` instead of `Promise.promise(() -> result)`
 - [ ] Extract inline string constants to named constants with `Causes.forValue(...)`
-- [ ] Implementation records named same as factory method (not "Impl")
+- [ ] Use case factories return lambdas directly, NEVER nested record implementations
 - [ ] Use `Result.unitResult()` for successful `Result<Unit>`
 - [ ] Use method references for exception mappers: `Error::cause` not `e -> Error.cause(e)`
 

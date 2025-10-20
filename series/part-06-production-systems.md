@@ -75,32 +75,17 @@ public interface RegisterUser {
         SaveUser saveUser,
         GenerateToken generateToken
     ) {
-        record registerUser(
-            CheckEmailUniqueness checkEmail,
-            HashPassword hashPassword,
-            SaveUser saveUser,
-            GenerateToken generateToken
-        ) implements RegisterUser {
-            public Promise<Response> execute(Request request) {
-                return ValidRequest.validRequest(request)
-                    .async()
-                    .flatMap(checkEmail::apply)
-                    .flatMap(this::hashPasswordForUser)
-                    .flatMap(saveUser::apply)
-                    .flatMap(generateToken::apply);
-            }
-
-            private Promise<ValidUser> hashPasswordForUser(ValidRequest request) {
-                return hashPassword.apply(request.password())
-                    .async()
-                    .map(hashed -> toValidUser(request, hashed));
-            }
-
-            private ValidUser toValidUser(ValidRequest request, HashedPassword hashed) {
-                return new ValidUser(request.email(), hashed, request.referralCode());
-            }
-        }
-        return new registerUser(checkEmail, hashPassword, saveUser, generateToken);
+        return request -> ValidRequest.validRequest(request)
+                                      .async()
+                                      .flatMap(checkEmail::apply)
+                                      .flatMap(valid -> hashPassword.apply(valid.password())
+                                                                    .async()
+                                                                    .map(hashed -> new ValidUser(
+                                                                        valid.email(),
+                                                                        hashed,
+                                                                        valid.referralCode())))
+                                      .flatMap(saveUser::apply)
+                                      .flatMap(generateToken::apply);
     }
 }
 ```
@@ -645,23 +630,14 @@ public interface GetUserProfile {
     }
 
     static GetUserProfile getUserProfile(FetchUser fetchUser) {
-        record getUserProfile(FetchUser fetchUser) implements GetUserProfile {
-            public Promise<Response> execute(Request request) {
-                return UserId.userId(request.userId())
-                    .async()
-                    .flatMap(fetchUser::apply)
-                    .map(this::toResponse);
-            }
-
-            private Response toResponse(User user) {
-                return new Response(
-                    user.id().value(),
-                    user.email().value(),
-                    user.displayName()
-                );
-            }
-        }
-        return new getUserProfile(fetchUser);
+        return request -> UserId.userId(request.userId())
+                                .async()
+                                .flatMap(fetchUser::apply)
+                                .map(user -> new Response(
+                                    user.id().value(),
+                                    user.email().value(),
+                                    user.displayName()
+                                ));
     }
 }
 ```

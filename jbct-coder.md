@@ -194,6 +194,64 @@ Every function implements **exactly one** pattern:
 
 ---
 
+## Null Policy
+
+### Never Return Null
+
+**Core Rule**: JBCT code NEVER returns null. Use `Option<T>` for optional values.
+
+```java
+// ❌ WRONG - Returning null
+public User findUser(UserId id) {
+    return repository.findById(id.value());  // May return null - ambiguous!
+}
+
+// ✅ CORRECT - Using Option
+public Option<User> findUser(UserId id) {
+    return Option.option(repository.findById(id.value()));
+}
+```
+
+### When Null IS Allowed
+
+Null appears only at **adapter boundaries**:
+
+**1. Wrapping External APIs:**
+```java
+// Wrap nullable external API immediately
+public Option<User> findUser(UserId id) {
+    User user = repository.findById(id.value());  // May return null
+    return Option.option(user);  // null → none(), value → some(value)
+}
+```
+
+**2. Writing to Nullable Database Columns:**
+```java
+// JOOQ - Option → null for nullable column
+.set(USERS.REFERRAL_CODE,
+    user.refCode().map(ReferralCode::value).orElse(null))
+```
+
+**3. Testing Validation:**
+```java
+@Test
+void email_fails_forNull() {
+    Email.email(null).onSuccess(Assertions::fail);
+}
+```
+
+### When Null is NOT Allowed
+
+- ❌ Never return null from business logic
+- ❌ Never pass null between JBCT components
+- ❌ Never use null checks in business logic (`if (value == null)`)
+- ✅ Use `Option<T>` for optional values
+- ✅ Use required parameters when value must be present
+
+**Summary**: Null exists only at adapter boundaries. Business logic uses `Option.none()`, never null.
+
+---
+
 ## API Usage Patterns
 
 ### Type Conversions
@@ -213,7 +271,7 @@ cause.promise()                   // Cause → Promise (PREFER over Promise.fail
 Promise.success(value)            // Create successful Promise
 Option.some(value)                // Create present Option
 Option.none()                     // Create empty Option
-Option.option(nullable)           // Convert nullable
+Option.option(nullable)           // Wrap nullable (adapter boundaries ONLY)
 ```
 
 ### Unit Type for No-Value Results

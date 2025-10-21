@@ -275,6 +275,154 @@ public Promise<User> loadUser(UserId id) {
 }
 ```
 
+## Null Policy
+
+### Never Return Null
+
+**Rule**: JBCT code NEVER returns null. Use `Option<T>` for optional values.
+
+```java
+// ❌ WRONG - Returning null
+public User findUser(UserId id) {
+    return repository.findById(id.value());  // May return null
+}
+
+// ✅ CORRECT - Using Option
+public Option<User> findUser(UserId id) {
+    return Option.option(repository.findById(id.value()));
+}
+```
+
+### When Null IS Acceptable
+
+Null appears only at **adapter boundaries** when interfacing with external code:
+
+#### 1. Wrapping External APIs
+
+```java
+// Adapter layer - wrap nullable external API
+public Option<User> findUser(UserId id) {
+    User user = repository.findById(id.value());  // External API may return null
+    return Option.option(user);  // Wrap immediately
+}
+
+// Spring Data JPA example
+public Option<User> findByEmail(Email email) {
+    return Option.option(
+        userRepository.findByEmail(email.value())  // JPA returns null if not found
+    );
+}
+```
+
+**Pattern**: `Option.option(nullable)` converts null → `Option.none()`, non-null → `Option.some(value)`.
+
+#### 2. Writing to Nullable Database Columns
+
+```java
+// Adapter layer - JOOQ insert with optional field
+public Promise<Unit> saveUser(User user) {
+    return Promise.lift(
+        DatabaseError::cause,
+        () -> {
+            dsl.insertInto(USERS)
+                .set(USERS.ID, user.id().value())
+                .set(USERS.EMAIL, user.email().value())
+                .set(USERS.REFERRAL_CODE,
+                    user.refCode().map(ReferralCode::value).orElse(null))  // Option → nullable column
+                .execute();
+            return Unit.unit();
+        }
+    );
+}
+```
+
+**Pattern**: `.orElse(null)` ONLY when mapping `Option<T>` to nullable database column.
+
+#### 3. Testing Validation
+
+```java
+@Test
+void email_fails_forNull() {
+    Email.email(null)  // Test null input
+         .onSuccess(Assertions::fail);
+}
+
+@Test
+void validRequest_fails_whenFieldNull() {
+    var request = new Request("valid@example.com", null);  // Test null field
+    ValidRequest.validRequest(request)
+                .onSuccess(Assertions::fail);
+}
+```
+
+**Pattern**: Use null in test inputs to verify validation rejects null.
+
+### When Null is NOT Acceptable
+
+#### Never Pass Null Between JBCT Components
+
+```java
+// ❌ WRONG - Passing null between business logic
+public Result<Order> processOrder(User user, Cart cart) {
+    if (cart == null) {  // DON'T check for null
+        return OrderError.InvalidCart.INSTANCE.result();
+    }
+    ...
+}
+
+// ✅ CORRECT - Use types to prevent null
+public Result<Order> processOrder(User user, Cart cart) {
+    // cart parameter cannot be null by convention
+    // If cart might be absent, use Option<Cart>
+    ...
+}
+```
+
+#### Never Use Null for "Unknown" vs "Absent"
+
+```java
+// ❌ WRONG - Null means "unknown"
+public String getUserTheme(UserId id) {
+    Theme theme = findTheme(id);
+    return theme != null ? theme.name() : null;  // Null ambiguous
+}
+
+// ✅ CORRECT - Option distinguishes absent from error
+public Option<Theme> getUserTheme(UserId id) {
+    return findTheme(id);  // none() = not set, some(theme) = set
+}
+```
+
+#### Never Return Null from Business Logic
+
+```java
+// ❌ WRONG
+public User enrichUser(User user) {
+    Profile profile = loadProfile(user.id());
+    if (profile == null) return null;  // Don't return null!
+    return user.withProfile(profile);
+}
+
+// ✅ CORRECT
+public Option<User> enrichUser(User user) {
+    return loadProfile(user.id())  // Returns Option<Profile>
+        .map(profile -> user.withProfile(profile));
+}
+```
+
+### Summary
+
+| Context | Null Usage | Correct Approach |
+|---------|-----------|------------------|
+| Return values | ❌ Never | Use `Option<T>` |
+| Between JBCT components | ❌ Never | Use `Option<T>` or required types |
+| Wrapping external APIs | ✅ Allowed | `Option.option(nullable)` |
+| Database nullable columns | ✅ Allowed | `.orElse(null)` |
+| Test inputs | ✅ Allowed | Test validation |
+| "Unknown" semantics | ❌ Never | Use `Option<T>` |
+
+**Core Principle**: Null exists only at system boundaries. Inside JBCT code, absence is `Option.none()`, not null.
+
 ## Related
 
 - [parse-dont-validate.md](parse-dont-validate.md) - Validation patterns with Result

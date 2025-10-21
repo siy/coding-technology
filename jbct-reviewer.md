@@ -37,6 +37,83 @@ implementation 'org.pragmatica-lite:core:0.8.3'
 
 Library documentation: https://central.sonatype.com/artifact/org.pragmatica-lite/core
 
+## NULL POLICY
+
+### Never Return Null
+
+**Core Rule**: JBCT code NEVER returns null. Use `Option<T>` for optional values.
+
+**Check for violations:**
+
+❌ **Returning null from JBCT code:**
+```java
+// BAD
+public User findUser(UserId id) {
+    return repository.findById(id.value());  // May return null
+}
+
+// GOOD
+public Option<User> findUser(UserId id) {
+    return Option.option(repository.findById(id.value()));
+}
+```
+
+❌ **Null checks in business logic:**
+```java
+// BAD
+if (user == null) return error;
+
+// GOOD
+// Use Option<T> parameter if value might be absent
+public Result<Order> processOrder(Option<User> maybeUser) {
+    return maybeUser
+        .toResult(UserError.NotFound.INSTANCE)
+        .flatMap(this::process);
+}
+```
+
+❌ **Passing null between JBCT components:**
+```java
+// BAD - Don't pass null as parameter
+processOrder(null);
+
+// GOOD - Use Option or required types
+processOrder(Option.none());
+```
+
+### When Null IS Allowed (Adapter Boundaries Only)
+
+✅ **Wrapping external API returns:**
+```java
+// Adapter layer - wrap immediately
+public Option<User> findUser(UserId id) {
+    User user = repository.findById(id.value());  // External API may return null
+    return Option.option(user);  // Wrap before returning
+}
+```
+
+✅ **Writing to nullable database columns:**
+```java
+// JOOQ - convert Option to null for column
+.set(USERS.REFERRAL_CODE,
+    user.refCode().map(ReferralCode::value).orElse(null))
+```
+
+✅ **Test inputs for validation:**
+```java
+@Test
+void email_fails_forNull() {
+    Email.email(null).onSuccess(Assertions::fail);
+}
+```
+
+**Review Checklist:**
+- [ ] No null returns from business logic
+- [ ] No null checks (`if (x == null)`) in use cases
+- [ ] External nullable values wrapped with `Option.option()` at adapter boundary
+- [ ] `.orElse(null)` used ONLY for database nullable columns
+- [ ] Parameters use `Option<T>` when value may be absent
+
 ## JBCT CORE PRINCIPLES
 
 ### 1. The Four Return Kinds

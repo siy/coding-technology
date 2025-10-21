@@ -1692,6 +1692,234 @@ This makes the code cleaner and leverages type inference properly.
 
 ---
 
+## Null Policy
+
+### Never Return Null
+
+**Core Rule**: JBCT code NEVER returns null. Use `Option<T>` for optional values.
+
+Traditional Java uses null for two semantically different cases: "value not found" and "error occurred". This ambiguity forces defensive null checks throughout the codebase and creates hidden failure modes.
+
+```java
+// ❌ WRONG - Returning null
+public User findUser(UserId id) {
+    return repository.findById(id.value());  // May return null - ambiguous!
+}
+
+// Caller must defend:
+User user = findUser(id);
+if (user == null) {  // Not found? Error? Unknown!
+    ...
+}
+
+// ✅ CORRECT - Using Option
+public Option<User> findUser(UserId id) {
+    return Option.option(repository.findById(id.value()));
+}
+
+// Caller gets explicit semantics:
+findUser(id)
+    .onPresent(user -> process(user))
+    .onEmpty(() -> handleNotFound());
+```
+
+### When Null IS Acceptable
+
+Null appears only at **adapter boundaries** when interfacing with external code that uses null:
+
+#### 1. Wrapping External APIs
+
+When calling external libraries that may return null, wrap immediately at the adapter boundary:
+
+```java
+// Adapter layer - wrap nullable external API
+public Option<User> findUser(UserId id) {
+    User user = repository.findById(id.value());  // External API may return null
+    return Option.option(user);  // Wrap immediately: null → none(), value → some(value)
+}
+
+// Spring Data JPA example
+public Option<User> findByEmail(Email email) {
+    return Option.option(
+        userRepository.findByEmail(email.value())  // JPA returns null if not found
+    );
+}
+
+// JDBC ResultSet example
+public Option<User> loadUser(UserId id) {
+    return Promise.lift(
+        DatabaseError::cause,
+        () -> {
+            ResultSet rs = executeQuery(id);
+            User user = rs.next() ? mapUser(rs) : null;  // null if not found
+            return Option.option(user);  // Wrap before returning
+        }
+    );
+}
+```
+
+**Pattern**: `Option.option(nullable)` immediately converts external null to `Option.none()`.
+
+#### 2. Writing to Nullable Database Columns
+
+When persisting to databases with nullable columns, convert `Option<T>` to null for the column:
+
+```java
+// Adapter layer - JOOQ insert with optional field
+public Promise<Unit> saveUser(User user) {
+    return Promise.lift(
+        DatabaseError::cause,
+        () -> {
+            dsl.insertInto(USERS)
+                .set(USERS.ID, user.id().value())
+                .set(USERS.EMAIL, user.email().value())
+                .set(USERS.REFERRAL_CODE,
+                    user.refCode().map(ReferralCode::value).orElse(null))  // Option → nullable column
+                .execute();
+            return Unit.unit();
+        }
+    );
+}
+
+// JDBC PreparedStatement example
+PreparedStatement stmt = connection.prepareStatement(
+    "INSERT INTO users (id, email, referral_code) VALUES (?, ?, ?)"
+);
+stmt.setString(1, user.id().value());
+stmt.setString(2, user.email().value());
+stmt.setString(3, user.refCode().map(ReferralCode::value).orElse(null));  // Option → null
+```
+
+**Pattern**: `.orElse(null)` ONLY when mapping `Option<T>` to nullable database column.
+
+#### 3. Testing Validation
+
+Use null in test inputs to verify that validation correctly rejects null:
+
+```java
+@Test
+void email_fails_forNull() {
+    Email.email(null)  // Test null input
+         .onSuccess(Assertions::fail);
+}
+
+@Test
+void validRequest_fails_whenFieldNull() {
+    var request = new Request("valid@example.com", null);  // Test null password
+    ValidRequest.validRequest(request)
+                .onSuccess(Assertions::fail);
+}
+
+@Test
+void userId_fails_forNull() {
+    UserId.userId((String) null)
+          .onSuccess(Assertions::fail);
+}
+```
+
+**Pattern**: Use null in test inputs to verify validation behavior.
+
+### When Null is NOT Acceptable
+
+#### Never Pass Null Between JBCT Components
+
+Business logic components communicate using domain types, never null:
+
+```java
+// ❌ WRONG - Defensive null checking in business logic
+public Result<Order> processOrder(User user, Cart cart) {
+    if (user == null || cart == null) {  // DON'T do this
+        return OrderError.InvalidInput.INSTANCE.result();
+    }
+    ...
+}
+
+// ✅ CORRECT - Parameters guaranteed non-null by convention
+public Result<Order> processOrder(User user, Cart cart) {
+    // If cart might be absent, parameter should be Option<Cart>
+    // If user might be absent, operation shouldn't be called
+    ...
+}
+
+// ✅ CORRECT - Explicit optionality when needed
+public Result<Order> processOrder(User user, Option<Cart> cart) {
+    return cart
+        .toResult(OrderError.EmptyCart.INSTANCE)
+        .flatMap(c -> validateAndProcess(user, c));
+}
+```
+
+**Rule**: If a value might be absent, use `Option<T>` parameter, never null.
+
+#### Never Use Null for "Unknown" vs "Absent"
+
+Null conflates two meanings: "value not set" and "value unknown/error". Use types to distinguish:
+
+```java
+// ❌ WRONG - Null means "unknown"
+public String getUserTheme(UserId id) {
+    Theme theme = findTheme(id);
+    return theme != null ? theme.name() : null;  // What does null mean?
+}
+
+// ✅ CORRECT - Option distinguishes "not set" from "error"
+public Option<Theme> getUserTheme(UserId id) {
+    return findTheme(id);  // none() = not set, some(theme) = set
+}
+
+// ✅ CORRECT - Result distinguishes "not found" from "error"
+public Result<Theme> getRequiredTheme(UserId id) {
+    return findTheme(id)
+        .toResult(ThemeError.NotFound.INSTANCE);
+}
+```
+
+#### Never Return Null from Business Logic
+
+Business logic always uses typed returns:
+
+```java
+// ❌ WRONG - Returning null from business logic
+public User enrichUser(User user) {
+    Profile profile = loadProfile(user.id());
+    if (profile == null) return null;  // Don't return null!
+    return user.withProfile(profile);
+}
+
+// ✅ CORRECT - Using Option
+public Option<User> enrichUser(User user) {
+    return loadProfile(user.id())  // Returns Option<Profile>
+        .map(profile -> user.withProfile(profile));
+}
+
+// ✅ CORRECT - Using Result if enrichment can fail
+public Result<User> enrichUser(User user) {
+    return loadProfile(user.id())
+        .toResult(ProfileError.NotFound.INSTANCE)
+        .map(profile -> user.withProfile(profile));
+}
+```
+
+### Summary
+
+| Context | Null Usage | Correct Approach |
+|---------|-----------|------------------|
+| Return values from JBCT code | ❌ Never | Use `Option<T>` |
+| Parameters between JBCT components | ❌ Never | Use `Option<T>` or required types |
+| Wrapping external API returns | ✅ Allowed | `Option.option(nullable)` immediately |
+| Writing to nullable DB columns | ✅ Allowed | `.orElse(null)` at write boundary |
+| Test inputs for validation | ✅ Allowed | Test null rejection |
+| "Unknown" or "absent" semantics | ❌ Never | Use `Option<T>` or `Result<T>` |
+
+**Core Principle**: Null exists only at system boundaries (adapters). Inside JBCT code, absence is represented by `Option.none()`, never null.
+
+**Benefits**:
+- **Mental Overhead**: No defensive null checks in business logic (-2)
+- **Reliability**: Compiler enforces null handling at boundaries (+2)
+- **Complexity**: Clear semantics - `Option.none()` vs null confusion eliminated (+1)
+
+---
+
 ## Naming Conventions
 
 Consistent naming reduces cognitive overhead and improves readability. This technology uses specific conventions that make code scannable and predictable.

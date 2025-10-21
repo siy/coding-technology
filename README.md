@@ -1,6 +1,6 @@
 # Java Backend Coding Technology
 
-> **Version 1.7.0** | [Full Changelog](CHANGELOG.md)
+> **Version 1.8.0** | [Full Changelog](CHANGELOG.md)
 
 A framework-agnostic methodology for writing predictable, testable Java backend code optimized for human-AI collaboration.
 

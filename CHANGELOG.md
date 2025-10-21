@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.8.0] - 2025-01-21
+
+### Added
+- **Comprehensive Null Policy** across all JBCT documentation
+  - Added dedicated "Null Policy" section to CODING_GUIDE.md
+  - Added null policy to skills/jbct/fundamentals/four-return-kinds.md with examples and summary table
+  - Added null policy to jbct-coder.md with clear rules and patterns
+  - Added null policy to jbct-reviewer.md with review checklist
+  - Core principle: "Null exists only at system boundaries, business logic uses Option.none()"
+  - Defined when null IS acceptable: adapter boundaries (wrapping external APIs, database nullable columns, test inputs)
+  - Defined when null is NOT acceptable: business logic returns, component parameters, null checks
+  - Pattern guidance: `Option.option(nullable)` at adapter entry, `.orElse(null)` at adapter exit (DB writes only)
+- **Structured JBCT Skill for Claude Code**
+  - Reorganized skills/jbct/ with progressive detalization structure
+  - fundamentals/: four-return-kinds.md, parse-dont-validate.md, no-business-exceptions.md (3 files)
+  - patterns/: leaf.md, sequencer.md, fork-join.md, condition.md, iteration.md, aspects.md (6 files)
+  - use-cases/: structure.md, complete-example.md (RegisterUser walkthrough) (2 files)
+  - testing/: patterns.md (functional assertions, test organization) (1 file)
+  - project-structure/: organization.md (vertical slicing) (1 file)
+  - Total: 13 detailed markdown files for granular topic access
+  - Updated SKILL.md with references to detailed resources
+  - Updated README.md with complete structure overview
+  - Self-contained package ready for distribution
+
+### Changed
+- **All version references updated** from 1.7.0 to 1.8.0
+
 ## [1.7.0] - 2025-01-19
 
 ### Added

@@ -46,7 +46,7 @@ A framework-agnostic methodology for writing predictable, testable Java backend 
 ### Changelog & Versioning
 
 - **[CHANGELOG.md](CHANGELOG.md)** - Version history following [Keep a Changelog](https://keepachangelog.com/)
-  - Current version: 1.7.0
+  - Current version: 1.8.0
   - Semantic versioning for documentation releases
 
 ## 🔧 For AI Collaboration
@@ -186,6 +186,6 @@ You are free to:
 
 ---
 
-**Version:** 1.7.0 | **Last Updated:** 2025-01-17 | **[Full Changelog](CHANGELOG.md)**
+**Version:** 1.8.0 | **Last Updated:** 2025-01-21 | **[Full Changelog](CHANGELOG.md)**
 
 **Copyright © 2025 Sergiy Yevtushenko. Released under the [MIT License](LICENSE).**

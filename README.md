@@ -4,6 +4,14 @@
 
 A framework-agnostic methodology for writing predictable, testable Java backend code optimized for human-AI collaboration.
 
+## Why "Technology"?
+
+In industrial manufacturing, **technology** is the structured method of producing goods with reliably consistent quality within reliably consistent time. It's not just tools. It's the engineered process that ensures stable output under defined conditions. Technology emphasizes predictability, repeatability, and control.
+
+Traditional software development relies on "best practices." These are subjective guidelines that often contradict each other, leaving developers to make judgment calls on every decision. Should this be a service or a helper? When is a class too complex? How should errors flow? These questions consume cognitive energy and produce inconsistent results across teams, projects, and even within the same codebase. It's "art" more than engineering.
+
+**Java Backend Coding Technology** transforms this into a technology. Less art, more engineering. It provides mechanical rules that eliminate subjective debates: unified code structure from functions to packages; clearly defined approaches to testing, logging, and interaction with external code; five objective criteria that replace "it depends" with measurable standards. The result is code that looks the same whether you wrote it, a colleague wrote it, or AI generated it. Predictable, testable, and optimized for both human and AI collaboration.
+
 ## 🚀 Quick Start
 
 **New to this technology?** Start with the learning series:
@@ -109,21 +117,6 @@ coding-technology/
 ├── templates/                   # Reusable templates
 └── PL_IMPROVEMENTS.md          # Pragmatica Lite enhancement backlog
 ```
-
-## 🎯 What This Technology Provides
-
-**Objective evaluation criteria** - Five measurable standards replace subjective "best practices":
-1. Mental Overhead - Items you must remember
-2. Business/Technical Ratio - Domain concepts vs framework noise
-3. Design Impact - Enforces good patterns or allows bad ones?
-4. Reliability - Compiler-verified or developer-remembered?
-5. Complexity - Elements, connections, hidden coupling
-
-**Mechanical refactoring rules** - No more "is this too complex?" debates. When a function does two patterns, split it. When validation logic appears twice, extract value object. When a component is reused, move to shared package.
-
-**Unified structure** - Code looks the same whether you wrote it, a colleague wrote it, or AI generated it. Use cases read like business processes. Errors are domain concepts, not stack traces.
-
-**Framework independence** - Business logic has zero framework dependencies. Adapters live at the edges. Swap Spring for Micronaut, JDBC for JOOQ - only rewrite adapters, not business logic.
 
 ## 🤝 Contributing
 

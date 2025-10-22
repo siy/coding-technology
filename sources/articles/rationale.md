@@ -1,16 +1,16 @@
 # Java Backend Coding Technology: Rationale
 
-Almost exactly 4 years ago I wrote a blog post [We Should Write Java Code Differently](https://dev.to/siy/we-should-write-java-code-differently-210b).
-It was my first attempt to explain what I understood about the code and why it is important. 
-This article is similar attempt to explain rationale behind highly technical reference guide details explained in the [previous article](../../CODING_GUIDE.md).
+The [Java Backend Coding Technology] is a densely packed reference guide. This article is an attempt to add some general considerations and rationales behind the Technology. 
 
 ## First And Foremost
-I tried my best to make every decision as rational as possible. Using criteria as a tool to make measurable or, at least, comparable decisions.
-I'll do my best to explain why I made every particular decision.
+I tried my best to make every decision as rational as possible. 
 
-## Criteria
-(from the previous article)
-(TBD insert link to the previous article but provide full quote of the criteria)
+### Criteria
+1. **Mental Overhead** - Each "Don't forget to..." and "Keep in mind that..." is a mental overhead.
+2. **Business/Technical Ratio** - The lower level of the technical details in code, the better business is visible. The more elements in code reflect business semantics, the better. 
+3. **Design Impact** - Whether an approach improves design consistency or breaks it. Does it enforce good patterns or allow bad ones?
+4. **Reliability** - Does the compiler catch mistakes, or must you remember? Type safety that makes invalid states unrepresentable eliminates entire classes of bugs.
+5. **Complexity** - Number of elements, connections, and especially hidden coupling. Fewer moving parts and explicit dependencies are better.
 
 ## Reducing Complexity
 You'll notice it behind basically every decision. Sometimes it means loosing current flexibility by limiting choices. 

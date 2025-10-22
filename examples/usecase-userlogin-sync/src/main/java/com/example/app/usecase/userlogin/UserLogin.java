@@ -9,6 +9,7 @@ import org.pragmatica.lang.Unit;
 import org.pragmatica.lang.utils.Causes;
 
 // Minimal UseCase variants for illustration; align with TECHNOLOGY.md
+
 // Pattern: Use case with nested Request/Response and Sequencer in execute()
 public interface UserLogin {
     // Public API
@@ -66,23 +67,12 @@ public interface UserLogin {
 
     // Factory named after type (lowerCamel)
     static UserLogin userLogin(CheckCredentials checkCredentials,
-                               CheckAccountStatus checkAccountStatus,
-                               GenerateToken generateToken) {
+                                        CheckAccountStatus checkAccountStatus,
+                                        GenerateToken generateToken) {
 
-        record userLogin(CheckCredentials checkCredentials,
-                         CheckAccountStatus checkAccountStatus,
-                         GenerateToken generateToken
-        ) implements UserLogin {
-            @Override
-            public Result<Response> execute(Request request) {
-                // Pattern: Sequencer  -  flatMap over steps; aspects may be applied inline as decorators
-                return ValidRequest.validRequest(request)
-                                   .flatMap(checkCredentials::apply)
-                                   .flatMap(checkAccountStatus::apply)
-                                   .flatMap(generateToken::apply);
-            }
-        }
-
-        return new userLogin(checkCredentials, checkAccountStatus, generateToken);
+        return request -> ValidRequest.validRequest(request)
+                                      .flatMap(checkCredentials::apply)
+                                      .flatMap(checkAccountStatus::apply)
+                                      .flatMap(generateToken::apply);
     }
 }

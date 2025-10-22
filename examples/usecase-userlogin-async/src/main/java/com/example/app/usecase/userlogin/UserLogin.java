@@ -67,24 +67,13 @@ public interface UserLogin {
 
     // Factory named after type (lowerCamel)
     static UserLogin userLogin(CheckCredentials checkCredentials,
-                               CheckAccountStatus checkAccountStatus,
-                               GenerateToken generateToken) {
+                                        CheckAccountStatus checkAccountStatus,
+                                        GenerateToken generateToken) {
 
-        record userLogin(CheckCredentials checkCredentials,
-                         CheckAccountStatus checkAccountStatus,
-                         GenerateToken generateToken
-        ) implements UserLogin {
-            @Override
-            public Promise<Response> execute(Request request) {
-                // Pattern: Lift sync validation to Promise, then sequencer with async steps
-                // Alternate: ValidRequest.validRequest(request).async()
-                return Promise.promise(() -> ValidRequest.validRequest(request))
-                              .flatMap(checkCredentials::apply)
-                              .flatMap(checkAccountStatus::apply)
-                              .flatMap(generateToken::apply);
-            }
-        }
-
-        return new userLogin(checkCredentials, checkAccountStatus, generateToken);
+        return request -> ValidRequest.validRequest(request)
+                                      .async()
+                                      .flatMap(checkCredentials::apply)
+                                      .flatMap(checkAccountStatus::apply)
+                                      .flatMap(generateToken::apply);
     }
 }

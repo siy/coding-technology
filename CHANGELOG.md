@@ -14,6 +14,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Integrated highlight.js with GitHub light/dark themes
   - Dynamic theme switching synced with site theme toggle
   - Fixes Firefox rendering issue where Java code blocks appeared as unreadable gray boxes
+- **Cross-references between JBCT skill and subagents**
+  - Added "When to Use Specialized Subagents" section to skills/jbct/SKILL.md
+  - Clear guidance on when to use jbct-coder vs jbct-reviewer vs skill
+  - Invocation instructions with Task tool for both subagents
+  - Inline tips in workflow and mistakes sections
+  - Enhanced External Resources section highlighting subagent capabilities
 
 ### Changed
 - **All version references updated** from 1.8.0 to 1.8.1

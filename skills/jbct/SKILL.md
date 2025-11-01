@@ -77,6 +77,42 @@ public record Email(String value) {
 - Constructor private or package-private
 - If instance exists, it's valid
 
+### Pragmatica Lite Validation Utilities
+
+**Verify.Is Predicates** - Use instead of custom lambdas:
+```java
+Verify.Is::notNull          // null check
+Verify.Is::notBlank         // non-empty, non-whitespace
+Verify.Is::lenBetween       // length in range
+Verify.Is::matches          // regex (String or Pattern)
+Verify.Is::positive         // > 0
+Verify.Is::between          // >= min && <= max
+Verify.Is::greaterThan      // > boundary
+```
+
+**Parse Subpackage** - Exception-safe JDK wrappers:
+```java
+import org.pragmatica.lang.parse.Number;
+import org.pragmatica.lang.parse.DateTime;
+import org.pragmatica.lang.parse.Network;
+
+Number.parseInt(raw)              // Result<Integer>
+DateTime.parseLocalDate(raw)      // Result<LocalDate>
+Network.parseUUID(raw)            // Result<UUID>
+```
+
+**Example:**
+```java
+public record Age(int value) {
+    public static Result<Age> age(String raw) {
+        return Number.parseInt(raw)
+            .flatMap(Verify.ensureFn(Causes.cause("Age 0-150"),
+                                     Verify.Is::between, 0, 150))
+            .map(Age::new);
+    }
+}
+```
+
 ### Use Case Structure
 
 ```java

@@ -159,6 +159,39 @@ public record Email(String value) {
 - Constructor private or package-private
 - If you have an instance, it's valid
 
+**Check for Pragmatica Lite Utility Usage:**
+
+❌ **Manual validation when Verify.Is predicate exists:**
+```java
+// BAD: Custom lambda
+.flatMap(p -> p.length() >= 8 ? Result.success(p) : Result.failure(...))
+.flatMap(s -> !s.isBlank() ? Result.success(s) : Result.failure(...))
+
+// GOOD: Standard predicate
+.flatMap(Verify.ensureFn(TOO_SHORT, Verify.Is::lenBetween, 8, 128))
+.flatMap(Verify.ensureFn(BLANK, Verify.Is::notBlank))
+```
+
+❌ **Manual Result.lift wrapping for standard JDK parsers:**
+```java
+// BAD: Manual wrapping
+Result.lift(Integer::parseInt, raw)
+Result.lift(LocalDate::parse, raw)
+Result.lift(UUID::fromString, raw)
+
+// GOOD: Use parse utilities
+Number.parseInt(raw)
+DateTime.parseLocalDate(raw)
+Network.parseUUID(raw)
+```
+
+**Available utilities to check for:**
+- **Verify.Is predicates:** `notNull`, `notBlank`, `lenBetween`, `matches`, `positive`, `negative`, `nonNegative`, `between`, `greaterThan`, `lessThan`, `contains`
+- **Number parsing:** `parseInt`, `parseLong`, `parseDouble`, `parseBigDecimal`, `parseBigInteger`
+- **DateTime parsing:** `parseLocalDate`, `parseLocalDateTime`, `parseZonedDateTime`, `parseInstant`
+- **Network parsing:** `parseUUID`, `parseURL`, `parseURI`, `parseInetAddress`
+- **I18n parsing:** `parseLocale`, `parseCurrency`
+
 ### 3. No Business Exceptions
 
 **Business logic never throws exceptions** - use `Result` or `Promise`:

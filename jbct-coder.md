@@ -129,6 +129,41 @@ record ValidatedRequest(...)  // Too verbose
 record ValidatedUser(...)      // No additional semantics
 ```
 
+**Pragmatica Lite Validation Utilities:**
+
+Use built-in `Verify.Is` predicates instead of custom lambdas:
+```java
+// ✅ PREFER: Standard predicates
+Verify.ensure(password, Verify.Is::lenBetween, 8, 128)
+Verify.ensure(age, Verify.Is::positive)
+Verify.ensure(username, Verify.Is::notBlank)
+Verify.ensure(email, Verify.Is::matches, EMAIL_PATTERN)
+
+// ❌ AVOID: Custom lambdas when standard predicate exists
+Verify.ensure(password, p -> p.length() >= 8 && p.length() <= 128)
+```
+
+Use `parse.*` utilities for JDK API wrapping:
+```java
+import org.pragmatica.lang.parse.Number;
+import org.pragmatica.lang.parse.DateTime;
+import org.pragmatica.lang.parse.Network;
+
+// ✅ PREFER: parse utilities
+Number.parseInt(raw)              // Result<Integer>
+DateTime.parseLocalDate(raw)      // Result<LocalDate>
+Network.parseUUID(raw)            // Result<UUID>
+
+// ❌ AVOID: Manual wrapping
+Result.lift(Integer::parseInt, raw)
+Result.lift(LocalDate::parse, raw)
+Result.lift(UUID::fromString, raw)
+```
+
+**Common Verify.Is predicates:** `notNull`, `notBlank`, `notEmpty`, `lenBetween`, `matches`, `positive`, `negative`, `nonNegative`, `between`, `greaterThan`, `lessThan`, `contains`.
+
+**Available parse utilities:** `Number` (parseInt, parseLong, parseDouble, parseBigDecimal), `DateTime` (parseLocalDate, parseLocalDateTime, parseZonedDateTime), `Network` (parseUUID, parseURL, parseURI), `I18n` (parseLocale, parseCurrency).
+
 ### 3. No Business Exceptions
 
 Business logic **never** throws exceptions. All failures flow through `Result` or `Promise` as typed `Cause` objects.
@@ -332,6 +367,13 @@ Result.lift1(
     encoder::encode,
     password.value()
 ).map(HashedPassword::new)
+
+// IMPORTANT: There is NO Promise.async(Runnable) method
+// Use Promise.lift(ThrowingRunnable) for async void operations
+Promise.lift(() -> {
+    // void operation that may throw
+    repository.updateStatus(userId);
+}).mapToUnit()
 ```
 
 ### Aggregation

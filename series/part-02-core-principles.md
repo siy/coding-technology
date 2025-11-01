@@ -294,6 +294,51 @@ When an AI generates a value object, the structure is mechanical:
 
 No guessing about where validation happens or how errors are reported. The AI learns the pattern once and applies it consistently.
 
+### Pragmatica Lite Validation Utilities
+
+Pragmatica Lite Core provides built-in utilities that eliminate boilerplate in value object validation:
+
+**Verify.Is Predicates** - 20+ ready-to-use validation predicates:
+```java
+// Instead of custom lambdas:
+.flatMap(s -> s.length() >= 8 ? Result.success(s) : Result.failure(...))
+
+// Use standard predicates:
+.flatMap(Verify.ensureFn(TOO_SHORT, Verify.Is::lenBetween, 8, 128))
+```
+
+**Common predicates:** `notNull`, `notBlank`, `lenBetween`, `matches`, `positive`, `nonNegative`, `between`, `greaterThan`, `lessThan`, `contains`.
+
+**Parse Subpackage** - Exception-safe JDK API wrappers:
+```java
+import org.pragmatica.lang.parse.Number;
+import org.pragmatica.lang.parse.DateTime;
+import org.pragmatica.lang.parse.Network;
+
+// Instead of: Result.lift(Integer::parseInt, raw)
+Number.parseInt(raw)              // Result<Integer>
+
+// Instead of: Result.lift(LocalDate::parse, raw)
+DateTime.parseLocalDate(raw)      // Result<LocalDate>
+
+// Instead of: Result.lift(UUID::fromString, raw)
+Network.parseUUID(raw)            // Result<UUID>
+```
+
+**Example using utilities:**
+```java
+public record Age(int value) {
+    public static Result<Age> age(String raw) {
+        return Number.parseInt(raw)
+            .flatMap(Verify.ensureFn(Causes.cause("Age 0-150"),
+                                     Verify.Is::between, 0, 150))
+            .map(Age::new);
+    }
+}
+```
+
+For comprehensive list, see main [Coding Guide](../CODING_GUIDE.md#pragmatica-lite-validation-and-parsing-utilities).
+
 ---
 
 ## No Business Exceptions

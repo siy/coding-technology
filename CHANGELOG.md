@@ -9,8 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.8.1] - 2025-01-21
 
+### Added
+- **Syntax highlighting for code blocks** on pragmatica.dev website
+  - Integrated highlight.js with GitHub light/dark themes
+  - Dynamic theme switching synced with site theme toggle
+  - Fixes Firefox rendering issue where Java code blocks appeared as unreadable gray boxes
+
 ### Changed
 - **All version references updated** from 1.8.0 to 1.8.1
+- **Pragmatica Lite API corrections** in CLAUDE.md and jbct-coder.md
+  - Added missing factory methods: `Option.from(Optional)`, `Result.unitResult()`, `Promise.unitPromise()`
+  - Corrected lift methods: removed non-existent `Promise.async(Runnable)`, use `Promise.lift(ThrowingRunnable)` instead
+  - Added missing aggregation: `Promise.failAll()`, `Promise.cancelAll()`
+  - Added missing callback methods: `.apply()`, `.fold()`, `.withSuccess()`, `.withFailure()`, `.withResult()`
+  - Added Promise-specific operations: `.resolve()`, `.succeed()`, `.fail()`, `.cancel()`, `.isResolved()`, `.timeout()`, `.mapResult()`, `.replaceResult()`, `.trace()`
+  - Added query and unsafe operations: `.isPresent()`, `.isEmpty()`, `.isSuccess()`, `.isFailure()`, `.unwrap()`, `.expect()`, `.stream()`, `.toOptional()`
 
 ## [1.8.0] - 2025-01-21
 

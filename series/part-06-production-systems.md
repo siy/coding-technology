@@ -148,7 +148,7 @@ public record Password(String value) {
 
     public static Result<Password> password(String raw) {
         return Verify.ensure(raw, Verify.Is::notNull)
-            .flatMap(Verify.ensureFn(TOO_SHORT, Verify.Is::minLength, 8))
+            .flatMap(Verify.ensureFn(TOO_SHORT, Verify.Is::lenBetween, 8, 128))
             .flatMap(ensureUppercase())
             .flatMap(ensureDigit())
             .map(Password::new);
@@ -215,7 +215,7 @@ public interface HashPassword {
 
 // Step 3: Save the user
 public interface SaveUser {
-    Promise<UserId> apply(ValidatedUser user);
+    Promise<UserId> apply(ValidUser user);
 }
 
 // Step 4: Generate a confirmation token
@@ -226,7 +226,7 @@ public interface GenerateToken {
 
 Supporting types:
 ```java
-record ValidatedUser(Email email, HashedPassword hashed, Option<ReferralCode> refCode) {}
+record ValidUser(Email email, HashedPassword hashed, Option<ReferralCode> refCode) {}
 record HashedPassword(String value) {}
 record UserId(String value) {}
 record ConfirmationToken(String value) {}
@@ -276,7 +276,7 @@ Uses `Result.lift1` to handle potential exceptions from BCrypt.
 class JooqUserRepository implements SaveUser {
     private final DSLContext dsl;
 
-    public Promise<UserId> apply(ValidatedUser user) {
+    public Promise<UserId> apply(ValidUser user) {
         return Promise.lift(
             RepositoryError.DatabaseFailure::cause,
             () -> {
@@ -695,6 +695,8 @@ public class UserController {
 Thin adapter: extract path variable → create Request → call use case → map Response/Cause to HTTP.
 
 #### 3. JOOQ Repository (Adapter Out)
+
+**Production example:** This uses the exception handling patterns introduced in Parts 2-3, demonstrating Promise.lift with JOOQ.
 
 ```java
 package com.example.app.adapter.persistence;

@@ -1,6 +1,6 @@
 # Part 3: Basic Patterns & Structure
 
-**Series:** [Java Backend Coding Technology](INDEX.md) | **Part:** 3 of 5
+**Series:** [Java Backend Coding Technology](INDEX.md) | **Part:** 3 of 6
 
 **Previous:** [Part 2: Core Principles](part-02-core-principles.md) | **Next:** [Part 4: Advanced Patterns & Testing](part-04-advanced-patterns.md)
 
@@ -233,6 +233,8 @@ public static Price calculateDiscount(Price original, Percentage rate) {
 }
 
 // Domain rule enforcement leaf
+// Unit is the functional equivalent of void—represents "no meaningful value"
+// Result.unitResult() returns success with no data
 public static Result<Unit> checkInventory(Product product, Quantity requested) {
     return product.availableQuantity().isGreaterThanOrEqual(requested)
         ? Result.unitResult()
@@ -253,7 +255,9 @@ If there's no I/O and no side effects, it's a business leaf. Keep each leaf focu
 
 ### Adapter Leaves
 
-Adapter leaves integrate with external systems: databases, HTTP clients, message queues, file systems. They map foreign errors to domain Causes:
+Adapter leaves integrate with external systems: databases, HTTP clients, message queues, file systems. They map foreign errors to domain Causes.
+
+**Building on Part 2:** This applies the Promise.lift exception handling pattern introduced in Part 2 to database adapters.
 
 ```java
 public interface UserRepository {
@@ -293,7 +297,7 @@ The adapter catches `SQLException` and wraps it in `RepositoryError.DatabaseFail
 
 **If a leaf is only used by one caller**, keep it nearby (same file, same package).
 
-**If it's reused**, move it immediately to the nearest `shared` package. Don't defer - tech debt accumulates when shared code stays in wrong locations.
+**If it's reused**, move it immediately to the nearest `shared` package. Don't defer - tech debt accumulates when shared code stays in wrong locations. (See Part 6 for `domain.shared` package organization details.)
 
 ### Common Mistakes
 

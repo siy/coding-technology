@@ -1,6 +1,6 @@
 # Part 2: Core Principles
 
-**Series:** [Java Backend Coding Technology](INDEX.md) | **Part:** 2 of 5
+**Series:** [Java Backend Coding Technology](INDEX.md) | **Part:** 2 of 6
 
 **Previous:** [Part 1: Introduction & Foundations](part-01-foundations.md) | **Next:** [Part 3: Basic Patterns & Structure](part-03-basic-patterns.md)
 
@@ -17,6 +17,8 @@ By the end of this part, you'll understand:
 - How to compose operations without nesting complexity
 
 These principles compress design decisions into mechanical rules. Master them, and the patterns in later parts become obvious.
+
+**Note on examples:** Code examples in this series show types in their final package locations (use case packages, `domain.shared`). Package structure and organization are covered comprehensively in Part 6—for now, focus on the concepts and patterns.
 
 ---
 
@@ -452,6 +454,8 @@ public sealed interface LoginError extends Cause {
 
 Failures compose: `Result.all(Email.email(...), Password.password(...))` collects validation failures into a `CompositeCause` automatically. If both email and password are invalid, the caller gets both errors, not just the first one encountered.
 
+**Note:** This demonstrates the Fork-Join pattern for parallel validation—covered in detail in Part 4. For now, understand it as validating multiple fields simultaneously and collecting all errors.
+
 ```java
 // If both fail:
 Result.all(Email.email("not-an-email"),
@@ -497,6 +501,8 @@ class JpaUserRepository implements UserRepository {
 The `lift()` methods handle try-catch boilerplate and exception-to-Cause conversion automatically via the provided exception-to-cause mapping function. Each monad type provides its own `lift()` method: `Option.lift()`, `Result.lift()`, and `Promise.lift()`.
 
 The adapter wraps checked `PersistenceException` in a domain `Cause` (`RepositoryError.DatabaseFailure`). Business logic never sees `PersistenceException` - only domain errors.
+
+**Note:** This exception handling pattern is applied to database adapters in Part 3 and shown in a complete JOOQ example in Part 6.
 
 ### Benefits
 
@@ -620,6 +626,7 @@ If any input fails, `all()` fails immediately (fail-fast for Promise) or collect
 | `Result<T>` | `Promise<T>` | `.async()` |
 | Multiple `Result<T>` | Single `Result` | `Result.all(...)` |
 | Multiple `Promise<T>` | Single `Promise` | `Promise.all(...)` |
+| `Collection<Promise<T>>` | `Promise<List<Result<T>>>` | `Promise.allOf(collection)` |
 
 ### Why These Rules?
 

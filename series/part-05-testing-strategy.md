@@ -1,6 +1,7 @@
 # Part 5: Testing Strategy & Evolutionary Approach
 
-**Series:** [Java Backend Coding Technology](INDEX.md)
+**Series:** [Java Backend Coding Technology](INDEX.md) | **Part:** 5 of 6
+
 **Previous:** [Part 4: Advanced Patterns & Testing](part-04-advanced-patterns.md) | **Next:** [Part 6: Production Systems](part-06-production-systems.md)
 
 ---
@@ -119,6 +120,11 @@ class EmailTest {
 }
 ```
 
+**Test naming convention:** Follow the pattern `methodName_outcome_condition`:
+- `email_rejectsInvalidFormat` - method name, what happens, under what condition
+- `email_normalizesToLowercase` - method name, outcome, implicit condition (always)
+- `execute_succeeds_forValidInput` - clear, readable, searchable
+
 **Why unit test here?** Value objects have zero dependencies. They're pure functions. Unit testing is natural.
 
 **2. Business Leaves: Unit Tests if Complex**
@@ -138,7 +144,11 @@ class PricingEngineTest {
 
 **Guideline:** If a leaf has 3+ conditional branches or complex logic, write unit tests.
 
+**Important:** If your leaf needs complex test setup or extensive mocking, it's probably not a leaf—extract the business logic to a separate function.
+
 **3. Use Cases: Integration Tests (Test Vectors)**
+
+**Test vectors:** comprehensive sets of input/output pairs systematically covering all decision paths and edge cases.
 
 The heart of your testing: test complete use case behavior with all steps assembled, only adapters stubbed.
 
@@ -907,173 +917,6 @@ class JooqUserRepositoryTest {
 **This is inverted from traditional pyramid** - we have MORE integration tests than unit tests.
 
 **Why?** Because our business logic is composition. Testing fragments misses the point.
-
----
-
-## Test Utilities & Helpers
-
-### Result Assertions
-
-**Problem:** Verbose assertions for Result/Option:
-
-```java
-// Painful
-assertTrue(result.isSuccess());
-assertEquals("expected", result.unwrap().value());
-
-// Still verbose
-result.onFailure(cause -> fail("Should succeed: " + cause.message()))
-      .onSuccess(value -> assertEquals("expected", value.field()));
-```
-
-**Solution:** Assertion helpers:
-
-```java
-public class ResultAssertions {
-    public static <T> T assertSuccess(Result<T> result) {
-        if (result.isFailure()) {
-            fail("Expected success but got failure: " + result.causeOrThrow().message());
-        }
-        return result.unwrap();
-    }
-
-    public static Cause assertFailure(Result<?> result) {
-        if (result.isSuccess()) {
-            fail("Expected failure but got success");
-        }
-        return result.causeOrThrow();
-    }
-
-    public static void assertFailureType(Result<?> result, Class<? extends Cause> expectedType) {
-        var cause = assertFailure(result);
-        assertInstanceOf(expectedType, cause);
-    }
-
-    public static void assertCompositeCause(Result<?> result, int expectedCount) {
-        var cause = assertFailure(result);
-        assertInstanceOf(Causes.CompositeCause.class, cause);
-        var composite = (Causes.CompositeCause) cause;
-        assertEquals(expectedCount, composite.causes().size());
-    }
-}
-```
-
-**Usage:**
-
-```java
-// Clean
-var value = assertSuccess(result);
-assertEquals("expected", value.field());
-
-// Or
-assertFailureType(result, UserError.InvalidEmail.class);
-assertCompositeCause(result, 3);
-```
-
----
-
-### Stub Builders
-
-**Problem:** Repetitive stub creation:
-
-```java
-// Repeated in every test
-CheckCredentials stubCreds = vr -> Result.success(new Credentials("user-1"));
-CheckAccountStatus stubStatus = c -> Result.success(new Account(c.userId(), true));
-```
-
-**Solution:** Stub factory:
-
-```java
-public class StubBuilders {
-    public static <T> Fn1<Result<T>, ?> alwaysSucceed(T value) {
-        return _ -> Result.success(value);
-    }
-
-    public static <T> Fn1<Result<T>, ?> alwaysFail(Cause cause) {
-        return _ -> cause.result();
-    }
-
-    public static <T> Fn1<Result<T>, ?> failNTimes(int n, Cause cause, T finalValue) {
-        return new Fn1<>() {
-            private int attempts = 0;
-
-            public Result<T> apply(Object input) {
-                if (attempts++ < n) {
-                    return cause.result();
-                }
-                return Result.success(finalValue);
-            }
-        };
-    }
-}
-```
-
-**Usage:**
-
-```java
-CheckCredentials stubCreds = StubBuilders.alwaysSucceed(new Credentials("user-1"));
-CheckAccountStatus failingStatus = StubBuilders.alwaysFail(UserError.AccountInactive.INSTANCE);
-GenerateToken flakyToken = StubBuilders.failNTimes(2, NetworkError.INSTANCE, new Response("token"));
-```
-
----
-
-### Promise Test Utilities
-
-**Problem:** Testing async code requires `.await()`, timeout handling:
-
-```java
-// Verbose
-var result = promise.await(Duration.ofSeconds(5));
-assertTrue(result.isSuccess());
-
-// Error-prone (no timeout)
-var result = promise.await();
-```
-
-**Solution:** Promise test helpers:
-
-```java
-public class PromiseTestUtils {
-    private static final Duration DEFAULT_TIMEOUT = Duration.ofSeconds(5);
-
-    public static <T> Result<T> awaitOrFail(Promise<T> promise) {
-        return promise.await(DEFAULT_TIMEOUT)
-                     .mapFailure(cause -> fail("Promise timed out: " + cause.message()));
-    }
-
-    public static <T> T awaitSuccess(Promise<T> promise) {
-        var result = awaitOrFail(promise);
-        return ResultAssertions.assertSuccess(result);
-    }
-
-    public static <T> void assertCompletesWithin(Promise<T> promise, Duration duration) {
-        var start = Instant.now();
-        promise.await(duration);
-        var elapsed = Duration.between(start, Instant.now());
-        assertTrue(elapsed.compareTo(duration) < 0,
-                  "Promise took " + elapsed + ", expected under " + duration);
-    }
-}
-```
-
-**Usage:**
-
-```java
-@Test
-void execute_succeeds_async() {
-    var promise = useCase.executeAsync(request);
-    var response = awaitSuccess(promise);
-    assertEquals("expected", response.token());
-}
-
-@Test
-void execute_completesQuickly() {
-    var promise = useCase.executeAsync(request);
-    assertCompletesWithin(promise, Duration.ofMillis(100));
-}
-```
 
 ---
 

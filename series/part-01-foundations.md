@@ -1,6 +1,6 @@
 # Part 1: Introduction & Foundations
 
-**Series:** [Java Backend Coding Technology](INDEX.md) | **Part:** 1 of 5 | **Next:** [Part 2: Core Principles](part-02-core-principles.md)
+**Series:** [Java Backend Coding Technology](INDEX.md) | **Part:** 1 of 6 | **Next:** [Part 2: Core Principles](part-02-core-principles.md)
 
 ---
 
@@ -207,6 +207,8 @@ Common monads you'll use:
 Each monad has:
 - **map**: "Transform the value, if/when available"
 - **flatMap**: "Chain another monadic operation, if/when the current one succeeds"
+
+**These concepts become practical in Part 2** when working with map/flatMap composition for validation and error handling.
 
 ### Why "Functional" Composition?
 

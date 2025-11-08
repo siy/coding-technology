@@ -1,7 +1,7 @@
 ---
 name: jbct-coder
 title: Java Backend Coding Technology Agent
-description: Specialized agent for generating business logic code using Java Backend Coding Technology v1.8.0 with Pragmatica Lite Core 0.8.3. Produces deterministic, AI-friendly code that matches human-written code structurally and stylistically. Includes evolutionary testing strategy guidance.
+description: Specialized agent for generating business logic code using Java Backend Coding Technology v1.8.1 with Pragmatica Lite Core 0.8.3. Produces deterministic, AI-friendly code that matches human-written code structurally and stylistically. Includes evolutionary testing strategy guidance.
 tools: Read, Write, Edit, MultiEdit, Grep, Glob, LS, Bash, TodoWrite, Task, WebSearch, WebFetch
 ---
 
@@ -128,6 +128,41 @@ record ValidUser(Email email, HashedPassword hashed) { ... }
 record ValidatedRequest(...)  // Too verbose
 record ValidatedUser(...)      // No additional semantics
 ```
+
+**Pragmatica Lite Validation Utilities:**
+
+Use built-in `Verify.Is` predicates instead of custom lambdas:
+```java
+// ✅ PREFER: Standard predicates
+Verify.ensure(password, Verify.Is::lenBetween, 8, 128)
+Verify.ensure(age, Verify.Is::positive)
+Verify.ensure(username, Verify.Is::notBlank)
+Verify.ensure(email, Verify.Is::matches, EMAIL_PATTERN)
+
+// ❌ AVOID: Custom lambdas when standard predicate exists
+Verify.ensure(password, p -> p.length() >= 8 && p.length() <= 128)
+```
+
+Use `parse.*` utilities for JDK API wrapping:
+```java
+import org.pragmatica.lang.parse.Number;
+import org.pragmatica.lang.parse.DateTime;
+import org.pragmatica.lang.parse.Network;
+
+// ✅ PREFER: parse utilities
+Number.parseInt(raw)              // Result<Integer>
+DateTime.parseLocalDate(raw)      // Result<LocalDate>
+Network.parseUUID(raw)            // Result<UUID>
+
+// ❌ AVOID: Manual wrapping
+Result.lift(Integer::parseInt, raw)
+Result.lift(LocalDate::parse, raw)
+Result.lift(UUID::fromString, raw)
+```
+
+**Common Verify.Is predicates:** `notNull`, `notBlank`, `notEmpty`, `lenBetween`, `matches`, `positive`, `negative`, `nonNegative`, `between`, `greaterThan`, `lessThan`, `contains`.
+
+**Available parse utilities:** `Number` (parseInt, parseLong, parseDouble, parseBigDecimal), `DateTime` (parseLocalDate, parseLocalDateTime, parseZonedDateTime), `Network` (parseUUID, parseURL, parseURI), `I18n` (parseLocale, parseCurrency).
 
 ### 3. No Business Exceptions
 
@@ -332,6 +367,13 @@ Result.lift1(
     encoder::encode,
     password.value()
 ).map(HashedPassword::new)
+
+// IMPORTANT: There is NO Promise.async(Runnable) method
+// Use Promise.lift(ThrowingRunnable) for async void operations
+Promise.lift(() -> {
+    // void operation that may throw
+    repository.updateStatus(userId);
+}).mapToUnit()
 ```
 
 ### Aggregation
@@ -1204,7 +1246,7 @@ public class JooqUserRepository implements SaveUser {
 
 ## References
 
-- **Full Guide**: `CODING_GUIDE.md` - Comprehensive explanation of all patterns and principles (v1.8.0)
+- **Full Guide**: `CODING_GUIDE.md` - Comprehensive explanation of all patterns and principles (v1.8.1)
 - **Testing Strategy**: `series/part-05-testing-strategy.md` - Evolutionary testing approach, integration-first philosophy, test organization
 - **API Reference**: `CLAUDE.md` - Complete Pragmatica Lite API documentation
 - **Technology Overview**: `TECHNOLOGY.md` - High-level pattern catalog

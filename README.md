@@ -54,7 +54,7 @@ Traditional software development relies on "best practices." These are subjectiv
 ### Changelog & Versioning
 
 - **[CHANGELOG.md](CHANGELOG.md)** - Version history following [Keep a Changelog](https://keepachangelog.com/)
-  - Current version: 1.8.0
+  - Current version: 1.8.1
   - Semantic versioning for documentation releases
 
 ## 🔧 For AI Collaboration

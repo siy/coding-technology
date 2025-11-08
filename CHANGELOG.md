@@ -30,6 +30,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added missing callback methods: `.apply()`, `.fold()`, `.withSuccess()`, `.withFailure()`, `.withResult()`
   - Added Promise-specific operations: `.resolve()`, `.succeed()`, `.fail()`, `.cancel()`, `.isResolved()`, `.timeout()`, `.mapResult()`, `.replaceResult()`, `.trace()`
   - Added query and unsafe operations: `.isPresent()`, `.isEmpty()`, `.isSuccess()`, `.isFailure()`, `.unwrap()`, `.expect()`, `.stream()`, `.toOptional()`
+- **JBCT Learning Series consistency fixes** (30 improvements across 6 parts)
+  - Fixed navigation metadata: Updated parts 1-3 from "of 5" to "of 6", added "Part: 5 of 6" header
+  - Fixed API violation: Changed `Verify.Is::minLength` to `Verify.Is::lenBetween` in Part 6
+  - Consolidated testing content: Removed duplication from Part 4, standardized to functional assertion style in Part 5
+  - Fixed naming convention: Changed all `ValidatedUser` occurrences to `ValidUser` in Part 6
+  - Added forward references: Fork-Join (Part 2), package organization (Part 2), exception handling (Parts 2-3-6)
+  - Added definitions: Unit type (Part 3), test vectors (Part 5), monad practical usage (Part 1)
+  - Added Promise.allOf() to composition cheat sheet (Part 2)
 
 ## [1.8.0] - 2025-01-21
 

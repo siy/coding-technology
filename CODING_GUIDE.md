@@ -6,7 +6,7 @@ description: "Revolutionary technology for writing deterministic, AI-friendly, h
 
 # Java Backend Coding Technology: Writing Code in the Era of AI
 
-**Version:** 1.6.2 | **Repository:** [github.com/siy/coding-technology](https://github.com/siy/coding-technology) | **Changelog:** [CHANGELOG.md](https://github.com/siy/coding-technology/blob/main/CHANGELOG.md)
+**Version:** 1.8.1 | **Repository:** [github.com/siy/coding-technology](https://github.com/siy/coding-technology) | **Changelog:** [CHANGELOG.md](https://github.com/siy/coding-technology/blob/main/CHANGELOG.md)
 
 ## Introduction: Code in a New Era
 
@@ -295,6 +295,187 @@ If `raw` is null or empty, we succeed with `Option.none()`. If it's present, we 
 **Normalization:** Factories can normalize input (trim whitespace, lowercase email domains, etc.) as part of parsing. This keeps invariants in one place and ensures all instances are normalized consistently.
 
 **Why this matters for AI:** When an AI generates a value object, the structure is mechanical: private constructor, static factory named after type, `Result<T>` or `Result<Option<T>>` return type, validation via `Verify` combinators. No guessing about where validation happens or how errors are reported.
+
+### Pragmatica Lite Validation and Parsing Utilities
+
+Pragmatica Lite Core provides two categories of utilities that eliminate common boilerplate: `Verify.Is` predicates for validation and the `parse` subpackage for exception-safe JDK API wrapping.
+
+#### Verify.Is Predicates
+
+The `Verify.Is` interface provides 20+ ready-to-use predicates for common validation scenarios. Instead of writing custom predicates or lambdas, use these standardized checks.
+
+**Null safety:**
+```java
+Verify.ensure(value, Verify.Is::notNull)
+```
+
+**String validations:**
+```java
+// Check non-empty and non-whitespace
+Verify.ensure(username, Verify.Is::notBlank)
+
+// Length constraints
+Verify.ensure(password, Verify.Is::lenBetween, 8, 128)
+
+// Pattern matching (accepts String regex or compiled Pattern)
+Verify.ensure(email, Verify.Is::matches, EMAIL_PATTERN)
+
+// Substring checks
+Verify.ensure(comment, Verify.Is::notContains, "spam")
+Verify.ensure(url, Verify.Is::contains, "https://")
+```
+
+**Numeric validations:**
+```java
+// Sign checks
+Verify.ensure(age, Verify.Is::positive)           // > 0
+Verify.ensure(balance, Verify.Is::negative)       // < 0
+Verify.ensure(count, Verify.Is::nonNegative)      // >= 0
+
+// Comparisons (works with any Comparable<T>)
+Verify.ensure(temperature, Verify.Is::greaterThan, 0)
+Verify.ensure(score, Verify.Is::lessThanOrEqualTo, 100)
+Verify.ensure(age, Verify.Is::between, 18, 120)
+
+// Equality checks using compareTo
+Verify.ensure(value, Verify.Is::equalTo, expected)
+Verify.ensure(value, Verify.Is::notEqualTo, forbidden)
+```
+
+**Option validations:**
+```java
+// Ensure Option is present
+Verify.ensure(maybeValue, Verify.Is::some)
+
+// Ensure Option is empty
+Verify.ensure(shouldBeEmpty, Verify.Is::none)
+```
+
+**Complete predicate list:** `notNull`, `positive`, `negative`, `nonNegative`, `nonPositive`, `greaterThan`, `greaterThanOrEqualTo`, `lessThan`, `lessThanOrEqualTo`, `equalTo`, `notEqualTo`, `between`, `empty`, `notEmpty`, `blank`, `notBlank`, `lenBetween`, `contains`, `notContains`, `matches`, `some`, `none`.
+
+**Combining multiple checks:**
+```java
+// Using Verify.combine for composite validation
+private static final Fn1<Result<String>, String> PASSWORD_CHECK = Verify.combine(
+    Verify.ensureFn(Causes.cause("Too short"), Verify.Is::lenBetween, 8, 128),
+    Verify.ensureFn(Causes.cause("No uppercase"), Verify.Is::matches, ".*[A-Z].*"),
+    Verify.ensureFn(Causes.cause("No digit"), Verify.Is::matches, ".*[0-9].*")
+);
+
+public static Result<Password> password(String raw) {
+    return Verify.ensure(raw, Verify.Is::notNull)
+        .flatMap(PASSWORD_CHECK)
+        .map(Password::new);
+}
+```
+
+#### Parse Subpackage - Exception-Safe JDK Wrappers
+
+The `org.pragmatica.lang.parse` package provides functional wrappers for JDK parsing APIs that throw exceptions. These return `Result<T>` instead of throwing, eliminating the need for manual `Result.lift()` wrapping.
+
+**Number parsing (`org.pragmatica.lang.parse.Number`):**
+```java
+import org.pragmatica.lang.parse.Number;
+
+// Instead of: Result.lift(Integer::parseInt, raw)
+Number.parseInt(raw)              // Result<Integer>
+Number.parseLong(raw)             // Result<Long>
+Number.parseDouble(raw)           // Result<Double>
+Number.parseBigDecimal(raw)       // Result<BigDecimal>
+Number.parseBigInteger(raw)       // Result<BigInteger>
+
+// With radix support
+Number.parseInt(hexString, 16)    // Result<Integer>
+```
+
+**DateTime parsing (`org.pragmatica.lang.parse.DateTime`):**
+```java
+import org.pragmatica.lang.parse.DateTime;
+
+// Instead of: Result.lift(LocalDate::parse, raw)
+DateTime.parseLocalDate(raw)               // Result<LocalDate>
+DateTime.parseLocalTime(raw)               // Result<LocalTime>
+DateTime.parseLocalDateTime(raw)           // Result<LocalDateTime>
+DateTime.parseZonedDateTime(raw)           // Result<ZonedDateTime>
+DateTime.parseInstant(raw)                 // Result<Instant>
+
+// With custom formatters
+DateTime.parseLocalDate(raw, customFormatter)  // Result<LocalDate>
+```
+
+**Network and identifier parsing (`org.pragmatica.lang.parse.Network`):**
+```java
+import org.pragmatica.lang.parse.Network;
+
+// Instead of: Result.lift(UUID::fromString, raw)
+Network.parseUUID(raw)              // Result<UUID>
+Network.parseURL(raw)               // Result<URL>
+Network.parseURI(raw)               // Result<URI>
+Network.parseInetAddress(raw)       // Result<InetAddress>
+```
+
+**I18n parsing (`org.pragmatica.lang.parse.I18n`):**
+```java
+import org.pragmatica.lang.parse.I18n;
+
+I18n.parseLocale(raw)              // Result<Locale>
+I18n.parseCurrency(raw)            // Result<Currency>
+```
+
+**Text utilities (`org.pragmatica.lang.parse.Text`):**
+```java
+import org.pragmatica.lang.parse.Text;
+
+Text.parseBoolean(raw)             // Result<Boolean>
+// Plus charset and encoding utilities
+```
+
+**Example value object using parse utilities:**
+```java
+public record UserId(UUID value) {
+    private static final Fn1<Cause, String> INVALID_ID =
+        Causes.forValue("Invalid user ID: {}");
+
+    public static Result<UserId> userId(String raw) {
+        return Verify.ensure(raw, Verify.Is::notBlank)
+            .flatMap(Network::parseUUID)
+            .mapFailure(_ -> INVALID_ID.apply(raw))
+            .map(UserId::new);
+    }
+}
+
+public record Age(int value) {
+    public static Result<Age> age(String raw) {
+        return Number.parseInt(raw)
+            .flatMap(Verify.ensureFn(Causes.cause("Age must be 0-150"),
+                                     Verify.Is::between, 0, 150))
+            .map(Age::new);
+    }
+}
+
+public record BirthDate(LocalDate value) {
+    public static Result<BirthDate> birthDate(String raw) {
+        return DateTime.parseLocalDate(raw)
+            .flatMap(Verify.ensureFn(Causes.cause("Birth date in future"),
+                                     Verify.Is::lessThanOrEqualTo, LocalDate.now()))
+            .map(BirthDate::new);
+    }
+}
+```
+
+**Why these utilities matter:**
+- **Discoverability:** Standard utilities are easier to find than custom validation code
+- **Consistency:** Same validation predicates used across all value objects
+- **Readability:** `Verify.Is::notBlank` reads better than `s -> !s.isBlank()`
+- **Correctness:** Pre-tested utilities eliminate subtle bugs in custom predicates
+- **AI-friendly:** Deterministic API surface for code generation
+
+**Guidelines:**
+- ✅ **Use `Verify.Is` predicates** instead of custom lambdas when available
+- ✅ **Use `parse.*` utilities** instead of `Result.lift()` for standard JDK parsing
+- ✅ **Combine predicates** with `Verify.combine()` for complex validation
+- ❌ **Don't write manual checks** for length, null, blank, numeric bounds
+- ❌ **Don't wrap JDK parsers** that already have `parse.*` equivalents
 
 ### No Business Exceptions
 
@@ -2401,7 +2582,7 @@ public record Password(String value) {
 
     public static Result<Password> password(String raw) {
         return Verify.ensure(raw, Verify.Is::notNull)
-            .flatMap(Verify.ensureFn(TOO_SHORT, Verify.Is::minLength, 8))
+            .flatMap(Verify.ensureFn(TOO_SHORT, Verify.Is::lenBetween, 8, 128))
             .flatMap(ensureUppercase())
             .flatMap(ensureDigit())
             .map(Password::new);

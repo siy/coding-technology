@@ -1,6 +1,6 @@
 # Part 2: Core Principles
 
-**Series:** [Java Backend Coding Technology](INDEX.md) | **Part:** 2 of 5
+**Series:** [Java Backend Coding Technology](INDEX.md) | **Part:** 2 of 6
 
 **Previous:** [Part 1: Introduction & Foundations](part-01-foundations.md) | **Next:** [Part 3: Basic Patterns & Structure](part-03-basic-patterns.md)
 
@@ -17,6 +17,8 @@ By the end of this part, you'll understand:
 - How to compose operations without nesting complexity
 
 These principles compress design decisions into mechanical rules. Master them, and the patterns in later parts become obvious.
+
+**Note on examples:** Code examples in this series show types in their final package locations (use case packages, `domain.shared`). Package structure and organization are covered comprehensively in Part 6—for now, focus on the concepts and patterns.
 
 ---
 
@@ -294,6 +296,51 @@ When an AI generates a value object, the structure is mechanical:
 
 No guessing about where validation happens or how errors are reported. The AI learns the pattern once and applies it consistently.
 
+### Pragmatica Lite Validation Utilities
+
+Pragmatica Lite Core provides built-in utilities that eliminate boilerplate in value object validation:
+
+**Verify.Is Predicates** - 20+ ready-to-use validation predicates:
+```java
+// Instead of custom lambdas:
+.flatMap(s -> s.length() >= 8 ? Result.success(s) : Result.failure(...))
+
+// Use standard predicates:
+.flatMap(Verify.ensureFn(TOO_SHORT, Verify.Is::lenBetween, 8, 128))
+```
+
+**Common predicates:** `notNull`, `notBlank`, `lenBetween`, `matches`, `positive`, `nonNegative`, `between`, `greaterThan`, `lessThan`, `contains`.
+
+**Parse Subpackage** - Exception-safe JDK API wrappers:
+```java
+import org.pragmatica.lang.parse.Number;
+import org.pragmatica.lang.parse.DateTime;
+import org.pragmatica.lang.parse.Network;
+
+// Instead of: Result.lift(Integer::parseInt, raw)
+Number.parseInt(raw)              // Result<Integer>
+
+// Instead of: Result.lift(LocalDate::parse, raw)
+DateTime.parseLocalDate(raw)      // Result<LocalDate>
+
+// Instead of: Result.lift(UUID::fromString, raw)
+Network.parseUUID(raw)            // Result<UUID>
+```
+
+**Example using utilities:**
+```java
+public record Age(int value) {
+    public static Result<Age> age(String raw) {
+        return Number.parseInt(raw)
+            .flatMap(Verify.ensureFn(Causes.cause("Age 0-150"),
+                                     Verify.Is::between, 0, 150))
+            .map(Age::new);
+    }
+}
+```
+
+For comprehensive list, see main [Coding Guide](../CODING_GUIDE.md#pragmatica-lite-validation-and-parsing-utilities).
+
 ---
 
 ## No Business Exceptions
@@ -407,6 +454,8 @@ public sealed interface LoginError extends Cause {
 
 Failures compose: `Result.all(Email.email(...), Password.password(...))` collects validation failures into a `CompositeCause` automatically. If both email and password are invalid, the caller gets both errors, not just the first one encountered.
 
+**Note:** This demonstrates the Fork-Join pattern for parallel validation—covered in detail in Part 4. For now, understand it as validating multiple fields simultaneously and collecting all errors.
+
 ```java
 // If both fail:
 Result.all(Email.email("not-an-email"),
@@ -452,6 +501,8 @@ class JpaUserRepository implements UserRepository {
 The `lift()` methods handle try-catch boilerplate and exception-to-Cause conversion automatically via the provided exception-to-cause mapping function. Each monad type provides its own `lift()` method: `Option.lift()`, `Result.lift()`, and `Promise.lift()`.
 
 The adapter wraps checked `PersistenceException` in a domain `Cause` (`RepositoryError.DatabaseFailure`). Business logic never sees `PersistenceException` - only domain errors.
+
+**Note:** This exception handling pattern is applied to database adapters in Part 3 and shown in a complete JOOQ example in Part 6.
 
 ### Benefits
 
@@ -575,6 +626,7 @@ If any input fails, `all()` fails immediately (fail-fast for Promise) or collect
 | `Result<T>` | `Promise<T>` | `.async()` |
 | Multiple `Result<T>` | Single `Result` | `Result.all(...)` |
 | Multiple `Promise<T>` | Single `Promise` | `Promise.all(...)` |
+| `Collection<Promise<T>>` | `Promise<List<Result<T>>>` | `Promise.allOf(collection)` |
 
 ### Why These Rules?
 

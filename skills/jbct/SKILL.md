@@ -10,13 +10,14 @@ A methodology for writing predictable, testable Java backend code optimized for 
 ## When to Use This Skill
 
 Activate this skill when:
-- Implementing Java backend features with functional patterns
-- Reviewing code for JBCT compliance
-- Designing use cases, value objects, or domain models
+- **Learning JBCT principles** and patterns
+- **Quick reference** for API usage and examples
+- **Understanding patterns** and when to use them
 - Working with `Result<T>`, `Option<T>`, `Promise<T>` types
 - Questions about monadic composition, error handling, or validation patterns
-- Structuring backend applications with vertical slicing
-- Converting imperative code to functional composition
+
+**For implementation work:** Use `jbct-coder` subagent (Task tool with `subagent_type: "jbct-coder"`)
+**For code review:** Use `jbct-reviewer` subagent (Task tool with `subagent_type: "jbct-reviewer"`)
 
 ## Core Philosophy
 
@@ -75,6 +76,42 @@ public record Email(String value) {
 - Factory method named after type (lowercase): `Email.email(...)`
 - Constructor private or package-private
 - If instance exists, it's valid
+
+### Pragmatica Lite Validation Utilities
+
+**Verify.Is Predicates** - Use instead of custom lambdas:
+```java
+Verify.Is::notNull          // null check
+Verify.Is::notBlank         // non-empty, non-whitespace
+Verify.Is::lenBetween       // length in range
+Verify.Is::matches          // regex (String or Pattern)
+Verify.Is::positive         // > 0
+Verify.Is::between          // >= min && <= max
+Verify.Is::greaterThan      // > boundary
+```
+
+**Parse Subpackage** - Exception-safe JDK wrappers:
+```java
+import org.pragmatica.lang.parse.Number;
+import org.pragmatica.lang.parse.DateTime;
+import org.pragmatica.lang.parse.Network;
+
+Number.parseInt(raw)              // Result<Integer>
+DateTime.parseLocalDate(raw)      // Result<LocalDate>
+Network.parseUUID(raw)            // Result<UUID>
+```
+
+**Example:**
+```java
+public record Age(int value) {
+    public static Result<Age> age(String raw) {
+        return Number.parseInt(raw)
+            .flatMap(Verify.ensureFn(Causes.cause("Age 0-150"),
+                                     Verify.Is::between, 0, 150))
+            .map(Age::new);
+    }
+}
+```
 
 ### Use Case Structure
 
@@ -323,6 +360,51 @@ implementation 'org.pragmatica-lite:core:0.8.3'
 
 Library documentation: https://central.sonatype.com/artifact/org.pragmatica-lite/core
 
+## When to Use Specialized Subagents
+
+This skill provides quick reference and learning resources. For complex implementation and review tasks, use specialized subagents:
+
+### Use jbct-coder Subagent When:
+- **Generating complete use case implementations** with all components
+- **Creating value objects** with validation and error types
+- **Implementing adapters** with proper exception handling
+- **Writing tests** following JBCT patterns
+- **Need deterministic code generation** following all JBCT rules
+
+**How to invoke:** Use Task tool with `subagent_type: "jbct-coder"`
+
+**What it provides:**
+- Complete use case structure (interface, factory, steps)
+- Validated request types with `Result.all()`
+- Value objects with parse-don't-validate pattern
+- Error types as sealed interfaces
+- Comprehensive test suites (validation, happy path, failures)
+- Step-by-step code generation with explanations
+
+### Use jbct-reviewer Subagent When:
+- **Reviewing existing code** for JBCT compliance
+- **Validating patterns** (Leaf, Sequencer, Fork-Join, etc.)
+- **Checking naming conventions** and structure
+- **Identifying violations** with specific fixes
+- **Need comprehensive checklist-based analysis**
+
+**How to invoke:** Use Task tool with `subagent_type: "jbct-reviewer"`
+
+**What it provides:**
+- Four Return Kinds compliance check
+- Parse-don't-validate pattern validation
+- Null policy enforcement
+- Pattern recognition and verification
+- Naming convention compliance
+- Detailed violation reports with corrections
+
+### Use This Skill When:
+- **Learning JBCT principles** and patterns
+- **Looking up API usage** examples
+- **Quick reference** for type conversions
+- **Understanding when to use** which pattern
+- **Exploring patterns** with examples
+
 ## Implementation Workflow
 
 1. **Define use case interface** with Request, Response, and execute signature
@@ -331,6 +413,8 @@ Library documentation: https://central.sonatype.com/artifact/org.pragmatica-lite
 4. **Create value objects** with validation in static factories
 5. **Implement factory method** returning lambda with composition chain
 6. **Write tests** starting with validation, then happy path, then failure cases
+
+**💡 Tip:** For automatic generation following this workflow, use the **jbct-coder** subagent.
 
 ## Common Mistakes to Avoid
 
@@ -342,6 +426,8 @@ Library documentation: https://central.sonatype.com/artifact/org.pragmatica-lite
 ❌ Public constructors on value objects
 ❌ Complex logic in lambdas (extract to methods)
 ❌ `Validated` prefix (use `Valid`)
+
+**💡 Tip:** For automated code review checking these mistakes, use the **jbct-reviewer** subagent.
 
 ## Detailed Resources
 
@@ -368,10 +454,20 @@ This skill contains comprehensive guidance organized by topic:
 - [testing/patterns.md](testing/patterns.md) - Test strategies and assertions
 - [project-structure/organization.md](project-structure/organization.md) - Vertical slicing
 
-### External Resources
+### Specialized Subagents
+- **../../jbct-coder.md** - Autonomous code generation agent (invoke with Task tool)
+  - Generates complete use cases with validation, tests, and adapters
+  - Follows deterministic algorithms for consistent output
+  - Includes evolutionary testing strategy
+- **../../jbct-reviewer.md** - Autonomous code review agent (invoke with Task tool)
+  - Comprehensive JBCT compliance checking
+  - Pattern validation and naming convention enforcement
+  - Detailed violation reports with fixes
+
+### Documentation
 - **../../CODING_GUIDE.md** - Complete technical reference (100+ pages)
 - **../../series/** - 6-part progressive learning series
-- **../../jbct-coder.md** - Code generation subagent
-- **../../jbct-reviewer.md** - Code review subagent
+- **../../TECHNOLOGY.md** - High-level pattern catalog
+- **../../CHANGELOG.md** - Version history and changes
 
 Repository: https://github.com/siy/coding-technology

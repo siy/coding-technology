@@ -177,11 +177,14 @@ Library documentation: https://central.sonatype.com/artifact/org.pragmatica-lite
 
 ### Factories (creating instances):
 - `Option.option(T value)`  -  wraps nullable value (null → empty)
+- `Option.from(Optional<T>)`  -  converts Java Optional to Option
 - `Option.some(T value)` / `Option.present(T value)`  -  create present option
 - `Option.none()` / `Option.empty()`  -  create empty option
 - `Result.success(T value)` / `Result.ok(T value)`  -  create success
+- `Result.unitResult()`  -  success with Unit value
 - `Result.failure(Cause cause)` / `Result.err(Cause cause)`  -  create failure (prefer `cause.result()`)
 - `Promise.success(T value)` / `Promise.ok(T value)`  -  resolved promise (success)
+- `Promise.unitPromise()`  -  resolved promise with Unit value
 - `Promise.failure(Cause cause)` / `Promise.err(Cause cause)`  -  resolved promise (failure) (prefer `cause.promise()`)
 - `Promise.resolved(Result<T> result)`  -  resolved promise
 - `Promise.promise()`  -  unresolved promise
@@ -223,7 +226,6 @@ All accept optional `exceptionMapper: Fn1<Cause, Throwable>` (defaults to `Cause
 - **`Promise.lift(Fn1<Cause, Throwable> mapper, ThrowingFn0<U> supplier)`**
 - **`Promise.lift(ThrowingRunnable runnable)`**  -  returns `Promise<Unit>`
 - **`Promise.lift(Cause cause, ThrowingFn0<U> supplier)`**  -  fixed cause on failure
-- **`Promise.async(Runnable action)`**  -  async execution returning `Promise<Unit>`
 - **`Promise.lift1(ThrowingFn1<R, T1> fn, T1 value)`**  -  direct invocation
 - **`Promise.lift1(Fn1<Cause, Throwable> mapper, ThrowingFn1<R, T1> fn, T1 value)`**  -  with custom mapper
 - **`Promise.lift2(ThrowingFn2<R, T1, T2> fn, T1 v1, T2 v2)`**  -  direct invocation
@@ -235,7 +237,116 @@ All accept optional `exceptionMapper: Fn1<Cause, Throwable>` (defaults to `Cause
 - **`Promise.liftFn2(ThrowingFn2<R, T1, T2> fn)`**  -  returns `Fn2<Promise<R>, T1, T2>`
 - **`Promise.liftFn3(ThrowingFn3<R, T1, T2, T3> fn)`**  -  returns `Fn3<Promise<R>, T1, T2, T3>`
 
-**Note**: There are NO `Promise.liftOption()` or `Promise.liftResult()` methods. Use `Promise.lift()` for exception handling in adapters.
+**Note**: There is NO `Promise.async(Runnable)` method. Use `Promise.lift(ThrowingRunnable)` for async execution of void operations.
+
+## Validation and Parsing Utilities
+
+### Verify.Is Predicates
+
+Standard validation predicates for use with `Verify.ensure()`:
+
+**Null check:**
+- `Verify.Is::notNull` - value != null
+
+**String checks:**
+- `Verify.Is::empty` - isEmpty()
+- `Verify.Is::notEmpty` - !isEmpty()
+- `Verify.Is::blank` - only whitespace
+- `Verify.Is::notBlank` - has non-whitespace
+- `Verify.Is::lenBetween` - length in range (inclusive)
+- `Verify.Is::contains` - contains substring
+- `Verify.Is::notContains` - doesn't contain substring
+- `Verify.Is::matches` - regex match (String or Pattern)
+
+**Numeric checks:**
+- `Verify.Is::positive` - > 0
+- `Verify.Is::negative` - < 0
+- `Verify.Is::nonNegative` - >= 0
+- `Verify.Is::nonPositive` - <= 0
+- `Verify.Is::greaterThan` - > boundary
+- `Verify.Is::greaterThanOrEqualTo` - >= boundary
+- `Verify.Is::lessThan` - < boundary
+- `Verify.Is::lessThanOrEqualTo` - <= boundary
+- `Verify.Is::equalTo` - == boundary (via compareTo)
+- `Verify.Is::notEqualTo` - != boundary (via compareTo)
+- `Verify.Is::between` - >= min && <= max
+
+**Option checks:**
+- `Verify.Is::some` - Option.isPresent()
+- `Verify.Is::none` - Option.isEmpty()
+
+**Usage:**
+```java
+Verify.ensure(password, Verify.Is::lenBetween, 8, 128)
+Verify.ensure(age, Verify.Is::between, 0, 150)
+Verify.ensure(username, Verify.Is::notBlank)
+```
+
+**Combining checks:**
+```java
+Verify.combine(
+    Verify.ensureFn(cause1, Verify.Is::notBlank),
+    Verify.ensureFn(cause2, Verify.Is::lenBetween, 8, 128)
+)
+```
+
+### Parse Subpackage - JDK Wrappers
+
+Exception-safe wrappers for JDK parsing APIs. All return `Result<T>`.
+
+**org.pragmatica.lang.parse.Number:**
+- `Number.parseInt(String)` → `Result<Integer>`
+- `Number.parseInt(String, int radix)` → `Result<Integer>`
+- `Number.parseLong(String)` → `Result<Long>`
+- `Number.parseLong(String, int radix)` → `Result<Long>`
+- `Number.parseShort(String)` → `Result<Short>`
+- `Number.parseByte(String)` → `Result<Byte>`
+- `Number.parseFloat(String)` → `Result<Float>`
+- `Number.parseDouble(String)` → `Result<Double>`
+- `Number.parseBigInteger(String)` → `Result<BigInteger>`
+- `Number.parseBigInteger(String, int radix)` → `Result<BigInteger>`
+- `Number.parseBigDecimal(String)` → `Result<BigDecimal>`
+
+**org.pragmatica.lang.parse.DateTime:**
+- `DateTime.parseLocalDate(String)` → `Result<LocalDate>`
+- `DateTime.parseLocalDate(String, DateTimeFormatter)` → `Result<LocalDate>`
+- `DateTime.parseLocalTime(String)` → `Result<LocalTime>`
+- `DateTime.parseLocalDateTime(String)` → `Result<LocalDateTime>`
+- `DateTime.parseZonedDateTime(String)` → `Result<ZonedDateTime>`
+- `DateTime.parseInstant(String)` → `Result<Instant>`
+- `DateTime.parseOffsetDateTime(String)` → `Result<OffsetDateTime>`
+
+**org.pragmatica.lang.parse.Network:**
+- `Network.parseUUID(String)` → `Result<UUID>`
+- `Network.parseURL(String)` → `Result<URL>`
+- `Network.parseURI(String)` → `Result<URI>`
+- `Network.parseInetAddress(String)` → `Result<InetAddress>`
+
+**org.pragmatica.lang.parse.I18n:**
+- `I18n.parseLocale(String)` → `Result<Locale>`
+- `I18n.parseCurrency(String)` → `Result<Currency>`
+
+**org.pragmatica.lang.parse.Text:**
+- `Text.parseBoolean(String)` → `Result<Boolean>`
+
+**Usage:**
+```java
+// Instead of: Result.lift(Integer::parseInt, raw)
+Number.parseInt(raw)
+
+// Instead of: Result.lift(UUID::fromString, raw)
+Network.parseUUID(raw)
+
+// Value object example
+public record Age(int value) {
+    public static Result<Age> age(String raw) {
+        return Number.parseInt(raw)
+            .flatMap(Verify.ensureFn(Causes.cause("Age 0-150"),
+                                     Verify.Is::between, 0, 150))
+            .map(Age::new);
+    }
+}
+```
 
 ## Aggregation (all/any/allOf)
 
@@ -262,6 +373,10 @@ All accept optional `exceptionMapper: Fn1<Cause, Throwable>` (defaults to `Cause
 - `Result.any(Result<T>...)`  -  first success result
 - `Promise.any(Promise<T>...)`  -  first success promise, cancels others
 
+### Promise-specific aggregation:
+- `Promise.failAll(Collection<Promise<?>>)`  -  waits for all promises to complete, returns failure if any failed
+- `Promise.cancelAll(Collection<Promise<?>>)`  -  cancels all promises in collection
+
 ## Common Methods
 
 ### map/flatMap (all types):
@@ -282,24 +397,54 @@ All accept optional `exceptionMapper: Fn1<Cause, Throwable>` (defaults to `Cause
 - `.onPresent(Consumer<T>)`  -  Option only
 - `.onPresentRun(Runnable)`  -  Option only: run action when present
 - `.onEmpty(Runnable)`  -  Option only (alias: `.onEmptyRun(Runnable)`)
+- `.apply(Consumer<T>, Runnable)`  -  Option only: bifurcation (onPresent, onEmpty)
 - `.onSuccess(Consumer<T>)`  -  Result and Promise
 - `.onSuccessRun(Runnable)`  -  Result and Promise: run action on success
 - `.onSuccessAsync(Consumer<T>)`  -  Promise only: async version of onSuccess
 - `.onSuccessRunAsync(Runnable)`  -  Promise only: async run action on success
+- `.withSuccess(Consumer<T>)`  -  Promise only: returns self for chaining
 - `.onFailure(Consumer<Cause>)`  -  Result and Promise
 - `.onFailureRun(Runnable)`  -  Result and Promise: run action on failure
 - `.onFailureAsync(Consumer<Cause>)`  -  Promise only: async version of onFailure
 - `.onFailureRunAsync(Runnable)`  -  Promise only: async run action on failure
+- `.withFailure(Consumer<Cause>)`  -  Promise only: returns self for chaining
 - `.onResult(Consumer<Result<T>>)`  -  Result and Promise
 - `.onResultRun(Runnable)`  -  Result and Promise: run action regardless of outcome
 - `.onResultAsync(Consumer<Result<T>>)`  -  Promise only: async version of onResult
 - `.onResultRunAsync(Runnable)`  -  Promise only: async run action regardless of outcome
+- `.withResult(Consumer<Result<T>>)`  -  Promise only: returns self for chaining
+- `.apply(Consumer<T>, Consumer<Cause>)`  -  Result only: bifurcation (onSuccess, onFailure)
+- `.fold(Fn1<R, T> success, Fn1<R, Cause> failure)`  -  Option/Result/Promise: transform both cases
 
 ### Recovery:
 - `.or(T replacement)`  -  provide fallback value
 - `.or(Supplier<T> supplier)`  -  lazy fallback value
 - `.orElse(M<T> replacement)`  -  fallback monadic value
 - `.recover(Fn1<T, Cause> mapper)`  -  Result/Promise: recover from failure
+
+### Promise-specific operations:
+- `.resolve(Result<T>)`  -  resolve unresolved promise with result
+- `.succeed(T value)`  -  resolve unresolved promise with success
+- `.fail(Cause cause)`  -  resolve unresolved promise with failure
+- `.succeedAsync(T value)`  -  resolve promise asynchronously
+- `.failAsync(Cause cause)`  -  fail promise asynchronously
+- `.cancel()`  -  cancel promise execution
+- `.isResolved()`  -  check if promise has been resolved
+- `.timeout(TimeSpan duration)`  -  add timeout to promise
+- `.mapResult(Fn1<Result<U>, Result<T>>)`  -  transform result (both success and failure)
+- `.replaceResult(Result<U>)`  -  replace result entirely
+- `.trace(Fn1<Cause, Cause>)`  -  transform error cause (alias: `.mapError()`)
+
+### Query methods:
+- `.isPresent()` / `.isEmpty()`  -  Option only
+- `.isSuccess()` / `.isFailure()`  -  Result only
+- `.isResolved()`  -  Promise only
+
+### Unsafe operations (avoid in production):
+- `.unwrap()`  -  deprecated, throws if empty/failure
+- `.expect(String message)`  -  throws with custom message if empty/failure
+- `.stream()`  -  converts to Java Stream (0 or 1 element)
+- `.toOptional()`  -  Option only: converts to Java Optional
 
 ## Example Usage Patterns
 

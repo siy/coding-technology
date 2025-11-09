@@ -7,6 +7,94 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.8.2] - 2025-01-09
+
+### Added
+- **README: 30-Second Pitch** with before/after code comparison
+  - Shows validation hell → parse-don't-validate transformation
+  - Concrete example highlighting immediate benefits
+  - Positioned at top of README for maximum impact
+
+- **README: Quick Wins section** for incremental adoption
+  - Three small changes developers can make today (10 minutes each)
+  - Win 1: Convert one value object to parse-don't-validate
+  - Win 2: Convert one service method to return Result<T>
+  - Win 3: Convert one test to functional assertions
+  - Emphasis: "You don't have to rewrite everything"
+
+- **Part 2: Spring to JBCT Translation table**
+  - Maps familiar Spring patterns to JBCT equivalents
+  - Clear guidance on @Service → use case, @Repository → adapter, etc.
+  - Example showing traditional vs JBCT Spring controller
+  - Reduces barrier for Spring Boot developers
+
+- **Part 2: "Why Not Java Standard Library?" comparison**
+  - Table comparing null, Optional, exceptions, CompletableFuture to JBCT types
+  - Shows concrete problems with traditional Java approaches
+  - Explains why four types are necessary
+
+- **Part 2: Migration strategy for existing codebases**
+  - Three-phase incremental adoption path
+  - Keep existing @Valid annotations, add parsing layer
+  - Gradual migration from services to value objects
+  - Real-world Spring controller example
+
+- **Part 2: Real-world validation examples**
+  - Cross-field validation (DateRange with end > start)
+  - Dependent validation (password must not contain username)
+  - Business rule validation (order total matches line items)
+  - Error accumulation with Result.all()
+
+- **Part 2: "When Exceptions Are Still OK" section**
+  - Programming errors vs business failures distinction
+  - Legitimate exception uses (IllegalArgumentException, framework boundaries)
+  - Clear table showing when to use Result vs exceptions
+
+- **Part 2: Basic testing moved forward from Part 5**
+  - Functional assertion pattern (onSuccess/onFailure)
+  - Examples for Result, Promise, and Option
+  - Test naming convention (methodName_outcome_condition)
+  - Allows developers to verify code immediately after learning concepts
+
+- **Part 2: Pragmatica Lite Quick Reference**
+  - Common imports and method cheat sheet
+  - Frequently used patterns with descriptions
+  - Positioned after validation utilities section
+
+- **Part 3: "Why This Rule Exists" section for Single Pattern Per Function**
+  - Shows concrete pain points of mixing patterns
+  - Testing brittleness, debugging confusion, code review issues
+  - Demonstrates benefits of separation
+
+- **Part 1: Evaluation Framework worked example**
+  - Complete analysis of @Transactional vs explicit transactions
+  - Applies all 5 criteria with scoring
+  - Shows how every JBCT decision is made objectively
+
+### Changed
+- **Progressive "Smart Wrapper" → "monad" terminology** across series
+  - Part 1: 90% "Smart Wrapper", 10% "monad" (gentle introduction)
+  - Part 2: 70% "Smart Wrapper", 30% "monad" (building familiarity)
+  - Part 3: 50/50 mix with transition statements
+  - Part 4: 70% "monad" (primary term established)
+  - Parts 5-6: 80-100% "monad" (correct FP terminology)
+  - Eliminates FP phobia while teaching correct terminology
+
+- **Part 3: Simplified async iteration example**
+  - Replaced complex reduce with simple for-loop version
+  - Shows reduce as "alternative" with note: "clarity matters more than cleverness"
+  - Makes async iteration immediately understandable
+
+- **Part 1: Added "Try It Now" exercises**
+  - After Smart Wrappers introduction
+  - Encourages code exploration before moving to Part 2
+  - Observation-focused (don't change yet, just notice patterns)
+
+- **Terminology clarifications**
+  - Part 2: Added note that "Cause" ≠ exception cause (means "FailureReason")
+  - Part 3: Clarified "Leaf" as "(atomic operation with no substeps)"
+  - Part 2: First code example shows full imports for API context
+
 ## [1.8.1] - 2025-01-21
 
 ### Added

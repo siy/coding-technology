@@ -1,8 +1,62 @@
 # Java Backend Coding Technology
 
-> **Version 1.8.1** | [Full Changelog](CHANGELOG.md)
+> **Version 1.8.2** | [Full Changelog](CHANGELOG.md)
 
 A framework-agnostic methodology for writing predictable, testable Java backend code optimized for human-AI collaboration.
+
+## Here's What Changes
+
+<table>
+<tr>
+<th>Without JBCT</th>
+<th>With JBCT</th>
+</tr>
+<tr>
+<td>
+
+```java
+// Validation scattered everywhere
+@PostMapping("/register")
+public User register(@Valid RegistrationRequest req) {
+    if (req.email == null || req.email.isBlank()) {
+        throw new ValidationException("Email required");
+    }
+    if (!req.email.matches("...")) {
+        throw new ValidationException("Invalid email");
+    }
+    // More validation...
+    // Then business logic...
+    // Hidden failures, unclear errors
+}
+```
+
+</td>
+<td>
+
+```java
+// Validation = construction
+public record Email(String value) {
+    public static Result<Email> email(String raw) {
+        return Verify.ensure(raw, Verify.Is::notBlank)
+            .flatMap(Verify.ensureFn(INVALID, Verify.Is::matches, PATTERN))
+            .map(Email::new);  // Impossible to create invalid email
+    }
+}
+
+@PostMapping("/register")
+public ResponseEntity<?> register(@RequestBody RegistrationRequest raw) {
+    return RegistrationRequest.validate(raw)  // Parse don't validate
+        .flatMap(useCase::execute)            // Type-safe composition
+        .fold(this::errorResponse,            // Explicit error handling
+              this::successResponse);
+}
+```
+
+</td>
+</tr>
+</table>
+
+**Result:** Validation lives in value objects. Business logic works only with valid data. Errors are typed and explicit. Testing is straightforward.
 
 ## Why "Technology"?
 
@@ -25,6 +79,102 @@ Traditional software development relies on "best practices." These are subjectiv
 7. **[Part 6: Production Systems](series/part-06-production-systems.md)** - Complete use case walkthrough, project structure, framework integration
 
 **Need the complete reference?** See **[CODING_GUIDE.md](CODING_GUIDE.md)** - comprehensive technical documentation with all patterns, principles, and examples.
+
+## ⚡ Quick Wins: Start Small
+
+**Don't want to learn a whole new paradigm?** You don't have to. Here are three changes you can make today that provide immediate value:
+
+### 1. Convert One Value Object
+
+Pick your most-validated field (email, phone, user ID).
+
+**Before:**
+```java
+// DTO with validation annotations
+public class UserRequest {
+    @NotBlank @Email
+    private String email;  // Can still be constructed with invalid data
+    // getter/setter
+}
+
+// Validation happens at controller, but domain code has no guarantees
+```
+
+**After:**
+```java
+// Validation = construction
+public record Email(String value) {
+    public static Result<Email> email(String raw) {
+        return Verify.ensure(raw, Verify.Is::notBlank)
+            .flatMap(Verify.ensureFn(INVALID_FORMAT, Verify.Is::matches, PATTERN))
+            .map(Email::new);
+    }
+}
+// Impossible to create invalid Email - type system guarantees it
+```
+
+**Win:** Business logic only sees valid emails. No defensive `if (email == null)` checks.
+
+### 2. Convert One Service Method
+
+Pick a method that can fail in business-meaningful ways.
+
+**Before:**
+```java
+public User findUser(String id) throws UserNotFoundException {
+    User user = repository.findById(id);
+    if (user == null) throw new UserNotFoundException(id);
+    return user;
+}
+// Caller doesn't know it throws without reading docs/code
+```
+
+**After:**
+```java
+public Result<User> findUser(UserId id) {
+    return repository.findById(id)  // Returns Option<User>
+        .toResult(UserNotFound.cause(id));
+}
+// Compiler forces caller to handle failure case
+```
+
+**Win:** Failures are type-safe. No hidden exceptions. Clear intent.
+
+### 3. Convert One Test
+
+Make one test more readable using functional assertions.
+
+**Before:**
+```java
+@Test
+void testValidation() {
+    Result<Email> result = Email.email("invalid");
+    assertTrue(result.isFailure());
+    // Or worse: try-catch with @Test(expected = ...)
+}
+```
+
+**After:**
+```java
+@Test
+void email_rejectsInvalidFormat() {
+    Email.email("invalid")
+        .onSuccess(Assertions::fail);  // Fail if unexpectedly succeeds
+}
+
+@Test
+void email_acceptsValidFormat() {
+    Email.email("user@example.com")
+        .onFailure(Assertions::fail)  // Fail if unexpectedly fails
+        .onSuccess(email -> assertEquals("user@example.com", email.value()));
+}
+```
+
+**Win:** Clear test intent. Better failure messages. More readable.
+
+---
+
+**That's it.** Three small changes. Each takes 10 minutes. Each provides immediate value. You don't have to rewrite your whole app—adopt incrementally.
 
 ## 📚 Documentation
 
@@ -54,7 +204,7 @@ Traditional software development relies on "best practices." These are subjectiv
 ### Changelog & Versioning
 
 - **[CHANGELOG.md](CHANGELOG.md)** - Version history following [Keep a Changelog](https://keepachangelog.com/)
-  - Current version: 1.8.1
+  - Current version: 1.8.2
   - Semantic versioning for documentation releases
 
 ## 🔧 For AI Collaboration
@@ -179,6 +329,6 @@ You are free to:
 
 ---
 
-**Version:** 1.8.1 | **Last Updated:** 2025-01-21 | **[Full Changelog](CHANGELOG.md)**
+**Version:** 1.8.2 | **Last Updated:** 2025-01-09 | **[Full Changelog](CHANGELOG.md)**
 
 **Copyright © 2025 Sergiy Yevtushenko. Released under the [MIT License](LICENSE).**

@@ -18,6 +18,8 @@ By the end of this part, you'll understand:
 
 These patterns compose the basic building blocks you learned in Part 3. Together, they cover 90% of backend use case implementation.
 
+**Note on terminology:** From this point forward, we'll primarily use "monad" when referring to Option, Result, and Promise. You're now familiar with these Smart Wrapper types—understanding them as monads connects you to the broader functional programming ecosystem.
+
 ---
 
 ## Pattern: Sequencer

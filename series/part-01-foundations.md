@@ -110,16 +110,18 @@ The second version **chains** operations. Each step takes the output of the prev
 
 Why this matters: composition lets you **build complex logic from simple pieces** without intermediate variables or explicit error checking at each step. The structure itself handles error propagation.
 
-### What Are Monads? (The Simple Explanation)
+### What Are Smart Wrappers?
 
-You've probably heard "monads" described in scary mathematical terms. Forget that. Here's the practical understanding:
+In JBCT, we use **Smart Wrappers**—types that wrap values and control how operations are applied to them.
 
-**A monad is a wrapper that controls when and if your operations run.**
+> **Note:** In functional programming, these are called *monads*. You'll see both terms used throughout this series, with "Smart Wrapper" being more common early on and "monad" becoming more frequent later. By the end, you'll be comfortable with the correct FP terminology.
+
+**A Smart Wrapper controls when and if your operations run.**
 
 #### The Key Insight: Inversion of Control
 
 Traditional code: **you** decide when to do something.
-Monadic code: **the wrapper** decides when to do something.
+Smart Wrapper code: **the wrapper** decides when to do something.
 
 Think: "Do this operation, **if/when the value is available**."
 
@@ -140,7 +142,7 @@ if (email != null) {
     // Error: null input
 }
 
-// Monad: WRAPPER checks, WRAPPER decides
+// Smart Wrapper: WRAPPER checks, WRAPPER decides
 Result<String> result = Result.success(email)
     .map(String::trim)          // "Trim, if value is present"
     .flatMap(this::validate)    // "Validate, if trim succeeded"
@@ -149,7 +151,7 @@ Result<String> result = Result.success(email)
 
 You're saying: "Here's what to do with the value... **if** you have one and **when** you're ready."
 
-The monad decides:
+The Smart Wrapper decides:
 - **Option**: "I'll apply your operation **if** the value is present"
 - **Result**: "I'll apply your operation **if** there's no error so far"
 - **Promise**: "I'll apply your operation **when** the async result arrives"
@@ -178,7 +180,7 @@ Promise<Profile> profile = user.flatMap(this::loadProfile);
 
 #### Why This Matters
 
-Without monads, **you** write control flow:
+Without Smart Wrappers, **you** write control flow:
 ```java
 if (email != null) {
     if (isValid(email)) {
@@ -189,7 +191,7 @@ if (email != null) {
 }
 ```
 
-With monads, **you describe transformations**, the wrapper handles control flow:
+With Smart Wrappers, **you describe transformations**, the wrapper handles control flow:
 ```java
 Result.success(email)
     .flatMap(this::validate)
@@ -197,18 +199,25 @@ Result.success(email)
 // "Validate, then save - but only if each step succeeds"
 ```
 
-**Key insight**: Monads invert control. Instead of you checking conditions and deciding what to run, you give the monad a chain of operations and it decides when/if to run them based on its rules (presence, success, completion).
+**Key insight**: Smart Wrappers (monads) invert control. Instead of you checking conditions and deciding what to run, you give the wrapper a chain of operations and it decides when/if to run them based on its rules (presence, success, completion).
 
-Common monads you'll use:
+Common Smart Wrappers you'll use:
 - **Option<T>**: Runs operations **if** value is present (handles "might be missing")
 - **Result<T>**: Runs operations **if** no error yet (handles "might fail")
 - **Promise<T>**: Runs operations **when** result arrives (handles "happens later")
 
-Each monad has:
+Each Smart Wrapper has:
 - **map**: "Transform the value, if/when available"
-- **flatMap**: "Chain another monadic operation, if/when the current one succeeds"
+- **flatMap**: "Chain another operation, if/when the current one succeeds"
 
 **These concepts become practical in Part 2** when working with map/flatMap composition for validation and error handling.
+
+> **Try It Now:** Before moving to Part 2, look at your current codebase:
+> - Find one place that uses `orElse(null)` with `Optional`. Consider how `Option` would make that type-safe.
+> - Find one method that throws exceptions for business failures. Think about how `Result<T>` would make those failures explicit in the type signature.
+> - Find one async operation using `CompletableFuture`. Notice the complexity of error handling—`Promise<T>` will simplify that in Part 3.
+>
+> Don't change anything yet—just observe the patterns. Part 2 will show you how to refactor them.
 
 ### Why "Functional" Composition?
 
@@ -293,6 +302,46 @@ These aren't preferences - they're measurable. When we say "don't use business e
 - **Mental Overhead**: Checked exceptions pollute signatures; unchecked are invisible (+2 for Result)
 - **Reliability**: Exceptions bypass type checker; Result makes failures explicit (+1 for Result)
 - **Complexity**: Exception hierarchies create coupling (+1 for Result)
+
+### Example: Applying the Criteria
+
+**Question:** Should we use `@Transactional` annotation or explicit transaction management in use cases?
+
+**Analysis using the five criteria:**
+
+1. **Mental Overhead:**
+   - `@Transactional`: Invisible behavior - must remember that methods run in transactions, requires understanding proxy mechanics, can fail silently if applied to private methods
+   - Explicit: Transaction boundaries are visible in code - you see exactly where they start/end
+   - **Score: +2 for explicit** (less to remember)
+
+2. **Business/Technical Ratio:**
+   - Both approaches are technical infrastructure, neither is more "business" than the other
+   - **Score: 0** (neutral)
+
+3. **Design Impact:**
+   - `@Transactional`: Couples business logic to Spring framework, makes code framework-dependent
+   - Explicit: Business logic stays framework-agnostic, transactions applied at assembly/adapter layer
+   - **Score: +2 for explicit** (better separation of concerns)
+
+4. **Reliability:**
+   - `@Transactional`: Fails silently in some cases (private methods, self-invocation), runtime errors only
+   - Explicit: Compiler errors if you forget transaction handling in adapter
+   - **Score: +1 for explicit** (more reliable)
+
+5. **Complexity:**
+   - `@Transactional`: Hidden control flow - method entry/exit triggers transaction logic you don't see
+   - Explicit: Control flow is visible - you see transaction begin/commit/rollback in code
+   - **Score: +1 for explicit** (less hidden behavior)
+
+**Verdict: Use explicit transaction management (Aspect pattern in Part 4)**
+- Mental Overhead: +2
+- Business/Technical Ratio: 0
+- Design Impact: +2
+- Reliability: +1
+- Complexity: +1
+- **Total: +6 points for explicit**
+
+This is how every decision in JBCT is made—not based on opinion, but on measurable impact across five dimensions.
 
 Throughout the series, major rules reference these criteria. They replace endless "best practices" with five measurable standards.
 

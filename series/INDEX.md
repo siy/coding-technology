@@ -1,6 +1,6 @@
 # Java Backend Coding Technology: Complete Learning Series
 
-**Based on:** [CODING_GUIDE.md](../CODING_GUIDE.md) v1.8.1
+**Based on:** [CODING_GUIDE.md](../CODING_GUIDE.md) v1.8.2
 
 ## About This Series
 
@@ -32,24 +32,31 @@ Understand why structural standardization matters in the AI era and learn the fo
 
 **Topics:**
 - The engineering scalability crisis: why traditional approaches fail
-- Foundational concepts: monads, composition, side effects (explained for beginners)
+- Foundational concepts: Smart Wrappers (monads), composition, side effects (explained for beginners)
+- Progressive terminology: starting with "Smart Wrappers", gradually introducing "monad"
 - What makes code "AI-ready"
-- Overview of what you'll learn
+- Evaluation Framework: objective criteria for every decision
+- Try It Now exercises: observing patterns in your existing code
 
 **Key takeaway:** Code structure is a business decision, not a preference. Mechanical rules enable teams to scale.
 
 ---
 
 ### [Part 2: Core Principles](part-02-core-principles.md)
-**~50 min read** | *The non-negotiable rules*
+**~60 min read** | *The non-negotiable rules*
 
 Master the four return types and three fundamental principles that form the foundation of the technology.
 
 **Topics:**
+- Spring to JBCT Translation: mapping familiar patterns (@Service, @Repository, etc.)
 - The Four Return Kinds: T, Option<T>, Result<T>, Promise<T>
+- Why Not Java Standard Library? Comparing to Optional, CompletableFuture, exceptions
 - Parse, Don't Validate: making invalid states unrepresentable
-- No Business Exceptions: errors as typed values
-- Monadic Composition Rules: lifting and avoiding nesting
+- Real-World Validation: cross-field, dependent, business rules
+- Migrating Existing Codebases: incremental adoption strategy
+- No Business Exceptions: errors as typed values (when exceptions are still OK)
+- Basic Testing: functional assertions with onSuccess/onFailure
+- Pragmatica Lite Quick Reference: common imports and patterns
 
 **Key takeaway:** Everything in this technology flows from these four types and three principles. Master these, and patterns become obvious.
 
@@ -71,16 +78,16 @@ Learn the structural rules and basic patterns that handle 80% of your daily codi
 
 ---
 
-### [Part 4: Advanced Patterns & Testing](part-04-advanced-patterns.md)
+### [Part 4: Advanced Patterns](part-04-advanced-patterns.md)
 **~50 min read** | *Composing patterns for real use cases*
 
-Compose basic patterns into sophisticated workflows and learn how to test functional code effectively.
+Compose basic patterns into sophisticated workflows for complex business logic.
 
 **Topics:**
 - Sequencer: chaining dependent steps (the workhorse pattern)
 - Fork-Join: parallel composition and independence validation
 - Aspects: cross-cutting concerns without mixing concerns
-- Testing Patterns: functional assertions with onSuccess/onFailure
+- Monadic terminology established: transitioning from Smart Wrappers
 
 **Key takeaway:** Real use cases are compositions of simple patterns. The Sequencer pattern structures 90% of business logic.
 
@@ -89,7 +96,7 @@ Compose basic patterns into sophisticated workflows and learn how to test functi
 ### [Part 5: Testing Strategy & Evolutionary Approach](part-05-testing-strategy.md)
 **~50 min read** | *Master comprehensive testing for functional composition*
 
-Learn the evolutionary testing strategy that grows tests alongside implementation, testing composition rather than isolated components.
+Learn the evolutionary testing strategy that grows tests alongside implementation, testing composition rather than isolated components. (Basic testing patterns are introduced in Part 2; this part covers advanced strategy.)
 
 **Topics:**
 - Evolutionary Testing Process: from stubs to production-ready
@@ -142,6 +149,15 @@ Looking for specific patterns? Jump directly to the relevant part using the topi
 - **Feedback**: [GitHub Issues](https://github.com/siy/coding-technology/issues)
 
 ## Series Version
+
+**Version 1.8.2** (2025-01-09)
+- Simplified documentation for average Java developers
+- Progressive terminology transition: Smart Wrappers → monads across series
+- Added Spring to JBCT Translation table (Part 2)
+- Added Quick Wins section for incremental adoption
+- Moved basic testing from Part 5 to Part 2 for earlier verification
+- Added real-world validation examples (Part 2)
+- Added migration strategy for existing codebases (Part 2)
 
 **Version 1.1.0** (2025-01-07)
 - Added Part 5: Testing Strategy & Evolutionary Approach

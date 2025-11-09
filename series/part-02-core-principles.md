@@ -130,7 +130,7 @@ import org.pragmatica.lang.error.Causes;
 import java.util.regex.Pattern;
 
 public record Email(String value) {
-    private Email {}  // Private constructor
+    // private Email {}  // Not yet supported in Java - constructor is package-private
 
     private static final Pattern EMAIL_PATTERN = Pattern.compile("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$");
     private static final Fn1<Cause, String> INVALID_EMAIL = Causes.forValue("Invalid email format: {}");
@@ -300,7 +300,7 @@ if (!email.isValid()) {
 ```java
 // DO: Validation IS construction
 public record Email(String value) {
-    private Email {}  // Private constructor
+    // private Email {}  // Not yet supported in Java - constructor is package-private
 
     private static final Pattern EMAIL_PATTERN = Pattern.compile("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$");
     private static final Fn1<Cause, String> INVALID_EMAIL = Causes.forValue("Invalid email format: {}");
@@ -360,7 +360,7 @@ Use `Result<Option<T>>` - validation can fail (Result), and if it succeeds, the 
 
 ```java
 public record ReferralCode(String value) {
-    private ReferralCode {}  // Private constructor
+    // private ReferralCode {}  // Not yet supported in Java - constructor is package-private
 
     private static final String PATTERN = "^[A-Z0-9]{6}$";
 
@@ -606,7 +606,7 @@ public record ValidRegistration(Email email, Password password, Age age) {
 ```java
 // New feature: payment processing
 public record CardNumber(String value) {
-    private CardNumber {}  // Private constructor
+    // private CardNumber {}  // Not yet supported in Java - constructor is package-private
 
     public static Result<CardNumber> cardNumber(String raw) {
         return Verify.ensure(raw, Verify.Is::notBlank)

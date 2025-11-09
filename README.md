@@ -41,7 +41,7 @@ public User findUser(String userId) throws NotFoundException {
 ```java
 // Parse don't validate - invalid states unrepresentable
 public record UserId(long value) {
-    private UserId {}  // Private constructor
+    // private UserId {}  // Not yet supported in Java - constructor is package-private
 
     public static Result<UserId> userId(String raw) {
         return Number.parseLong(raw)
@@ -114,7 +114,7 @@ public class UserRequest {
 ```java
 // Validation = construction
 public record Email(String value) {
-    private Email {}  // Private constructor - only factory can create instances
+    // private Email {}  // Not yet supported in Java - constructor is package-private
 
     public static Result<Email> email(String raw) {
         return Verify.ensure(raw, Verify.Is::notBlank)

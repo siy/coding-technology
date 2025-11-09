@@ -15,18 +15,23 @@ A framework-agnostic methodology for writing predictable, testable Java backend 
 <td>
 
 ```java
-// Validation scattered everywhere
-@PostMapping("/register")
-public User register(@Valid RegistrationRequest req) {
-    if (req.email == null || req.email.isBlank()) {
-        throw new ValidationException("Email required");
+// Hidden failure modes, unclear control flow
+public User findUser(String userId) throws NotFoundException {
+    long id;
+    try {
+        id = Long.parseLong(userId);
+    } catch (NumberFormatException e) {
+        throw new IllegalArgumentException("Invalid user ID");
     }
-    if (!req.email.matches("...")) {
-        throw new ValidationException("Invalid email");
+
+    User user = repository.findById(id);
+    if (user == null) {
+        throw new NotFoundException("User not found: " + id);
     }
-    // More validation...
-    // Then business logic...
-    // Hidden failures, unclear errors
+
+    return user;
+    // Multiple failure modes hidden in throws
+    // Caller must read docs to know what exceptions to catch
 }
 ```
 
@@ -34,29 +39,34 @@ public User register(@Valid RegistrationRequest req) {
 <td>
 
 ```java
-// Validation = construction
-public record Email(String value) {
-    public static Result<Email> email(String raw) {
-        return Verify.ensure(raw, Verify.Is::notBlank)
-            .flatMap(Verify.ensureFn(INVALID, Verify.Is::matches, PATTERN))
-            .map(Email::new);  // Impossible to create invalid email
+// Parse don't validate - invalid states unrepresentable
+public record UserId(long value) {
+    private UserId {}  // Private constructor
+
+    public static Result<UserId> userId(String raw) {
+        return Number.parseLong(raw)
+            .map(UserId::new);
     }
 }
 
-@PostMapping("/register")
-public ResponseEntity<?> register(@RequestBody RegistrationRequest raw) {
-    return RegistrationRequest.validate(raw)  // Parse don't validate
-        .flatMap(useCase::execute)            // Type-safe composition
-        .fold(this::errorResponse,            // Explicit error handling
-              this::successResponse);
+public interface FindUser {
+    Promise<User> execute(UserId id);
 }
+
+// Usage
+UserId.userId(userIdStr)
+      .async()
+      .flatMap(findUser::execute)
+      // Parsing errors: Result<UserId>
+      // Not found errors: Promise<User>
+      // All failures typed, compiler enforces handling
 ```
 
 </td>
 </tr>
 </table>
 
-**Result:** Validation lives in value objects. Business logic works only with valid data. Errors are typed and explicit. Testing is straightforward.
+**Result:** Parse-don't-validate makes invalid states impossible. Typed errors eliminate hidden exceptions. Type signatures document failure modes.
 
 ## Why "Technology"?
 
@@ -104,6 +114,8 @@ public class UserRequest {
 ```java
 // Validation = construction
 public record Email(String value) {
+    private Email {}  // Private constructor - only factory can create instances
+
     public static Result<Email> email(String raw) {
         return Verify.ensure(raw, Verify.Is::notBlank)
             .flatMap(Verify.ensureFn(INVALID_FORMAT, Verify.Is::matches, PATTERN))

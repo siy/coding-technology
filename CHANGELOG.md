@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.8.2] - 2025-01-09
 
+**Enhanced documentation for easier adoption**
+
 ### Added
 - **README: 30-Second Pitch** with before/after code comparison
   - Shows validation hell → parse-don't-validate transformation

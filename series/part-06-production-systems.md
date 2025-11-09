@@ -120,6 +120,8 @@ package com.example.app.domain.shared;
 import org.pragmatica.lang.*;
 
 public record Email(String value) {
+    private Email {}  // Private constructor
+
     private static final Pattern EMAIL_PATTERN = Pattern.compile("^[a-z0-9+_.-]+@[a-z0-9.-]+$");
     private static final Fn1<Cause, String> INVALID_EMAIL = Causes.forValue("Invalid email format: {}");
 
@@ -142,6 +144,8 @@ package com.example.app.domain.shared;
 import org.pragmatica.lang.*;
 
 public record Password(String value) {
+    private Password {}  // Private constructor
+
     private static final Fn1<Cause, String> TOO_SHORT = Causes.forValue("Password must be at least 8 characters");
     private static final Fn1<Cause, String> MISSING_UPPERCASE = Causes.forValue("Password must contain uppercase letter");
     private static final Fn1<Cause, String> MISSING_DIGIT = Causes.forValue("Password must contain digit");
@@ -179,6 +183,8 @@ package com.example.app.domain.shared;
 import org.pragmatica.lang.*;
 
 public record ReferralCode(String value) {
+    private ReferralCode {}  // Private constructor
+
     private static final String REFERRAL_PATTERN = "^[A-Z0-9]{6}$";
 
     public static Result<Option<ReferralCode>> referralCode(String raw) {

@@ -487,11 +487,11 @@ record ImmutableCart(Money subtotal, List<LineItem> items) {
 
 ```java
 // Use case step validating and collecting errors
-public Result<ValidatedOrder> execute(Order order) {
+public Result<ValidOrder> execute(Order order) {
     return validateOrder(order);
 }
 
-private Result<ValidatedOrder> validateOrder(Order order) {
+private Result<ValidOrder> validateOrder(Order order) {
     var validator = new OrderValidator();
 
     validator.checkOrderId(order.id());
@@ -535,9 +535,9 @@ private static class OrderValidator {
         }
     }
 
-    Result<ValidatedOrder> buildResult(Order order) {
+    Result<ValidOrder> buildResult(Order order) {
         if (errors.isEmpty()) {
-            return Result.success(new ValidatedOrder(order));
+            return Result.success(new ValidOrder(order));
         }
 
         return ValidationFailed.cause(List.copyOf(errors)).result();

@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.8.2] - 2025-01-09
+## [1.8.2] - 2025-11-09
 
 **Enhanced documentation for easier adoption**
 
@@ -97,7 +97,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Part 3: Clarified "Leaf" as "(atomic operation with no substeps)"
   - Part 2: First code example shows full imports for API context
 
-## [1.8.1] - 2025-01-21
+## [1.8.1] - 2025-11-08
 
 ### Added
 - **Syntax highlighting for code blocks** on pragmatica.dev website
@@ -129,7 +129,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added definitions: Unit type (Part 3), test vectors (Part 5), monad practical usage (Part 1)
   - Added Promise.allOf() to composition cheat sheet (Part 2)
 
-## [1.8.0] - 2025-01-21
+## [1.8.0] - 2025-10-21
 
 ### Added
 - **Comprehensive Null Policy** across all JBCT documentation
@@ -156,7 +156,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - **All version references updated** from 1.7.0 to 1.8.0
 
-## [1.7.0] - 2025-01-19
+## [1.7.0] - 2025-10-20
 
 ### Added
 - **proposals/private-record-constructors.md** - JEP proposal for enabling private canonical constructors in records
@@ -194,7 +194,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Grammar improvements** - "the factory method which builds" → "factory method that builds"
 - **All version references updated** from 1.6.2 to 1.7.0
 
-## [1.6.2] - 2025-01-17
+## [1.6.2] - 2025-10-19
 
 ### Added
 - **jbct-reviewer.md** - Claude Code subagent for JBCT-specialized code review

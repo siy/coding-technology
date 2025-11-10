@@ -341,6 +341,6 @@ You are free to:
 
 ---
 
-**Version:** 1.8.2 | **Last Updated:** 2025-01-09 | **[Full Changelog](CHANGELOG.md)**
+**Version:** 1.8.2 | **Last Updated:** 2025-11-09 | **[Full Changelog](CHANGELOG.md)**
 
 **Copyright © 2025 Sergiy Yevtushenko. Released under the [MIT License](LICENSE).**

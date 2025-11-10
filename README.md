@@ -116,9 +116,13 @@ public class UserRequest {
 public record Email(String value) {
     // private Email {}  // Not yet supported in Java
 
+    private static final Fn1<Cause, String> EMAIL_REQUIRED = Causes.forValue("Email is required");
+    private static final Fn1<Cause, String> EMAIL_BLANK = Causes.forValue("Email cannot be blank");
+    private static final Fn1<Cause, String> INVALID_FORMAT = Causes.forValue("Invalid email format: {}");
+
     public static Result<Email> email(String raw) {
-        return Verify.ensure(raw, Verify.Is::notNull)
-            .flatMap(Verify.ensureFn(INVALID_FORMAT, Verify.Is::notBlank))
+        return Verify.ensure(raw, Verify.Is::notNull, EMAIL_REQUIRED)
+            .flatMap(Verify.ensureFn(EMAIL_BLANK, Verify.Is::notBlank))
             .flatMap(Verify.ensureFn(INVALID_FORMAT, Verify.Is::matches, PATTERN))
             .map(Email::new);
     }

@@ -97,6 +97,52 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Part 3: Clarified "Leaf" as "(atomic operation with no substeps)"
   - Part 2: First code example shows full imports for API context
 
+- **CODING_GUIDE.md: Major comprehensive improvements (+1074 lines)**
+  - Added complete **Foundational Concepts** section (~250 lines)
+    - Side effects and purity explanation
+    - Composition fundamentals
+    - Smart Wrappers (Monads) with "Do, If/When Available" mental model
+    - Functional vs imperative comparison
+    - Pipes and values mental model
+  - Added **Evaluation Framework worked example**
+    - Complete @Transactional analysis with 5-criteria scoring
+    - Shows objective decision-making process
+  - Added **Spring to JBCT Translation** table
+    - Maps @Service, @Repository, @Valid, etc. to JBCT equivalents
+    - Before/after Spring controller example
+    - Reduces adoption friction for Spring Boot teams
+  - Added comprehensive **Testing Strategy** section (~580 lines)
+    - Problem with traditional component-focused testing
+    - Integration-first philosophy with criteria justification
+    - Three testing layers (value objects, leaves, use cases)
+    - Evolutionary testing process (Phase 1-N)
+    - Complex input handling (3 solutions: builders, vectors, factories)
+    - Managing large test counts (3 strategies: nested classes, parameterized, file organization)
+    - When to write unit tests (clear guidelines)
+    - Migration guide from traditional unit testing
+  - Added **Real-World Validation Scenarios** (~95 lines)
+    - Cross-field validation (DateRange)
+    - Dependent validation (password/username)
+    - Business rule validation (order totals)
+    - Error accumulation with Result.all()
+  - Added **Incremental Adoption Strategy** (~95 lines)
+    - 4-phase migration path for existing codebases
+    - Keep existing validation while adding JBCT
+    - Gradual shift from service layer to value objects
+    - Timeline guidance (3-6 months)
+  - Added **Pragmatica Lite Quick Reference** (~45 lines)
+    - Common imports cheat sheet
+    - Frequently used patterns with descriptions
+    - Positioned early for immediate reference
+  - All examples updated with commented-out private constructors
+    - `// private Email {}  // Not yet supported in Java`
+    - Team discipline note about package-private limitation
+  - Terminology note added to Smart Wrappers section
+    - Explains Smart Wrapper ↔ monad equivalence
+    - Connects to broader FP ecosystem
+
+**Impact:** CODING_GUIDE.md evolved from 3076 lines to 4150 lines of comprehensive, reference-quality documentation that bridges theoretical concepts with practical implementation guidance.
+
 ## [1.8.1] - 2025-11-08
 
 ### Added

@@ -74,6 +74,328 @@ Similarly, "parse don't validate":
 
 Throughout this guide, major rules reference these criteria. The goal: replace endless "best practices" with five measurable standards.
 
+### Example: Applying the Criteria
+
+**Question:** Should we use `@Transactional` annotation or explicit transaction management in use cases?
+
+**Analysis using the five criteria:**
+
+1. **Mental Overhead:**
+   - `@Transactional`: Invisible behavior - must remember that methods run in transactions, requires understanding proxy mechanics, can fail silently if applied to private methods
+   - Explicit: Transaction boundaries are visible in code - you see exactly where they start/end
+   - **Score: +2 for explicit** (less to remember)
+
+2. **Business/Technical Ratio:**
+   - Both approaches are technical infrastructure, neither is more "business" than the other
+   - **Score: 0** (neutral)
+
+3. **Design Impact:**
+   - `@Transactional`: Couples business logic to Spring framework, makes code framework-dependent
+   - Explicit: Business logic stays framework-agnostic, transactions applied at assembly/adapter layer
+   - **Score: +2 for explicit** (better separation of concerns)
+
+4. **Reliability:**
+   - `@Transactional`: Fails silently in some cases (private methods, self-invocation), runtime errors only
+   - Explicit: Compiler errors if you forget transaction handling in adapter
+   - **Score: +1 for explicit** (more reliable)
+
+5. **Complexity:**
+   - `@Transactional`: Hidden control flow - method entry/exit triggers transaction logic you don't see
+   - Explicit: Control flow is visible - you see transaction begin/commit/rollback in code
+   - **Score: +1 for explicit** (less hidden behavior)
+
+**Verdict: Use explicit transaction management (Aspect pattern)**
+- Mental Overhead: +2
+- Business/Technical Ratio: 0
+- Design Impact: +2
+- Reliability: +1
+- Complexity: +1
+- **Total: +6 points for explicit**
+
+This is how every decision in JBCT is made—not based on opinion, but on measurable impact across five dimensions.
+
+---
+
+## Foundational Concepts
+
+Before diving into specific rules and patterns, understanding the core concepts that make this technology work is essential. These concepts provide the foundation for all patterns and practices described later.
+
+### Side Effects and Purity
+
+A **side effect** is anything a function does beyond computing and returning a value:
+
+- Writing to a database
+- Making an HTTP call
+- Writing to a file
+- Printing to console
+- Modifying a global variable
+- Throwing an exception
+
+**Pure function** (no side effects):
+```java
+public int add(int a, int b) {
+    return a + b;  // Only computes and returns
+}
+```
+
+**Impure function** (has side effects):
+```java
+public Promise<Unit> saveUser(User user) {
+    return database.save(user)  // Side effect: modifies external state
+        .onSuccess(__ -> logger.info("User saved"));  // Side effect: writes to log
+}
+```
+
+**Pure functions are predictable**: same inputs always produce same output. They're easy to test (no mocking needed) and safe to run anywhere, anytime.
+
+**Impure functions are necessary** - applications must interact with the world - but they're **unpredictable**: network might fail, disk might be full, database might be down.
+
+**This technology's approach**: Push side effects to the edges. Keep business logic pure. Isolate impure operations in adapter leaves. This makes core logic easy to test and reason about.
+
+### Composition
+
+**Composition** means building complex operations by combining simpler ones.
+
+Traditional imperative style:
+```java
+public String processUser(String email) {
+    String trimmed = email.trim();
+    String lowercase = trimmed.toLowerCase();
+    String validated = validate(lowercase);
+    String saved = save(validated);
+    return saved;
+}
+```
+
+Functional composition:
+```java
+public Result<String> processUser(String email) {
+    return Result.success(email)
+        .map(String::trim)
+        .map(String::toLowerCase)
+        .flatMap(this::validate)
+        .flatMap(this::save);
+}
+```
+
+The second version **chains** operations. Each step takes the output of the previous step as input. Data flows through a pipeline.
+
+Composition lets you **build complex logic from simple pieces** without intermediate variables or explicit error checking at each step. The structure itself handles error propagation.
+
+### Smart Wrappers (Monads)
+
+This technology uses **Smart Wrappers**—types that wrap values and control how operations are applied to them.
+
+> **Terminology Note:** In functional programming, these are called *monads*. This guide uses both terms, with "Smart Wrapper" being more accessible for those new to functional programming and "monad" connecting to broader FP ecosystem. They refer to the same concept.
+
+**A Smart Wrapper controls when and if your operations run.**
+
+#### The Key Insight: Inversion of Control
+
+Traditional code: **you** decide when to do something.
+Smart Wrapper code: **the wrapper** decides when to do something.
+
+Think: "Do this operation, **if/when the value is available**."
+
+```java
+// Traditional: YOU check, YOU decide
+String result;
+if (email != null) {
+    String trimmed = email.trim();
+    if (isValid(trimmed)) {
+        result = save(trimmed);
+        if (result == null) {
+            // Error: save failed
+        }
+    } else {
+        // Error: invalid
+    }
+} else {
+    // Error: null input
+}
+
+// Smart Wrapper: WRAPPER checks, WRAPPER decides
+Result<String> result = Result.success(email)
+    .map(String::trim)          // "Trim, if value is present"
+    .flatMap(this::validate)    // "Validate, if trim succeeded"
+    .flatMap(this::save);       // "Save, if validate succeeded"
+```
+
+You're saying: "Here's what to do with the value... **if** you have one and **when** you're ready."
+
+The Smart Wrapper decides:
+- **Option**: "I'll apply your operation **if** the value is present"
+- **Result**: "I'll apply your operation **if** there's no error so far"
+- **Promise**: "I'll apply your operation **when** the async result arrives"
+
+#### The "Do, If/When Available" Mental Model
+
+```java
+// Option: "Do this, IF value is present"
+Option<User> user = findUser(id);
+Option<String> email = user.map(User::email);
+// You: "Extract email"
+// Option: "OK, I'll do that IF I have a user. I don't? Then I won't."
+
+// Result: "Do this, IF no error yet"
+Result<Email> email = Email.email(raw);
+Result<User> user = email.flatMap(this::findByEmail);
+// You: "Find user by email"
+// Result: "OK, I'll do that IF email is valid. It failed? Then I skip this."
+
+// Promise: "Do this, WHEN result arrives"
+Promise<User> user = fetchUser(id);
+Promise<Profile> profile = user.flatMap(this::loadProfile);
+// You: "Load profile"
+// Promise: "OK, I'll do that WHEN the user fetch completes. Not done? I'll wait."
+```
+
+#### Why This Matters
+
+Without Smart Wrappers, **you** write control flow:
+```java
+if (email != null) {
+    if (isValid(email)) {
+        if (save(email) != null) {
+            // success
+        }
+    }
+}
+```
+
+With Smart Wrappers, **you describe transformations**, the wrapper handles control flow:
+```java
+Result.success(email)
+    .flatMap(this::validate)
+    .flatMap(this::save);
+// "Validate, then save - but only if each step succeeds"
+```
+
+**Key insight**: Smart Wrappers (monads) invert control. Instead of checking conditions and deciding what to run, you give the wrapper a chain of operations and it decides when/if to run them based on its rules (presence, success, completion).
+
+Common Smart Wrappers:
+- **Option<T>**: Runs operations **if** value is present (handles "might be missing")
+- **Result<T>**: Runs operations **if** no error yet (handles "might fail")
+- **Promise<T>**: Runs operations **when** result arrives (handles "happens later")
+
+Each Smart Wrapper has:
+- **map**: "Transform the value, if/when available"
+- **flatMap**: "Chain another operation, if/when the current one succeeds"
+
+### Functional vs Imperative
+
+Traditional object-oriented programming **hides data inside objects** and exposes behavior through methods:
+
+```java
+class User {
+    private String email;
+
+    public void setEmail(String email) {
+        this.email = email;  // Mutates state
+    }
+}
+```
+
+Functional programming **makes data transparent** and treats functions as transformations:
+
+```java
+public record User(String email) {  // Immutable data
+    public User withEmail(String newEmail) {
+        return new User(newEmail);  // Returns new instance
+    }
+}
+```
+
+Benefits:
+- **No hidden state**: All data visible in type signature
+- **No mutation**: Original values never change, eliminating bug classes
+- **Easier reasoning**: Function output depends only on inputs, not hidden state
+
+This technology uses functional principles:
+- **Immutable data**: Records, not mutable classes
+- **Pure functions**: Computation separate from side effects
+- **Explicit effects**: Return types declare what can happen (Option, Result, Promise)
+
+But it's **pragmatic functional programming**: we use Java, integrate with imperative frameworks, don't chase theoretical purity. The goal is **predictable structure**, not functional programming orthodoxy.
+
+### Mental Model: Pipes and Values
+
+Think of code as a series of **pipes** through which **values** flow:
+
+```java
+// Water (value) flows through pipes (functions)
+public Result<Response> execute(Request request) {
+    return ValidRequest.validate(request)     // Pipe 1: validation
+        .flatMap(this::checkPermissions)      // Pipe 2: authorization
+        .flatMap(this::processRequest)        // Pipe 3: business logic
+        .flatMap(this::saveResult)            // Pipe 4: persistence
+        .map(this::buildResponse);            // Pipe 5: formatting
+}
+```
+
+Each pipe:
+- Takes input from the previous pipe
+- Transforms it
+- Passes output to the next pipe
+
+If any pipe "leaks" (returns a failure), **the flow stops** and the error propagates to the end.
+
+This mental model makes code structure **visual and predictable**:
+- Linear flow: top to bottom
+- No hidden branching: if you see 5 steps, there are 5 steps
+- Error handling: automatic, not scattered through if-checks
+
+---
+
+## Spring to JBCT Translation
+
+**If you're coming from Spring Boot**, here's how JBCT concepts map to familiar patterns. JBCT doesn't replace Spring—it changes how you structure code within Spring applications.
+
+| Spring Pattern | JBCT Equivalent | Key Difference |
+|----------------|-----------------|----------------|
+| `@Service` class | Use case interface + implementation | Pure functions, no framework coupling. Business logic doesn't know about Spring. |
+| `@Repository` interface | Adapter interface (in use case package) | I/O operations live at edges only. Database logic is isolated. |
+| `@Valid` + Bean Validation | Parse-don't-validate (value object factories) | Validation = construction. Impossible to create invalid objects. |
+| `Optional<T>` | `Option<T>` | Better composition with Smart Wrappers (monads), clearer semantics for "might be missing". |
+| `throws Exception` | `Result<T>` (sync) or `Promise<T>` (async) | Typed errors, no hidden control flow. Compiler forces error handling. |
+| `CompletableFuture<T>` | `Promise<T>` | Simpler error handling, consistent with `Result<T>` patterns. |
+| `@Transactional` | Aspect pattern | Explicit boundary management, independently testable. |
+
+**Key insight:** Your Spring controllers stay largely the same. But instead of calling `@Service` beans that throw exceptions and return nulls, you call use case interfaces that return `Result<T>` or `Promise<T>`. The framework integration stays in adapters—business logic becomes pure and framework-agnostic.
+
+Example:
+
+```java
+// Traditional Spring
+@RestController
+public class UserController {
+    @Autowired private UserService userService;  // Framework-coupled service
+
+    @PostMapping("/register")
+    public User register(@Valid @RequestBody RegistrationRequest req) {
+        return userService.registerUser(req);  // Throws exceptions
+    }
+}
+
+// JBCT with Spring
+@RestController
+public class UserController {
+    private final RegisterUser registerUser;  // Pure use case interface
+
+    public UserController(RegisterUser registerUser) {
+        this.registerUser = registerUser;
+    }
+
+    @PostMapping("/register")
+    public ResponseEntity<?> register(@RequestBody RegistrationRequest raw) {
+        return ValidRequest.validate(raw)  // Parse at boundary
+            .flatMap(registerUser::execute)  // Smart Wrapper composition
+            .fold(this::errorResponse,       // Explicit error handling
+                  this::successResponse);
+    }
+}
+```
+
 ---
 
 ## Core Concepts
@@ -103,6 +425,53 @@ Every function in this technology returns exactly one of four types. Not "usuall
 - **Mental Overhead**: Hidden error channels (exceptions), hidden optionality (null), hidden asynchrony (blocking I/O) all force developers to remember behavior not expressed in signatures. Explicit return types eliminate this (+3).
 - **Reliability**: Compiler verifies error handling, null safety, and async boundaries when encoded in types (+3).
 - **Complexity**: Four types cover all scenarios - no guessing about combinations or special cases (+2).
+
+#### Pragmatica Lite Quick Reference
+
+Common imports and methods you'll use throughout this guide:
+
+```java
+// Core types
+import org.pragmatica.lang.Option;
+import org.pragmatica.lang.Result;
+import org.pragmatica.lang.Promise;
+import org.pragmatica.lang.Unit;
+
+// Error handling
+import org.pragmatica.lang.error.Cause;
+import org.pragmatica.lang.error.Causes;
+
+// Validation
+import org.pragmatica.lang.validation.Verify;
+
+// Parsing utilities
+import org.pragmatica.lang.parse.Number;
+import org.pragmatica.lang.parse.DateTime;
+import org.pragmatica.lang.parse.Network;
+
+// Functions
+import org.pragmatica.lang.Functions.Fn1;
+import org.pragmatica.lang.Functions.Fn2;
+```
+
+**Common patterns:**
+- `Result.success(value)` - Create success
+- `Result.failure(cause)` or `cause.result()` - Create failure (prefer the latter)
+- `Result.all(r1, r2, ...)` - Parallel validation, collect all errors
+- `Result.allOf(list)` - Aggregate list of Results
+- `Option.option(value)` - Wrap nullable (null → empty())
+- `Option.some(value)` / `Option.none()` - Create present/absent
+- `Promise.success(value)` / `Promise.failure(cause)` - Resolved promises
+- `Promise.promise(supplier)` - Async execution
+- `Promise.all(p1, p2, ...)` - Parallel execution, fail-fast
+- `Promise.allOf(list)` - Parallel with resilient collection
+- `Verify.ensure(cause, value, predicate)` - Validate with error
+- `Verify.ensureFn(cause, predicate, params...)` - Validate with params
+- `Causes.cause("message")` - Create fixed cause
+- `Causes.forValue("message: %s")` - Create cause factory
+- `Number.parseInt(raw)`, `DateTime.parseLocalDate(raw)` - Safe parsing
+
+---
 
 **`T`**  - Synchronous, cannot fail, value always present.
 
@@ -295,6 +664,203 @@ If `raw` is null or empty, we succeed with `Option.none()`. If it's present, we 
 **Normalization:** Factories can normalize input (trim whitespace, lowercase email domains, etc.) as part of parsing. This keeps invariants in one place and ensures all instances are normalized consistently.
 
 **Why this matters for AI:** When an AI generates a value object, the structure is mechanical: private constructor, static factory named after type, `Result<T>` or `Result<Option<T>>` return type, validation via `Verify` combinators. No guessing about where validation happens or how errors are reported.
+
+#### Real-World Validation Scenarios
+
+The basic examples above validate single fields independently. Real applications have more complex requirements: cross-field validation, dependent rules, and business constraints spanning multiple values.
+
+**Cross-field validation** - One field depends on another:
+
+```java
+// Date range where end must be after start
+public record DateRange(LocalDate start, LocalDate end) {
+    // private DateRange {}  // Not yet supported in Java
+
+    private static final Fn1<Cause, LocalDate> END_BEFORE_START =
+        date -> Causes.cause("End date must be after start date: " + date);
+
+    public static Result<DateRange> dateRange(LocalDate start, LocalDate end) {
+        return Verify.ensure(Causes.cause("Start date required"), start, Verify.Is::notNull)
+            .flatMap(_ -> Verify.ensure(Causes.cause("End date required"), end, Verify.Is::notNull))
+            .flatMap(_ -> Verify.ensure(END_BEFORE_START, end, isAfter(start)))
+            .map(_ -> new DateRange(start, end));
+    }
+
+    private static Predicate<LocalDate> isAfter(LocalDate start) {
+        return end -> end.isAfter(start);
+    }
+}
+```
+
+**Dependent validation** - Second field's validity depends on first:
+
+```java
+// Password must not contain username (case-insensitive)
+public record ValidCredentials(Username username, Password password) {
+    // private ValidCredentials {}  // Not yet supported in Java
+
+    private static final Fn1<Cause, String> PASSWORD_CONTAINS_USERNAME =
+        pass -> Causes.cause("Password must not contain username");
+
+    public static Result<ValidCredentials> credentials(String usernameRaw, String passwordRaw) {
+        return Result.all(Username.username(usernameRaw),
+                          Password.password(passwordRaw))
+                     .flatMap(ValidCredentials::validatePasswordIndependent);
+    }
+
+    private static Result<ValidCredentials> validatePasswordIndependent(Username user, Password pass) {
+        String userLower = user.value().toLowerCase();
+        String passLower = pass.value().toLowerCase();
+
+        return passLower.contains(userLower)
+            ? PASSWORD_CONTAINS_USERNAME.apply(pass.value()).result()
+            : Result.success(new ValidCredentials(user, pass));
+    }
+}
+```
+
+**Business rule validation** - Complex domain invariants:
+
+```java
+// Order total must match sum of line items
+public record ValidOrder(OrderId id, Money total, List<LineItem> items) {
+    // private ValidOrder {}  // Not yet supported in Java
+
+    private static final Fn1<Cause, Money> TOTAL_MISMATCH =
+        actual -> Causes.cause("Order total does not match line items. Expected: " + actual);
+
+    public static Result<ValidOrder> validOrder(OrderId id, Money total, List<LineItem> items) {
+        Money calculated = items.stream()
+            .map(LineItem::subtotal)
+            .reduce(Money.ZERO, Money::add);
+
+        return calculated.equals(total)
+            ? Result.success(new ValidOrder(id, total, items))
+            : TOTAL_MISMATCH.apply(calculated).result();
+    }
+}
+```
+
+**Collecting multiple errors with Result.all():**
+
+```java
+// Validate user registration - collect all field errors
+public record ValidRegistration(Email email, Password password, Age age) {
+    // private ValidRegistration {}  // Not yet supported in Java
+
+    public static Result<ValidRegistration> validate(String emailRaw,
+                                                      String passwordRaw,
+                                                      String ageRaw) {
+        return Result.all(Email.email(emailRaw),
+                          Password.password(passwordRaw),
+                          Age.age(ageRaw))
+                     .map(ValidRegistration::new);
+        // If any field fails, Result.all() accumulates ALL errors
+        // User sees "Invalid email AND password too short AND age out of range"
+        // Not just the first error
+    }
+}
+```
+
+**Key insight:** Use `Result.all()` for independent field validation (collects all errors), then use `flatMap` chains for dependent validation (fail-fast when one field depends on another being valid first).
+
+#### Adopting Incrementally in Existing Codebases
+
+**Don't refactor everything at once.** Parse-don't-validate works best when adopted incrementally at boundaries.
+
+**Strategy:**
+
+**1. New features first** - Use parse-don't-validate from day one for all new code:
+
+```java
+// New feature: referral code tracking
+public record ReferralCode(String value) {
+    // private ReferralCode {}  // Not yet supported in Java
+
+    public static Result<Option<ReferralCode>> referralCode(String raw) {
+        return isAbsent(raw)
+            ? Result.success(Option.none())
+            : validatePresent(raw);
+    }
+    // ... validation logic
+}
+
+// Use in new use cases immediately
+public interface TrackReferral {
+    Result<Response> execute(ReferralCode code);
+}
+```
+
+**2. Keep existing validation** - Don't remove `@Valid` annotations or existing validation immediately:
+
+```java
+// Existing controller - keep @Valid for now
+@PostMapping("/register")
+public ResponseEntity<?> register(@Valid @RequestBody RegistrationRequest request) {
+    // New code uses parse-don't-validate internally
+    return ValidRequest.validate(request)
+        .async()
+        .flatMap(useCase::execute)
+        .await()
+        .fold(this::errorResponse, this::successResponse);
+}
+```
+
+**3. Gradually move validation** - Shift validation from service layer to value objects:
+
+Before:
+```java
+@Service
+public class RegistrationService {
+    public User register(String email, String password) {
+        if (email == null || !isValidEmail(email)) {
+            throw new ValidationException("Invalid email");
+        }
+        if (password == null || password.length() < 8) {
+            throw new ValidationException("Password too short");
+        }
+        // ... business logic
+    }
+}
+```
+
+After (incremental):
+```java
+// Step 1: Extract value objects
+public interface RegisterUser {
+    Result<User> execute(Email email, Password password);
+}
+
+// Step 2: Keep service as thin adapter
+@Service
+public class RegistrationService {
+    private final RegisterUser useCase;
+
+    public User register(String email, String password) {
+        return Result.all(Email.email(email), Password.password(password))
+                     .flatMap(useCase::execute)
+                     .fold(
+                         cause -> throw new ValidationException(cause.message()),
+                         user -> user
+                     );
+    }
+}
+```
+
+**4. End state** - Pure business logic with adapters at boundaries:
+
+```java
+@PostMapping("/register")
+public ResponseEntity<?> register(@RequestBody RegistrationRequest request) {
+    return ValidRequest.validate(request.email(), request.password())
+        .async()
+        .flatMap(useCase::execute)
+        .await()
+        .fold(this::errorResponse, this::successResponse);
+}
+```
+
+**Timeline:** New features immediately, existing features over 3-6 months as you touch the code. No big-bang refactoring required.
 
 ### Pragmatica Lite Validation and Parsing Utilities
 
@@ -1801,11 +2367,136 @@ var decorated = withTimeout(timeSpan(5).seconds(),
 
 ---
 
-## Testing Patterns
+## Testing Strategy
 
-Testing functional code uses a different approach than traditional imperative testing. Instead of interrogating state with `isSuccess()`/`isFailure()`, we use functional bifurcation with `onSuccess`/`onFailure` callbacks.
+### The Problem with Traditional Component-Focused Testing
 
-### Core Testing Pattern
+Traditional Java testing fragments business logic across isolated unit tests:
+
+```java
+// Traditional: separate tests for each component
+class ValidateInputTest {
+    @Test void emailValidation() { /* ... */ }
+    // 10 tests
+}
+class CheckCredentialsTest {
+    @Test void validCredentials() { /* ... */ }
+    // 5 tests
+}
+// Total: 22 tests, never testing them TOGETHER
+```
+
+**Problems:**
+1. Doesn't test composition - steps work individually but fail when chained
+2. Doesn't test error propagation - how do failures bubble through?
+3. Doesn't test actual behavior - tests verify components, not use cases
+4. Brittle - interface changes break all tests even when behavior unchanged
+5. False confidence - all tests pass, production fails because integration untested
+
+**What we actually want to test:** When a user calls `UseCase.execute(request)`, does the complete assembled behavior match requirements?
+
+### Philosophy: Integration-First Testing
+
+**Core Principle:** Test assembled use cases, not isolated components.
+
+Your use case is a composition of steps. Test the composition. Stub only at adapter boundaries (database, HTTP, external services). Test all business logic together.
+
+**Why by criteria:**
+- **Mental Overhead**: One test suite per use case, not per component (+2)
+- **Business/Technical Ratio**: Tests read like behavior specifications (+3)
+- **Reliability**: Tests verify actual end-to-end behavior (+3)
+- **Complexity**: Fewer test contexts, clearer boundaries (+2)
+
+### The Three Testing Layers
+
+**1. Value Objects: Unit Tests (100% coverage)**
+
+Value objects are pure, isolated, enforce invariants. Test them comprehensively:
+
+```java
+class EmailTest {
+    @ParameterizedTest
+    @ValueSource(strings = {"bad", "no@domain", "@missing"})
+    void email_rejectsInvalidFormat(String raw) {
+        Email.email(raw).onSuccess(Assertions::fail);
+    }
+
+    @Test
+    void email_normalizesToLowercase() {
+        Email.email("USER@EXAMPLE.COM")
+             .onSuccess(email -> assertEquals("user@example.com", email.value()));
+    }
+}
+```
+
+**Why unit test here?** Value objects have zero dependencies. They're pure functions. Unit testing is natural.
+
+**2. Business Leaves: Unit Tests if Complex**
+
+Simple business leaves (single calculation, simple transformation) don't need isolated tests - covered by use case integration tests.
+
+Complex business leaves (rich algorithms, many branches) deserve unit tests:
+
+```java
+class PricingEngineTest {
+    @Test void volumeDiscount_appliesAtThreshold() { /* ... */ }
+    @Test void combinedDiscounts_stackCorrectly() { /* ... */ }
+    // 20+ tests for complex pricing logic
+}
+```
+
+**Guideline:** If a leaf has 3+ conditional branches or complex logic, write unit tests.
+
+**3. Use Cases: Integration Tests (Test Vectors)**
+
+**Test vectors:** comprehensive sets of input/output pairs systematically covering all decision paths and edge cases.
+
+Test complete use case behavior with all steps assembled, only adapters stubbed:
+
+```java
+class UserLoginTest {
+    // Stubs for adapter leaves
+    CheckCredentials mockCredentials;
+    CheckAccountStatus mockStatus;
+    GenerateToken mockToken;
+
+    UserLogin useCase;
+
+    @BeforeEach
+    void setup() {
+        // Assemble use case with stubbed adapters
+        mockCredentials = vr -> Result.success(new Credentials("user-1"));
+        mockStatus = c -> Result.success(new Account(c.userId(), true));
+        mockToken = acc -> Result.success(new Response("token-" + acc.userId()));
+
+        useCase = UserLogin.userLogin(mockCredentials, mockStatus, mockToken);
+    }
+
+    @Test
+    void execute_succeeds_forValidInput() {
+        var request = new Request("john@example.com", "Valid123", null);
+
+        useCase.execute(request)
+               .onFailure(Assertions::fail)
+               .onSuccess(response -> assertEquals("token-user-1", response.token()));
+    }
+
+    @Test
+    void execute_fails_whenCredentialsInvalid() {
+        CheckCredentials failingCreds = vr -> UserLoginError.InvalidCredentials.INSTANCE.result();
+        var useCase = UserLogin.userLogin(failingCreds, mockStatus, mockToken);
+        var request = new Request("john@example.com", "Valid123", null);
+
+        useCase.execute(request)
+               .onSuccess(Assertions::fail)
+               .onFailure(cause -> assertInstanceOf(UserLoginError.InvalidCredentials.class, cause));
+    }
+}
+```
+
+This tests **real behavior**: validation → credentials → status → token, with error propagation.
+
+### Core Testing Patterns
 
 **For expected failures** - use `.onSuccess(Assertions::fail)`:
 ```java
@@ -1828,7 +2519,6 @@ void validation_succeeds_forValidInput() {
                 .onFailure(Assertions::fail)  // Fail if unexpectedly fails
                 .onSuccess(valid -> {
                     assertEquals("valid@example.com", valid.email().value());
-                    // Additional assertions...
                 });
 }
 ```
@@ -1847,14 +2537,398 @@ void execute_succeeds_forValidInput() {
 }
 ```
 
-### Benefits of This Approach
+**Benefits:**
+1. No intermediate variables - no `var result = ...` clutter
+2. Functional bifurcation - explicitly specify behavior for each outcome
+3. Method references - `Assertions::fail` instead of lambdas
+4. Clear intent - test structure mirrors functional flow
 
-1. **No intermediate variables**: No `var result = ...` clutter
-2. **Functional bifurcation**: Explicitly specify behavior for each outcome
-3. **Method references**: Use `Assertions::fail` instead of `() -> Assertions.fail()`
-4. **Clear intent**: The test structure mirrors the functional flow
+**Test naming convention:** Follow pattern `methodName_outcome_condition`:
+- `email_rejectsInvalidFormat` - method name, what happens, under what condition
+- `execute_succeeds_forValidInput` - clear, readable, searchable
 
-See [Naming Conventions](#naming-conventions) for test naming patterns.
+### The Evolutionary Testing Process
+
+Instead of writing tests after implementation, evolve them **alongside** implementation:
+
+```
+Phase 1: Stub Everything
+    ↓
+Phase 2: Implement & Test Validation
+    ↓
+Phase 3-N: Implement Steps Incrementally
+    ↓
+Final: Production-Ready
+```
+
+At each phase, **all tests remain green**. You're not breaking and fixing - you're growing.
+
+**Phase 1 - Stub Everything:**
+
+Create use case interface with factory returning stub:
+
+```java
+public interface UserLogin {
+    record Request(String email, String password, String referral) {}
+    record Response(String token) {}
+
+    Result<Response> execute(Request request);
+
+    // Factory returns stub that always succeeds
+    static UserLogin userLogin() {
+        return request -> Result.success(new Response("stub-token"));
+    }
+}
+```
+
+Write initial test:
+
+```java
+@Test
+void execute_succeeds_forValidInput() {
+    var useCase = UserLogin.userLogin();
+    var request = new Request("john@example.com", "Valid123", null);
+
+    useCase.execute(request)
+           .onSuccess(response -> assertEquals("stub-token", response.token()));
+}
+```
+
+Status: ✅ Test passes (trivial, but structure correct)
+
+**Phase 2 - Implement Validation:**
+
+Add validated request with validation logic:
+
+```java
+record ValidRequest(Email email, Password password, Option<ReferralCode> referral) {
+    static Result<ValidRequest> validRequest(Request raw) {
+        return Result.all(Email.email(raw.email()),
+                          Password.password(raw.password()),
+                          ReferralCode.referralCode(raw.referral()))
+                     .map(ValidRequest::new);
+    }
+}
+```
+
+Update factory to use validation:
+
+```java
+static UserLogin userLogin() {
+    return request -> ValidRequest.validRequest(request)
+                                  .map(_ -> new Response("stub-token"));
+}
+```
+
+Add validation test vectors:
+
+```java
+@Test
+void execute_fails_forInvalidEmail() {
+    var useCase = UserLogin.userLogin();
+    var request = new Request("bad-email", "Valid123", null);
+
+    useCase.execute(request).onSuccess(Assertions::fail);
+}
+
+@Test
+void execute_aggregatesMultipleErrors() {
+    var useCase = UserLogin.userLogin();
+    var request = new Request("bad", "weak", "invalid-ref");
+
+    useCase.execute(request)
+           .onSuccess(Assertions::fail)
+           .onFailure(cause -> assertInstanceOf(Causes.CompositeCause.class, cause));
+}
+```
+
+Status: ✅ Happy path still green, validation failures tested
+
+**Phase 3+ - Implement Steps Incrementally:**
+
+For each step:
+1. Define step interface
+2. Update factory to accept step dependency
+3. Update existing test stubs
+4. Add step failure scenarios
+
+Example:
+
+```java
+interface CheckCredentials {
+    Result<Credentials> apply(ValidRequest request);
+}
+
+static UserLogin userLogin(CheckCredentials checkCredentials) {
+    return request -> ValidRequest.validRequest(request)
+                                  .flatMap(checkCredentials::apply)
+                                  .map(creds -> new Response("stub-token"));
+}
+```
+
+**Final Phase - Production Ready:**
+- ✅ All business logic implemented
+- ✅ Only adapter leaves stubbed (database, HTTP, external services)
+- ✅ Comprehensive test vector coverage
+- ✅ Tests serve as living documentation
+
+### Handling Complex Input Objects
+
+**Problem:** Test data construction becomes verbose:
+
+```java
+// Painful to write repeatedly
+var request = new Request(
+    "john.doe@example.com",
+    "SecureP@ssw0rd123",
+    "REF-PREMIUM-2024",
+    true,
+    "192.168.1.1",
+    Instant.now(),
+    Map.of("tracking", "utm_source=test")
+);
+```
+
+**Solution 1 - Test Data Builders:**
+
+```java
+public class TestData {
+    public static RequestBuilder request() {
+        return new RequestBuilder();
+    }
+
+    public static class RequestBuilder {
+        private String email = "default@example.com";
+        private String password = "DefaultValid123";
+        private String referral = null;
+        // ... defaults for all fields
+
+        public RequestBuilder withEmail(String email) {
+            this.email = email;
+            return this;
+        }
+
+        public RequestBuilder withPassword(String password) {
+            this.password = password;
+            return this;
+        }
+
+        public Request build() {
+            return new Request(email, password, referral, /* ... */);
+        }
+    }
+}
+
+// Usage
+var request = TestData.request()
+                      .withEmail("test@example.com")
+                      .build();
+```
+
+**Solution 2 - Canonical Test Vectors:**
+
+```java
+public class TestVectors {
+    public static final Request VALID = new Request(
+        "user@example.com",
+        "Valid123!",
+        "REF-123",
+        // ... all valid defaults
+    );
+
+    public static final Request INVALID_EMAIL = new Request(
+        "bad-email",
+        "Valid123!",
+        "REF-123",
+        // ... rest valid
+    );
+
+    public static final Request WEAK_PASSWORD = new Request(
+        "user@example.com",
+        "weak",
+        "REF-123",
+        // ... rest valid
+    );
+}
+
+// Usage
+useCase.execute(TestVectors.VALID).onFailure(Assertions::fail);
+useCase.execute(TestVectors.INVALID_EMAIL).onSuccess(Assertions::fail);
+```
+
+**Solution 3 - Factory Methods:**
+
+```java
+public class TestData {
+    public static Request valid() {
+        return new Request("user@example.com", "Valid123!", "REF-123", /* ... */);
+    }
+
+    public static Request withEmail(String email) {
+        return new Request(email, "Valid123!", "REF-123", /* ... */);
+    }
+
+    public static Request withPassword(String password) {
+        return new Request("user@example.com", password, "REF-123", /* ... */);
+    }
+}
+
+// Usage
+useCase.execute(TestData.valid()).onFailure(Assertions::fail);
+useCase.execute(TestData.withEmail("bad")).onSuccess(Assertions::fail);
+```
+
+**Combine strategies:**
+
+```java
+Request valid = TestVectors.VALID;  // Canonical
+
+Request customized = TestData.request()  // Builder for complex customization
+                             .from(TestVectors.VALID)
+                             .withEmail("custom@test.com")
+                             .build();
+```
+
+### Managing Large Test Counts
+
+Comprehensive testing generates many tests. **This is not a problem - it's honest complexity.** 35 tests = 35 real scenarios. But we need organization.
+
+**Strategy 1 - Nested Test Classes:**
+
+```java
+class UserLoginTest {
+    private UserLogin useCase;
+    // ... stubs
+
+    @BeforeEach
+    void setup() { /* ... */ }
+
+    @Nested class HappyPath {
+        @Test void execute_succeeds_forValidInput() { /* ... */ }
+        @Test void execute_succeeds_withOptionalReferral() { /* ... */ }
+    }
+
+    @Nested class ValidationFailures {
+        @Test void execute_fails_forInvalidEmail() { /* ... */ }
+        @Test void execute_fails_forWeakPassword() { /* ... */ }
+        @Test void execute_aggregatesMultipleErrors() { /* ... */ }
+    }
+
+    @Nested class StepFailures {
+        @Test void execute_fails_whenCredentialsInvalid() { /* ... */ }
+        @Test void execute_fails_whenAccountInactive() { /* ... */ }
+    }
+
+    @Nested class EdgeCases {
+        @Test void execute_handlesNullReferral() { /* ... */ }
+        @Test void execute_handlesExtremelyLongInputs() { /* ... */ }
+    }
+}
+```
+
+**Benefits:** IDE collapses nested classes, clear categorization, shared setup per category, test reports group meaningfully.
+
+**Strategy 2 - Parameterized Tests:**
+
+```java
+@ParameterizedTest
+@ValueSource(strings = {"bad", "no@domain", "@missing", "CAPS@TEST.COM"})
+void execute_fails_forInvalidEmail(String invalidEmail) {
+    var request = TestData.request().withEmail(invalidEmail).build();
+
+    useCase.execute(request).onSuccess(Assertions::fail);
+}
+
+@ParameterizedTest
+@CsvSource({
+    "weak, TooShort",
+    "alllowercase, NoUppercase",
+    "ALLUPPERCASE, NoLowercase"
+})
+void execute_fails_forWeakPassword(String password, String expectedReason) {
+    var request = TestData.request().withPassword(password).build();
+
+    useCase.execute(request)
+           .onSuccess(Assertions::fail)
+           .onFailure(cause -> assertTrue(cause.message().contains(expectedReason)));
+}
+```
+
+**What collapsed:** 5 individual tests → 1 parameterized test with 5 values.
+
+**Strategy 3 - Test Organization in Files:**
+
+Large use cases → multiple test files:
+
+```
+usecase/userlogin/
+├── UserLogin.java
+├── UserLoginValidationTest.java (validation scenarios)
+├── UserLoginFlowTest.java (happy path + step failures)
+├── UserLoginBranchesTest.java (conditional logic)
+└── UserLoginEdgeCasesTest.java (edge cases)
+```
+
+**Guideline:** Keep individual test files under 500 lines.
+
+### When to Write Unit Tests
+
+**Always unit test:**
+1. **Value objects** - Pure functions, zero dependencies, enforce invariants
+2. **Complex business leaves** - 3+ branches, rich algorithms, many edge cases
+3. **Utility functions** - Pure transformations used across many use cases
+
+**Never unit test:**
+1. **Simple business leaves** - Single calculation, covered by integration tests
+2. **Sequencers/Fork-Joins** - These ARE the integration, test assembled
+3. **Adapters** - Test through use case with stubs, or with real infrastructure
+
+**Rule of thumb:** If it needs mocking to test in isolation, it's not a unit - test it integrated.
+
+### Migrating from Traditional Unit Testing
+
+**Don't delete everything.** Migrate incrementally:
+
+**Step 1:** Add integration tests alongside existing unit tests
+
+```java
+// Keep existing unit tests
+class ValidateInputTest { /* ... */ }
+class CheckCredentialsTest { /* ... */ }
+
+// Add new integration test
+class UserLoginTest {
+    @Test void execute_succeeds_forValidInput() { /* ... */ }
+    // Full use case coverage
+}
+```
+
+**Step 2:** Identify redundancy
+
+Run coverage report. Which unit tests are now redundant because integration tests cover them?
+
+**Step 3:** Remove redundant tests
+
+If `UserLoginTest` covers all scenarios from `CheckCredentialsTest` and `ValidateInputTest`, delete them.
+
+**Step 4:** Keep unique value
+
+Retain unit tests that test edge cases not covered by integration tests, or complex algorithms worth isolated testing.
+
+**End state:**
+
+```
+Before:
+- 50 unit tests (component fragments)
+- 0 integration tests
+- False confidence
+
+After:
+- 15 value object unit tests (pure functions)
+- 5 complex leaf unit tests (algorithms)
+- 20 use case integration tests (assembled behavior)
+- Real confidence
+```
 
 ### Testing with Stubs
 
@@ -1869,7 +2943,7 @@ HashPassword hashPassword = pwd -> Result.success(new HashedPassword("hashed"));
 var checkEmail = (CheckEmailUniqueness) req -> Promise.success(req);
 ```
 
-This makes the code cleaner and leverages type inference properly.
+This makes code cleaner and leverages type inference properly.
 
 ---
 

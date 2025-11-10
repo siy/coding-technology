@@ -19,7 +19,7 @@ Core Rules
   - `Promise<T>`  -  async, can fail (technical/business), same semantics as `Result<T>` but asynchronous.
 - No business exceptions: represent business failures via `Result<T>` (and `Promise<T>` failures). Technical exceptions should not appear in business logic; if unavoidable in adapters, convert to Causes.
 - Parse, don’t validate: construct only valid domain/value objects. Factories enforce invariants before instance creation.
-- Single pattern per function: each method implements exactly one pattern (Sequencer, Fan‑Out‑Fan‑In, Condition, Iteration, Leaf). Exception: Aspects may be applied inline as decorators.
+- Single pattern per function: each method implements exactly one pattern (Leaf, Sequencer, Fork-Join, Condition, Iteration, Aspects).
 - Leaves:
   - Business leaves are pure (no side effects).
   - Adapter leaves integrate with external systems; map foreign failures to domain/technical Causes.
@@ -37,7 +37,7 @@ Validation Model (parse, don’t validate)
 - Optional fields: if presence is optional and validation may fail, factories return `Result<Option<T>>` (None = absent, Failure = invalid).
 - Aggregate input: define a validated internal type with two (or more) factories using chain‑of‑responsibility:
   - From raw input: parse per‑field VOs, then delegate to the component‑based factory.
-  - From components: perform cross‑field checks, then construct; returns `Result<Validated>`.
+  - From components: perform cross‑field checks, then construct; returns `Result<ValidRequest>`.
 - Cross‑field checks: break into small `Result<Unit>` checks and combine via `Result.all(...).map(_ -> this)` to get aggregated `CompositeCause`.
 
 Use Case Shape

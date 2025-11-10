@@ -1,13 +1,15 @@
 Examples (Java 25, Maven)
 
 Overview
-- Multi-module Maven project under `examples/` with two modules:
+- Multi-module Maven project under `examples/` with three modules:
   - `usecase-userlogin-sync`  -  synchronous use case implemented with `Result<T>`.
   - `usecase-userlogin-async`  -  asynchronous use case implemented with `Promise<T>`.
-- Code follows TECHNOLOGY.md conventions: nested Request/Response, parse‑don’t‑validate, per‑field VO factories, steps as single‑method interfaces, sequencer in execute().
+  - `usecase-internal-service`  -  internal service integration example.
+- Code follows TECHNOLOGY.md conventions: nested Request/Response, parse‑don't‑validate, per‑field VO factories, steps as single‑method interfaces, sequencer in execute().
 
 Notes
-- The code references Pragmatica Lite types (`Option`, `Result`, `Promise`, `Causes`, `Verify`). To compile, add Pragmatica Lite Core to your build or adjust imports.
+- The code references Pragmatica Lite types (`Option`, `Result`, `Promise`, `Causes`, `Verify`).
+- Pragmatica Lite Core 0.8.3 is available on Maven Central.
 - Java 25 is configured via Maven compiler properties. Adjust to your local JDK if needed.
 
 Layout
@@ -15,6 +17,6 @@ Layout
 - `com.example.app.domain.shared.*`  -  shared value objects (Email, Password, ReferralCode) with static factories.
 
 Build
-- Ensure Pragmatica Lite Core `org.pragmatica-lite:core:0.7.23` is installed to your local Maven repo (from `../pragmatica-lite/core`).
+- Pragmatica Lite Core `org.pragmatica-lite:core:0.8.3` is declared in parent POM and available from Maven Central.
 - Package: `mvn -q -f examples/pom.xml -DskipTests package`
 - Test: `mvn -q -f examples/pom.xml test`

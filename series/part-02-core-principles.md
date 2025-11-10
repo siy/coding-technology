@@ -22,6 +22,59 @@ These principles compress design decisions into mechanical rules. Master them, a
 
 ---
 
+## Spring to JBCT Translation
+
+**If you're coming from Spring Boot**, here's how JBCT concepts map to familiar patterns. JBCT doesn't replace Spring—it changes how you structure code within Spring applications.
+
+| Spring Pattern | JBCT Equivalent | Key Difference |
+|----------------|-----------------|----------------|
+| `@Service` class | Use case interface + implementation | Pure functions, no framework coupling. Business logic doesn't know about Spring. |
+| `@Repository` interface | Adapter interface (in use case package) | I/O operations live at edges only. Database logic is isolated. |
+| `@Valid` + Bean Validation | Parse-don't-validate (value object factories) | Validation = construction. Impossible to create invalid objects. |
+| `Optional<T>` | `Option<T>` | Better composition with Smart Wrappers (monads), clearer semantics for "might be missing". |
+| `throws Exception` | `Result<T>` (sync) or `Promise<T>` (async) | Typed errors, no hidden control flow. Compiler forces error handling. |
+| `CompletableFuture<T>` | `Promise<T>` | Simpler error handling, consistent with `Result<T>` patterns. |
+| `@Transactional` | Aspect pattern (Part 4) | Explicit boundary management, independently testable. |
+
+**Key insight:** Your Spring controllers stay largely the same. But instead of calling `@Service` beans that throw exceptions and return nulls, you call use case interfaces that return `Result<T>` or `Promise<T>`. The framework integration stays in adapters—business logic becomes pure and framework-agnostic.
+
+Example:
+
+```java
+// Traditional Spring
+@RestController
+public class UserController {
+    @Autowired private UserService userService;  // Framework-coupled service
+
+    @PostMapping("/register")
+    public User register(@Valid @RequestBody RegistrationRequest req) {
+        return userService.registerUser(req);  // Throws exceptions
+    }
+}
+
+// JBCT with Spring
+@RestController
+public class UserController {
+    private final RegisterUser registerUser;  // Pure use case interface
+
+    public UserController(RegisterUser registerUser) {
+        this.registerUser = registerUser;
+    }
+
+    @PostMapping("/register")
+    public ResponseEntity<?> register(@RequestBody RegistrationRequest raw) {
+        return ValidRequest.validate(raw)  // Parse at boundary
+            .flatMap(registerUser::execute)  // Smart Wrapper composition
+            .fold(this::errorResponse,       // Explicit error handling
+                  this::successResponse);
+    }
+}
+```
+
+Throughout Part 2, you'll see Smart Wrappers (monads) used frequently. These are the fundamental building blocks. We'll gradually introduce the term "monad" as you become comfortable with the patterns.
+
+---
+
 ## The Four Return Kinds
 
 Every function in this technology returns exactly one of four types. Not "usually" or "preferably" - exactly one, always. This isn't arbitrary restriction; it's intentional compression of complexity into type signatures.
@@ -65,8 +118,20 @@ The signature `Option<Theme>` tells you: this always succeeds, but the value mig
 
 Use this when an operation might fail for business or validation reasons. Parsing input, enforcing invariants, business rules that can be violated. Failures are represented as typed `Cause` objects, not exceptions. Every failure path is explicit in the return type.
 
+> **Note on terminology:** `Cause` represents domain failures or error reasons, not exception causes (like `Throwable.getCause()`). Think of it as "FailureReason" or "DomainError"—it's the typed representation of why a business operation failed.
+
 ```java
+import org.pragmatica.lang.Result;
+import org.pragmatica.lang.Functions.Fn1;
+import org.pragmatica.lang.validation.Verify;
+import org.pragmatica.lang.error.Cause;
+import org.pragmatica.lang.error.Causes;
+
+import java.util.regex.Pattern;
+
 public record Email(String value) {
+    // private Email {}  // Not yet supported in Java
+
     private static final Pattern EMAIL_PATTERN = Pattern.compile("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$");
     private static final Fn1<Cause, String> INVALID_EMAIL = Causes.forValue("Invalid email format: {}");
 
@@ -92,6 +157,57 @@ public interface AccountRepository {
 ```
 
 The signature `Promise<Account>` tells you: this completes later (async), might fail (network, database), failure is carried in the Promise.
+
+### Why Not Use Java's Built-in Types?
+
+**"Can't I just use `Optional`, `CompletableFuture`, and exceptions?"**
+
+You could, but you'd hit these problems:
+
+| Java Standard Approach | Problem | JBCT Solution |
+|------------------------|---------|---------------|
+| `return null` | Hidden optionality → `NullPointerException` at runtime | `Option<T>` - optionality explicit in type |
+| `Optional<T>` | Can't represent failures (empty vs error), awkward async composition | `Option<T>` for "not found", `Result<T>` for "might fail with typed error" |
+| `try-catch` with exceptions | Invisible control flow, unchecked = hidden, checked = verbose | `Result<T>` - errors are values, type-checked, composable |
+| `CompletableFuture<T>` | Complex error handling (`.exceptionally`, `.handle`), nested hell with `Optional` | `Promise<T>` - consistent with `Result<T>` patterns, simpler composition |
+| `CompletableFuture<Optional<T>>` | Forbidden anti-pattern - two levels of "might not have value" | Use `Promise<T>` (failure in Promise) or `Promise<Option<T>>` sparingly |
+
+**Example of the problem:**
+
+```java
+// Traditional Java - hidden failures
+public User findUser(String id) throws UserNotFoundException {
+    // Throws checked exception - must declare, must catch
+    // OR returns null - hidden optionality
+    // OR returns Optional<User> - can't distinguish "not found" from "database error"
+}
+
+// CompletableFuture for async
+public CompletableFuture<User> findUserAsync(String id) {
+    // Error handling: .exceptionally? .handle? .whenComplete?
+    // What if user not found vs database error?
+    // CompletableFuture<Optional<User>>? Now you have nested hell
+}
+
+// JBCT - explicit, composable
+public Result<User> findUser(UserId id) {
+    // Sync: Returns Result - caller knows it might fail
+    // Type carries both success (User) and failure (Cause)
+    // Composes with flatMap, no exception handling needed
+}
+
+public Promise<User> findUserAsync(UserId id) {
+    // Async: Returns Promise - caller knows it's async
+    // Failure is inside Promise, same Result semantics
+    // Composes with flatMap, consistent patterns
+}
+```
+
+**Key differences:**
+- **Explicit in types**: Signature tells you failure modes, no hidden exceptions
+- **Consistent composition**: `map`/`flatMap` work the same across all monadic types
+- **No nesting**: One concern per type level, never `Promise<Result<T>>`
+- **Better inference**: AI can generate correct error handling from types alone
 
 ### Why Exactly Four?
 
@@ -184,6 +300,8 @@ if (!email.isValid()) {
 ```java
 // DO: Validation IS construction
 public record Email(String value) {
+    // private Email {}  // Not yet supported in Java
+
     private static final Pattern EMAIL_PATTERN = Pattern.compile("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$");
     private static final Fn1<Cause, String> INVALID_EMAIL = Causes.forValue("Invalid email format: {}");
 
@@ -242,6 +360,8 @@ Use `Result<Option<T>>` - validation can fail (Result), and if it succeeds, the 
 
 ```java
 public record ReferralCode(String value) {
+    // private ReferralCode {}  // Not yet supported in Java
+
     private static final String PATTERN = "^[A-Z0-9]{6}$";
 
     public static Result<Option<ReferralCode>> referralCode(String raw) {
@@ -340,6 +460,218 @@ public record Age(int value) {
 ```
 
 For comprehensive list, see main [Coding Guide](../CODING_GUIDE.md#pragmatica-lite-validation-and-parsing-utilities).
+
+---
+
+**Pragmatica Lite Quick Reference**
+
+Common imports and methods you'll use throughout this series:
+
+```java
+// Core types
+import org.pragmatica.lang.Option;
+import org.pragmatica.lang.Result;
+import org.pragmatica.lang.Promise;
+import org.pragmatica.lang.Unit;
+
+// Error handling
+import org.pragmatica.lang.error.Cause;
+import org.pragmatica.lang.error.Causes;
+
+// Validation
+import org.pragmatica.lang.validation.Verify;
+
+// Parsing utilities
+import org.pragmatica.lang.parse.Number;
+import org.pragmatica.lang.parse.DateTime;
+import org.pragmatica.lang.parse.Network;
+
+// Functions
+import org.pragmatica.lang.Functions.Fn1;
+import org.pragmatica.lang.Functions.Fn2;
+```
+
+**Common patterns:**
+- `Result.success(value)` - Create success
+- `Result.failure(cause)` or `cause.result()` - Create failure
+- `Result.all(r1, r2, ...)` - Parallel validation, collect all errors
+- `Result.allOf(list)` - Aggregate list of Results
+- `Verify.ensure(value, predicate)` - Validate value
+- `Verify.ensureFn(cause, predicate, params...)` - Validate with custom error
+- `Causes.forValue("message: {}")` - Create cause factory
+- `Number.parseInt(raw)`, `DateTime.parseLocalDate(raw)` - Safe parsing
+
+---
+
+### Real-World Validation Scenarios
+
+The basic examples above validate single fields independently. Real applications have more complex requirements: cross-field validation, dependent rules, and business constraints that span multiple values.
+
+**Cross-field validation** - One field depends on another:
+
+```java
+// Date range where end must be after start
+public record DateRange(LocalDate start, LocalDate end) {
+    private static final Fn1<Cause, LocalDate> END_BEFORE_START =
+        date -> Causes.cause("End date must be after start date: " + date);
+
+    public static Result<DateRange> dateRange(LocalDate start, LocalDate end) {
+        return Verify.ensure(start, Verify.Is::notNull)
+            .flatMap(_ -> Verify.ensure(end, Verify.Is::notNull))
+            .flatMap(_ -> Verify.ensure(end, isAfter(start), END_BEFORE_START))
+            .map(_ -> new DateRange(start, end));
+    }
+
+    private static Predicate<LocalDate> isAfter(LocalDate start) {
+        return end -> end.isAfter(start);
+    }
+}
+```
+
+**Dependent validation** - Second field's validity depends on first:
+
+```java
+// Password must not contain username (case-insensitive)
+public record ValidCredentials(Username username, Password password) {
+    private static final Fn1<Cause, String> PASSWORD_CONTAINS_USERNAME =
+        pass -> Causes.cause("Password must not contain username");
+
+    public static Result<ValidCredentials> credentials(String usernameRaw, String passwordRaw) {
+        return Result.all(Username.username(usernameRaw),
+                          Password.password(passwordRaw))
+                     .flatMap((user, pass) ->
+                         validatePasswordIndependent(user, pass)
+                     );
+    }
+
+    private static Result<ValidCredentials> validatePasswordIndependent(Username user, Password pass) {
+        String userLower = user.value().toLowerCase();
+        String passLower = pass.value().toLowerCase();
+
+        return passLower.contains(userLower)
+            ? PASSWORD_CONTAINS_USERNAME.apply(pass.value()).result()
+            : Result.success(new ValidCredentials(user, pass));
+    }
+}
+```
+
+**Business rule validation** - Complex domain invariants:
+
+```java
+// Order total must match sum of line items
+public record ValidOrder(OrderId id, Money total, List<LineItem> items) {
+    private static final Fn1<Cause, Money> TOTAL_MISMATCH =
+        actual -> Causes.cause("Order total does not match line items. Expected: " + actual);
+
+    public static Result<ValidOrder> validOrder(OrderId id, Money total, List<LineItem> items) {
+        Money calculated = items.stream()
+            .map(LineItem::subtotal)
+            .reduce(Money.ZERO, Money::add);
+
+        return calculated.equals(total)
+            ? Result.success(new ValidOrder(id, total, items))
+            : TOTAL_MISMATCH.apply(calculated).result();
+    }
+}
+```
+
+**Collecting multiple errors with Result.all():**
+
+```java
+// Validate user registration - collect all field errors
+public record ValidRegistration(Email email, Password password, Age age) {
+    public static Result<ValidRegistration> validate(String emailRaw,
+                                                      String passwordRaw,
+                                                      String ageRaw) {
+        return Result.all(Email.email(emailRaw),
+                          Password.password(passwordRaw),
+                          Age.age(ageRaw))
+                     .map(ValidRegistration::new);
+        // If any field fails, Result.all() accumulates ALL errors
+        // User sees "Invalid email AND password too short AND age out of range"
+        // Not just the first error
+    }
+}
+```
+
+**Key insight:** Use `Result.all()` for independent field validation (collects all errors), then use `flatMap` chains for dependent validation (fail-fast when one field depends on another being valid first).
+
+### Adopting Incrementally in Existing Codebases
+
+**Don't refactor everything at once.** Parse-don't-validate works best when adopted incrementally at boundaries.
+
+**Strategy:**
+
+**1. New features first** - Use parse-don't-validate from day one for all new code:
+```java
+// New feature: payment processing
+public record CardNumber(String value) {
+    // private CardNumber {}  // Not yet supported in Java
+
+    public static Result<CardNumber> cardNumber(String raw) {
+        return Verify.ensure(raw, Verify.Is::notBlank)
+            .flatMap(Verify.ensureFn(INVALID, Verify.Is::matches, CARD_PATTERN))
+            .map(CardNumber::new);
+    }
+}
+```
+
+**2. Keep existing validation at controller boundaries** - Don't remove `@Valid` annotations immediately. Add a parsing layer:
+```java
+// Existing Spring controller
+@RestController
+public class UserController {
+    private final RegisterUser registerUser;
+
+    @PostMapping("/register")
+    public ResponseEntity<?> register(@Valid @RequestBody RegistrationRequest dto) {
+        // Keep @Valid for now - it validates the DTO shape
+        // Add new parsing layer that converts DTO → domain
+        return ValidRequest.validate(dto)  // New: parse to domain types
+            .flatMap(registerUser::execute)
+            .fold(this::errorResponse, this::successResponse);
+    }
+}
+
+// New validation layer
+public record ValidRequest(Email email, Password password) {
+    public static Result<ValidRequest> validate(RegistrationRequest dto) {
+        return Result.all(Email.email(dto.email()),
+                          Password.password(dto.password()))
+                     .map(ValidRequest::new);
+    }
+}
+```
+
+**3. Gradually move validation from services to value objects:**
+- Find a service method with manual validation
+- Extract that validation into a value object factory method
+- Update callers to use the value object
+- Repeat for next field
+
+**Example migration:**
+```java
+// Before: Validation in service
+@Service
+public class UserService {
+    public User registerUser(String emailRaw, String passwordRaw) {
+        if (emailRaw == null || !emailRaw.matches(EMAIL_PATTERN)) {
+            throw new ValidationException("Invalid email");
+        }
+        // ... more validation, then business logic
+    }
+}
+
+// After: Validation in value objects
+public class UseCase implements RegisterUser {
+    public Result<UserId> execute(ValidRequest request) {
+        // request.email() and request.password() are already validated
+        // Business logic only sees valid data
+    }
+}
+```
+
+**Key insight:** Start at the edges (controllers, API boundaries) and work inward. Your existing service layer can stay mostly unchanged while you build the new domain layer alongside it. Over time, the service layer shrinks as logic moves to use cases and value objects.
 
 ---
 
@@ -470,6 +802,71 @@ Result.all(Email.email("not-an-email"),
 
 This is far superior to traditional exception-based approaches where you only learn about one error at a time, forcing users to fix-and-retry repeatedly.
 
+### When Exceptions Are Still OK
+
+The "no business exceptions" rule is specifically about **business failures**. There are legitimate uses of exceptions in JBCT code:
+
+**Programming errors (bugs) - Use unchecked exceptions:**
+```java
+// IllegalArgumentException for programmer mistakes
+public record UserId(UUID value) {
+    public UserId {
+        if (value == null) {
+            throw new IllegalArgumentException("UserId cannot be null");
+        }
+    }
+}
+
+// IllegalStateException for invariant violations
+public class UserSession {
+    public void logout() {
+        if (!isAuthenticated()) {
+            throw new IllegalStateException("Cannot logout - not authenticated");
+        }
+        // ... logout logic
+    }
+}
+```
+
+These are **assertions** about code correctness, not business scenarios. If they throw, it's a bug that should crash loudly during development.
+
+**Framework exceptions at boundaries - Catch and convert in adapters:**
+```java
+// Adapter layer: catch framework exceptions, convert to domain Result/Promise
+public class JdbcUserRepository implements FindUser {
+    @Override
+    public Promise<User> findById(UserId id) {
+        return Promise.lift(
+            CoreError::database,  // Convert SQLException → domain Cause
+            () -> jdbcTemplate.queryForObject(
+                "SELECT * FROM users WHERE id = ?",
+                new Object[]{id.value()},
+                this::mapUser
+            )
+        );
+    }
+}
+```
+
+Framework exceptions (SQLException, IOException, etc.) are technical failures. **They never escape adapters.** The adapter catches them and converts to `Result` or `Promise` with domain-appropriate `Cause` objects.
+
+**Unrecoverable errors - Let them propagate:**
+```java
+// OutOfMemoryError, StackOverflowError, AssertionError
+// These indicate fatal JVM problems - don't catch them
+```
+
+**The key distinction:**
+
+| Scenario | Use |
+|----------|-----|
+| **Business failure** (invalid input, not found, unauthorized) | `Result<T>` or `Promise<T>` with typed `Cause` |
+| **Programming error** (null where shouldn't be, invalid state) | Unchecked exception (`IllegalArgumentException`, `IllegalStateException`) |
+| **Framework/library exception** at boundary | Catch in adapter, convert to `Result`/`Promise` |
+| **Unrecoverable JVM error** | Let it propagate, don't catch |
+
+**Rule of thumb:** If a user action can trigger it, it's not an exception—it's a business failure that belongs in `Result`/`Promise`.
+
 ### Adapter Exceptions: The Boundary
 
 Foreign code (libraries, frameworks, databases) throws exceptions. **Adapter leaves** catch these and convert them to `Cause` objects. Business logic never sees foreign exceptions.
@@ -523,6 +920,98 @@ void loginUser_fails_forInvalidEmail() {
 - `SomeCause.INSTANCE.promise()` for Promise
 
 No decisions about checked vs unchecked, when to catch, how to wrap.
+
+---
+
+## Testing Your Code
+
+Now that you understand the four return types and core principles, you need to know how to test them. This section covers the basic functional assertion pattern—Part 5 will cover advanced testing strategies (stubs, integration tests, test organization).
+
+### Testing Results: The Functional Pattern
+
+When testing functions that return `Result<T>`, use `.onSuccess(Assertions::fail)` and `.onFailure(Assertions::fail)` to make test intent explicit.
+
+**Testing failures:**
+```java
+@Test
+void email_rejectsInvalidFormat() {
+    Email.email("not-an-email")
+        .onSuccess(Assertions::fail);  // Fail test if unexpectedly succeeds
+}
+```
+
+**Testing successes:**
+```java
+@Test
+void email_acceptsValidFormat() {
+    Email.email("user@example.com")
+        .onFailure(Assertions::fail)  // Fail test if unexpectedly fails
+        .onSuccess(email -> {
+            assertEquals("user@example.com", email.value());
+            // More assertions on the success value
+        });
+}
+```
+
+**Why this pattern:**
+- **Clear intent**: `.onSuccess(Assertions::fail)` reads as "this should fail"
+- **Better failures**: You see "Expected failure but got success with value X"
+- **Functional style**: Matches the Smart Wrapper (monadic) composition you use in production code
+
+### Testing Promises: Await Then Assert
+
+For async code that returns `Promise<T>`, call `.await()` to block the test thread, then use the same pattern:
+
+```java
+@Test
+void execute_succeeds_forValidInput() {
+    var useCase = UseCase.create(repositoryStub, emailServiceStub);
+    var request = new Request("valid-data");
+
+    useCase.execute(request)
+        .await()  // Block until promise resolves
+        .onFailure(Assertions::fail)
+        .onSuccess(response -> {
+            assertEquals("expected", response.value());
+        });
+}
+```
+
+### Testing Options
+
+Same pattern works for `Option<T>`:
+
+```java
+@Test
+void findUser_returnsEmpty_whenUserNotFound() {
+    repository.findUser(unknownId)
+        .onPresent(Assertions::fail);  // Should be empty
+}
+
+@Test
+void findUser_returnsUser_whenUserExists() {
+    repository.findUser(knownId)
+        .onEmpty(Assertions::fail)  // Should be present
+        .onPresent(user -> {
+            assertEquals("expected@example.com", user.email());
+        });
+}
+```
+
+### Test Naming Convention
+
+Follow the pattern `methodName_outcome_condition`:
+- `email_rejectsInvalidFormat` - method name, what happens, under what condition
+- `email_normalizesToLowercase` - method name, outcome, implicit condition (always)
+- `execute_succeeds_forValidInput` - clear, readable, searchable
+
+This is the foundation. **Part 5 covers**:
+- Stub creation and dependency injection
+- Integration testing with real I/O
+- Test organization (nested classes, builders, parameterized tests)
+- Testing complex scenarios
+
+For now, this functional assertion pattern is all you need to verify your value objects and simple use cases.
 
 ---
 

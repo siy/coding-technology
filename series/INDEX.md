@@ -150,7 +150,7 @@ Looking for specific patterns? Jump directly to the relevant part using the topi
 
 ## Series Version
 
-**Version 1.8.2** (2025-01-09)
+**Version 1.8.2** (2025-11-09)
 - Enhanced documentation for easier adoption
 - Progressive terminology transition: Smart Wrappers → monads across series
 - Added Spring to JBCT Translation table (Part 2)
@@ -159,14 +159,14 @@ Looking for specific patterns? Jump directly to the relevant part using the topi
 - Added real-world validation examples (Part 2)
 - Added migration strategy for existing codebases (Part 2)
 
-**Version 1.1.0** (2025-01-07)
+**Version 1.1.0** (2025-10-06)
 - Added Part 5: Testing Strategy & Evolutionary Approach
 - Series expanded from 5 to 6 parts
 - Comprehensive testing strategy with integration-first philosophy
 - Evolutionary testing process documentation
 - Former Part 5 is now Part 6
 
-**Version 1.0.0** (2025-10-05)
+**Version 1.0.0** (2025-10-04)
 - Initial series split from CODING_GUIDE.md v1.1.0
 - Added foundational concepts section for junior developers
 - Organized into progressive learning modules

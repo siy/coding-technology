@@ -18,6 +18,8 @@ By the end of this part, you'll understand:
 
 These patterns are your building blocks. Master them, and you can write clear, testable code for most scenarios.
 
+**Building on Part 2:** You've learned about Smart Wrappers (Option, Result, Promise)—the monadic types that control when operations run. In Part 3, we'll use both terms interchangeably to build familiarity with the functional programming terminology. These monads are the foundation for all patterns in this part.
+
 ---
 
 ## Single Pattern Per Function
@@ -32,6 +34,54 @@ This rule has a mechanical benefit: it makes refactoring deterministic. When a f
 - **Mental Overhead**: One pattern per function means immediate recognition - no mental model switching (+2).
 - **Complexity**: Mechanical refactoring rule eliminates subjective debates about "too complex" (+2).
 - **Design Impact**: Forces proper abstraction layers - no mixing orchestration with computation (+2).
+
+### Why This Rule Exists: The Pain of Mixed Patterns
+
+Before showing violations, understand the **concrete problems** that mixing patterns causes:
+
+**Testing becomes brittle:**
+```java
+// Mixed pattern function
+public Result<Report> generateReport(ReportRequest request) {
+    // Validates, fetches in parallel, computes, formats - all in one
+}
+
+// To test, you need:
+// 1. Valid request setup
+// 2. Mock for fetchUserData
+// 3. Mock for fetchSalesData
+// 4. Verify computeMetrics logic
+// 5. Verify formatReport logic
+// Can't test parts independently - it's all or nothing
+```
+
+**Debugging is unclear:**
+```java
+// Stack trace points to generateReport() line 45
+// But which step failed? Validation? Fork-Join fetch? Compute? Format?
+// You can't tell without stepping through the whole function
+```
+
+**Code review is confusing:**
+```java
+// Reviewer: "Wait, why are we fetching user and sales sequentially
+//            if they're independent?"
+// You: "We're not, there's a Fork-Join in the middle"
+// Reviewer: "Oh, I didn't see that buried in the lambda"
+```
+
+**Reuse is impossible:**
+```java
+// Another use case needs the same Fork-Join fetch logic
+// But it's buried inside generateReport()
+// Can't reuse it - have to copy-paste or refactor
+```
+
+**With single pattern per function:**
+- Each function is independently testable
+- Patterns are reusable across use cases
+- Failures are localized (stack trace says "fetchReportData failed")
+- Structure is predictable and scannable
 
 ### Example Violation
 
@@ -214,7 +264,7 @@ Single level of abstraction makes code generation deterministic. When an AI sees
 
 ## Pattern: Leaf
 
-**Definition:** A Leaf is the smallest unit of processing - a function that does one thing and has no internal steps. It's either a business leaf (pure computation) or an adapter leaf (I/O or side effects).
+**Definition:** A **Leaf** (an atomic operation with no substeps) is the smallest unit of processing - a function that does one thing and has no internal steps. It's either a business leaf (pure computation) or an adapter leaf (I/O or side effects).
 
 **Rationale (by criteria):**
 - **Mental Overhead**: Atomic operations have no internal steps to track - immediate comprehension (+2).
@@ -341,6 +391,8 @@ However, dependencies on specific libraries for business functionality (encrypti
 ```java
 // DO: Keep leaves focused
 public record Email(String value) {
+    // private Email {}  // Not yet supported in Java
+
     private static final Pattern EMAIL_PATTERN = Pattern.compile("^[a-z0-9+_.-]+@[a-z0-9.-]+$");
     private static final Fn1<Cause, String> INVALID_EMAIL = Causes.forValue("Invalid email");
 
@@ -437,9 +489,9 @@ private Result<Discount> standardDiscount(Order order) {
 
 Now each function has one level of branching. Much clearer.
 
-### Condition with Monads
+### Condition with Smart Wrappers (Monads)
 
-Use `map`, `flatMap`, and `filter` to keep types consistent. Never use ternaries in lambdas - they violate Single Pattern per Function.
+Use `map`, `flatMap`, and `filter` on your monadic types (Result, Option, Promise) to keep types consistent. Never use ternaries in lambdas - they violate Single Pattern per Function.
 
 ```java
 // DON'T: Ternary in lambda (violates Single Pattern per Function)
@@ -565,21 +617,36 @@ When processing collections with async operations, decide between sequential and
 
 **Sequential:**
 ```java
-// Process orders one at a time
+// Process orders one at a time (simple loop version)
 Promise<List<Receipt>> processOrders(List<Order> orders) {
+    Promise<List<Receipt>> result = Promise.success(new ArrayList<>());
+
+    for (Order order : orders) {
+        result = result.flatMap(receipts ->
+            processOrder(order).map(receipt -> {
+                receipts.add(receipt);
+                return receipts;
+            })
+        );
+    }
+
+    return result;
+}
+
+// Alternative: Use reduce if you prefer functional style
+// (More concise but less obvious - clarity matters more than cleverness)
+Promise<List<Receipt>> processOrdersWithReduce(List<Order> orders) {
     return orders.stream()
         .reduce(
             Promise.success(new ArrayList<Receipt>()),
-            (promiseAcc, order) -> promiseAcc.flatMap(acc -> addReceipt(acc, order)),
-            (p1, p2) -> p1  // Won't be used in sequential reduction
+            (acc, order) -> acc.flatMap(list ->
+                processOrder(order).map(receipt -> {
+                    list.add(receipt);
+                    return list;
+                })
+            ),
+            (p1, p2) -> p1
         );
-}
-
-private Promise<List<Receipt>> addReceipt(List<Receipt> acc, Order order) {
-    return processOrder(order).map(receipt -> {
-        acc.add(receipt);
-        return acc;
-    });
 }
 ```
 

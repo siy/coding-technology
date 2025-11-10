@@ -391,7 +391,7 @@ However, dependencies on specific libraries for business functionality (encrypti
 ```java
 // DO: Keep leaves focused
 public record Email(String value) {
-    // private Email {}  // Not yet supported in Java - constructor is package-private
+    // private Email {}  // Not yet supported in Java
 
     private static final Pattern EMAIL_PATTERN = Pattern.compile("^[a-z0-9+_.-]+@[a-z0-9.-]+$");
     private static final Fn1<Cause, String> INVALID_EMAIL = Causes.forValue("Invalid email");

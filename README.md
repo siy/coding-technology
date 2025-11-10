@@ -117,7 +117,8 @@ public record Email(String value) {
     // private Email {}  // Not yet supported in Java
 
     public static Result<Email> email(String raw) {
-        return Verify.ensure(raw, Verify.Is::notBlank)
+        return Verify.ensure(raw, Verify.Is::notNull)
+            .flatMap(Verify.ensureFn(INVALID_FORMAT, Verify.Is::notBlank))
             .flatMap(Verify.ensureFn(INVALID_FORMAT, Verify.Is::matches, PATTERN))
             .map(Email::new);
     }

@@ -2,7 +2,7 @@
 
 **Series:** [Java Backend Coding Technology](INDEX.md) | **Part:** 4 of 9
 
-**Previous:** [Part 5: Parse, Don't Validate](part-03-parse-dont-validate.md) | **Next:** [Part 5: Basic Patterns & Structure](part-05-basic-patterns.md)
+**Previous:** [Part 3: Parse, Don't Validate](part-03-parse-dont-validate.md) | **Next:** [Part 5: Basic Patterns & Structure](part-05-basic-patterns.md)
 
 ---
 
@@ -1462,7 +1462,7 @@ In [Part 5: Basic Patterns & Structure](part-05-basic-patterns.md), you'll learn
 
 **Series Navigation**
 
-[← Part 5: Parse, Don't Validate](part-03-parse-dont-validate.md) | [Index](INDEX.md) | [Part 5: Basic Patterns & Structure →](part-05-basic-patterns.md)
+[← Part 3: Parse, Don't Validate](part-03-parse-dont-validate.md) | [Index](INDEX.md) | [Part 5: Basic Patterns & Structure →](part-05-basic-patterns.md)
 
 ---
 

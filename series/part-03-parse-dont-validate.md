@@ -537,13 +537,13 @@ You've learned the "parse, don't validate" principle:
 
 ## What's Next?
 
-In [Part 9: Error Handling & Composition](part-04-error-handling.md), you'll learn how to handle errors as values, avoid business exceptions, and compose operations cleanly.
+In [Part 4: Error Handling & Composition](part-04-error-handling.md), you'll learn how to handle errors as values, avoid business exceptions, and compose operations cleanly.
 
 ---
 
 **Series Navigation**
 
-[← Part 2: The Four Return Types](part-02-four-return-types.md) | [Index](INDEX.md) | [Part 9: Error Handling & Composition →](part-04-error-handling.md)
+[← Part 2: The Four Return Types](part-02-four-return-types.md) | [Index](INDEX.md) | [Part 4: Error Handling & Composition →](part-04-error-handling.md)
 
 ---
 

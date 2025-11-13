@@ -408,7 +408,7 @@ This series teaches you a complete technology for writing backend Java code. By 
 - How to refactor mechanically when patterns don't match
 - When to extract functions and where to put them
 
-### Part 9: Advanced Patterns & Testing
+### Part 6: Advanced Patterns & Testing
 - The Sequencer pattern that structures 90% of business logic
 - Fork-Join for parallel operations
 - How to add cross-cutting concerns without mixing responsibilities

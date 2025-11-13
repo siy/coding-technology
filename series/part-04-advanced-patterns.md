@@ -1,8 +1,8 @@
 # Part 4: Advanced Patterns & Testing
 
-**Series:** [Java Backend Coding Technology](INDEX.md) | **Part:** 4 of 6
+**Series:** [Java Backend Coding Technology](INDEX.md) | **Part:** 4 of 9
 
-**Previous:** [Part 3: Basic Patterns & Structure](part-03-basic-patterns.md) | **Next:** [Part 5: Testing Strategy](part-05-testing-strategy.md)
+**Previous:** [Part 3: Basic Patterns & Structure](part-03-basic-patterns.md) | **Next:** [Part 5A: Testing Philosophy & Evolution](part-05a-testing-philosophy.md)
 
 ---
 
@@ -881,7 +881,7 @@ With these patterns, you can structure any backend use case:
 
 You've learned the patterns and basic testing approach. Now it's time to dive deep into testing strategy.
 
-In **[Part 5: Testing Strategy & Evolutionary Approach →](part-05-testing-strategy.md)**, you'll learn:
+In **[Part 5A: Testing Philosophy & Evolution →](part-05a-testing-philosophy.md)** and **[Part 5B: Testing in Practice](part-05b-testing-practice.md)**, you'll learn:
 
 - **Evolutionary Testing**: How to grow tests alongside implementation
 - **Integration-First Testing**: Why test composition, not components
@@ -890,13 +890,13 @@ In **[Part 5: Testing Strategy & Evolutionary Approach →](part-05-testing-stra
 - **What to Test Where**: Value objects vs leaves vs use cases
 - **Migration Guide**: From traditional unit testing to this approach
 
-Part 5 completes your testing knowledge before we build production systems in Part 6.
+Parts 5A and 5B complete your testing knowledge before we build production systems in Part 6.
 
 ---
 
 **Series Navigation**
 
-[← Part 3: Basic Patterns & Structure](part-03-basic-patterns.md) | [Index](INDEX.md) | [Part 5: Testing Strategy →](part-05-testing-strategy.md)
+[← Part 3: Basic Patterns & Structure](part-03-basic-patterns.md) | [Index](INDEX.md) | [Part 5A: Testing Philosophy & Evolution →](part-05a-testing-philosophy.md)
 
 ---
 

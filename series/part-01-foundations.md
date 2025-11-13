@@ -1,6 +1,6 @@
 # Part 1: Introduction & Foundations
 
-**Series:** [Java Backend Coding Technology](INDEX.md) | **Part:** 1 of 6 | **Next:** [Part 2: Core Principles](part-02-core-principles.md)
+**Series:** [Java Backend Coding Technology](INDEX.md) | **Part:** 1 of 9 | **Next:** [Part 2A: The Four Return Types](part-02a-four-return-types.md)
 
 ---
 
@@ -728,15 +728,15 @@ You now understand:
 - What you'll learn in this series
 - How to approach the learning path
 
-**Next:** [Part 2: Core Principles](part-02-core-principles.md)
+**Next:** [Part 2A: The Four Return Types](part-02a-four-return-types.md)
 
-In Part 2, we'll dive into the four return types that form the foundation of everything else: T, Option<T>, Result<T>, and Promise<T>. You'll learn when to use each one, how they compose, and why these four types are all you need.
+In Part 2A, we'll dive into the four return types that form the foundation of everything else: T, Option<T>, Result<T>, and Promise<T>. You'll learn when to use each one, how they compose, and why these four types are all you need.
 
 ---
 
 **Series Navigation**
 
-← *You are at Part 1* | [Index](INDEX.md) | [Part 2: Core Principles →](part-02-core-principles.md)
+← *You are at Part 1* | [Index](INDEX.md) | [Part 2A: The Four Return Types →](part-02a-four-return-types.md)
 
 ---
 

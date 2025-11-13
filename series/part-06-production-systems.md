@@ -1,8 +1,8 @@
 # Part 6: Building Production Systems
 
-**Series:** [Java Backend Coding Technology](INDEX.md) | **Part:** 6 of 6
+**Series:** [Java Backend Coding Technology](INDEX.md) | **Part:** 6 of 9
 
-**Previous:** [Part 5: Testing Strategy](part-05-testing-strategy.md) | **Complete Series:** [Index](INDEX.md)
+**Previous:** [Part 5B: Testing in Practice](part-05b-testing-practice.md) | **Complete Series:** [Index](INDEX.md)
 
 ---
 
@@ -371,7 +371,7 @@ Sealed interface ensures exhaustive pattern matching. Each error is a typed valu
 
 ### Step 7: Testing
 
-> **Note:** This section shows basic test examples. For comprehensive testing strategy including evolutionary testing, test organization, and utilities, see **[Part 5: Testing Strategy](part-05-testing-strategy.md)**.
+> **Note:** This section shows basic test examples. For comprehensive testing strategy including evolutionary testing, test organization, and utilities, see **[Part 5A: Testing Philosophy](part-05a-testing-philosophy.md)** and **[Part 5B: Testing in Practice](part-05b-testing-practice.md)**.
 
 **Validation tests:**
 ```java
@@ -1051,7 +1051,7 @@ Welcome to the future of backend development. Code that's predictable, testable,
 
 **Series Navigation**
 
-[← Part 4: Advanced Patterns & Testing](part-04-advanced-patterns.md) | [Series Index](INDEX.md) | [Complete Guide →](../CODING_GUIDE.md)
+[← Part 5B: Testing in Practice](part-05b-testing-practice.md) | [Series Index](INDEX.md) | [Complete Guide →](../CODING_GUIDE.md)
 
 ---
 

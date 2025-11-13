@@ -1,8 +1,8 @@
 # Part 3: Basic Patterns & Structure
 
-**Series:** [Java Backend Coding Technology](INDEX.md) | **Part:** 3 of 6
+**Series:** [Java Backend Coding Technology](INDEX.md) | **Part:** 3 of 9
 
-**Previous:** [Part 2: Core Principles](part-02-core-principles.md) | **Next:** [Part 4: Advanced Patterns & Testing](part-04-advanced-patterns.md)
+**Previous:** [Part 2C: Error Handling & Composition](part-02c-error-handling.md) | **Next:** [Part 4: Advanced Patterns](part-04-advanced-patterns.md)
 
 ---
 
@@ -1014,7 +1014,7 @@ The basic patterns you just learned are building blocks. Part 4 shows you how to
 
 **Series Navigation**
 
-[← Part 2: Core Principles](part-02-core-principles.md) | [Index](INDEX.md) | [Part 4: Advanced Patterns & Testing →](part-04-advanced-patterns.md)
+[← Part 2C: Error Handling & Composition](part-02c-error-handling.md) | [Index](INDEX.md) | [Part 4: Advanced Patterns →](part-04-advanced-patterns.md)
 
 ---
 

@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [2.0.0] - TBD
+## [2.0.0] - 2024-11-13
 
 **Major release: Thread Safety, Concurrency, and Series v2.0.0 (100% Parity)**
 
@@ -105,6 +105,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Series restructured from 6 to 9 parts for better learning progression**
+  - Part 2 split into 2A (Four Return Types), 2B (Parse Don't Validate), 2C (Error Handling)
+  - Part 5 split into 5A (Testing Philosophy), 5B (Testing Practice)
+  - Each section now focused and digestible (~450-700 lines vs 2000+)
+  - Improved navigation with clear prerequisites and next steps
+  - All cross-references updated throughout series
 - **Series INDEX.md**: Updated version to 2.0.0 with complete changelog
   - Added all new topics to each part's topic list
   - Updated version history with comprehensive v2.0.0 details

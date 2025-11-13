@@ -1,6 +1,6 @@
 # Part 1: Introduction & Foundations
 
-**Series:** [Java Backend Coding Technology](INDEX.md) | **Part:** 1 of 9 | **Next:** [Part 2A: The Four Return Types](part-02a-four-return-types.md)
+**Series:** [Java Backend Coding Technology](INDEX.md) | **Part:** 1 of 9 | **Next:** [Part 2: The Four Return Types](part-02-four-return-types.md)
 
 ---
 
@@ -402,13 +402,13 @@ This series teaches you a complete technology for writing backend Java code. By 
 - Why business logic never throws exceptions
 - How to compose operations without nesting complexity
 
-### Part 3: Basic Patterns & Structure
+### Part 5: Basic Patterns & Structure
 - The two structural rules that prevent most bugs
 - Five patterns that cover 80% of daily coding
 - How to refactor mechanically when patterns don't match
 - When to extract functions and where to put them
 
-### Part 4: Advanced Patterns & Testing
+### Part 9: Advanced Patterns & Testing
 - The Sequencer pattern that structures 90% of business logic
 - Fork-Join for parallel operations
 - How to add cross-cutting concerns without mixing responsibilities
@@ -470,8 +470,8 @@ The goal: **teach you enough to build production backend systems with predictabl
 
 **Practical application**:
 - After Part 2: Try converting a simple function to use Result<T>
-- After Part 3: Refactor a small module to follow Single Level of Abstraction
-- After Part 4: Implement a complete use case with Sequencer pattern
+- After Part 5: Refactor a small module to follow Single Level of Abstraction
+- After Part 9: Implement a complete use case with Sequencer pattern
 - After Part 5: Structure a new service using vertical slicing
 
 ---
@@ -728,7 +728,7 @@ You now understand:
 - What you'll learn in this series
 - How to approach the learning path
 
-**Next:** [Part 2A: The Four Return Types](part-02a-four-return-types.md)
+**Next:** [Part 2: The Four Return Types](part-02-four-return-types.md)
 
 In Part 2A, we'll dive into the four return types that form the foundation of everything else: T, Option<T>, Result<T>, and Promise<T>. You'll learn when to use each one, how they compose, and why these four types are all you need.
 
@@ -736,7 +736,7 @@ In Part 2A, we'll dive into the four return types that form the foundation of ev
 
 **Series Navigation**
 
-← *You are at Part 1* | [Index](INDEX.md) | [Part 2A: The Four Return Types →](part-02a-four-return-types.md)
+← *You are at Part 1* | [Index](INDEX.md) | [Part 2: The Four Return Types →](part-02-four-return-types.md)
 
 ---
 

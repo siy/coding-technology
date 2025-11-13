@@ -1,8 +1,8 @@
-# Part 5A: Testing Philosophy & Evolution
+# Part 7: Testing Philosophy & Evolution
 
-**Series:** [Java Backend Coding Technology](INDEX.md) | **Part:** 5A of 9
+**Series:** [Java Backend Coding Technology](INDEX.md) | **Part:** 7 of 9
 
-**Previous:** [Part 4: Advanced Patterns](part-04-advanced-patterns.md) | **Next:** [Part 5B: Testing in Practice](part-05b-testing-practice.md)
+**Previous:** [Part 9: Advanced Patterns](part-06-advanced-patterns.md) | **Next:** [Part 8: Testing in Practice](part-08-testing-practice.md)
 
 ---
 
@@ -660,13 +660,13 @@ You've learned the evolutionary testing approach:
 
 ## What's Next?
 
-In [Part 5B: Testing in Practice](part-05b-testing-practice.md), you'll learn advanced organization techniques, complete worked examples, and how to migrate from traditional unit testing.
+In [Part 8: Testing in Practice](part-08-testing-practice.md), you'll learn advanced organization techniques, complete worked examples, and how to migrate from traditional unit testing.
 
 ---
 
 **Series Navigation**
 
-[← Part 4: Advanced Patterns](part-04-advanced-patterns.md) | [Index](INDEX.md) | [Part 5B: Testing in Practice →](part-05b-testing-practice.md)
+[← Part 9: Advanced Patterns](part-06-advanced-patterns.md) | [Index](INDEX.md) | [Part 8: Testing in Practice →](part-08-testing-practice.md)
 
 ---
 

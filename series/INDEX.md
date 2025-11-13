@@ -43,7 +43,7 @@ Understand why structural standardization matters in the AI era and learn the fo
 
 ---
 
-### [Part 2A: The Four Return Types](part-02a-four-return-types.md)
+### [Part 2: The Four Return Types](part-02-four-return-types.md)
 **~20 min read** | *The foundation: four types that cover everything*
 
 Learn why exactly four return types are sufficient and when to use each one.
@@ -60,7 +60,7 @@ Learn why exactly four return types are sufficient and when to use each one.
 
 ---
 
-### [Part 2B: Parse, Don't Validate](part-02b-parse-dont-validate.md)
+### [Part 5: Parse, Don't Validate](part-03-parse-dont-validate.md)
 **~20 min read** | *Make invalid states unrepresentable*
 
 Master the principle of validation through construction using factory methods.
@@ -79,7 +79,7 @@ Master the principle of validation through construction using factory methods.
 
 ---
 
-### [Part 2C: Error Handling & Composition](part-02c-error-handling.md)
+### [Part 9: Error Handling & Composition](part-04-error-handling.md)
 **~25 min read** | *Errors as values, clean composition*
 
 Complete the core principles with error handling, null policy, and composition rules.
@@ -97,7 +97,7 @@ Complete the core principles with error handling, null policy, and composition r
 
 ---
 
-### [Part 3: Basic Patterns & Structure](part-03-basic-patterns.md)
+### [Part 5: Basic Patterns & Structure](part-05-basic-patterns.md)
 **~50 min read** | *Your first building blocks*
 
 Learn the structural rules and basic patterns that handle 80% of your daily coding tasks.
@@ -115,7 +115,7 @@ Learn the structural rules and basic patterns that handle 80% of your daily codi
 
 ---
 
-### [Part 4: Advanced Patterns](part-04-advanced-patterns.md)
+### [Part 9: Advanced Patterns](part-06-advanced-patterns.md)
 **~50 min read** | *Composing patterns for real use cases*
 
 Compose basic patterns into sophisticated workflows for complex business logic.
@@ -131,7 +131,7 @@ Compose basic patterns into sophisticated workflows for complex business logic.
 
 ---
 
-### [Part 5A: Testing Philosophy & Evolution](part-05a-testing-philosophy.md)
+### [Part 7: Testing Philosophy & Evolution](part-07-testing-philosophy.md)
 **~25 min read** | *Integration-first testing*
 
 Learn why testing composition beats testing components, and how to evolve tests alongside implementation.
@@ -147,7 +147,7 @@ Learn why testing composition beats testing components, and how to evolve tests 
 
 ---
 
-### [Part 5B: Testing in Practice](part-05b-testing-practice.md)
+### [Part 8: Testing in Practice](part-08-testing-practice.md)
 **~25 min read** | *Organization, examples, migration*
 
 Apply evolutionary testing at scale with practical techniques and complete examples.
@@ -164,7 +164,7 @@ Apply evolutionary testing at scale with practical techniques and complete examp
 
 ---
 
-### [Part 6: Building Production Systems](part-06-production-systems.md)
+### [Part 9: Building Production Systems](part-09-production-systems.md)
 **~50 min read** | *From patterns to production-ready code*
 
 Build a complete use case from requirements to deployment and learn how to integrate with real frameworks.
@@ -183,7 +183,7 @@ Build a complete use case from requirements to deployment and learn how to integ
 ## Learning Paths
 
 ### Fast Track (Senior Developers)
-Already familiar with functional programming? Skip Part 1 and start with [Part 2A: The Four Return Types](part-02a-four-return-types.md).
+Already familiar with functional programming? Skip Part 1 and start with [Part 2: The Four Return Types](part-02-four-return-types.md).
 
 ### Complete Learning (Recommended)
 New to functional composition or want comprehensive understanding? Read sequentially from Part 1 through Part 6.

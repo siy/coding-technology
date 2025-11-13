@@ -60,7 +60,7 @@ Learn why exactly four return types are sufficient and when to use each one.
 
 ---
 
-### [Part 5: Parse, Don't Validate](part-03-parse-dont-validate.md)
+### [Part 3: Parse, Don't Validate](part-03-parse-dont-validate.md)
 **~20 min read** | *Make invalid states unrepresentable*
 
 Master the principle of validation through construction using factory methods.
@@ -79,7 +79,7 @@ Master the principle of validation through construction using factory methods.
 
 ---
 
-### [Part 9: Error Handling & Composition](part-04-error-handling.md)
+### [Part 4: Error Handling & Composition](part-04-error-handling.md)
 **~25 min read** | *Errors as values, clean composition*
 
 Complete the core principles with error handling, null policy, and composition rules.
@@ -115,7 +115,7 @@ Learn the structural rules and basic patterns that handle 80% of your daily codi
 
 ---
 
-### [Part 9: Advanced Patterns](part-06-advanced-patterns.md)
+### [Part 6: Advanced Patterns](part-06-advanced-patterns.md)
 **~50 min read** | *Composing patterns for real use cases*
 
 Compose basic patterns into sophisticated workflows for complex business logic.

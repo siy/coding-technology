@@ -2,7 +2,7 @@
 
 **Series:** [Java Backend Coding Technology](INDEX.md) | **Part:** 7 of 9
 
-**Previous:** [Part 9: Advanced Patterns](part-06-advanced-patterns.md) | **Next:** [Part 8: Testing in Practice](part-08-testing-practice.md)
+**Previous:** [Part 6: Advanced Patterns](part-06-advanced-patterns.md) | **Next:** [Part 8: Testing in Practice](part-08-testing-practice.md)
 
 ---
 
@@ -666,7 +666,7 @@ In [Part 8: Testing in Practice](part-08-testing-practice.md), you'll learn adva
 
 **Series Navigation**
 
-[← Part 9: Advanced Patterns](part-06-advanced-patterns.md) | [Index](INDEX.md) | [Part 8: Testing in Practice →](part-08-testing-practice.md)
+[← Part 6: Advanced Patterns](part-06-advanced-patterns.md) | [Index](INDEX.md) | [Part 8: Testing in Practice →](part-08-testing-practice.md)
 
 ---
 

@@ -80,13 +80,16 @@ Traditional software development relies on "best practices." These are subjectiv
 
 **New to this technology?** Start with the learning series:
 
-1. **[Series Index](series/INDEX.md)** - Overview and navigation for the 6-part learning series
+1. **[Series Index](series/INDEX.md)** - Overview and navigation for the 9-part learning series
 2. **[Part 1: Foundations](series/part-01-foundations.md)** - Mental model and core ideas
-3. **[Part 2: Core Principles](series/part-02-core-principles.md)** - Four return types, parse-don't-validate, no business exceptions
-4. **[Part 3: Basic Patterns](series/part-03-basic-patterns.md)** - Leaf, Condition, Iteration
-5. **[Part 4: Advanced Patterns](series/part-04-advanced-patterns.md)** - Sequencer, Fork-Join, Aspects, Testing basics
-6. **[Part 5: Testing Strategy](series/part-05-testing-strategy.md)** - Evolutionary testing, integration-first approach, test organization
-7. **[Part 6: Production Systems](series/part-06-production-systems.md)** - Complete use case walkthrough, project structure, framework integration
+3. **[Part 2: The Four Return Types](series/part-02-four-return-types.md)** - T, Option, Result, Promise
+4. **[Part 3: Parse, Don't Validate](series/part-03-parse-dont-validate.md)** - Making invalid states unrepresentable
+5. **[Part 4: Error Handling & Composition](series/part-04-error-handling.md)** - Errors as values, null policy, monadic rules
+6. **[Part 5: Basic Patterns](series/part-05-basic-patterns.md)** - Leaf, Condition, Iteration
+7. **[Part 6: Advanced Patterns](series/part-06-advanced-patterns.md)** - Sequencer, Fork-Join, Aspects
+8. **[Part 7: Testing Philosophy](series/part-07-testing-philosophy.md)** - Integration-first, evolutionary testing
+9. **[Part 8: Testing in Practice](series/part-08-testing-practice.md)** - Organization, examples, migration
+10. **[Part 9: Production Systems](series/part-09-production-systems.md)** - Complete walkthrough, project structure, frameworks
 
 **Need the complete reference?** See **[CODING_GUIDE.md](CODING_GUIDE.md)** - comprehensive technical documentation with all patterns, principles, and examples.
 
@@ -210,8 +213,9 @@ void email_acceptsValidFormat() {
   - Naming conventions, testing patterns, project structure
   - Complete use case walkthrough with Spring Boot and JOOQ integration
 
-- **[series/](series/)** - Progressive learning path (6 parts, ~25 pages each)
-  - Part 5 covers comprehensive testing strategy
+- **[series/](series/)** - Progressive learning path (9 parts)
+  - Parts 2-4 cover core principles (split for digestibility)
+  - Parts 7-8 cover comprehensive testing strategy
   - Designed for sequential reading
   - Builds concepts incrementally
   - Ideal for onboarding and teaching
@@ -265,14 +269,17 @@ Ready-to-use configurations for specialized code assistance:
 ```
 coding-technology/
 ├── CODING_GUIDE.md              # Complete technical reference
-├── series/                       # 6-part learning series
+├── series/                       # 9-part learning series
 │   ├── INDEX.md                 # Series overview and navigation
 │   ├── part-01-foundations.md
-│   ├── part-02-core-principles.md
-│   ├── part-03-basic-patterns.md
-│   ├── part-04-advanced-patterns.md
-│   ├── part-05-testing-strategy.md
-│   └── part-06-production-systems.md
+│   ├── part-02-four-return-types.md
+│   ├── part-03-parse-dont-validate.md
+│   ├── part-04-error-handling.md
+│   ├── part-05-basic-patterns.md
+│   ├── part-06-advanced-patterns.md
+│   ├── part-07-testing-philosophy.md
+│   ├── part-08-testing-practice.md
+│   └── part-09-production-systems.md
 ├── MANAGEMENT_PERSPECTIVE.md    # Business case and ROI
 ├── CHANGELOG.md                 # Version history
 ├── skills/                      # Claude Code skills

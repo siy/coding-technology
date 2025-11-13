@@ -25,6 +25,7 @@ JBCT reduces the space of valid choices to one good way to do most things throug
 - **Four Return Kinds**: Every function returns exactly one of `T`, `Option<T>`, `Result<T>`, `Promise<T>`
 - **Parse, Don't Validate**: Make invalid states unrepresentable
 - **No Business Exceptions**: Business failures are typed `Cause` values
+- **Thread Safety by Design**: Immutability at boundaries, thread confinement for sequential logic
 - **Six Structural Patterns**: All code fits one pattern (Leaf, Sequencer, Fork-Join, Condition, Iteration, Aspects)
 
 ## Quick Reference
@@ -160,6 +161,34 @@ static RegisterUser registerUser(CheckEmail check, SaveUser save) {
 
 **Rule:** Records are for data (value objects), lambdas are for behavior (use cases, steps).
 
+## Thread Safety Essentials
+
+**Core Rules:**
+- **Immutable at boundaries**: All shared data (parameters, return values) must be immutable
+- **Thread confinement**: Mutable state allowed within single-threaded execution (sequential patterns)
+- **Fork-Join requires immutability**: Parallel operations must not share mutable state
+
+**Pattern-Specific Safety:**
+- **Leaf, Sequencer, Condition, Iteration**: Thread-safe through sequential execution. Mutable local state OK.
+- **Fork-Join**: Requires strict immutability. All parallel operations receive immutable inputs.
+- **Promise resolution**: Thread-safe (exactly-once semantics, synchronization point for flatMap/map chains)
+
+**Example - Thread-Safe Fork-Join:**
+```java
+// ✅ CORRECT: Immutable cart passed to both operations
+Promise.all(applyBogo(cart),          // cart is immutable
+            applyPercentOff(cart))    // cart is immutable
+    .map(this::mergeDiscounts);
+
+// ❌ WRONG: Shared mutable context creates data race
+private final DiscountContext context = new DiscountContext();
+Promise.all(applyBogo(cart, context),     // mutates context
+            applyPercentOff(cart, context))  // DATA RACE
+    .map(this::merge);
+```
+
+**See CODING_GUIDE.md** for comprehensive thread safety coverage, including detailed examples and common mistakes.
+
 ## Structural Patterns
 
 ### 1. Leaf Pattern
@@ -185,7 +214,7 @@ return ValidRequest.validRequest(request)
 ```
 
 ### 3. Fork-Join Pattern
-Parallel independent operations:
+Parallel independent operations (requires immutable inputs):
 ```java
 return Promise.all(fetchProfile.apply(userId),
                    fetchPreferences.apply(userId),
@@ -193,6 +222,8 @@ return Promise.all(fetchProfile.apply(userId),
     .map((profile, prefs, orders) ->
         new Dashboard(profile, prefs, orders));
 ```
+
+**Thread Safety:** All parallel operations must receive immutable inputs. No shared mutable state.
 
 ### 4. Condition Pattern
 Branching as values (no mutation):
@@ -280,6 +311,33 @@ Result.lift(
 - **Error types**: Past tense verbs: `EmailNotFound`, `AccountLocked`, `PaymentFailed`
 - **Test names**: `methodName_outcome_condition`
 - **Acronyms**: Treat as words (camelCase): `httpClient`, `apiKey` not `HTTPClient`, `APIKey`
+
+### Zone-Based Naming (Abstraction Levels)
+
+> **Source:** Adapted from [Derrick Brandt's systematic approach](https://medium.com/@brandt.a.derrick/how-to-write-clean-code-actually-5205963ec524).
+
+Use zone-appropriate verbs to maintain consistent abstraction levels:
+
+**Zone 2 (Step Interfaces - Orchestration):**
+- Verbs: `validate`, `process`, `handle`, `transform`, `apply`, `check`, `load`, `save`, `manage`, `configure`, `initialize`
+- Examples: `ValidateInput`, `ProcessPayment`, `HandleRefund`, `LoadUserData`
+
+**Zone 3 (Leaves - Implementation):**
+- Verbs: `get`, `set`, `fetch`, `parse`, `calculate`, `convert`, `hash`, `format`, `encode`, `decode`, `extract`, `split`, `join`, `log`, `send`, `receive`, `read`, `write`, `add`, `remove`
+- Examples: `hashPassword()`, `parseJson()`, `fetchFromDatabase()`, `calculateTax()`
+
+**Anti-pattern:** Mixing zones (e.g., step interface named `FetchUserData` uses Zone 3 verb `fetch` instead of Zone 2 verb `load`)
+
+**Stepdown rule test:** Read code aloud with "to" before functions - should flow naturally:
+```java
+// "To execute, we validate the request, then process payment, then send confirmation"
+return ValidRequest.validRequest(request)
+    .async()
+    .flatMap(this::processPayment)
+    .flatMap(this::sendConfirmation);
+```
+
+**For complete zone verb vocabulary**, see **CODING_GUIDE.md: Zone-Based Naming Vocabulary**.
 
 ## Project Structure (Vertical Slicing)
 

@@ -159,6 +159,33 @@ public record Email(String value) {
 - Constructor private or package-private
 - If you have an instance, it's valid
 
+❌ **CRITICAL: Direct constructor invocation bypassing factory method:**
+```java
+// BAD: Bypassing validation
+var email = new Email("user@example.com");  // Skips Email.email() validation
+var password = new Password("secret");       // Skips Password.password() validation
+
+// GOOD: Using factory method
+var emailResult = Email.email("user@example.com");      // Validates
+var passwordResult = Password.password("secret");       // Validates
+```
+
+**Exception:** Constructor references are allowed ONLY inside factory methods or in `.map()` chains when value is already validated:
+```java
+// ✅ ALLOWED: Constructor reference inside factory method
+public static Result<Email> email(String raw) {
+    return validate(raw).map(Email::new);  // OK - validation already done
+}
+
+// ✅ ALLOWED: Constructor reference after validation
+Result.all(Email.email(emailRaw), Password.password(passwordRaw))
+    .map(ValidRequest::new);  // OK - both fields already validated
+```
+
+**Review Rule:** Flag any `new ValueObject(...)` calls outside of:
+1. The factory method itself (using constructor reference)
+2. `.map(Constructor::new)` after all inputs are validated Results
+
 **Check for Pragmatica Lite Utility Usage:**
 
 ❌ **Manual validation when Verify.Is predicate exists:**
@@ -246,6 +273,70 @@ public Promise<User> findUser(UserId id) {
 - Method references: `Error::cause` over `e -> Error.cause(e)`
 - Extract complex logic to named methods
 
+#### Zone-Based Abstraction Check
+
+> **Source:** Adapted from [Derrick Brandt's systematic approach to clean code](https://medium.com/@brandt.a.derrick/how-to-write-clean-code-actually-5205963ec524).
+
+Verify that code maintains consistent abstraction levels across the three zones:
+
+**Zone 1 (Use Case Level)** - High-level business goals:
+- `RegisterUser.execute()`, `ProcessOrder.execute()`
+- One zone 1 function per use case
+
+**Zone 2 (Orchestration Level)** - Coordinating steps:
+- Step interfaces in Sequencer/Fork-Join patterns
+- Expected verbs: `validate`, `process`, `handle`, `transform`, `apply`, `check`, `load`, `save`, `manage`, `configure`, `initialize`
+- Examples: `ValidateInput.apply()`, `ProcessPayment.apply()`, `HandleNotification.apply()`
+
+**Zone 3 (Implementation Level)** - Concrete operations:
+- Business and adapter leaves
+- Expected verbs: `get`, `set`, `fetch`, `parse`, `calculate`, `convert`, `hash`, `format`, `encode`, `decode`, `extract`, `split`, `join`, `log`, `send`, `receive`, `read`, `write`, `add`, `remove`
+- Examples: `hashPassword()`, `parseJson()`, `fetchFromDatabase()`
+
+**Check for zone violations:**
+
+❌ **Zone 2 step using Zone 3 verb:**
+```java
+// BAD: "fetch" is too specific for orchestration level
+interface FetchUserData { Promise<User> apply(UserId id); }
+
+// GOOD: "load" is appropriately general for orchestration
+interface LoadUserData { Promise<User> apply(UserId id); }
+```
+
+❌ **Mixing abstraction levels in Sequencer:**
+```java
+// BAD: Mixing Zone 2 (validate, process) with Zone 3 (hashPassword)
+return ValidRequest.validRequest(request)  // Zone 2
+    .async()
+    .flatMap(this::hashPassword)           // Zone 3 - should be wrapped in Zone 2 step
+    .flatMap(this::saveUser);              // Zone 2
+
+// GOOD: All steps at Zone 2
+return ValidRequest.validRequest(request)
+    .async()
+    .flatMap(this::processCredentials)     // Zone 2 step (internally calls hashPassword)
+    .flatMap(this::saveUser);
+```
+
+**Stepdown Rule Test:** Verify code reads naturally with "to" before each function:
+```java
+// Should read: "To execute, we validate the request, then process payment, then send confirmation"
+return ValidRequest.validRequest(request)
+    .async()
+    .flatMap(this::processPayment)
+    .flatMap(this::sendConfirmation);
+```
+
+If it doesn't flow naturally, abstraction levels likely mixed.
+
+**Review Checklist:**
+- [ ] Step interfaces use Zone 2 verbs (`validate`, `process`, `handle`, `load`, `save`)
+- [ ] Leaf functions use Zone 3 verbs (`get`, `fetch`, `parse`, `hash`, `calculate`)
+- [ ] No Zone 3 verbs in step interface names
+- [ ] Sequencer chains maintain same abstraction level (all Zone 2)
+- [ ] Code passes stepdown rule test (reads naturally with "to")
+
 ### 5. Use Case Factories Return Lambdas
 
 **CRITICAL:** Use case and step factories must return lambdas directly, NEVER nested record implementations:
@@ -281,6 +372,53 @@ static RegisterUser registerUser(CheckEmail checkEmail, SaveUser saveUser) {
 - Harder to read and maintain
 
 **Rule:** Records are for data (value objects), lambdas are for behavior (use cases, steps).
+
+## THREAD SAFETY AND IMMUTABILITY
+
+> **Critical for v2.0.0:** All JBCT code must follow thread safety rules. See CODING_GUIDE.md: Thread Safety Quick Reference.
+
+### Core Requirement: Input Data is Read-Only
+
+**All input parameters MUST be treated as immutable and read-only.** Check for violations:
+
+❌ **Mutating input parameters:**
+```java
+// BAD
+private void processCart(Cart cart) {
+    cart.setTotal(calculateTotal(cart));  // Mutates input
+}
+
+// GOOD
+private Cart processCart(Cart cart) {
+    return cart.withTotal(calculateTotal(cart));  // Returns new instance
+}
+```
+
+### What MUST Be Immutable
+
+- Data passed between parallel operations (Fork-Join pattern)
+- All input parameters to any operation
+- Response types returned from use cases
+- Value objects used as map keys or in collections
+
+### What CAN Be Mutable (Thread-Confined)
+
+- Local state within single operation (accumulators, builders)
+- Working objects within adapter boundaries
+- State confined to sequential patterns (Leaf, Sequencer, Iteration steps)
+- Test fixtures (single-threaded test execution)
+
+### Pattern-Specific Rules
+
+- **Leaf:** Thread-safe through confinement (each invocation isolated)
+- **Sequencer:** Thread-safe through sequential execution (steps don't overlap)
+- **Fork-Join:** All inputs MUST be immutable (parallel execution, no synchronization)
+- **Iteration (Sequential):** Local mutable accumulators safe (single-threaded)
+- **Iteration (Parallel):** All inputs MUST be immutable (same as Fork-Join)
+
+**When reviewing Fork-Join, always check for shared mutable state and input mutation.**
+
+---
 
 ## JBCT STRUCTURAL PATTERNS
 
@@ -379,6 +517,46 @@ return Promise.all(
 ```
 
 **Branches must be independent** - no data flow between them.
+
+**Thread Safety: Fork-Join requires immutable inputs** - check for:
+
+❌ **Shared mutable state between branches:**
+```java
+// BAD - Data race
+private final DiscountContext context = new DiscountContext();  // Mutable
+
+Promise<Result> calculate() {
+    return Promise.all(
+        applyBogo(cart, context),      // Mutates context
+        applyPercentOff(cart, context)  // Mutates context - DATA RACE
+    ).map(this::merge);
+}
+
+// GOOD - Immutable inputs
+Promise<Result> calculate(Cart cart) {
+    return Promise.all(
+        applyBogo(cart),          // cart is immutable
+        applyPercentOff(cart)     // cart is immutable
+    ).map(this::mergeDiscounts);
+}
+```
+
+❌ **Mutating input parameters:**
+```java
+// BAD - Mutating shared input
+Promise.all(
+    applyDiscount(cart),      // Mutates cart.subtotal
+    calculateTax(cart)        // Reads cart.subtotal - RACE
+)
+
+// GOOD - Treat inputs as read-only, return new data
+Promise.all(
+    applyDiscount(cart),      // Returns new Discount, doesn't mutate cart
+    calculateTax(cart)        // Returns new Tax, doesn't mutate cart
+)
+```
+
+**Key rule:** All inputs to Fork-Join MUST be immutable. Local mutable state within each branch is safe (thread-confined).
 
 ### Pattern 4: Condition
 
@@ -566,6 +744,8 @@ ValidRequest.validRequest(valid)
 **Check all code against:**
 - [ ] Four Return Kinds used correctly (no `Promise<Result<T>>`, no `Void`)
 - [ ] Parse, Don't Validate (validation at construction)
+  - [ ] No direct constructor calls bypassing factory methods (e.g., `new Email(...)` instead of `Email.email(...)`)
+  - [ ] Constructor references only in factory methods or `.map()` after validation
 - [ ] No Business Exceptions (errors via `Result`/`Promise`)
 - [ ] Single Level of Abstraction (lambdas simple)
 - [ ] Patterns identified correctly (Leaf, Sequencer, Fork-Join, Condition, Iteration)
@@ -809,7 +989,7 @@ void validRequest_fails_forInvalidEmail() {
 
 ### Prioritize Effectively
 
-1. **Critical**: Four Return Kinds violations, business exceptions, invalid states, incorrect dependency configuration
+1. **Critical**: Four Return Kinds violations, business exceptions, invalid states (including direct constructor calls bypassing factory methods), incorrect dependency configuration
 2. **Warning**: Pattern misuse, structural violations, composition issues
 3. **Suggestion**: Naming conventions, test organization, style consistency
 4. **Nitpick**: Minor formatting, non-critical style

@@ -603,6 +603,194 @@ com.example.app.config/
 └── ProfileConfig.java  # @Bean methods connecting pieces
 ```
 
+### Module Organization (Multi-Module Projects)
+
+For larger projects or teams, splitting into multiple modules provides compile-time boundaries and clearer separation of concerns. This is **optional** - single-module projects work fine for most teams.
+
+#### When to Use Modules
+
+Consider multi-module structure when:
+- **Team size**: 5+ developers working on same codebase
+- **Deployment units**: Different components deploy independently (microservices)
+- **Compile-time enforcement**: Need hard boundaries between layers (prevent accidental adapter→domain dependencies)
+- **Build performance**: Modules enable incremental compilation
+- **Reusability**: Shared domain logic used across multiple applications
+
+**When single module is sufficient:**
+- Small to medium teams (< 5 developers)
+- Monolithic deployment
+- Package conventions provide sufficient structure
+- Build time is acceptable (< 30 seconds)
+
+#### Module Structure
+
+Standard multi-module layout:
+
+```
+my-app/                           # Root project
+├── my-app-domain/                # Module 1: Domain logic
+│   └── src/main/java/
+│       └── com.example.app/
+│           └── domain/
+│               └── shared/       # Shared value objects
+│                   ├── Email.java
+│                   ├── UserId.java
+│                   └── Money.java
+├── my-app-application/           # Module 2: Use cases
+│   └── src/main/java/
+│       └── com.example.app/
+│           └── usecase/
+│               ├── registeruser/
+│               │   └── RegisterUser.java
+│               └── getprofile/
+│                   └── GetProfile.java
+├── my-app-adapters/              # Module 3: Infrastructure
+│   └── src/main/java/
+│       └── com.example.app/
+│           └── adapter/
+│               ├── rest/         # HTTP controllers
+│               ├── persistence/  # Database
+│               └── messaging/    # Event bus
+└── my-app-bootstrap/             # Module 4: Main application
+    └── src/main/java/
+        └── com.example.app/
+            ├── Application.java  # Spring Boot main
+            └── config/           # Wiring
+```
+
+#### Module Dependencies
+
+**Dependency rules** (enforced by build tool):
+
+```
+domain         → (no dependencies)
+  ↑
+application    → domain
+  ↑
+adapters       → application, domain
+  ↑
+bootstrap      → adapters, application, domain
+```
+
+- **domain**: Pure value objects, no external dependencies
+- **application**: Use cases, depends only on domain
+- **adapters**: Implementation, depends on application & domain
+- **bootstrap**: Assembly, depends on everything
+
+**Gradle example:**
+
+```gradle
+// settings.gradle
+rootProject.name = 'my-app'
+include 'my-app-domain'
+include 'my-app-application'
+include 'my-app-adapters'
+include 'my-app-bootstrap'
+
+// my-app-domain/build.gradle
+dependencies {
+    implementation 'org.pragmatica-lite:core:0.8.3'
+}
+
+// my-app-application/build.gradle
+dependencies {
+    implementation project(':my-app-domain')
+    implementation 'org.pragmatica-lite:core:0.8.3'
+}
+
+// my-app-adapters/build.gradle
+dependencies {
+    implementation project(':my-app-domain')
+    implementation project(':my-app-application')
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.jooq:jooq'
+}
+
+// my-app-bootstrap/build.gradle
+dependencies {
+    implementation project(':my-app-domain')
+    implementation project(':my-app-application')
+    implementation project(':my-app-adapters')
+    implementation 'org.springframework.boot:spring-boot-starter'
+}
+```
+
+**Maven example:**
+
+```xml
+<!-- Root pom.xml -->
+<modules>
+    <module>my-app-domain</module>
+    <module>my-app-application</module>
+    <module>my-app-adapters</module>
+    <module>my-app-bootstrap</module>
+</modules>
+
+<!-- my-app-application/pom.xml -->
+<dependencies>
+    <dependency>
+        <groupId>com.example</groupId>
+        <artifactId>my-app-domain</artifactId>
+        <version>${project.version}</version>
+    </dependency>
+</dependencies>
+```
+
+#### Where Types Go
+
+| Type | Module | Rationale |
+|------|--------|-----------|
+| Shared value objects | `domain` | Used across multiple use cases |
+| Use case-specific value objects | `application` (inside use case package) | Used by single use case |
+| Use case interfaces | `application` | Business logic orchestration |
+| Step interfaces | `application` (inside use case) | Part of use case |
+| Adapter interfaces | `application` (inside use case) | Contract for adapters |
+| Adapter implementations | `adapters` | Infrastructure concerns |
+| Controllers/REST | `adapters` | HTTP inbound |
+| Repositories | `adapters` | Database outbound |
+| Configuration/wiring | `bootstrap` | Assembly |
+
+#### Benefits of Multi-Module
+
+**Compile-time safety:**
+```java
+// ❌ This won't compile - adapters can't depend on each other
+// (assuming proper module boundaries)
+package com.example.app.adapter.rest;
+import com.example.app.adapter.persistence.UserRepositoryImpl;  // COMPILE ERROR
+```
+
+**Incremental builds:**
+- Change in `domain` → rebuild application, adapters, bootstrap
+- Change in `adapters` → rebuild only bootstrap (faster)
+
+**Deployment flexibility:**
+- Package `bootstrap` as executable JAR
+- Reuse `domain` in multiple applications
+- Deploy adapters separately (different databases per environment)
+
+#### When NOT to Use Modules
+
+**Don't use modules if:**
+- Single developer or very small team
+- Build time already fast
+- Package conventions working well
+- Additional complexity not justified
+
+**Alternative:** Package structure with ArchUnit tests to enforce boundaries:
+
+```java
+// Single module with ArchUnit enforcement
+@Test
+void adapters_shouldNotDependOnEachOther() {
+    noClasses().that().resideInAPackage("..adapter.rest..")
+        .should().dependOnClassesThat().resideInAPackage("..adapter.persistence..")
+        .check(classes);
+}
+```
+
+Module organization is a **scaling strategy** - adopt when needed, not prematurely.
+
 ---
 
 ## Framework Integration

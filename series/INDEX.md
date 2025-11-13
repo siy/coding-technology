@@ -1,6 +1,6 @@
 # Java Backend Coding Technology: Complete Learning Series
 
-**Based on:** [CODING_GUIDE.md](../CODING_GUIDE.md) v1.8.2
+**Based on:** [CODING_GUIDE.md](../CODING_GUIDE.md) v2.0.0
 
 ## About This Series
 
@@ -34,6 +34,7 @@ Understand why structural standardization matters in the AI era and learn the fo
 - The engineering scalability crisis: why traditional approaches fail
 - Foundational concepts: Smart Wrappers (monads), composition, side effects (explained for beginners)
 - Progressive terminology: starting with "Smart Wrappers", gradually introducing "monad"
+- Quick Reference: pattern decision tree, type transformations, naming conventions
 - What makes code "AI-ready"
 - Evaluation Framework: objective criteria for every decision
 - Try It Now exercises: observing patterns in your existing code
@@ -53,10 +54,13 @@ Master the four return types and three fundamental principles that form the foun
 - Why Not Java Standard Library? Comparing to Optional, CompletableFuture, exceptions
 - Parse, Don't Validate: making invalid states unrepresentable
 - Real-World Validation: cross-field, dependent, business rules
+- Null Policy: when null is acceptable at adapter boundaries
+- Error Recovery Patterns: fallback values, graceful degradation
 - Migrating Existing Codebases: incremental adoption strategy
 - No Business Exceptions: errors as typed values (when exceptions are still OK)
 - Basic Testing: functional assertions with onSuccess/onFailure
-- Pragmatica Lite Quick Reference: common imports and patterns
+- Monadic Composition Rules: lambda guidelines, forbidden patterns
+- Pragmatica Lite API Reference: conversions, aggregation, utilities
 
 **Key takeaway:** Everything in this technology flows from these four types and three principles. Master these, and patterns become obvious.
 
@@ -70,6 +74,8 @@ Learn the structural rules and basic patterns that handle 80% of your daily codi
 **Topics:**
 - Single Pattern Per Function: one responsibility, mechanical refactoring
 - Single Level of Abstraction: no complex logic in lambdas
+- Zone-Based Abstraction Framework: three zones for consistent naming (Derrick Brandt)
+- Naming Conventions: factory methods, validated inputs, zone-based verbs
 - Leaf: the atomic unit of processing
 - Condition: branching as values
 - Iteration: functional collection processing
@@ -87,6 +93,7 @@ Compose basic patterns into sophisticated workflows for complex business logic.
 - Sequencer: chaining dependent steps (the workhorse pattern)
 - Fork-Join: parallel composition and independence validation
 - Aspects: cross-cutting concerns without mixing concerns
+- Thread Safety Quick Reference: pattern-by-pattern guarantees
 - Monadic terminology established: transitioning from Smart Wrappers
 
 **Key takeaway:** Real use cases are compositions of simple patterns. The Sequencer pattern structures 90% of business logic.
@@ -118,6 +125,7 @@ Build a complete use case from requirements to deployment and learn how to integ
 **Topics:**
 - Complete Use Case Walkthrough: RegisterUser from requirements to tests
 - Project Structure & Package Organization: vertical slicing, placement rules
+- Module Organization: multi-module projects, when to use them
 - Framework Integration: connecting to Spring Boot and JOOQ
 - Conclusion: where to go next
 
@@ -150,7 +158,23 @@ Looking for specific patterns? Jump directly to the relevant part using the topi
 
 ## Series Version
 
-**Version 2.0.0** (TBD)
+**Version 2.0.0** (2025-01-13)
+- **100% parity with CODING_GUIDE.md v2.0.0:**
+  - Quick Reference: pattern decision tree, type transformations, testing patterns (Part 1)
+  - Null Policy comprehensive coverage (Part 2)
+  - Error Recovery Patterns: fallback values, graceful degradation (Part 2)
+  - Expanded Monadic Composition Rules: lambda guidelines, forbidden patterns (Part 2)
+  - Pragmatica Lite API Reference: conversions, aggregation, utilities (Part 2)
+  - Zone-Based Abstraction Framework with Derrick Brandt attribution (Part 3)
+  - Naming Conventions: factory methods, validated inputs, zone-based verbs (Part 3)
+  - Thread Safety Quick Reference: pattern-by-pattern guarantees (Part 4)
+  - Module Organization: multi-module projects, Gradle/Maven examples (Part 6)
+- **Thread Safety and Concurrency additions:**
+  - Immutability and Thread Confinement section (Part 1)
+  - Promise resolution thread safety guarantees (Part 2)
+  - Fork-Join independence and thread safety unified view (Part 4)
+  - Thread safety notes for all patterns (Parts 3, 4)
+  - Mutable test state acceptability explanation (Part 5)
 - Enhanced documentation for easier adoption
 - Progressive terminology transition: Smart Wrappers → monads across series
 - Added Spring to JBCT Translation table (Part 2)

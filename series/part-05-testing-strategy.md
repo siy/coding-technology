@@ -125,6 +125,28 @@ class EmailTest {
 - `email_normalizesToLowercase` - method name, outcome, implicit condition (always)
 - `execute_succeeds_forValidInput` - clear, readable, searchable
 
+**Thread Safety in Tests:**
+
+Mutable test state is acceptable because **test execution is single-threaded**. Each test runs in isolation with its own mutable accumulators, call logs, or test data builders:
+
+```java
+@Test
+void execute_appliesDiscounts_inCorrectOrder() {
+    var callLog = new ArrayList<String>();  // Mutable test state - safe
+
+    DiscountRule bogo = createLoggingRule("BOGO", callLog);
+    DiscountRule percent = createLoggingRule("PERCENT", callLog);
+
+    calculateDiscounts.apply(new CartWithRules(cart, List.of(bogo, percent)))
+        .await()
+        .onFailure(Assertions::fail);
+
+    assertEquals(List.of("BOGO", "PERCENT"), callLog);  // Verify call order
+}
+```
+
+This doesn't violate production immutability rules - tests are inherently sequential, and mutable test fixtures are confined to single test method scope.
+
 **Why unit test here?** Value objects have zero dependencies. They're pure functions. Unit testing is natural.
 
 **2. Business Leaves: Unit Tests if Complex**

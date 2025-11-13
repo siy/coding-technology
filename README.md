@@ -140,7 +140,9 @@ Pick a method that can fail in business-meaningful ways.
 ```java
 public User findUser(String id) throws UserNotFoundException {
     User user = repository.findById(id);
-    if (user == null) throw new UserNotFoundException(id);
+    if (user == null) {
+        throw new UserNotFoundException(id);
+    }
     return user;
 }
 // Caller doesn't know it throws without reading docs/code
@@ -148,14 +150,14 @@ public User findUser(String id) throws UserNotFoundException {
 
 **After:**
 ```java
-public Result<User> findUser(UserId id) {
-    return repository.findById(id)  // Returns Option<User>
-        .toResult(UserNotFound.cause(id));
+public Promise<User> findUser(UserId id) {
+    return repository.findById(id)  // Returns Promise<Option<User>>
+        .flatMap(opt -> opt.async(UserNotFound.cause(id)));
 }
 // Compiler forces caller to handle failure case
 ```
 
-**Win:** Failures are type-safe. No hidden exceptions. Clear intent.
+**Win:** Failures are type-safe. No hidden exceptions. Async I/O explicit in return type.
 
 ### 3. Convert One Test
 
@@ -164,11 +166,15 @@ Make one test more readable using functional assertions.
 **Before:**
 ```java
 @Test
-void testValidation() {
-    Result<Email> result = Email.email("invalid");
-    assertTrue(result.isFailure());
-    // Or worse: try-catch with @Test(expected = ...)
+void testEmailValidation() {
+    try {
+        validateEmail("invalid");
+        fail("Should have thrown exception");
+    } catch (ValidationException e) {
+        assertTrue(e.getMessage().contains("email"));
+    }
 }
+// Verbose, requires manual assertion, easy to forget fail()
 ```
 
 **After:**
@@ -187,7 +193,7 @@ void email_acceptsValidFormat() {
 }
 ```
 
-**Win:** Clear test intent. Better failure messages. More readable.
+**Win:** Clear test intent. No try-catch boilerplate. Better failure messages.
 
 ---
 
@@ -241,12 +247,12 @@ void email_acceptsValidFormat() {
 
 Ready-to-use configurations for specialized code assistance:
 
-- **[jbct-coder.md](https://raw.githubusercontent.com/siy/coding-technology/main/jbct-coder.md)** - Code generation subagent
+- **[jbct-coder.md](jbct-coder.md)** - Code generation subagent
   - Generates JBCT-compliant code from requirements
   - Enforces Four Return Kinds, Parse Don't Validate, structural patterns
   - **Installation**: Download and place in `~/.claude/agents/jbct-coder.md`
 
-- **[jbct-reviewer.md](https://raw.githubusercontent.com/siy/coding-technology/main/jbct-reviewer.md)** - Code review subagent
+- **[jbct-reviewer.md](jbct-reviewer.md)** - Code review subagent
   - Reviews code for JBCT compliance and best practices
   - Checks patterns, naming conventions, project structure
   - Provides actionable feedback with examples

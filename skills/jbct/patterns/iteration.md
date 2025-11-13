@@ -239,6 +239,21 @@ Map<UserId, User> userMap = users.stream()
     .collect(Collectors.toMap(User::id, Function.identity()));
 ```
 
+## Thread Safety
+
+**Sequential iteration is thread-safe through single-threaded execution.** Stream operations execute on the calling thread unless explicitly parallelized.
+
+```java
+// OK - Mutable accumulator in sequential loop (thread-confined)
+var totals = new ArrayList<Money>();  // Thread-confined
+for (Order order : orders) {
+    totals.add(order.total());
+}
+return List.copyOf(totals);  // Immutable result
+```
+
+**Rule:** Sequential iteration allows mutable accumulators (thread-confined), but prefer functional combinators (map, filter, reduce) for clarity.
+
 ## Anti-Patterns
 
 ### ❌ Mutable State in Stream

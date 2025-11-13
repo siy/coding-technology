@@ -463,7 +463,7 @@ public Promise<User> findUser(UserId id) {
 ### Lifting sync Result to async Promise:
 ```java
 public Promise<Response> execute(Request request) {
-    return ValidRequest.validate(request)  // returns Result<ValidRequest>
+    return ValidRequest.validRequest(request)  // returns Result<ValidRequest>
                        .async()            // converts to Promise<ValidRequest>
                        .flatMap(step1::apply)
                        .flatMap(step2::apply);
@@ -491,7 +491,7 @@ Promise<User> promise = optUser.async(UserError.NotFound.INSTANCE);
 void validation_fails_forInvalidInput() {
     var request = new Request("invalid", "data");
 
-    ValidRequest.validate(request)
+    ValidRequest.validRequest(request)
                 .onSuccess(Assertions::fail);  // Fail test if unexpectedly succeeds
 }
 ```
@@ -502,7 +502,7 @@ void validation_fails_forInvalidInput() {
 void validation_succeeds_forValidInput() {
     var request = new Request("valid@example.com", "Valid1234");
 
-    ValidRequest.validate(request)
+    ValidRequest.validRequest(request)
                 .onFailure(Assertions::fail)  // Fail test if unexpectedly fails
                 .onSuccess(valid -> {
                     assertEquals("valid@example.com", valid.email().value());

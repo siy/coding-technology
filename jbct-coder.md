@@ -1,7 +1,7 @@
 ---
 name: jbct-coder
 title: Java Backend Coding Technology Agent
-description: Specialized agent for generating business logic code using Java Backend Coding Technology v1.8.2 with Pragmatica Lite Core 0.8.3. Produces deterministic, AI-friendly code that matches human-written code structurally and stylistically. Includes evolutionary testing strategy guidance.
+description: Specialized agent for generating business logic code using Java Backend Coding Technology v2.0.0 with Pragmatica Lite Core 0.8.3. Produces deterministic, AI-friendly code that matches human-written code structurally and stylistically. Includes evolutionary testing strategy guidance.
 tools: Read, Write, Edit, MultiEdit, Grep, Glob, LS, Bash, TodoWrite, Task, WebSearch, WebFetch
 ---
 
@@ -164,6 +164,8 @@ Result.lift(UUID::fromString, raw)
 
 **Available parse utilities:** `Number` (parseInt, parseLong, parseDouble, parseBigDecimal), `DateTime` (parseLocalDate, parseLocalDateTime, parseZonedDateTime), `Network` (parseUUID, parseURL, parseURI), `I18n` (parseLocale, parseCurrency).
 
+> **For complete Pragmatica Lite API reference**, see **CLAUDE.md context** in CODING_GUIDE.md or **CODING_GUIDE.md: Pragmatica Lite API** section.
+
 ### 3. No Business Exceptions
 
 Business logic **never** throws exceptions. All failures flow through `Result` or `Promise` as typed `Cause` objects.
@@ -227,6 +229,64 @@ Every function implements **exactly one** pattern:
 
 **Extract complex logic to named functions.**
 
+#### Zone-Based Abstraction Framework
+
+> **Source:** Adapted from [Derrick Brandt's systematic approach to clean code](https://medium.com/@brandt.a.derrick/how-to-write-clean-code-actually-5205963ec524).
+
+Use the three-zone framework to maintain consistent abstraction levels:
+
+**Zone 1 (Use Case Level)** - High-level business goals:
+- `RegisterUser.execute()`, `ProcessOrder.execute()`
+- One zone 1 function per use case
+
+**Zone 2 (Orchestration Level)** - Coordinating steps:
+- Step interfaces in Sequencer/Fork-Join patterns
+- Verbs: `validate`, `process`, `handle`, `transform`, `apply`, `check`, `load`, `save`
+- Examples: `ValidateInput.apply()`, `ProcessPayment.apply()`
+
+**Zone 3 (Implementation Level)** - Concrete operations:
+- Business and adapter leaves
+- Verbs: `get`, `set`, `fetch`, `parse`, `calculate`, `convert`, `hash`, `format`
+- Examples: `hashPassword()`, `parseJson()`, `fetchFromDatabase()`
+
+**Naming Guidelines:**
+
+Zone 2 (step interfaces):
+```java
+interface ValidateInput { ... }    // Zone 2 verb
+interface ProcessPayment { ... }   // Zone 2 verb
+interface HandleRefund { ... }     // Zone 2 verb
+```
+
+Zone 3 (leaves):
+```java
+private Hash hashPassword(Password pwd) { ... }        // Zone 3 verb
+private Data fetchFromCache(Key key) { ... }           // Zone 3 verb
+private Unit saveToDatabase(User user) { ... }         // Zone 3 verb
+```
+
+**Anti-pattern - Mixing zones:**
+```java
+// ❌ WRONG - Zone 2 step using Zone 3 verb
+interface FetchUserData { ... }  // Too specific - "fetch" is Zone 3
+
+// ✅ CORRECT - Zone 2 verb
+interface LoadUserData { ... }   // Appropriately general - "load" is Zone 2
+```
+
+**Stepdown Rule Test:** Read your code aloud with "to" before each function:
+```java
+// To execute, we validate the request, then process payment, then send confirmation
+return ValidRequest.validRequest(request)
+    .async()
+    .flatMap(this::processPayment)
+    .flatMap(this::sendConfirmation);
+```
+
+If it flows naturally, your abstraction levels align.
+
+> **For complete zone verb vocabulary**, see **CODING_GUIDE.md: Zone-Based Naming Vocabulary** section.
+
 ---
 
 ## Null Policy
@@ -284,6 +344,89 @@ void email_fails_forNull() {
 - ✅ Use required parameters when value must be present
 
 **Summary**: Null exists only at adapter boundaries. Business logic uses `Option.none()`, never null.
+
+---
+
+## Thread Safety and Immutability
+
+> **For comprehensive thread safety guidance**, see **CODING_GUIDE.md: Immutability and Thread Confinement** and **Thread Safety Quick Reference** sections.
+
+### Core Requirement: Input Data is Read-Only
+
+**All input data passed to operations MUST be treated as immutable and read-only.** This is not optional—it's required for thread safety guarantees.
+
+**What MUST be immutable:**
+- Data passed between parallel operations (Fork-Join pattern)
+- All input parameters to any operation
+- Response types returned from use cases
+- Value objects used as map keys or in collections
+
+**What CAN be mutable (thread-confined):**
+- Local state within single operation (accumulators, builders, working objects)
+- Working objects within adapter boundaries (before domain conversion)
+- State confined to sequential patterns (Leaf, Sequencer, Iteration steps)
+- Test fixtures and mutable test state (single-threaded test execution)
+
+**Example - Safe local mutable state:**
+```java
+private DiscountResult applyRules(Cart cart, List<DiscountRule> rules) {
+    var mutableCart = cart.toMutable();  // Local working copy
+    var applied = new ArrayList<>();     // Local accumulator
+
+    for (var rule : rules) {
+        applied.add(rule.apply(mutableCart));
+    }
+
+    return new DiscountResult(
+        mutableCart.toImmutable(),  // Immutable result
+        List.copyOf(applied)
+    );
+}
+```
+
+**Why safe:** `mutableCart` and `applied` are thread-confined to this method. Input `cart` remains unmodified. Result is immutable.
+
+### Fork-Join Pattern: Strict Immutability
+
+Fork-Join executes branches in parallel with NO synchronization. **All inputs MUST be immutable:**
+
+```java
+// ❌ WRONG: Shared mutable state
+private final DiscountContext context = new DiscountContext();  // Mutable, shared
+
+Promise<Result> calculate() {
+    return Promise.all(
+        applyBogo(cart, context),      // DATA RACE
+        applyPercentOff(cart, context)  // DATA RACE - both branches mutate context
+    ).map(this::merge);
+}
+
+// ✅ CORRECT: Immutable inputs
+Promise<Result> calculate(Cart cart) {
+    return Promise.all(
+        applyBogo(cart),          // Immutable cart input
+        applyPercentOff(cart)     // Immutable cart input
+    ).map(this::mergeDiscounts);  // Combine immutable results
+}
+```
+
+### Promise Resolution is Thread-Safe
+
+Promise resolution is **thread-safe** and happens **exactly once**:
+- Multiple threads can attempt resolution - only the first succeeds
+- Resolution serves as synchronization point
+- Transformations execute after resolution in attachment order
+- Side effects execute independently
+
+### Pattern-Specific Safety Rules
+
+- **Leaf:** Thread-safe through confinement (each invocation isolated)
+- **Sequencer:** Thread-safe through sequential execution (steps don't overlap)
+- **Fork-Join:** All inputs MUST be immutable (parallel execution, no synchronization)
+- **Iteration (Sequential):** Local mutable accumulators safe (single-threaded)
+- **Iteration (Parallel):** All inputs MUST be immutable (same as Fork-Join)
+
+**Key principle:** Input data is always read-only. Local working data can be mutable if thread-confined. Output data is always immutable.
 
 ---
 
@@ -382,8 +525,8 @@ Promise.lift(() -> {
 // Result aggregation (collects failures into CompositeCause)
 Result.all(Email.email(raw.email()),
            Password.password(raw.password()),
-           ReferralCode.referralCode(raw.refCode()))
-      .flatMap(ValidRequest::new)
+           ReferralCode.referralCode(raw.referralCode()))
+      .map(ValidRequest::new)
 
 // Collection aggregation
 Result.allOf(
@@ -724,12 +867,19 @@ var request = new RequestBuilder()
 
 > **Note:** This section covers basic patterns for immediate code generation. See [Part 5](series/part-05-testing-strategy.md) for evolutionary testing approach.
 
-### Testing Philosophy: Integration-First
+### Testing Philosophy: Integration-First with Evolutionary Approach
+
+> **For complete evolutionary testing strategy**, see **[Part 5: Testing Strategy](series/part-05-testing-strategy.md)** - comprehensive guide to integration-first philosophy and evolutionary testing process.
 
 **Test assembled use cases with all business logic, stub only adapters.** Follow the evolutionary approach:
-1. Start with stubs for all steps (tests pass immediately)
-2. Replace stubs incrementally, adding test vectors for new scenarios
-3. Final state: Only adapter leaves stubbed, complete behavior coverage
+
+1. **Phase 1: Stub Everything** - All steps return success, tests pass immediately
+2. **Phase 2: Implement Validation** - Replace validation stub with real implementation, add validation test vectors
+3. **Phase 3: Implement First Step** - Replace first step stub, add success/failure tests for that step
+4. **Phase 4-N: Continue Expanding** - Replace remaining stubs one at a time, adding tests incrementally
+5. **Final Phase: Production Ready** - Only adapter leaves stubbed, complete behavior coverage
+
+**Key principle:** Tests evolve alongside implementation, not written after. Each phase adds tests for newly implemented functionality while keeping future steps stubbed.
 
 ### Core Testing Pattern
 
@@ -933,10 +1083,40 @@ record ValidRequest(Email email, Password password, Option<ReferralCode> referra
         return Result.all(Email.email(raw.email()),
                           Password.password(raw.password()),
                           ReferralCode.referralCode(raw.referralCode()))
-                     .flatMap(ValidRequest::new);
+                     .map(ValidRequest::new);
     }
 }
 ```
+
+**For cross-field validation** (e.g., "premium users must have strong passwords"), add validation after construction:
+
+```java
+record ValidRequest(Email email, Password password, Option<ReferralCode> referralCode) {
+
+    public static Result<ValidRequest> validRequest(Request raw) {
+        return Result.all(Email.email(raw.email()),
+                          Password.password(raw.password()),
+                          ReferralCode.referralCode(raw.referralCode()))
+                     .map(ValidRequest::new)
+                     .flatMap(ValidRequest::checkCrossFieldRules);
+    }
+
+    private static Result<ValidRequest> checkCrossFieldRules(ValidRequest req) {
+        return req.referralCode()
+                  .filter(ReferralCode::isPremium)
+                  .map(_ -> checkPremiumPassword(req))
+                  .orElse(Result.success(req));
+    }
+
+    private static Result<ValidRequest> checkPremiumPassword(ValidRequest req) {
+        return req.password().length() >= 10
+            ? Result.success(req)
+            : RegistrationError.WeakPasswordForPremium.INSTANCE.result();
+    }
+}
+```
+
+**See CODING_GUIDE.md** for more complex cross-field validation patterns and dependent validation scenarios.
 
 ### Step 5: Generate Value Objects
 
@@ -1246,7 +1426,7 @@ public class JooqUserRepository implements SaveUser {
 
 ## References
 
-- **Full Guide**: `CODING_GUIDE.md` - Comprehensive explanation of all patterns and principles (v1.8.2)
+- **Full Guide**: `CODING_GUIDE.md` - Comprehensive explanation of all patterns and principles (v2.0.0)
 - **Testing Strategy**: `series/part-05-testing-strategy.md` - Evolutionary testing approach, integration-first philosophy, test organization
 - **API Reference**: `CLAUDE.md` - Complete Pragmatica Lite API documentation
 - **Technology Overview**: `TECHNOLOGY.md` - High-level pattern catalog

@@ -236,9 +236,13 @@ class User {
 Functional programming **makes data transparent** and treats functions as transformations:
 
 ```java
-public record User(String email) {  // Immutable data
-    public User withEmail(String newEmail) {
-        return new User(newEmail);  // Returns new instance
+public record User(UserId id, Email email, UserName name, Status status) {  // Immutable data with value objects
+    public User withEmail(Email newEmail) {
+        return new User(id, newEmail, name, status);  // Returns new instance, other fields unchanged
+    }
+
+    public User withStatus(Status newStatus) {
+        return new User(id, email, name, newStatus);  // Only status changed
     }
 }
 ```
@@ -262,7 +266,7 @@ Think of your code as a series of **pipes** through which **values** flow:
 ```java
 // Water (value) flows through pipes (functions)
 public Result<Response> execute(Request request) {
-    return ValidRequest.validate(request)     // Pipe 1: validation
+    return ValidRequest.validRequest(request)     // Pipe 1: validation
         .flatMap(this::checkPermissions)      // Pipe 2: authorization
         .flatMap(this::processRequest)        // Pipe 3: business logic
         .flatMap(this::saveResult)            // Pipe 4: persistence
@@ -281,6 +285,47 @@ This mental model makes code structure **visual and predictable**:
 - Linear flow: top to bottom
 - No hidden branching: if you see 5 steps, there are 5 steps
 - Error handling: automatic, not scattered through if-checks
+
+### Immutability and Thread Confinement
+
+This technology's thread safety guarantees rest on one critical requirement: **all input data passed to operations must be treated as immutable and read-only**. This isn't about dogmatic functional purity - it's about maintaining safety guarantees that make concurrent code predictable.
+
+**Thread confinement** (i.e., data accessed by exactly one thread) is the key safety mechanism. When data stays within a single operation's scope, mutable state is safe. When data crosses operation boundaries - especially with patterns that enable parallelism - it must be immutable.
+
+**What MUST be immutable:**
+- Data passed between parallel operations (Fork-Join pattern - see Part 4)
+- Input parameters to any operation (read-only contract)
+- Response types returned from use cases (may be cached/reused)
+- Value objects used as map keys or in collections
+- Data crossing Promise boundaries when parallel execution is possible
+
+**What CAN be mutable (thread-confined):**
+- Local state within single operation (accumulators, builders)
+- Working objects within adapter boundaries (before domain conversion)
+- State confined to sequential patterns (Leaf, Sequencer, Iteration steps)
+
+**Example - Safe local mutable state:**
+```java
+private DiscountResult applyRules(Cart cart, List<DiscountRule> rules) {
+    var mutableCart = cart.toMutable();  // Local working copy
+    var applied = new ArrayList<>();     // Local accumulator
+
+    for (var rule : rules) {
+        applied.add(rule.apply(mutableCart));
+    }
+
+    return new DiscountResult(
+        mutableCart.toImmutable(),  // Immutable result
+        List.copyOf(applied)
+    );
+}
+```
+
+**Why safe:** `mutableCart` and `applied` are local variables, thread-confined to this method. Input `cart` remains unmodified (read-only). Result is immutable.
+
+**Key principle:** Mutability is safe when state is **thread-confined** (accessed by single thread). Sequential patterns (Sequencer, Leaf, Iteration) guarantee isolation between steps, making local mutable state safe within each step. Parallel patterns (Fork-Join) require immutable inputs because no such isolation exists.
+
+Detailed pattern-specific safety rules are covered in Part 3 and Part 4. For now, remember: **input data is read-only, local working data can be mutable, output data is immutable**.
 
 ---
 
@@ -464,6 +509,200 @@ implementation 'org.pragmatica-lite:core:0.8.3'
 ```
 
 Library documentation: https://central.sonatype.com/artifact/org.pragmatica-lite/core
+
+---
+
+## Quick Reference
+
+This section provides at-a-glance reference for the core concepts you'll learn throughout the series. Bookmark this page for quick lookup while coding.
+
+### The Four Return Kinds
+
+Every function returns exactly one of these:
+
+| Type | Meaning | Use When | Example |
+|------|---------|----------|---------|
+| `T` | Sync, can't fail, always present | Pure computation | `String initials()` |
+| `Option<T>` | Sync, can't fail, may be absent | Optional value | `Option<Theme> findTheme()` |
+| `Result<T>` | Sync, can fail (validation/business) | Validation, business rules | `Result<Email> email(String)` |
+| `Promise<T>` | Async, can fail (I/O/external) | Database, HTTP, file I/O | `Promise<User> loadUser()` |
+
+**Critical:** Never `Promise<Result<T>>` - Promise already handles failures.
+
+### Pattern Decision Tree
+
+Choose your pattern based on the situation:
+
+```
+Is this a single atomic operation?
+├─ Yes → Leaf pattern
+└─ No → Does it involve multiple operations?
+    ├─ Yes → Are they independent (can run in parallel)?
+    │   ├─ Yes → Fork-Join pattern
+    │   └─ No → Sequencer pattern
+    └─ No → Does it branch based on condition?
+        ├─ Yes → Condition pattern
+        └─ No → Does it process a collection?
+            ├─ Yes → Iteration pattern
+            └─ No → Need cross-cutting concerns? → Aspects pattern
+```
+
+### Core Principles Summary
+
+**Parse, Don't Validate:**
+```java
+// Factory method validates, constructor is private
+public record Email(String value) {
+    public static Result<Email> email(String raw) {
+        return validate(raw).map(Email::new);
+    }
+}
+```
+
+**No Business Exceptions:**
+```java
+// Errors are typed values, not thrown
+public sealed interface UserError extends Cause {
+    enum NotFound implements UserError { INSTANCE; }
+    record InvalidEmail(String value) implements UserError {}
+}
+```
+
+**Single Level of Abstraction:**
+```java
+// ✅ Lambdas contain only method references
+.flatMap(this::validateInput)
+.flatMap(this::processPayment)
+
+// ❌ No complex logic in lambdas
+.flatMap(user -> { /* nested logic */ })  // WRONG
+```
+
+### Common Type Transformations
+
+Moving between the four return types:
+
+```java
+// Option → Result
+option.toResult(cause)        // or .await(cause)
+
+// Option → Promise
+option.async(cause)
+
+// Result → Promise
+result.async()
+
+// Promise → Result (blocking - use with caution)
+promise.await()
+promise.await(timeout)
+
+// Cause → Result/Promise (prefer over constructors)
+cause.result()                // Recommended
+cause.promise()               // Recommended
+```
+
+### Aggregation Quick Reference
+
+Combining multiple operations:
+
+```java
+// Result.all - Accumulates ALL failures
+Result.all(result1, result2, result3)
+    .map((v1, v2, v3) -> combine(v1, v2, v3));
+
+// Promise.all - Fail-fast on FIRST failure
+Promise.all(promise1, promise2, promise3)
+    .map((v1, v2, v3) -> combine(v1, v2, v3));
+
+// Option.all - Fail-fast on FIRST empty
+Option.all(opt1, opt2, opt3)
+    .map((v1, v2, v3) -> combine(v1, v2, v3));
+```
+
+### Naming Conventions
+
+```java
+// Factory methods: TypeName.typeName
+Email.email(raw)
+Password.password(raw)
+
+// Validated inputs: Valid prefix
+record ValidRequest(Email email, Password password) {}
+
+// Step interfaces (Zone 2): orchestration verbs
+interface ValidateInput { ... }
+interface ProcessPayment { ... }
+
+// Leaves (Zone 3): implementation verbs
+private Hash hashPassword(Password pwd) { ... }
+private Data fetchFromCache(Key key) { ... }
+
+// Tests: methodName_outcome_condition
+void email_fails_forInvalidFormat() {}
+```
+
+### Project Structure (Vertical Slicing)
+
+```
+com.example.app/
+├── usecase/
+│   ├── registeruser/         # Self-contained slice
+│   │   ├── RegisterUser.java # Use case + factory
+│   │   └── [internal types]  # Steps, errors, validated inputs
+│   └── loginuser/
+│       └── LoginUser.java
+├── domain/
+│   └── shared/               # Reusable value objects ONLY
+│       ├── Email.java
+│       └── UserId.java
+└── adapter/
+    ├── rest/                 # Inbound adapters
+    ├── persistence/          # Outbound adapters
+    └── messaging/
+```
+
+**Placement Rule:** If used by single use case → inside use case package. If used by 2+ → `domain/shared/`.
+
+### Testing Pattern
+
+```java
+// Test failures
+@Test
+void validation_fails_forInvalidInput() {
+    ValidRequest.validRequest(badRequest)
+        .onSuccess(Assertions::fail);
+}
+
+// Test successes
+@Test
+void validation_succeeds_forValidInput() {
+    ValidRequest.validRequest(goodRequest)
+        .onFailure(Assertions::fail)
+        .onSuccess(valid -> assertEquals(...));
+}
+
+// Async tests
+@Test
+void execute_succeeds_forValidInput() {
+    useCase.execute(request)
+        .await()
+        .onFailure(Assertions::fail)
+        .onSuccess(response -> assertEquals(...));
+}
+```
+
+### When to Use Each Pattern
+
+| Pattern | Use Case | Example |
+|---------|----------|---------|
+| **Leaf** | Single operation | Hash password, calculate total, query database |
+| **Sequencer** | Dependent steps (A→B→C) | Validate → save → notify |
+| **Fork-Join** | Independent parallel ops | Load user + orders + notifications |
+| **Condition** | Branching logic | Premium vs basic user processing |
+| **Iteration** | Process collection | Validate list of items |
+| **Aspects** | Cross-cutting concerns | Retry, timeout, metrics, logging |
+
+This reference covers the essentials. Each topic is explained in depth in subsequent parts. Refer back here when you need a quick reminder.
 
 ---
 

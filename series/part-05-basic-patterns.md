@@ -1,8 +1,8 @@
-# Part 3: Basic Patterns & Structure
+# Part 5: Basic Patterns & Structure
 
-**Series:** [Java Backend Coding Technology](INDEX.md) | **Part:** 3 of 9
+**Series:** [Java Backend Coding Technology](INDEX.md) | **Part:** 5 of 9
 
-**Previous:** [Part 2C: Error Handling & Composition](part-02c-error-handling.md) | **Next:** [Part 4: Advanced Patterns](part-04-advanced-patterns.md)
+**Previous:** [Part 9: Error Handling & Composition](part-04-error-handling.md) | **Next:** [Part 9: Advanced Patterns](part-06-advanced-patterns.md)
 
 ---
 
@@ -1001,7 +1001,7 @@ These patterns handle:
 
 ## What's Next?
 
-In [Part 4: Advanced Patterns & Testing](part-04-advanced-patterns.md), we'll compose these basic patterns into sophisticated workflows:
+In [Part 9: Advanced Patterns & Testing](part-06-advanced-patterns.md), we'll compose these basic patterns into sophisticated workflows:
 
 - **Sequencer**: Chaining dependent steps (the workhorse of use case implementation)
 - **Fork-Join**: Parallel composition for independent operations
@@ -1014,7 +1014,7 @@ The basic patterns you just learned are building blocks. Part 4 shows you how to
 
 **Series Navigation**
 
-[← Part 2C: Error Handling & Composition](part-02c-error-handling.md) | [Index](INDEX.md) | [Part 4: Advanced Patterns →](part-04-advanced-patterns.md)
+[← Part 9: Error Handling & Composition](part-04-error-handling.md) | [Index](INDEX.md) | [Part 9: Advanced Patterns →](part-06-advanced-patterns.md)
 
 ---
 

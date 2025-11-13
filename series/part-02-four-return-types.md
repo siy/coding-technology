@@ -1,8 +1,8 @@
-# Part 2A: The Four Return Types
+# Part 2: The Four Return Types
 
-**Series:** [Java Backend Coding Technology](INDEX.md) | **Part:** 2A of 9
+**Series:** [Java Backend Coding Technology](INDEX.md) | **Part:** 2 of 9
 
-**Previous:** [Part 1: Introduction & Foundations](part-01-foundations.md) | **Next:** [Part 2B: Parse, Don't Validate](part-02b-parse-dont-validate.md)
+**Previous:** [Part 1: Introduction & Foundations](part-01-foundations.md) | **Next:** [Part 5: Parse, Don't Validate](part-03-parse-dont-validate.md)
 
 ---
 
@@ -449,13 +449,13 @@ These aren't preferences or guidelines. They're **mechanical rules** that make s
 
 ## What's Next?
 
-In [Part 2B: Parse, Don't Validate](part-02b-parse-dont-validate.md), you'll learn how to make invalid states unrepresentable through factory methods and validation at construction time.
+In [Part 5: Parse, Don't Validate](part-03-parse-dont-validate.md), you'll learn how to make invalid states unrepresentable through factory methods and validation at construction time.
 
 ---
 
 **Series Navigation**
 
-[← Part 1: Introduction & Foundations](part-01-foundations.md) | [Index](INDEX.md) | [Part 2B: Parse, Don't Validate →](part-02b-parse-dont-validate.md)
+[← Part 1: Introduction & Foundations](part-01-foundations.md) | [Index](INDEX.md) | [Part 5: Parse, Don't Validate →](part-03-parse-dont-validate.md)
 
 ---
 

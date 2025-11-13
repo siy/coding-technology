@@ -1,8 +1,8 @@
-# Part 2B: Parse, Don't Validate
+# Part 3: Parse, Don't Validate
 
-**Series:** [Java Backend Coding Technology](INDEX.md) | **Part:** 2B of 9
+**Series:** [Java Backend Coding Technology](INDEX.md) | **Part:** 3 of 9
 
-**Previous:** [Part 2A: The Four Return Types](part-02a-four-return-types.md) | **Next:** [Part 2C: Error Handling & Composition](part-02c-error-handling.md)
+**Previous:** [Part 2: The Four Return Types](part-02-four-return-types.md) | **Next:** [Part 4: Error Handling & Composition](part-04-error-handling.md)
 
 ---
 
@@ -17,7 +17,7 @@ By the end of this part, you'll understand:
 - Real-world validation scenarios
 - How to adopt this incrementally in existing codebases
 
-**Prerequisites:** [Part 2A: The Four Return Types](part-02a-four-return-types.md)
+**Prerequisites:** [Part 2: The Four Return Types](part-02-four-return-types.md)
 
 ---
 
@@ -537,13 +537,13 @@ You've learned the "parse, don't validate" principle:
 
 ## What's Next?
 
-In [Part 2C: Error Handling & Composition](part-02c-error-handling.md), you'll learn how to handle errors as values, avoid business exceptions, and compose operations cleanly.
+In [Part 9: Error Handling & Composition](part-04-error-handling.md), you'll learn how to handle errors as values, avoid business exceptions, and compose operations cleanly.
 
 ---
 
 **Series Navigation**
 
-[← Part 2A: The Four Return Types](part-02a-four-return-types.md) | [Index](INDEX.md) | [Part 2C: Error Handling & Composition →](part-02c-error-handling.md)
+[← Part 2: The Four Return Types](part-02-four-return-types.md) | [Index](INDEX.md) | [Part 9: Error Handling & Composition →](part-04-error-handling.md)
 
 ---
 

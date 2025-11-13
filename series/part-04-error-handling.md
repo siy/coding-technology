@@ -1,8 +1,8 @@
-# Part 2C: Error Handling & Composition
+# Part 4: Error Handling & Composition
 
-**Series:** [Java Backend Coding Technology](INDEX.md) | **Part:** 2C of 9
+**Series:** [Java Backend Coding Technology](INDEX.md) | **Part:** 4 of 9
 
-**Previous:** [Part 2B: Parse, Don't Validate](part-02b-parse-dont-validate.md) | **Next:** [Part 3: Basic Patterns & Structure](part-03-basic-patterns.md)
+**Previous:** [Part 5: Parse, Don't Validate](part-03-parse-dont-validate.md) | **Next:** [Part 5: Basic Patterns & Structure](part-05-basic-patterns.md)
 
 ---
 
@@ -18,7 +18,7 @@ By the end of this part, you'll understand:
 - Monadic composition rules and lambda guidelines
 - Common mistakes to avoid
 
-**Prerequisites:** [Part 2A](part-02a-four-return-types.md) and [Part 2B](part-02b-parse-dont-validate.md)
+**Prerequisites:** [Part 2A](part-02-four-return-types.md) and [Part 2B](part-03-parse-dont-validate.md)
 
 ---
 
@@ -1406,7 +1406,7 @@ public static Result<UserId> userId(String raw) {
 
 ## What's Next?
 
-In [Part 3: Basic Patterns & Structure](part-03-basic-patterns.md), we'll learn the structural rules and basic patterns that handle 80% of daily coding:
+In [Part 5: Basic Patterns & Structure](part-05-basic-patterns.md), we'll learn the structural rules and basic patterns that handle 80% of daily coding:
 
 - Single Pattern Per Function: one responsibility, mechanical refactoring
 - Single Level of Abstraction: no complex logic in lambdas
@@ -1420,7 +1420,7 @@ These patterns apply the core principles you just learned. Once you master them,
 
 **Series Navigation**
 
-[← Part 1: Introduction & Foundations](part-01-foundations.md) | [Index](INDEX.md) | [Part 3: Basic Patterns & Structure →](part-03-basic-patterns.md)
+[← Part 1: Introduction & Foundations](part-01-foundations.md) | [Index](INDEX.md) | [Part 5: Basic Patterns & Structure →](part-05-basic-patterns.md)
 
 ---
 
@@ -1456,13 +1456,13 @@ These aren't preferences - they're mechanical rules that eliminate entire classe
 
 ## What's Next?
 
-In [Part 3: Basic Patterns & Structure](part-03-basic-patterns.md), you'll learn the structural rules and basic patterns (Leaf, Condition, Iteration) that handle 80% of your daily coding.
+In [Part 5: Basic Patterns & Structure](part-05-basic-patterns.md), you'll learn the structural rules and basic patterns (Leaf, Condition, Iteration) that handle 80% of your daily coding.
 
 ---
 
 **Series Navigation**
 
-[← Part 2B: Parse, Don't Validate](part-02b-parse-dont-validate.md) | [Index](INDEX.md) | [Part 3: Basic Patterns & Structure →](part-03-basic-patterns.md)
+[← Part 5: Parse, Don't Validate](part-03-parse-dont-validate.md) | [Index](INDEX.md) | [Part 5: Basic Patterns & Structure →](part-05-basic-patterns.md)
 
 ---
 

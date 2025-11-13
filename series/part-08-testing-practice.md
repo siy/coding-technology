@@ -1,8 +1,8 @@
-# Part 5B: Testing in Practice
+# Part 8: Testing in Practice
 
-**Series:** [Java Backend Coding Technology](INDEX.md) | **Part:** 5B of 9
+**Series:** [Java Backend Coding Technology](INDEX.md) | **Part:** 8 of 9
 
-**Previous:** [Part 5A: Testing Philosophy & Evolution](part-05a-testing-philosophy.md) | **Next:** [Part 6: Building Production Systems](part-06-production-systems.md)
+**Previous:** [Part 7: Testing Philosophy & Evolution](part-07-testing-philosophy.md) | **Next:** [Part 9: Building Production Systems](part-09-production-systems.md)
 
 ---
 
@@ -17,7 +17,7 @@ This part covers practical testing techniques: organizing large test suites, com
 - How to migrate existing unit test suites
 - The testing pyramid for this technology
 
-**Prerequisites:** [Part 5A: Testing Philosophy & Evolution](part-05a-testing-philosophy.md)
+**Prerequisites:** [Part 7: Testing Philosophy & Evolution](part-07-testing-philosophy.md)
 
 ---
 
@@ -759,11 +759,11 @@ After Migration:
 
 ### What's Next
 
-**Part 6: Production Systems**
+**Part 9: Production Systems**
 
 Now that you know how to test, let's put it all together: complete use case walkthrough from requirements to deployment, project structure, and framework integration.
 
-**[Continue to Part 6: Production Systems →](part-06-production-systems.md)**
+**[Continue to Part 9: Production Systems →](part-09-production-systems.md)**
 
 ---
 
@@ -812,17 +812,17 @@ You've learned how to apply evolutionary testing at scale:
 
 ## What's Next?
 
-**Part 6: Building Production Systems**
+**Part 9: Building Production Systems**
 
 Now that you know how to test, let's put it all together: complete use case walkthrough from requirements to deployment, project structure, and framework integration.
 
-**[Continue to Part 6: Building Production Systems →](part-06-production-systems.md)**
+**[Continue to Part 9: Building Production Systems →](part-09-production-systems.md)**
 
 ---
 
 **Series Navigation**
 
-[← Part 5A: Testing Philosophy & Evolution](part-05a-testing-philosophy.md) | [Index](INDEX.md) | [Part 6: Building Production Systems →](part-06-production-systems.md)
+[← Part 7: Testing Philosophy & Evolution](part-07-testing-philosophy.md) | [Index](INDEX.md) | [Part 9: Building Production Systems →](part-09-production-systems.md)
 
 ---
 

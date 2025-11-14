@@ -131,6 +131,74 @@ When writing Java code examples, follow these formatting conventions strictly:
      ).flatMap(this::validateAndCheckStatus);
      ```
 
+5. **Lambda complexity rules**
+   - Lambdas in `map`, `flatMap`, `recover`, `filter` must be minimal
+   - Allowed: method references, simple parameter forwarding, constructor references
+   - Forbidden: conditionals, try-catch, multi-statement blocks
+   - Example:
+     ```java
+     // DO: Extract to named method
+     .recover(this::recoverExpectedErrors)
+
+     private Promise<Data> recoverExpectedErrors(Cause cause) {
+         return switch (cause) {
+             case NotFound ignored, Timeout ignored -> useDefault();
+             default -> cause.promise();
+         };
+     }
+
+     // DON'T: instanceof chain in lambda
+     .recover(cause -> {
+         if (cause instanceof NotFound || cause instanceof Timeout) {
+             return useDefault();
+         }
+         return cause.promise();
+     })
+     ```
+
+6. **Use switch expressions for type matching**
+   - Replace `if (instanceof)` chains with pattern matching switch
+   - Use multi-case matching: `case A ignored, B ignored ->`
+   - Example:
+     ```java
+     // DO
+     private Promise<User> recoverNetworkError(Cause cause) {
+         return switch (cause) {
+             case NetworkError.Timeout ignored -> TIMEOUT.promise();
+             case NetworkError.Connection ignored -> UNREACHABLE.promise();
+             default -> cause.promise();
+         };
+     }
+
+     // DON'T
+     private Promise<User> recoverNetworkError(Cause cause) {
+         if (cause instanceof NetworkError.Timeout) {
+             return TIMEOUT.promise();
+         }
+         if (cause instanceof NetworkError.Connection) {
+             return UNREACHABLE.promise();
+         }
+         return cause.promise();
+     }
+     ```
+
+7. **Extract error constants**
+   - Define Cause instances as static final constants
+   - Never construct inline with fixed strings
+   - Example:
+     ```java
+     // DO
+     private static final Cause TIMEOUT = new ServiceUnavailable("User service timed out");
+     private static final Cause UNREACHABLE = new ServiceUnavailable("User service unreachable");
+
+     // DON'T
+     return switch (cause) {
+         case NetworkError.Timeout ignored ->
+             new ServiceUnavailable("Timed out").promise();
+         default -> cause.promise();
+     };
+     ```
+
 ---
 
 # Pragmatica Lite Core 0.8.3 API Reference

@@ -155,9 +155,9 @@ public User findUser(String id) throws UserNotFoundException {
 ```java
 public Promise<User> findUser(UserId id) {
     return repository.findById(id)  // Returns Promise<Option<User>>
-        .flatMap(opt -> opt.async(UserNotFound.cause(id)));
+        .flatMap(opt -> opt.async(USER_NOT_FOUND)); // Replace missing value with corresponding business error
 }
-// Compiler forces caller to handle failure case
+// Compiler forces caller to handle the failure case
 ```
 
 **Win:** Failures are type-safe. No hidden exceptions. Async I/O explicit in return type.
@@ -185,14 +185,14 @@ void testEmailValidation() {
 @Test
 void email_rejectsInvalidFormat() {
     Email.email("invalid")
-        .onSuccess(Assertions::fail);  // Fail if unexpectedly succeeds
+         .onSuccess(Assertions::fail);  // Fail if unexpectedly succeeds
 }
 
 @Test
 void email_acceptsValidFormat() {
     Email.email("user@example.com")
-        .onFailure(Assertions::fail)  // Fail if unexpectedly fails
-        .onSuccess(email -> assertEquals("user@example.com", email.value()));
+         .onFailure(Assertions::fail)  // Fail if unexpectedly fails
+         .onSuccess(email -> assertEquals("user@example.com", email.value()));
 }
 ```
 
@@ -231,7 +231,8 @@ void email_acceptsValidFormat() {
 ### Changelog & Versioning
 
 - **[CHANGELOG.md](CHANGELOG.md)** - Version history following [Keep a Changelog](https://keepachangelog.com/)
-  - Current version: 1.8.2
+  - Current version: 2.0.0 (2024-11-13)
+  - Major release: Thread safety, concurrency, and 9-part series restructuring
   - Semantic versioning for documentation releases
 
 ## 🔧 For AI Collaboration
@@ -291,11 +292,11 @@ coding-technology/
 ├── examples/                    # Java code examples
 │   └── [Maven projects demonstrating patterns]
 ├── sources/                     # Research materials
-│   ├── articles/               # Reference articles
-│   ├── code/                   # Code snippets
-│   └── patterns/               # Pattern documentation
+│   ├── articles/                # Reference articles
+│   ├── code/                    # Code snippets
+│   └── patterns/                # Pattern documentation
 ├── templates/                   # Reusable templates
-└── PL_IMPROVEMENTS.md          # Pragmatica Lite enhancement backlog
+└── PL_IMPROVEMENTS.md           # Pragmatica Lite enhancement backlog
 ```
 
 ## 🤝 Contributing

@@ -885,11 +885,13 @@ The basic examples above validate single fields independently. Real applications
 public record DateRange(LocalDate start, LocalDate end) {
     // private DateRange {}  // Not yet supported in Java
 
+    private static final Cause START_REQUIRED = Causes.cause("Start date required");
+    private static final Cause END_REQUIRED = Causes.cause("End date required");
     private static final Fn1<Cause, LocalDate> END_BEFORE_START = Causes.forOneValue("End date must be after start date: {}");
 
     public static Result<DateRange> dateRange(LocalDate start, LocalDate end) {
-        return Verify.ensure(Causes.cause("Start date required"), start, Verify.Is::notNull)
-                     .flatMap(_ -> Verify.ensure(Causes.cause("End date required"), end, Verify.Is::notNull))
+        return Verify.ensure(START_REQUIRED, start, Verify.Is::notNull)
+                     .flatMap(_ -> Verify.ensure(END_REQUIRED, end, Verify.Is::notNull))
                      .flatMap(_ -> Verify.ensure(END_BEFORE_START, end, isAfter(start)))
                      .map(_ -> new DateRange(start, end));
     }
@@ -1133,10 +1135,14 @@ Verify.ensure(shouldBeEmpty, Verify.Is::none)
 **Combining multiple checks:**
 ```java
 // Using Verify.combine for composite validation
+private static final Cause TOO_SHORT = Causes.cause("Password must be at least 8 characters");
+private static final Cause NO_UPPERCASE = Causes.cause("Password must contain uppercase letter");
+private static final Cause NO_DIGIT = Causes.cause("Password must contain digit");
+
 private static final Fn1<Result<String>, String> PASSWORD_CHECK = Verify.combine(
-    Verify.ensureFn(Causes.cause("Too short"), Verify.Is::lenBetween, 8, 128),
-    Verify.ensureFn(Causes.cause("No uppercase"), Verify.Is::matches, ".*[A-Z].*"),
-    Verify.ensureFn(Causes.cause("No digit"), Verify.Is::matches, ".*[0-9].*")
+    Verify.ensureFn(TOO_SHORT, Verify.Is::lenBetween, 8, 128),
+    Verify.ensureFn(NO_UPPERCASE, Verify.Is::matches, ".*[A-Z].*"),
+    Verify.ensureFn(NO_DIGIT, Verify.Is::matches, ".*[0-9].*")
 );
 
 public static Result<Password> password(String raw) {
@@ -1221,17 +1227,21 @@ public record UserId(UUID value) {
 }
 
 public record Age(int value) {
+    private static final Cause INVALID_RANGE = Causes.cause("Age must be 0-150");
+
     public static Result<Age> age(String raw) {
         return Number.parseInt(raw)
-                     .flatMap(Verify.ensureFn(Causes.cause("Age must be 0-150"), Verify.Is::between, 0, 150))
+                     .flatMap(Verify.ensureFn(INVALID_RANGE, Verify.Is::between, 0, 150))
                      .map(Age::new);
     }
 }
 
 public record BirthDate(LocalDate value) {
+    private static final Cause FUTURE_DATE = Causes.cause("Birth date cannot be in the future");
+
     public static Result<BirthDate> birthDate(String raw) {
         return DateTime.parseLocalDate(raw)
-                       .flatMap(Verify.ensureFn(Causes.cause("Birth date in future"), Verify.Is::lessThanOrEqualTo, LocalDate.now()))
+                       .flatMap(Verify.ensureFn(FUTURE_DATE, Verify.Is::lessThanOrEqualTo, LocalDate.now()))
                        .map(BirthDate::new);
     }
 }
@@ -2065,10 +2075,10 @@ public record Email(String value) {
     // DO: One clear responsibility
     public static Result<Email> email(String raw) {
         return Verify.ensure(raw, Verify.Is::notNull)
-            .map(String::trim)
-            .map(String::toLowerCase)
-            .flatMap(Verify.ensureFn(INVALID_EMAIL, Verify.Is::matches, EMAIL_PATTERN))
-            .map(Email::new);
+                     .map(String::trim)
+                     .map(String::toLowerCase)
+                     .flatMap(Verify.ensureFn(INVALID_EMAIL, Verify.Is::matches, EMAIL_PATTERN))
+                     .map(Email::new);
     }
 }
 ```
@@ -2112,16 +2122,14 @@ public interface ProcessOrder {
         Result<Response> apply(Payment payment); 
     }
 
-    static ProcessOrder processOrder(
-        ValidateInput validate,
-        ReserveInventory reserve,
-        ProcessPayment processPayment,
-        ConfirmOrder confirm
-    ) {
-        return request -> validate.apply(request)     // Step 1
-                    .flatMap(reserve::apply)          // Step 2
-                    .flatMap(processPayment::apply)   // Step 3
-                    .flatMap(confirm::apply);         // Step 4
+    static ProcessOrder processOrder(ValidateInput validate, 
+                                     ReserveInventory reserve, 
+                                     ProcessPayment processPayment, 
+                                     ConfirmOrder confirm) {
+        return request -> validate.apply(request)                 // Step 1
+                                  .flatMap(reserve::apply)        // Step 2
+                                  .flatMap(processPayment::apply) // Step 3
+                                  .flatMap(confirm::apply);       // Step 4
     }
 }
 ```
@@ -2131,11 +2139,11 @@ Four steps, each a single-method interface. The `execute()` body reads top-to-bo
 Async example (same structure, different types):
 ```java
 public Promise<Response> execute(Request request) {
-    return ValidateInput.validate(request)  // returns Result<ValidInput>
-        .async()                            // lift to Promise<ValidInput>
-        .flatMap(reserve::apply)            // returns Promise<Reservation>
-        .flatMap(processPayment::apply)     // returns Promise<Payment>
-        .flatMap(confirm::apply);           // returns Promise<Response>
+    return ValidateInput.validate(request)              // returns Result<ValidInput>
+                        .async()                        // lift to Promise<ValidInput>
+                        .flatMap(reserve::apply)        // returns Promise<Reservation>
+                        .flatMap(processPayment::apply) // returns Promise<Payment>
+                        .flatMap(confirm::apply);       // returns Promise<Response>
 }
 ```
 
@@ -2145,24 +2153,22 @@ Validation is synchronous (returns `Result`), so we lift it to `Promise` using `
 
 **When to extract sub-sequencers:**
 
-If a step grows complex internally, extract it to its own interface with a nested structure. Suppose `processPayment` actually needs to: authorize card → capture funds → record transaction. That's three dependent steps - a Sequencer. Extract:
+As soon as you need more than one pattern to express business logic, that other pattern
+should be extracted into own (step) method. If method continues to grow and exceeds one pattern,
+method should be moved into a dedicated interface.
+Suppose `processPayment` actually needs to: authorize card → capture funds → record transaction. That's three dependent steps - a Sequencer. Extract:
 
 ```java
 // Original step interface
 interface ProcessPayment {
     Promise<Payment> apply(Reservation reservation);
-}
 
-// Implementation delegates to a sub-sequencer
-class CreditCardPaymentProcessor implements ProcessPayment {
-    private final AuthorizeCard authorizeCard;
-    private final CaptureFunds captureFunds;
-    private final RecordTransaction recordTransaction;
-
-    public Promise<Payment> apply(Reservation reservation) {
-        return authorizeCard.apply(reservation)
-            .flatMap(captureFunds::apply)
-            .flatMap(recordTransaction::apply);
+    static ProcessPayment processPayment(AuthorizeCard authorizeCard,
+                                         CaptureFunds captureFunds,
+                                         RecordTransaction recordTransaction) {
+        return reservation -> authorizeCard.apply(reservation)
+                                           .flatMap(captureFunds::apply)
+                                           .flatMap(recordTransaction::apply);
     }
 }
 ```

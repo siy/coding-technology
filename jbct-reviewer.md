@@ -337,6 +337,71 @@ If it doesn't flow naturally, abstraction levels likely mixed.
 - [ ] Sequencer chains maintain same abstraction level (all Zone 2)
 - [ ] Code passes stepdown rule test (reads naturally with "to")
 
+### Lambda Complexity Checks
+
+Lambdas passed to `map`, `flatMap`, `recover`, `filter` must be minimal:
+
+**Allowed:**
+- [ ] Method references: `Email::new`, `this::processUser`, `User::id`
+- [ ] Simple parameter forwarding: `user -> validate(requiredRole, user)`
+- [ ] Constructor references for error mapping: `RepositoryError.DatabaseFailure::new`
+
+**Forbidden - Flag these violations:**
+- [ ] No conditionals (`if`, ternary, `switch`) in lambdas
+- [ ] No try-catch blocks in lambdas
+- [ ] No multi-statement blocks in lambdas
+- [ ] No object construction beyond simple factory calls
+- [ ] No nested maps/flatMaps
+
+❌ **instanceof chains in lambdas:**
+```java
+// BAD
+.recover(cause -> {
+    if (cause instanceof NotFound || cause instanceof Timeout) {
+        return useDefault();
+    }
+    return cause.promise();
+})
+
+// GOOD: Extract with switch expression
+.recover(this::recoverExpectedErrors)
+
+private Promise<T> recoverExpectedErrors(Cause cause) {
+    return switch (cause) {
+        case NotFound ignored, Timeout ignored -> useDefault();
+        default -> cause.promise();
+    };
+}
+```
+
+❌ **Inline Cause construction with fixed strings:**
+```java
+// BAD
+private Promise<User> recoverNetworkError(Cause cause) {
+    return switch (cause) {
+        case NetworkError.Timeout ignored ->
+            new ServiceUnavailable("Timed out").promise();
+        default -> cause.promise();
+    };
+}
+
+// GOOD: Extract as constants
+private static final Cause TIMEOUT = new ServiceUnavailable("User service timed out");
+
+private Promise<User> recoverNetworkError(Cause cause) {
+    return switch (cause) {
+        case NetworkError.Timeout ignored -> TIMEOUT.promise();
+        default -> cause.promise();
+    };
+}
+```
+
+**Review Rules:**
+- [ ] Type matching uses switch expressions, not instanceof chains
+- [ ] Multi-case pattern matching uses comma-separated cases: `case A ignored, B ignored ->`
+- [ ] Error Cause instances are static final constants, not inline constructions
+- [ ] Complex `.recover()` logic extracted to named recovery methods
+
 ### 5. Use Case Factories Return Lambdas
 
 **CRITICAL:** Use case and step factories must return lambdas directly, NEVER nested record implementations:

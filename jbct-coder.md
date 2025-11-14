@@ -210,24 +210,84 @@ Every function implements **exactly one** pattern:
 
 ### 5. Single Level of Abstraction
 
-**Lambdas may contain ONLY**:
-- Method references: `Email::new`, `this::processUser`, `HashedPassword::new`
-- Simple parameter forwarding: `param -> someMethod(outerParam, param)`
-- Simple constructors with captured parameters: `hashed -> new ValidCredentials(email, hashed)` (only when mixing lambda parameters with outer scope variables)
+Lambdas passed to monadic operations (`map`, `flatMap`, `recover`, `filter`) must be minimal. Complex logic belongs in named methods.
 
-**Use constructor references when all parameters come from lambda:**
-- DO: `.map(Email::new)` instead of `.map(value -> new Email(value))`
-- DO: `.map(Pair::new)` instead of `.map((a, b) -> new Pair(a, b))`
+**Allowed in lambdas**:
+- Method references: `Email::new`, `this::processUser`, `User::id`
+- Simple parameter forwarding: `user -> validate(requiredRole, user)`
+- Constructor references for error mapping: `RepositoryError.DatabaseFailure::new`
 
 **Forbidden in lambdas**:
-- Ternaries (use `filter()` or extract to named function)
-- if/switch statements
+- Conditionals (`if`, ternary, `switch`)
+- Try-catch blocks
+- Multi-statement blocks
+- Object construction beyond simple factory calls
 - Nested maps/flatMaps
-- Complex object construction (multiple fields, logic, nested objects)
 - Stream processing
-- Any logic beyond simple forwarding
 
-**Extract complex logic to named functions.**
+**Use switch expressions for type matching**:
+
+Extract type matching to named methods with pattern matching switch:
+
+```java
+// DON'T: instanceof chain in lambda
+.recover(cause -> {
+    if (cause instanceof NotFound) {
+        return useDefault();
+    }
+    if (cause instanceof Timeout) {
+        return useDefault();
+    }
+    return cause.promise();
+})
+
+// DO: Extract to named method with switch expression
+.recover(this::recoverExpectedErrors)
+
+private Promise<Data> recoverExpectedErrors(Cause cause) {
+    return switch (cause) {
+        case NotFound ignored, Timeout ignored -> useDefault();
+        default -> cause.promise();
+    };
+}
+```
+
+**Multi-case pattern matching**: Use comma-separated cases for same recovery strategy:
+
+```java
+private Promise<Theme> recoverWithDefault(Cause cause) {
+    return switch (cause) {
+        case NotFound ignored, Timeout ignored, ServiceUnavailable ignored ->
+            Promise.success(Theme.DEFAULT);
+        default -> cause.promise();
+    };
+}
+```
+
+**Extract error constants**:
+
+Don't construct `Cause` instances inline with fixed messages:
+
+```java
+// DON'T: Inline construction
+private Promise<User> recoverNetworkError(Cause cause) {
+    return switch (cause) {
+        case NetworkError.Timeout ignored ->
+            new ServiceUnavailable("Timed out").promise();
+        default -> cause.promise();
+    };
+}
+
+// DO: Extract as constants
+private static final Cause TIMEOUT = new ServiceUnavailable("User service timed out");
+
+private Promise<User> recoverNetworkError(Cause cause) {
+    return switch (cause) {
+        case NetworkError.Timeout ignored -> TIMEOUT.promise();
+        default -> cause.promise();
+    };
+}
+```
 
 #### Zone-Based Abstraction Framework
 

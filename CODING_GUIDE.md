@@ -263,7 +263,7 @@ public int add(int a, int b) {
 ```java
 public Promise<Unit> saveUser(User user) {
     return database.save(user)  // Side effect: modifies external state
-        .onSuccess(__ -> logger.info("User saved"));  // Side effect: writes to log
+                   .onSuccess(_ -> logger.info("User saved"));  // Side effect: writes to log
 }
 ```
 
@@ -292,10 +292,10 @@ Functional composition:
 ```java
 public Result<String> processUser(String email) {
     return Result.success(email)
-        .map(String::trim)
-        .map(String::toLowerCase)
-        .flatMap(this::validate)
-        .flatMap(this::save);
+                 .map(String::trim)
+                 .map(String::toLowerCase)
+                 .flatMap(this::validate)
+                 .flatMap(this::save);
 }
 ```
 
@@ -337,9 +337,9 @@ if (email != null) {
 
 // Smart Wrapper: WRAPPER checks, WRAPPER decides
 Result<String> result = Result.success(email)
-    .map(String::trim)          // "Trim, if value is present"
-    .flatMap(this::validate)    // "Validate, if trim succeeded"
-    .flatMap(this::save);       // "Save, if validate succeeded"
+                              .map(String::trim)       // "Trim, if value is present"
+                              .flatMap(this::validate) // "Validate, if trim succeeded"
+                              .flatMap(this::save);    // "Save, if validate succeeded"
 ```
 
 You're saying: "Here's what to do with the value... **if** you have one and **when** you're ready."
@@ -387,8 +387,8 @@ if (email != null) {
 With Smart Wrappers, **you describe transformations**, the wrapper handles control flow:
 ```java
 Result.success(email)
-    .flatMap(this::validate)
-    .flatMap(this::save);
+      .flatMap(this::validate)
+      .flatMap(this::save);
 // "Validate, then save - but only if each step succeeds"
 ```
 
@@ -457,11 +457,11 @@ Think of code as a series of **pipes** through which **values** flow:
 ```java
 // Water (value) flows through pipes (functions)
 public Result<Response> execute(Request request) {
-    return ValidRequest.validRequest(request)     // Pipe 1: validation
-        .flatMap(this::checkPermissions)      // Pipe 2: authorization
-        .flatMap(this::processRequest)        // Pipe 3: business logic
-        .flatMap(this::saveResult)            // Pipe 4: persistence
-        .map(this::buildResponse);            // Pipe 5: formatting
+    return ValidRequest.validRequest(request)           // Pipe 1: validation
+                       .flatMap(this::checkPermissions) // Pipe 2: authorization
+                       .flatMap(this::processRequest)   // Pipe 3: business logic
+                       .flatMap(this::saveResult)       // Pipe 4: persistence
+                       .map(this::buildResponse);       // Pipe 5: formatting
 }
 ```
 
@@ -562,8 +562,8 @@ public class UserController {
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody RegisterUser.Request raw) {
         return registerUser.execute(raw)     // Validation happens inside use case
-            .fold(this::errorResponse,       // Explicit error handling
-                  this::successResponse);
+                           .fold(this::errorResponse,     // Explicit error handling
+                                 this::successResponse);
     }
 }
 ```
@@ -640,7 +640,9 @@ import org.pragmatica.lang.Functions.Fn2;
 - `Verify.ensure(cause, value, predicate)` - Validate with error
 - `Verify.ensureFn(cause, predicate, params...)` - Validate with params
 - `Causes.cause("message")` - Create fixed cause
-- `Causes.forValue("message: %s")` - Create cause factory
+- `Causes.forOneValue("message: {}")` - Create cause factory for one context value
+- `Causes.forTwoValues("message: {} {}")` - Create cause factory for two context values
+- `Causes.forThreeValues("message: {} {} {}")` - Create cause factory for three context values
 - `Number.parseInt(raw)`, `DateTime.parseLocalDate(raw)` - Safe parsing
 
 ---
@@ -653,9 +655,11 @@ Use this when the operation is pure computation with no possibility of failure o
 public record FullName(String value) {
     public String initials() {  // returns String (T)
         return value.chars()
-            .filter(Character::isUpperCase)
-            .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append)
-            .toString();
+                    .filter(Character::isUpperCase)
+                    .collect(StringBuilder::new, 
+                             StringBuilder::appendCodePoint, 
+                             StringBuilder::append)
+                    .toString();
     }
 }
 ```
@@ -678,13 +682,13 @@ Use this when an operation might fail for business or validation reasons. Parsin
 ```java
 public record Email(String value) {
     private static final Pattern EMAIL_PATTERN = Pattern.compile("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$");
-    private static final Fn1<Cause, String> INVALID_EMAIL = Causes.forValue("Invalid email format: {}");
+    private static final Fn1<Cause, String> INVALID_EMAIL = Causes.forOneValue("Invalid email format: {}");
 
     public static Result<Email> email(String raw) {
         return Verify.ensure(raw, Verify.Is::notNull)
-            .map(String::trim)
-            .flatMap(Verify.ensureFn(INVALID_EMAIL, Verify.Is::matches, EMAIL_PATTERN))
-            .map(Email::new);
+                     .map(String::trim)
+                     .flatMap(Verify.ensureFn(INVALID_EMAIL, Verify.Is::matches, EMAIL_PATTERN))
+                     .map(Email::new);
     }
 }
 ```
@@ -734,15 +738,20 @@ When an operation succeeds but doesn't produce a meaningful value, use `Result<U
 public static Result<Unit> checkInventory(Product product, Quantity requested) {
     return product.availableQuantity().isGreaterThanOrEqual(requested)
         ? Result.unitResult()
-        : InsufficientInventory.cause(product.id(), requested).result();
+        : INSUFFICIENT_INVENTORY.apply(product.id(), requested).result();
 }
 
 // DO: Use Promise<Unit> for async operations with no return value
 public Promise<Unit> sendNotification(UserId userId, Message message) {
-    return Promise.lift(
-        NotificationError.SendFailure::cause,
-        () -> notificationService.send(userId, message)
-    ).mapToUnit();
+    return Promise.lift(NotificationError.SendFailure::cause,
+                        () -> notificationService.send(userId, message))
+                  .mapToUnit();
+    // Alternatively, use Promise.lift2():
+    // return Promise.lift2(NotificationError.SendFailure::cause, 
+    //                      notificationService::send,
+    //                      userId, 
+    //                      message)
+    //               .mapToUnit();
 }
 
 // DON'T: Never use Void - it has no instances and doesn't compose
@@ -753,12 +762,12 @@ Promise<Void> sendNotification(...) { }  // ❌ FORBIDDEN
 **Why Unit, not Void:**
 - `Void` has no instances - you cannot create a value of type `Void` (it's an uninhabited type)
 - `Unit` is a singleton type with exactly one instance - it represents "successful computation with no meaningful return value"
-- Technically, `Unit` is an empty record (a record with no fields), which by definition has only one possible value
+- Technically, `Unit` is an representation of empty set or a record with no fields, which by definition has only one possible value
 - `Unit` composes naturally with monadic operations (map, flatMap, fold)
 - `Unit` makes "no meaningful value" explicit in the type system
 - Use `Result.unitResult()` or `Promise.unitPromise()` for operations that succeed without producing data
 
-**Why exactly four?**
+**Why exactly four return types?**
 
 These four types form a complete basis for composition. You can lift "up" when needed (`Option` to `Result` to `Promise`), but you never nest the same concern twice (`Promise<Result<T>>` is forbidden). Each type represents one orthogonal concern:
 - Synchronous vs. asynchronous (now vs. later)
@@ -810,13 +819,13 @@ Parse-don't-validate approach:
 // DO: Validation IS construction
 public record Email(String value) {
     private static final Pattern EMAIL_PATTERN = Pattern.compile("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$");
-    private static final Fn1<Cause, String> INVALID_EMAIL = Causes.forValue("Invalid email format: {}");
+    private static final Fn1<Cause, String> INVALID_EMAIL = Causes.forOneValue("Invalid email format: {}");
 
     public static Result<Email> email(String raw) {
         return Verify.ensure(raw, Verify.Is::notNull)
-            .map(String::trim)
-            .flatMap(Verify.ensureFn(INVALID_EMAIL, Verify.Is::matches, EMAIL_PATTERN))
-            .map(Email::new);
+                     .map(String::trim)
+                     .flatMap(Verify.ensureFn(INVALID_EMAIL, Verify.Is::matches, EMAIL_PATTERN))
+                     .map(Email::new);
     }
 }
 
@@ -876,14 +885,13 @@ The basic examples above validate single fields independently. Real applications
 public record DateRange(LocalDate start, LocalDate end) {
     // private DateRange {}  // Not yet supported in Java
 
-    private static final Fn1<Cause, LocalDate> END_BEFORE_START =
-        date -> Causes.cause("End date must be after start date: " + date);
+    private static final Fn1<Cause, LocalDate> END_BEFORE_START = Causes.forOneValue("End date must be after start date: {}");
 
     public static Result<DateRange> dateRange(LocalDate start, LocalDate end) {
         return Verify.ensure(Causes.cause("Start date required"), start, Verify.Is::notNull)
-            .flatMap(_ -> Verify.ensure(Causes.cause("End date required"), end, Verify.Is::notNull))
-            .flatMap(_ -> Verify.ensure(END_BEFORE_START, end, isAfter(start)))
-            .map(_ -> new DateRange(start, end));
+                     .flatMap(_ -> Verify.ensure(Causes.cause("End date required"), end, Verify.Is::notNull))
+                     .flatMap(_ -> Verify.ensure(END_BEFORE_START, end, isAfter(start)))
+                     .map(_ -> new DateRange(start, end));
     }
 
     private static Predicate<LocalDate> isAfter(LocalDate start) {
@@ -900,14 +908,16 @@ public record ValidCredentials(Username username, Password password) {
     // private ValidCredentials {}  // Not yet supported in Java
 
     private static final Result<ValidCredentials> PASSWORD_CONTAINS_USERNAME =
-        Result.failure(Causes.cause("Password must not contain username"));
+        Causes.cause("Password must not contain username").result();
 
     public static Result<ValidCredentials> validCredentials(String usernameRaw, String passwordRaw) {
+        // Parse components then call factory method to build instance
         return Result.all(Username.username(usernameRaw),
                           Password.password(passwordRaw))
                      .flatMap(ValidCredentials::validCredentials);
     }
 
+    // Factory method for valid components performs cross-component validation
     public static Result<ValidCredentials> validCredentials(Username username, Password password) {
         return password.contains(username)
             ? PASSWORD_CONTAINS_USERNAME
@@ -923,13 +933,12 @@ public record ValidCredentials(Username username, Password password) {
 public record ValidOrder(OrderId id, Money total, List<LineItem> items) {
     // private ValidOrder {}  // Not yet supported in Java
 
-    private static final Fn1<Cause, Money> TOTAL_MISMATCH =
-        actual -> Causes.cause("Order total does not match line items. Expected: " + actual);
+    private static final Fn1<Cause, Money> TOTAL_MISMATCH = Causes.forOneValue("Order total does not match line items. Expected: {}");
 
     public static Result<ValidOrder> validOrder(OrderId id, Money total, List<LineItem> items) {
         Money calculated = items.stream()
-            .map(LineItem::subtotal)
-            .reduce(Money.ZERO, Money::add);
+                                .map(LineItem::subtotal)
+                                .reduce(Money.ZERO, Money::add);
 
         return calculated.equals(total)
             ? Result.success(new ValidOrder(id, total, items))
@@ -945,9 +954,9 @@ public record ValidOrder(OrderId id, Money total, List<LineItem> items) {
 public record ValidRegistration(Email email, Password password, Age age) {
     // private ValidRegistration {}  // Not yet supported in Java
 
-    public static Result<ValidRegistration> validate(String emailRaw,
-                                                      String passwordRaw,
-                                                      String ageRaw) {
+    public static Result<ValidRegistration> validRegistration(String emailRaw,
+                                                              String passwordRaw,
+                                                              String ageRaw) {
         return Result.all(Email.email(emailRaw),
                           Password.password(passwordRaw),
                           Age.age(ageRaw))
@@ -998,14 +1007,14 @@ public ResponseEntity<?> register(@Valid @RequestBody RegistrationRequest dto) {
     // Add bridge layer that converts DTO → use case request
     var request = new RegisterUser.Request(dto.email(), dto.password());
     return registerUser.execute(request)
-        .fold(this::errorResponse, this::successResponse);
+                       .fold(this::errorResponse, this::successResponse);
 }
 
 // AFTER: Fully migrated - use case request directly
 @PostMapping("/register")
 public ResponseEntity<?> register(@RequestBody RegisterUser.Request raw) {
     return registerUser.execute(raw)     // Validation happens inside use case
-        .fold(this::errorResponse, this::successResponse);
+                       .fold(this::errorResponse, this::successResponse);
 }
 ```
 
@@ -1042,10 +1051,9 @@ public class RegistrationService {
     public User register(String email, String password) {
         return Result.all(Email.email(email), Password.password(password))
                      .flatMap(useCase::execute)
-                     .fold(
-                         cause -> throw new ValidationException(cause.message()),
-                         user -> user
-                     );
+                     // Still throws exception for compatibility with existing code
+                     .fold(cause -> throw new ValidationException(cause.message()),
+                           user -> user);
     }
 }
 ```
@@ -1056,9 +1064,9 @@ public class RegistrationService {
 @PostMapping("/register")
 public ResponseEntity<?> register(@RequestBody RegistrationRequest request) {
     return ValidRequest.validRequest(request)
-        .async()
-        .flatMap(useCase::execute)
-        .await()
+        .async() // Transition into asynchronous code
+        .flatMap(useCase::execute) // Use case does I/O -> uses Promise
+        .await() // Return to synchronous code
         .fold(this::errorResponse, this::successResponse);
 }
 ```
@@ -1202,32 +1210,29 @@ Text.parseBoolean(raw)             // Result<Boolean>
 **Example value object using parse utilities:**
 ```java
 public record UserId(UUID value) {
-    private static final Fn1<Cause, String> INVALID_ID =
-        Causes.forValue("Invalid user ID: {}");
+    private static final Fn1<Cause, String> INVALID_ID = Causes.forOneValue("Invalid user ID: {}");
 
     public static Result<UserId> userId(String raw) {
         return Verify.ensure(raw, Verify.Is::notBlank)
-            .flatMap(Network::parseUUID)
-            .mapFailure(_ -> INVALID_ID.apply(raw))
-            .map(UserId::new);
+                     .flatMap(Network::parseUUID)
+                     .mapFailure(_ -> INVALID_ID.apply(raw)) // Convert generic cause into domain-specific one
+                     .map(UserId::new);
     }
 }
 
 public record Age(int value) {
     public static Result<Age> age(String raw) {
         return Number.parseInt(raw)
-            .flatMap(Verify.ensureFn(Causes.cause("Age must be 0-150"),
-                                     Verify.Is::between, 0, 150))
-            .map(Age::new);
+                     .flatMap(Verify.ensureFn(Causes.cause("Age must be 0-150"), Verify.Is::between, 0, 150))
+                     .map(Age::new);
     }
 }
 
 public record BirthDate(LocalDate value) {
     public static Result<BirthDate> birthDate(String raw) {
         return DateTime.parseLocalDate(raw)
-            .flatMap(Verify.ensureFn(Causes.cause("Birth date in future"),
-                                     Verify.Is::lessThanOrEqualTo, LocalDate.now()))
-            .map(BirthDate::new);
+                       .flatMap(Verify.ensureFn(Causes.cause("Birth date in future"), Verify.Is::lessThanOrEqualTo, LocalDate.now()))
+                       .map(BirthDate::new);
     }
 }
 ```
@@ -1235,7 +1240,7 @@ public record BirthDate(LocalDate value) {
 **Why these utilities matter:**
 - **Discoverability:** Standard utilities are easier to find than custom validation code
 - **Consistency:** Same validation predicates used across all value objects
-- **Readability:** `Verify.Is::notBlank` reads better than `s -> !s.isBlank()`
+- **High Level:** `Verify.Is::notBlank` tells "what", not "how", unlike `s -> !s.isBlank()`
 - **Correctness:** Pre-tested utilities eliminate subtle bugs in custom predicates
 - **AI-friendly:** Deterministic API surface for code generation
 
@@ -1303,7 +1308,7 @@ public Result<User> loginUser(String emailRaw, String passwordRaw) {
 
 private Result<User> validateAndCheckStatus(Email email, Password password) {
     return checkCredentials(email, password)
-                 .flatMap(this::checkAccountStatus);
+        .flatMap(this::checkAccountStatus);
 }
 
 private Result<User> checkCredentials(Email email, Password password) {
@@ -1390,15 +1395,15 @@ When a failure is acceptable and you have a sensible default:
 // Load user theme, fallback to default if not found
 public Promise<Theme> loadThemeFor(UserId id) {
     return themeRepository.findByUserId(id)
-        .flatMap(opt -> opt.async(ThemeNotFound.cause(id)))
-        .recover(_ -> Promise.success(Theme.DEFAULT));
+                          .flatMap(opt -> opt.async(ThemeNotFound.cause(id)))
+                          .recover(_ -> Promise.success(Theme.DEFAULT));
 }
 
 // Or more concisely
 public Promise<Theme> loadThemeFor(UserId id) {
     return themeRepository.findByUserId(id)
-        .map(opt -> opt.orElse(Theme.DEFAULT))
-        .async();
+                          .map(opt -> opt.orElse(Theme.DEFAULT))
+                          .async();
 }
 ```
 
@@ -1410,10 +1415,10 @@ When primary approach fails, try alternative:
 // Try primary API, fallback to secondary if primary fails
 public Promise<ExchangeRate> fetchRate(Currency from, Currency to) {
     return primaryRateApi.getRate(from, to)
-        .recover(primaryError -> {
-            log.warn("Primary API failed: {}, trying secondary", primaryError.message());
-            return secondaryRateApi.getRate(from, to);
-        });
+                         .recover(primaryError -> {
+                             log.warn("Primary API failed: {}, trying secondary", primaryError.message());
+                             return secondaryRateApi.getRate(from, to);
+                         });
 }
 ```
 
@@ -1423,17 +1428,20 @@ Map low-level errors to domain-appropriate ones:
 
 ```java
 // Map network errors to service unavailable
+private static final Cause TIMEOUT = new ServiceUnavailable("User service timed out");
+private static final Cause UNREACHABLE = new ServiceUnavailable("User service unreachable");
+
 public Promise<User> loadUser(UserId id) {
     return httpClient.get("/users/" + id.value())
-        .recover(cause -> {
-            if (cause instanceof NetworkError.Timeout) {
-                return ServiceUnavailable.cause("User service timed out").promise();
-            }
-            if (cause instanceof NetworkError.Connection) {
-                return ServiceUnavailable.cause("User service unreachable").promise();
-            }
-            return cause.promise();  // Propagate other errors unchanged
-        });
+                     .recover(this::recoverNetworkError);
+}
+
+private Promise<User> recoverNetworkError(Cause cause) {
+    return switch (cause) {
+        case NetworkError.Timeout ignored -> TIMEOUT.promise();
+        case NetworkError.Connection ignored -> UNREACHABLE.promise();
+        default -> cause.promise();
+    };
 }
 ```
 
@@ -1444,11 +1452,10 @@ Continue operation with reduced functionality when non-critical parts fail:
 ```java
 // Load dashboard data, continue even if some sections fail
 public Promise<Dashboard> loadDashboard(UserId id) {
-    return Promise.all(
-        loadProfile(id),
-        loadNotifications(id).recover(_ -> Promise.success(Notifications.EMPTY)),
-        loadActivity(id).recover(_ -> Promise.success(Activity.EMPTY))
-    ).map(Dashboard::new);
+    return Promise.all(loadProfile(id), 
+                       loadNotifications(id).recover(_ -> Promise.success(Notifications.EMPTY)), 
+                       loadActivity(id).recover(_ -> Promise.success(Activity.EMPTY)))
+                  .map(Dashboard::new);
 }
 ```
 
@@ -1460,13 +1467,15 @@ When absence is acceptable but failure is not:
 // Find optional configuration, treat "not found" as empty
 public Promise<Option<Config>> findConfig(ConfigKey key) {
     return configRepository.load(key)
-        .map(Option::some)
-        .recover(cause -> {
-            if (cause instanceof ConfigNotFound) {
-                return Promise.success(Option.none());
-            }
-            return cause.promise();  // Propagate real errors
-        });
+                           .map(Option::some)
+                           .recover(this::recoverConfigNotFound);
+}
+
+private Promise<Option<Config>> recoverConfigNotFound(Cause cause) {
+    return switch (cause) {
+        case ConfigNotFound ignored -> Promise.success(Option.none());
+        default -> cause.promise();
+    };
 }
 ```
 
@@ -1482,12 +1491,12 @@ import static org.pragmatica.lang.io.TimeSpan.timeSpan;
 // Retry transient network failures
 public Promise<Response> callExternalService(Request request) {
     var retry = Retry.create()
-        .attempts(3)
-        .strategy(BackoffStrategy.exponential()
-            .initialDelay(timeSpan(100).millis())
-            .maxDelay(timeSpan(5).seconds())
-            .factor(2.0)
-            .withJitter());
+                     .attempts(3)
+                     .strategy(BackoffStrategy.exponential()
+                                              .initialDelay(timeSpan(100).millis())
+                                              .maxDelay(timeSpan(5).seconds())
+                                              .factor(2.0)
+                                              .withJitter());
 
     return retry.execute(() -> httpClient.post("/api/endpoint", request));
 }
@@ -1498,22 +1507,23 @@ public Promise<Response> callExternalService(Request request) {
 Fail fast when service is degraded (prevents cascading failures):
 
 ```java
-import org.pragmatica.lang.utils.CircuitBreaker;
+  import org.pragmatica.lang.utils.CircuitBreaker;
 
 // Protect against cascade failures
 private final CircuitBreaker breaker = CircuitBreaker.create()
-    .failureThreshold(5)
-    .timeout(timeSpan(30).seconds());
+                                                     .failureThreshold(5)
+                                                     .timeout(timeSpan(30).seconds());
 
 public Promise<Data> fetchFromUnstableService(Query query) {
     return breaker.execute(() -> unstableService.query(query))
-        .recover(cause -> {
-            if (cause instanceof CircuitOpen) {
-                // Circuit open, use cached data
-                return cache.get(query);
-            }
-            return cause.promise();
-        });
+                  .recover(cause -> recoverWithCache(cause, query));
+}
+
+private Promise<Data> recoverWithCache(Cause cause, Query query) {
+    return switch (cause) {
+        case CircuitOpen ignored -> cache.get(query);
+        default -> cause.promise();
+    };
 }
 ```
 
@@ -1522,16 +1532,14 @@ public Promise<Data> fetchFromUnstableService(Query query) {
 ❌ **Silent failure recovery:**
 ```java
 // DON'T: Hide all errors
-operation.recover(_ -> Promise.success(null))  // Where did the error go?
+operation.recover(_ -> Promise.success(Unit.unit()))  // Where did the error go?
 ```
 
 ✅ **Explicit error handling:**
 ```java
-// DO: Log before recovering
-operation.recover(cause -> {
-    log.warn("Operation failed: {}, using fallback", cause.message());
-    return Promise.success(fallbackValue);
-})
+// DO: Trace before recovering
+operation.trace() // Add tracing information to the error.
+         .recover(cause -> loggingAspect(cause, Promise.success(fallbackValue))); // Log and return fallback value
 ```
 
 ❌ **Overly broad recovery:**
@@ -1543,11 +1551,9 @@ operation.recover(_ -> useDefault())  // What about real errors?
 ✅ **Selective recovery:**
 ```java
 // DO: Only recover expected errors
-operation.recover(cause -> {
-    if (cause instanceof NotFound || cause instanceof Timeout) {
-        return useDefault();
-    }
-    return cause.promise();  // Let unexpected errors propagate
+operation.recover(cause -> switch (cause) {
+    case NotFound ignored, Timeout ignored -> useDefault();
+    default -> cause.promise();  // Let unexpected errors propagate
 })
 ```
 
@@ -1612,9 +1618,13 @@ return fetchUser(userId)
     .map(this::buildResponse);
 
 private Promise<User> checkAdminAccess(User user) {
-    return user.isActive() && user.hasPermission("admin")
+    return isActiveAdministrator(user)
         ? Promise.success(user)
         : AccessError.InsufficientPermissions.INSTANCE.promise();
+}
+
+private boolean isActiveAdministrator(User user) {
+    return user.isActive() && user.hasPermission("admin");
 }
 
 private Promise<Dashboard> loadAdminDashboard(User user) {
@@ -1629,8 +1639,8 @@ private Response buildResponse(Dashboard dashboard) {
 
 private List<Alert> filterUrgentAlerts(List<Alert> alerts) {
     return alerts.stream()
-        .filter(Alert::isUrgent)
-        .toList();
+                 .filter(Alert::isUrgent)
+                 .toList();
 }
 ```
 
@@ -1664,9 +1674,9 @@ Your code passes the abstraction test if you can narrate it naturally by adding 
 // Good - reads as a story
 public Promise<Response> execute(Request request) {
     return ValidRequest.validRequest(request)  // To execute, we validate the request
-        .async()
-        .flatMap(this::processPayment)         // then we process payment
-        .flatMap(this::sendConfirmation);      // then we send confirmation
+                       .async()
+                       .flatMap(this::processPayment)         // then we process payment
+                       .flatMap(this::sendConfirmation);      // then we send confirmation
 }
 ```
 
@@ -1750,9 +1760,9 @@ This function starts as a Sequencer (validate → fetch user → fetch sales →
 // DO: One pattern per function
 public Result<Report> generateReport(ReportRequest request) {
     return ValidRequest.validRequest(request)
-        .flatMap(this::fetchReportData)
-        .flatMap(this::computeMetrics)
-        .flatMap(this::formatReport);
+                       .flatMap(this::fetchReportData)
+                       .flatMap(this::computeMetrics)
+                       .flatMap(this::formatReport);
 }
 
 private Result<ReportData> fetchReportData(ValidRequest request) {
@@ -1830,9 +1840,9 @@ Avoid `Option<Result<T>>` - it means "maybe there's a result, and that result mi
 
 ```java
 // Validation: collect multiple field validations
-Result<ValidRequest> validated = Result.all(Email.email(raw.email()),
-                                             Password.password(raw.password()),
-                                             ReferralCode.referralCode(raw.referralCode()))
+Result<ValidRequest> validated = Result.all(Email.email(raw.email()),                                             
+                                            Password.password(raw.password()),
+                                            ReferralCode.referralCode(raw.referralCode()))
                                        .flatMap(ValidRequest::new);
 
 // Async: run independent queries in parallel
@@ -1842,9 +1852,98 @@ Promise<Report> report = Promise.all(userRepo.findById(userId),
                                 .flatMap(this::generateReport);
 ```
 
-If any input fails, `all()` fails immediately (fail-fast for Promise) or collects failures (CompositeCause for Result).
+If any input fails, `all()` collects all values and then collects failures (CompositeCause).
 
 **Why these rules?** They prevent complexity explosion. With exactly four return types and clear composition rules, you can always tell how to combine two functions by looking at their signatures. AI code generation becomes mechanical - given input and output types, there's one obvious way to compose.
+
+#### Lambda Complexity Rules
+
+Lambdas passed to monadic operations (`map`, `flatMap`, `recover`, `filter`) must be minimal. Complex logic belongs in named methods.
+
+**Allowed in lambdas:**
+- Method references: `Email::new`, `this::processUser`, `User::id`
+- Simple parameter forwarding: `user -> validate(requiredRole, user)`
+- Constructor references for error mapping: `RepositoryError.DatabaseFailure::new`
+
+**Forbidden in lambdas:**
+- Conditionals (`if`, ternary, `switch`)
+- Try-catch blocks
+- Multi-statement blocks
+- Object construction beyond simple factory calls
+
+**Use switch expressions for type matching:**
+
+Instead of `if (instanceof)` chains, use pattern matching switch expressions in named methods:
+
+```java
+// DON'T: instanceof chain in lambda
+.recover(cause -> {
+    if (cause instanceof NotFound) {
+        return useDefault();
+    }
+    if (cause instanceof Timeout) {
+        return useDefault();
+    }
+    return cause.promise();
+})
+
+// DO: Extract to named method with switch expression
+.recover(this::recoverExpectedErrors)
+
+private Promise<Data> recoverExpectedErrors(Cause cause) {
+    return switch (cause) {
+        case NotFound ignored, Timeout ignored -> useDefault();
+        default -> cause.promise();
+    };
+}
+```
+
+**Multi-case pattern matching:** When multiple error types require the same recovery strategy, use comma-separated cases:
+
+```java
+private Promise<Theme> recoverWithDefault(Cause cause) {
+    return switch (cause) {
+        case NotFound ignored, Timeout ignored, ServiceUnavailable ignored ->
+            Promise.success(Theme.DEFAULT);
+        default -> cause.promise();
+    };
+}
+```
+
+**Extract error constants:**
+
+Don't construct `Cause` instances inline with fixed messages. Define them as `static final` constants:
+
+```java
+// DON'T: Inline construction with fixed strings
+private Promise<User> recoverNetworkError(Cause cause) {
+    return switch (cause) {
+        case NetworkError.Timeout ignored ->
+            new ServiceUnavailable("User service timed out").promise();
+        case NetworkError.Connection ignored ->
+            new ServiceUnavailable("User service unreachable").promise();
+        default -> cause.promise();
+    };
+}
+
+// DO: Extract as constants
+private static final Cause TIMEOUT = new ServiceUnavailable("User service timed out");
+private static final Cause UNREACHABLE = new ServiceUnavailable("User service unreachable");
+
+private Promise<User> recoverNetworkError(Cause cause) {
+    return switch (cause) {
+        case NetworkError.Timeout ignored -> TIMEOUT.promise();
+        case NetworkError.Connection ignored -> UNREACHABLE.promise();
+        default -> cause.promise();
+    };
+}
+```
+
+**Why these rules:**
+- **Mental Overhead**: Flat composition chains read linearly - no descending into nested logic (+2).
+- **Business/Technical Ratio**: Named methods document intent; anonymous lambdas hide it (+2).
+- **Complexity**: Extracted methods are testable in isolation; buried logic requires testing through container (+2).
+- **Reliability**: Switch expressions provide exhaustiveness checking; instanceof chains don't (+1).
 
 ---
 
@@ -1877,11 +1976,9 @@ public static Result<Unit> checkInventory(Product product, Quantity requested) {
 
 // Data transformation leaf
 public static OrderSummary toSummary(Order order) {
-    return new OrderSummary(
-        order.id(),
-        order.totalAmount(),
-        order.items().size()
-    );
+    return new OrderSummary(order.id(), 
+                            order.totalAmount(), 
+                            order.items().size());
 }
 ```
 
@@ -1899,19 +1996,20 @@ class PostgresUserRepository implements UserRepository {
     private final DataSource dataSource;
 
     public Promise<Option<User>> findByEmail(Email email) {
-        return Promise.lift(
-            e -> RepositoryError.DatabaseFailure.cause(e),
-            () -> {
-                try (var conn = dataSource.getConnection();
-                     var stmt = conn.prepareStatement("SELECT * FROM users WHERE email = ?")) {
+        return Promise.lift(RepositoryError.DatabaseFailure::new, 
+                            () -> queryUserByEmail(email))
+                      .map(Option::option);
+    }
 
-                    stmt.setString(1, email.value());
-                    var rs = stmt.executeQuery();
+    private User queryUserByEmail(Email email) throws SQLException {
+        try (var conn = dataSource.getConnection();
+             var stmt = conn.prepareStatement("SELECT * FROM users WHERE email = ?")) {
 
-                    return rs.next() ? mapUser(rs) : null;
-                }
-            }
-        ).map(Option::option);
+            stmt.setString(1, email.value());
+            var rs = stmt.executeQuery();
+
+            return rs.next() ? mapUser(rs) : null;
+        }
     }
 
     private User mapUser(ResultSet rs) throws SQLException {
@@ -1962,7 +2060,7 @@ DO keep leaves focused:
 ```java
 public record Email(String value) {
     private static final Pattern EMAIL_PATTERN = Pattern.compile("^[a-z0-9+_.-]+@[a-z0-9.-]+$");
-    private static final Fn1<Cause, String> INVALID_EMAIL = Causes.forValue("Invalid email");
+    private static final Fn1<Cause, String> INVALID_EMAIL = Causes.forOneValue("Invalid email {}");
 
     // DO: One clear responsibility
     public static Result<Email> email(String raw) {
@@ -4365,7 +4463,7 @@ interface LoadUserData { ... }   // Appropriately general - "load" is Zone 2
 
 **Why this matters:**
 - **Consistency**: Same verb for same abstraction level across entire codebase
-- **Readability**: Predictable naming patterns reduce cognitive load
+- **Lower Mental Overhead**: Predictable naming patterns reduce cognitive load
 - **AI-friendly**: Clear vocabulary makes code generation more deterministic
 - **Self-documenting**: Function name immediately signals its abstraction level
 
@@ -4653,7 +4751,7 @@ import org.pragmatica.lang.*;
 
 public record Email(String value) {
     private static final Pattern EMAIL_PATTERN = Pattern.compile("^[a-z0-9+_.-]+@[a-z0-9.-]+$");
-    private static final Fn1<Cause, String> INVALID_EMAIL = Causes.forValue("Invalid email format: {}");
+    private static final Fn1<Cause, String> INVALID_EMAIL = Causes.forOneValue("Invalid email format: {}");
 
     public static Result<Email> email(String raw) {
         return Verify.ensure(raw, Verify.Is::notNull)
@@ -4672,9 +4770,9 @@ package com.example.app.domain.shared;
 import org.pragmatica.lang.*;
 
 public record Password(String value) {
-    private static final Fn1<Cause, String> TOO_SHORT = Causes.forValue("Password must be at least 8 characters");
-    private static final Fn1<Cause, String> MISSING_UPPERCASE = Causes.forValue("Password must contain uppercase letter");
-    private static final Fn1<Cause, String> MISSING_DIGIT = Causes.forValue("Password must contain digit");
+    private static final Cause TOO_SHORT = Causes.cause("Password must be at least 8 characters");
+    private static final Cause MISSING_UPPERCASE = Causes.cause("Password must contain uppercase letter");
+    private static final Cause MISSING_DIGIT = Causes.cause("Password must contain digit");
 
     public static Result<Password> password(String raw) {
         return Verify.ensure(raw, Verify.Is::notNull)
@@ -4687,13 +4785,13 @@ public record Password(String value) {
     private static Fn1<Result<String>, String> ensureUppercase() {
         return raw -> raw.chars().anyMatch(Character::isUpperCase)
             ? Result.success(raw)
-            : MISSING_UPPERCASE.apply(raw).result();
+            : MISSING_UPPERCASE.result();
     }
 
     private static Fn1<Result<String>, String> ensureDigit() {
         return raw -> raw.chars().anyMatch(Character::isDigit)
             ? Result.success(raw)
-            : MISSING_DIGIT.apply(raw).result();
+            : MISSING_DIGIT.result();
     }
 
     public int length() {
@@ -4719,8 +4817,8 @@ public record ReferralCode(String value) {
         return switch (raw) {
             case null, "" -> Result.success(Option.none());
             default -> Verify.ensure(raw.trim(), Verify.Is::matches, REFERRAL_PATTERN)
-                .map(ReferralCode::new)
-                .map(Option::some);
+                             .map(ReferralCode::new)
+                             .map(Option::some);
         };
     }
 

@@ -881,16 +881,88 @@ If any input fails, `all()` fails immediately (fail-fast for Promise) or collect
 
 ### Lambda Rules: Keep Composition Clean
 
-Lambdas passed to `map`, `flatMap`, and similar combinators should contain ONLY:
+Lambdas passed to `map`, `flatMap`, `recover`, `filter`, and similar combinators must be minimal. Complex logic belongs in named methods.
+
+**Allowed in lambdas:**
 - **Method references**: `Email::new`, `this::processUser`, `User::id`
-- **Simple parameter forwarding**: `param -> someMethod(outerParam, param)`
-- **Simple constructors**: `hashed -> new ValidCredentials(email, hashed)`
+- **Simple parameter forwarding**: `user -> validate(requiredRole, user)`
+- **Constructor references for error mapping**: `RepositoryError.DatabaseFailure::new`
+
+**Forbidden in lambdas:**
+- Conditionals (`if`, ternary, `switch`)
+- Try-catch blocks
+- Multi-statement blocks
+- Object construction beyond simple factory calls
 
 **Why?** Lambdas are composition points, not implementation locations. Burying logic inside lambdas hides abstraction levels and makes code harder to read and test.
 
-**Forbidden in lambdas:**
+**Use switch expressions for type matching:**
 
-❌ **Ternaries** (violates Single Pattern per Function):
+When recovering from errors, use pattern matching switch expressions in named methods instead of `if (instanceof)` chains:
+
+```java
+// DON'T: instanceof chain in lambda
+.recover(cause -> {
+    if (cause instanceof NotFound) {
+        return useDefault();
+    }
+    if (cause instanceof Timeout) {
+        return useDefault();
+    }
+    return cause.promise();
+})
+
+// DO: Extract to named method with switch expression
+.recover(this::recoverExpectedErrors)
+
+private Promise<Data> recoverExpectedErrors(Cause cause) {
+    return switch (cause) {
+        case NotFound ignored, Timeout ignored -> useDefault();
+        default -> cause.promise();
+    };
+}
+```
+
+**Multi-case pattern matching:** When multiple error types require the same recovery strategy, use comma-separated cases:
+
+```java
+private Promise<Theme> recoverWithDefault(Cause cause) {
+    return switch (cause) {
+        case NotFound ignored, Timeout ignored, ServiceUnavailable ignored ->
+            Promise.success(Theme.DEFAULT);
+        default -> cause.promise();
+    };
+}
+```
+
+**Extract error constants:**
+
+Don't construct `Cause` instances inline with fixed messages. Define them as `static final` constants:
+
+```java
+// DON'T: Inline construction with fixed strings
+private Promise<User> recoverNetworkError(Cause cause) {
+    return switch (cause) {
+        case NetworkError.Timeout ignored ->
+            new ServiceUnavailable("User service timed out").promise();
+        default -> cause.promise();
+    };
+}
+
+// DO: Extract as constants
+private static final Cause TIMEOUT = new ServiceUnavailable("User service timed out");
+
+private Promise<User> recoverNetworkError(Cause cause) {
+    return switch (cause) {
+        case NetworkError.Timeout ignored -> TIMEOUT.promise();
+        default -> cause.promise();
+    };
+}
+```
+
+**Additional anti-patterns:**
+
+❌ **Ternaries in lambdas** (violates Single Pattern per Function):
 ```java
 // DON'T: Ternary in lambda
 .flatMap(user -> user.isPremium()

@@ -167,6 +167,33 @@ private Result<ValidRequest> applyDiscountIfEligible(ValidRequest request) {
 }
 ```
 
+**DON'T use instanceof chains - use switch expressions:**
+```java
+// DON'T: instanceof chain in recover lambda
+return fetchUserProfile(userId)
+    .recover(cause -> {
+        if (cause instanceof NotFound) {
+            return createDefaultProfile(userId);
+        }
+        if (cause instanceof PermissionDenied) {
+            return createGuestProfile(userId);
+        }
+        return cause.promise();
+    });
+
+// DO: Extract to named method with switch expression
+return fetchUserProfile(userId)
+    .recover(this::recoverWithDefaultProfile);
+
+private Promise<Profile> recoverWithDefaultProfile(Cause cause) {
+    return switch (cause) {
+        case NotFound ignored -> createDefaultProfile(userId);
+        case PermissionDenied ignored -> createGuestProfile(userId);
+        default -> cause.promise();
+    };
+}
+```
+
 **DON'T mix Fork-Join inside a Sequencer without extraction:**
 ```java
 // DON'T: Suddenly doing Fork-Join mid-sequence (violates Single Pattern + SLA)

@@ -189,6 +189,61 @@ Promise.all(applyBogo(cart, context),     // mutates context
 
 **See CODING_GUIDE.md** for comprehensive thread safety coverage, including detailed examples and common mistakes.
 
+## Lambda Composition Guidelines
+
+**Rule:** Lambdas passed to monadic operations (`map`, `flatMap`, `recover`, `filter`) must be minimal.
+
+**Allowed:**
+- Method references: `Email::new`, `this::processUser`, `User::id`
+- Parameter forwarding: `user -> validate(requiredRole, user)`
+- Constructor references for error mapping: `RepositoryError.DatabaseFailure::new`
+
+**Forbidden:**
+- Conditionals (`if`, ternary, `switch`)
+- Try-catch blocks
+- Multi-statement blocks
+- Object construction beyond simple factory calls
+
+**Pattern matching:** Use switch expressions in named methods:
+
+```java
+// Extract type matching to named method
+.recover(this::recoverKnownErrors)
+
+private Promise<T> recoverKnownErrors(Cause cause) {
+    return switch (cause) {
+        case NotFound ignored, Timeout ignored -> DEFAULT.promise();
+        default -> cause.promise();
+    };
+}
+```
+
+**Multi-case matching:** Comma-separated for same recovery:
+
+```java
+private Promise<Theme> recoverWithDefault(Cause cause) {
+    return switch (cause) {
+        case NotFound ignored, Timeout ignored, ServiceUnavailable ignored ->
+            Promise.success(Theme.DEFAULT);
+        default -> cause.promise();
+    };
+}
+```
+
+**Error constants:** Define once, reuse everywhere:
+
+```java
+private static final Cause NOT_FOUND = new UserNotFound("User not found");
+private static final Cause TIMEOUT = new ServiceUnavailable("Request timed out");
+
+private Promise<User> recoverNetworkError(Cause cause) {
+    return switch (cause) {
+        case NetworkError.Timeout ignored -> TIMEOUT.promise();
+        default -> cause.promise();
+    };
+}
+```
+
 ## Structural Patterns
 
 ### 1. Leaf Pattern

@@ -224,6 +224,12 @@ Now the top-level chain reads linearly: fetch → check access → load dashboar
 
 ### Forbidden in Lambdas
 
+**Forbidden:**
+- Conditionals (`if`, ternary, `switch`)
+- Try-catch blocks
+- Multi-statement blocks
+- Object construction beyond simple factory calls
+
 **No ternaries** (they are the Condition pattern, violates Single Pattern per Function):
 ```java
 // DON'T: Ternary in lambda (violates Single Pattern per Function)
@@ -254,6 +260,56 @@ private Result<Discount> applyApplicableDiscount(User user) {
 
 // DO: Extract to the named function
 .flatMap(this::applyApplicableDiscount)
+```
+
+**Use switch expressions for type matching:**
+
+When working with errors or type hierarchies, use pattern matching switch expressions in named methods:
+
+```java
+// DON'T: instanceof chain in lambda
+.recover(cause -> {
+    if (cause instanceof NotFound) {
+        return useDefault();
+    }
+    if (cause instanceof Timeout) {
+        return useDefault();
+    }
+    return cause.promise();
+})
+
+// DO: Extract to named method with switch expression
+.recover(this::recoverExpectedErrors)
+
+private Promise<Data> recoverExpectedErrors(Cause cause) {
+    return switch (cause) {
+        case NotFound ignored, Timeout ignored -> useDefault();
+        default -> cause.promise();
+    };
+}
+```
+
+**Extract error constants:**
+
+```java
+// DON'T: Inline construction with fixed strings
+private Promise<User> recoverNetworkError(Cause cause) {
+    return switch (cause) {
+        case NetworkError.Timeout ignored ->
+            new ServiceUnavailable("Timed out").promise();
+        default -> cause.promise();
+    };
+}
+
+// DO: Extract as constants
+private static final Cause TIMEOUT = new ServiceUnavailable("User service timed out");
+
+private Promise<User> recoverNetworkError(Cause cause) {
+    return switch (cause) {
+        case NetworkError.Timeout ignored -> TIMEOUT.promise();
+        default -> cause.promise();
+    };
+}
 ```
 
 ### Why This Matters for AI

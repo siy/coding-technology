@@ -70,13 +70,13 @@ public record Email(String value) {
     // private Email {}  // Not yet supported in Java
 
     private static final Pattern EMAIL_PATTERN = Pattern.compile("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$");
-    private static final Fn1<Cause, String> INVALID_EMAIL = Causes.forValue("Invalid email format: {}");
+    private static final Fn1<Cause, String> INVALID_EMAIL = Causes.forOneValue("Invalid email format: %s");
 
     public static Result<Email> email(String raw) {
         return Verify.ensure(raw, Verify.Is::notNull)
-            .map(String::trim)
-            .flatMap(Verify.ensureFn(INVALID_EMAIL, Verify.Is::matches, EMAIL_PATTERN))
-            .map(Email::new);
+                     .map(String::trim)
+                     .flatMap(Verify.ensureFn(INVALID_EMAIL, Verify.Is::matches, EMAIL_PATTERN))
+                     .map(Email::new);
     }
 }
 
@@ -163,10 +163,10 @@ Factories can normalize input (trim whitespace, lowercase email domains, etc.) a
 ```java
 public static Result<Email> email(String raw) {
     return Verify.ensure(raw, Verify.Is::notNull)
-        .map(String::trim)           // Normalize: remove whitespace
-        .map(String::toLowerCase)    // Normalize: lowercase for comparison
-        .flatMap(Verify.ensureFn(INVALID_EMAIL, Verify.Is::matches, EMAIL_PATTERN))
-        .map(Email::new);
+                 .map(String::trim)           // Normalize: remove whitespace
+                 .map(String::toLowerCase)    // Normalize: lowercase for comparison
+                 .flatMap(Verify.ensureFn(INVALID_EMAIL, Verify.Is::matches, EMAIL_PATTERN))
+                 .map(Email::new);
 }
 ```
 
@@ -284,9 +284,8 @@ Network.parseUUID(raw)            // Result<UUID>
 public record Age(int value) {
     public static Result<Age> age(String raw) {
         return Number.parseInt(raw)
-            .flatMap(Verify.ensureFn(Causes.cause("Age 0-150"),
-                                     Verify.Is::between, 0, 150))
-            .map(Age::new);
+                     .flatMap(Verify.ensureFn(Causes.cause("Age 0-150"), Verify.Is::between, 0, 150))
+                     .map(Age::new);
     }
 }
 ```
@@ -330,7 +329,7 @@ import org.pragmatica.lang.Functions.Fn2;
 - `Result.allOf(list)` - Aggregate list of Results
 - `Verify.ensure(value, predicate)` - Validate value
 - `Verify.ensureFn(cause, predicate, params...)` - Validate with custom error
-- `Causes.forValue("message: {}")` - Create cause factory
+- `Causes.forOneValue("message: %s")` - Create cause factory
 - `Number.parseInt(raw)`, `DateTime.parseLocalDate(raw)` - Safe parsing
 
 ---
@@ -349,9 +348,9 @@ public record DateRange(LocalDate start, LocalDate end) {
 
     public static Result<DateRange> dateRange(LocalDate start, LocalDate end) {
         return Verify.ensure(start, Verify.Is::notNull)
-            .flatMap(_ -> Verify.ensure(end, Verify.Is::notNull))
-            .flatMap(_ -> Verify.ensure(end, isAfter(start), END_BEFORE_START))
-            .map(_ -> new DateRange(start, end));
+                     .flatMap(_ -> Verify.ensure(end, Verify.Is::notNull))
+                     .flatMap(_ -> Verify.ensure(end, isAfter(start), END_BEFORE_START))
+                     .map(_ -> new DateRange(start, end));
     }
 
     private static Predicate<LocalDate> isAfter(LocalDate start) {
@@ -365,26 +364,23 @@ public record DateRange(LocalDate start, LocalDate end) {
 ```java
 // Password must not contain username (case-insensitive)
 public record ValidCredentials(Username username, Password password) {
-    private static final Fn1<Cause, String> PASSWORD_CONTAINS_USERNAME =
-        pass -> Causes.cause("Password must not contain username");
+    // private ValidCredentials {}  // Not yet supported in Java
 
-    public static Result<ValidCredentials> credentials(String usernameRaw, String passwordRaw) {
-        return validateIndependently(usernameRaw, passwordRaw)
-            .flatMap(ValidCredentials::validatePasswordDependency);
-    }
+    private static final Result<ValidCredentials> PASSWORD_CONTAINS_USERNAME =
+            Causes.cause("Password must not contain username").result();
 
-    private static Result<Tuple2<Username, Password>> validateIndependently(String usernameRaw, String passwordRaw) {
+    public static Result<ValidCredentials> validCredentials(String usernameRaw, String passwordRaw) {
+        // Parse components then call factory method to build instance
         return Result.all(Username.username(usernameRaw),
-                          Password.password(passwordRaw));
+                          Password.password(passwordRaw))
+                     .flatMap(ValidCredentials::validCredentials);
     }
 
-    private static Result<ValidCredentials> validatePasswordDependency(Username user, Password pass) {
-        String userLower = user.value().toLowerCase();
-        String passLower = pass.value().toLowerCase();
-
-        return passLower.contains(userLower)
-            ? PASSWORD_CONTAINS_USERNAME.apply(pass.value()).result()
-            : Result.success(new ValidCredentials(user, pass));
+    // Factory method for valid components performs cross-component validation
+    public static Result<ValidCredentials> validCredentials(Username username, Password password) {
+        return password.contains(username)
+                ? PASSWORD_CONTAINS_USERNAME
+                : Result.success(new ValidCredentials(username, password));
     }
 }
 ```
@@ -395,16 +391,18 @@ public record ValidCredentials(Username username, Password password) {
 // Order total must match sum of line items
 public record ValidOrder(OrderId id, Money total, List<LineItem> items) {
     private static final Fn1<Cause, Money> TOTAL_MISMATCH =
-        actual -> Causes.cause("Order total does not match line items. Expected: " + actual);
+        Causes.forOneValue("Order total does not match line items. Expected: %s");
 
     public static Result<ValidOrder> validOrder(OrderId id, Money total, List<LineItem> items) {
-        Money calculated = items.stream()
-            .map(LineItem::subtotal)
-            .reduce(Money.ZERO, Money::add);
-
-        return calculated.equals(total)
+        return total.equals(calculateTotal(items))
             ? Result.success(new ValidOrder(id, total, items))
-            : TOTAL_MISMATCH.apply(calculated).result();
+            : TOTAL_MISMATCH.apply(calculateTotal(items)).result();
+    }
+
+    private static Money calculateTotal(List<LineItem> items) {
+        return items.stream()
+                    .map(LineItem::subtotal)
+                    .reduce(Money.ZERO, Money::add);
     }
 }
 ```

@@ -123,7 +123,7 @@ public record Email(String value) {
     // private Email {}  // Not yet supported in Java
 
     private static final Pattern EMAIL_PATTERN = Pattern.compile("^[a-z0-9+_.-]+@[a-z0-9.-]+$");
-    private static final Fn1<Cause, String> INVALID_EMAIL = Causes.forValue("Invalid email format: {}");
+    private static final Fn1<Cause, String> INVALID_EMAIL = Causes.forOneValue("Invalid email format: %s");
 
     public static Result<Email> email(String raw) {
         return Verify.ensure(raw, Verify.Is::notNull)
@@ -146,9 +146,9 @@ import org.pragmatica.lang.*;
 public record Password(String value) {
     // private Password {}  // Not yet supported in Java
 
-    private static final Fn1<Cause, String> TOO_SHORT = Causes.forValue("Password must be at least 8 characters");
-    private static final Fn1<Cause, String> MISSING_UPPERCASE = Causes.forValue("Password must contain uppercase letter");
-    private static final Fn1<Cause, String> MISSING_DIGIT = Causes.forValue("Password must contain digit");
+    private static final Fn1<Cause, String> TOO_SHORT = Causes.forOneValue("Password must be at least 8 characters");
+    private static final Fn1<Cause, String> MISSING_UPPERCASE = Causes.forOneValue("Password must contain uppercase letter");
+    private static final Fn1<Cause, String> MISSING_DIGIT = Causes.forOneValue("Password must contain digit");
 
     public static Result<Password> password(String raw) {
         return Verify.ensure(raw, Verify.Is::notNull)

@@ -138,7 +138,7 @@ void email_fails_forNull() {
 // ✅ CORRECT: Validation at construction, private constructor
 public record Email(String value) {
     private static final Fn1<Cause, String> INVALID_EMAIL =
-        Causes.forValue("Invalid email: {}");
+        Causes.forOneValue("Invalid email: %s");
 
     public static Result<Email> email(String raw) {
         return Verify.ensure(raw, Verify.Is::notNull)

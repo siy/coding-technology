@@ -180,18 +180,21 @@ Parse-don't-validate handles complex validation beyond single fields. What if va
 
 ```java
 record ValidRegistration(Email email, Password password) {
+    private static final Cause PASSWORD_CONTAINS_EMAIL =
+        Causes.cause("Password cannot contain email local part");
+
     // Factory validates fields independently, then checks cross-field rule
     static Result<ValidRegistration> validRegistration(String emailRaw, String passwordRaw) {
         return Result.all(Email.email(emailRaw),
                           Password.password(passwordRaw))
-            .flatMap((email, pwd) -> {
-                // Cross-field rule: password can't contain email local part
-                String localPart = email.value().split("@")[0];
-                if (pwd.value().contains(localPart)) {
-                    return RegistrationError.PasswordContainsEmail.INSTANCE.result();
-                }
-                return Result.success(new ValidRegistration(email, pwd));
-            });
+                     .flatMap(ValidRegistration::checkPasswordNotContainsEmail);
+    }
+
+    private static Result<ValidRegistration> checkPasswordNotContainsEmail(Email email, Password pwd) {
+        String localPart = email.value().split("@")[0];
+        return pwd.value().contains(localPart)
+            ? PASSWORD_CONTAINS_EMAIL.result()
+            : Result.success(new ValidRegistration(email, pwd));
     }
 }
 ```
@@ -206,25 +209,31 @@ record ValidRegistration(Email email, Password password) {
 
 ```java
 record ValidRequest(Email email, Password password, Option<PremiumCode> premiumCode) {
+    private static final Cause PREMIUM_REQUIRES_STRONG_PASSWORD =
+        Causes.cause("Premium code requires password of at least 12 characters");
+
     static Result<ValidRequest> validRequest(Request raw) {
         return Result.all(Email.email(raw.email()),
                           Password.password(raw.password()),
                           PremiumCode.premiumCode(raw.premiumCode()))
-            .flatMap((email, pwd, premium) -> {
-                // Cross-field rule: premium code requires 12+ char password
-                if (premium.isPresent() && pwd.value().length() < 12) {
-                    return RequestError.PremiumRequiresStrongPassword.INSTANCE.result();
-                }
-                return Result.success(new ValidRequest(email, pwd, premium));
-            });
+                     .flatMap(ValidRequest::checkPremiumPasswordRequirement);
+    }
+
+    private static Result<ValidRequest> checkPremiumPasswordRequirement(Email email,
+                                                                        Password pwd,
+                                                                        Option<PremiumCode> premium) {
+        return premium.isPresent() && pwd.value().length() < 12
+            ? PREMIUM_REQUIRES_STRONG_PASSWORD.result()
+            : Result.success(new ValidRequest(email, pwd, premium));
     }
 }
 ```
 
 **Pattern:**
 1. Validate individual fields with `Result.all()` → accumulates per-field errors
-2. Use `.flatMap()` to add cross-field validation → fail-fast on cross-field rules
-3. Only construct if all validation passes
+2. Use `.flatMap()` with method reference to add cross-field validation → fail-fast on cross-field rules
+3. Extract cross-field logic to named methods → follows Single Level of Abstraction
+4. Only construct if all validation passes
 
 This keeps validation close to the data while handling complex business rules cleanly.
 

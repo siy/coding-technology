@@ -743,36 +743,26 @@ When processing collections with async operations, decide between sequential and
 
 **Sequential:**
 ```java
-// Process orders one at a time (simple loop version)
+// Process orders one at a time (sequential iteration)
 Promise<List<Receipt>> processOrders(List<Order> orders) {
-    Promise<List<Receipt>> result = Promise.success(new ArrayList<>());
+    Promise<List<Receipt>> result = Promise.success(List.of());
 
     for (Order order : orders) {
-        result = result.flatMap(receipts ->
-            processOrder(order).map(receipt -> {
-                receipts.add(receipt);
-                return receipts;
-            })
-        );
+        result = result.flatMap2(this::appendReceipt, order);
     }
 
     return result;
 }
 
-// Alternative: Use reduce if you prefer functional style
-// (More concise but less obvious - clarity matters more than cleverness)
-Promise<List<Receipt>> processOrdersWithReduce(List<Order> orders) {
-    return orders.stream()
-        .reduce(
-            Promise.success(new ArrayList<Receipt>()),
-            (acc, order) -> acc.flatMap(list ->
-                processOrder(order).map(receipt -> {
-                    list.add(receipt);
-                    return list;
-                })
-            ),
-            (p1, p2) -> p1
-        );
+private Promise<List<Receipt>> appendReceipt(List<Receipt> receipts, Order order) {
+    return processOrder(order)
+               .map(receipt -> appendToList(receipts, receipt));
+}
+
+private <T> List<T> appendToList(List<T> list, T element) {
+    var newList = new ArrayList<>(list);
+    newList.add(element);
+    return List.copyOf(newList);  // Return immutable
 }
 ```
 

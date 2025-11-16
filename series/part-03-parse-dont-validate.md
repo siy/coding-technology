@@ -547,4 +547,4 @@ In [Part 4: Error Handling & Composition](part-04-error-handling.md), you'll lea
 
 ---
 
-**Version:** 2.0.0 (2025-01-13) | **Part of:** [Java Backend Coding Technology Series](INDEX.md)
+**Version:** 2.0.0 (2025-11-13) | **Part of:** [Java Backend Coding Technology Series](INDEX.md)

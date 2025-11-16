@@ -1055,6 +1055,6 @@ Welcome to the future of backend development. Code that's predictable, testable,
 
 ---
 
-**Version:** 1.0.0 (2025-10-05) | **Part of:** [Java Backend Coding Technology Series](INDEX.md)
+**Version:** 2.0.0 (2025-11-13) | **Part of:** [Java Backend Coding Technology Series](INDEX.md)
 
 **Series Complete!** Return to [Index](INDEX.md) to review any part or see [CODING_GUIDE.md](../CODING_GUIDE.md) for the complete reference.

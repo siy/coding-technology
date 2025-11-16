@@ -1490,16 +1490,6 @@ These patterns apply the core principles you just learned. Once you master them,
 
 ---
 
-**Series Navigation**
-
-[← Part 1: Introduction & Foundations](part-01-foundations.md) | [Index](INDEX.md) | [Part 5: Basic Patterns & Structure →](part-05-basic-patterns.md)
-
----
-
-**Version:** 1.0.0 (2025-10-05) | **Part of:** [Java Backend Coding Technology Series](INDEX.md)
-
----
-
 ## Summary: The Complete Foundation
 
 You now have all three core principles:
@@ -1538,4 +1528,4 @@ In [Part 5: Basic Patterns & Structure](part-05-basic-patterns.md), you'll learn
 
 ---
 
-**Version:** 2.0.0 (2025-01-13) | **Part of:** [Java Backend Coding Technology Series](INDEX.md)
+**Version:** 2.0.0 (2025-11-13) | **Part of:** [Java Backend Coding Technology Series](INDEX.md)

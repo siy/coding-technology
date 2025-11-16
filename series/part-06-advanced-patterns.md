@@ -927,4 +927,4 @@ Parts 5A and 5B complete your testing knowledge before we build production syste
 
 ---
 
-**Version:** 1.0.0 (2025-10-05) | **Part of:** [Java Backend Coding Technology Series](INDEX.md)
+**Version:** 2.0.0 (2025-11-13) | **Part of:** [Java Backend Coding Technology Series](INDEX.md)

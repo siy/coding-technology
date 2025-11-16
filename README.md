@@ -120,8 +120,8 @@ public record Email(String value) {
     // private Email {}  // Not yet supported in Java
 
     private static final Cause EMAIL_REQUIRED = Causes.cause("Email is required");
-    private static final Fn1<Cause, String> EMAIL_BLANK = Causes.forValue("Email cannot be blank: %s");
-    private static final Fn1<Cause, String> INVALID_FORMAT = Causes.forValue("Invalid email format: %s");
+    private static final Fn1<Cause, String> EMAIL_BLANK = Causes.forOneValue("Email cannot be blank: %s");
+    private static final Fn1<Cause, String> INVALID_FORMAT = Causes.forOneValue("Invalid email format: %s");
 
     public static Result<Email> email(String raw) {
         return Verify.ensure(EMAIL_REQUIRED, raw, Verify.Is::notNull)

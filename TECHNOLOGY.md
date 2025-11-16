@@ -66,7 +66,7 @@ Package Layout
 - Move shared components immediately when reuse appears (no deferred refactors).
 
 Errors
-- Per‑use‑case errors live with the use case. Suggest sealed interfaces by default; enums or local constants via `Causes.forValue()` are acceptable if simpler.
+- Per‑use‑case errors live with the use case. Suggest sealed interfaces by default; enums or local constants via `Causes.forOneValue()` are acceptable if simpler.
 - Error mapping: adapters wrap foreign failures into domain/technical Causes. A use case should not leak unknown exceptions.
 - Validation details: rely on `CompositeCause` from `Result.all(...)`. Specific per‑project policies for error shapes are allowed (TBD).
 
@@ -177,7 +177,7 @@ Examples: What They Demonstrate (understanding)
   - ReferralCode shows the “optional‑with‑validation” pattern by returning Result<Option<ReferralCode>>.
 - Error handling
   - Per‑field failures accumulate through Result.all(...) into a CompositeCause automatically; cross‑field checks return Result<Unit> and are combined the same way.
-  - No business exceptions are thrown; errors are represented as Causes produced via Causes.forValue and carried by Result/Promise.
+  - No business exceptions are thrown; errors are represented as Causes produced via Causes.forOneValue and carried by Result/Promise.
 - Steps as single‑method interfaces
   - Steps (CheckCredentials, CheckAccountStatus, GenerateToken) each return the use case’s monad; they can be passed directly to flatMap via method references.
   - Leaves that are only used by a single step remain nearby; shared components would be moved to a shared package.

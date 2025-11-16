@@ -640,9 +640,9 @@ import org.pragmatica.lang.Functions.Fn2;
 - `Verify.ensure(cause, value, predicate)` - Validate with error
 - `Verify.ensureFn(cause, predicate, params...)` - Validate with params
 - `Causes.cause("message")` - Create fixed cause
-- `Causes.forOneValue("message: {}")` - Create cause factory for one context value
-- `Causes.forTwoValues("message: {} {}")` - Create cause factory for two context values
-- `Causes.forThreeValues("message: {} {} {}")` - Create cause factory for three context values
+- `Causes.forOneValue("message: %s")` - Create cause factory for one context value
+- `Causes.forTwoValues("message: %s %s")` - Create cause factory for two context values
+- `Causes.forThreeValues("message: %s %s %s")` - Create cause factory for three context values
 - `Number.parseInt(raw)`, `DateTime.parseLocalDate(raw)` - Safe parsing
 
 ---
@@ -682,7 +682,7 @@ Use this when an operation might fail for business or validation reasons. Parsin
 ```java
 public record Email(String value) {
     private static final Pattern EMAIL_PATTERN = Pattern.compile("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$");
-    private static final Fn1<Cause, String> INVALID_EMAIL = Causes.forOneValue("Invalid email format: {}");
+    private static final Fn1<Cause, String> INVALID_EMAIL = Causes.forOneValue("Invalid email format: %s");
 
     public static Result<Email> email(String raw) {
         return Verify.ensure(raw, Verify.Is::notNull)
@@ -819,7 +819,7 @@ Parse-don't-validate approach:
 // DO: Validation IS construction
 public record Email(String value) {
     private static final Pattern EMAIL_PATTERN = Pattern.compile("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$");
-    private static final Fn1<Cause, String> INVALID_EMAIL = Causes.forOneValue("Invalid email format: {}");
+    private static final Fn1<Cause, String> INVALID_EMAIL = Causes.forOneValue("Invalid email format: %s");
 
     public static Result<Email> email(String raw) {
         return Verify.ensure(raw, Verify.Is::notNull)
@@ -887,7 +887,7 @@ public record DateRange(LocalDate start, LocalDate end) {
 
     private static final Cause START_REQUIRED = Causes.cause("Start date required");
     private static final Cause END_REQUIRED = Causes.cause("End date required");
-    private static final Fn1<Cause, LocalDate> END_BEFORE_START = Causes.forOneValue("End date must be after start date: {}");
+    private static final Fn1<Cause, LocalDate> END_BEFORE_START = Causes.forOneValue("End date must be after start date: %s");
 
     public static Result<DateRange> dateRange(LocalDate start, LocalDate end) {
         return Verify.ensure(START_REQUIRED, start, Verify.Is::notNull)
@@ -935,16 +935,18 @@ public record ValidCredentials(Username username, Password password) {
 public record ValidOrder(OrderId id, Money total, List<LineItem> items) {
     // private ValidOrder {}  // Not yet supported in Java
 
-    private static final Fn1<Cause, Money> TOTAL_MISMATCH = Causes.forOneValue("Order total does not match line items. Expected: {}");
+    private static final Fn1<Cause, Money> TOTAL_MISMATCH = Causes.forOneValue("Order total does not match line items. Expected: %s");
 
     public static Result<ValidOrder> validOrder(OrderId id, Money total, List<LineItem> items) {
-        Money calculated = items.stream()
-                                .map(LineItem::subtotal)
-                                .reduce(Money.ZERO, Money::add);
-
-        return calculated.equals(total)
+        return total.equals(calculateTotal(items))
             ? Result.success(new ValidOrder(id, total, items))
-            : TOTAL_MISMATCH.apply(calculated).result();
+            : TOTAL_MISMATCH.apply(calculateTotal(items)).result();
+    }
+
+    private static Money calculateTotal(List<LineItem> items) {
+        return items.stream()
+                    .map(LineItem::subtotal)
+                    .reduce(Money.ZERO, Money::add);
     }
 }
 ```
@@ -1216,7 +1218,7 @@ Text.parseBoolean(raw)             // Result<Boolean>
 **Example value object using parse utilities:**
 ```java
 public record UserId(UUID value) {
-    private static final Fn1<Cause, String> INVALID_ID = Causes.forOneValue("Invalid user ID: {}");
+    private static final Fn1<Cause, String> INVALID_ID = Causes.forOneValue("Invalid user ID: %s");
 
     public static Result<UserId> userId(String raw) {
         return Verify.ensure(raw, Verify.Is::notBlank)
@@ -2070,7 +2072,7 @@ DO keep leaves focused:
 ```java
 public record Email(String value) {
     private static final Pattern EMAIL_PATTERN = Pattern.compile("^[a-z0-9+_.-]+@[a-z0-9.-]+$");
-    private static final Fn1<Cause, String> INVALID_EMAIL = Causes.forOneValue("Invalid email {}");
+    private static final Fn1<Cause, String> INVALID_EMAIL = Causes.forOneValue("Invalid email %s");
 
     // DO: One clear responsibility
     public static Result<Email> email(String raw) {
@@ -4690,7 +4692,7 @@ import org.pragmatica.lang.*;
 
 public record Email(String value) {
     private static final Pattern EMAIL_PATTERN = Pattern.compile("^[a-z0-9+_.-]+@[a-z0-9.-]+$");
-    private static final Fn1<Cause, String> INVALID_EMAIL = Causes.forOneValue("Invalid email format: {}");
+    private static final Fn1<Cause, String> INVALID_EMAIL = Causes.forOneValue("Invalid email format: %s");
 
     public static Result<Email> email(String raw) {
         return Verify.ensure(raw, Verify.Is::notNull)

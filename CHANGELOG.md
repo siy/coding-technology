@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Causes API consistency**: Replaced deprecated `Causes.forValue()` with `Causes.forOneValue()` across all documentation
+- **Template syntax**: Changed `{}` placeholders to `%s` (String.format syntax) in all Causes factory examples
+- **CLAUDE.md API Reference**: Added comprehensive Causes utilities documentation with correct template syntax
+- **ValidOrder examples**: Extracted `calculateTotal()` method to follow Single Level of Abstraction principle
+
 ## [2.0.0] - 2025-11-13
 
 **Major release: Thread Safety, Concurrency, and Series v2.0.0 (100% Parity)**

@@ -307,6 +307,24 @@ All accept optional `exceptionMapper: Fn1<Cause, Throwable>` (defaults to `Cause
 
 **Note**: There is NO `Promise.async(Runnable)` method. Use `Promise.lift(ThrowingRunnable)` for async execution of void operations.
 
+### Causes utilities:
+- **`Causes.cause(String message)`**  -  create simple cause with message
+- **`Causes.cause(String message, Option<Cause> source)`**  -  create cause with source
+- **`Causes.fromThrowable(Throwable throwable)`**  -  convert exception to cause (includes stack trace)
+- **`Causes.forOneValue(String template)`**  -  create `Fn1<Cause, T>` factory with `String.format` template
+- **`Causes.forTwoValues(String template)`**  -  create `Fn2<Cause, T1, T2>` factory
+- **`Causes.forThreeValues(String template)`**  -  create `Fn3<Cause, T1, T2, T3>` factory
+- **`Causes.composite(Result<?>...)`**  -  create composite cause from multiple results
+
+**Template syntax**: Uses `String.format` placeholders (`%s`), NOT MessageFormat (`{}`):
+```java
+Causes.forOneValue("Invalid email: %s")           // CORRECT
+Causes.forOneValue("Invalid email: {}")           // WRONG - uses MessageFormat syntax
+Causes.forTwoValues("Range error: %s to %s")      // CORRECT
+```
+
+**DEPRECATED**: `Causes.forValue(String)` - use `Causes.forOneValue(String)` instead (since 0.8.2, for removal)
+
 ## Validation and Parsing Utilities
 
 ### Verify.Is Predicates

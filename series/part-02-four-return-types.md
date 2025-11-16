@@ -89,9 +89,9 @@ Use this when the operation is pure computation with no possibility of failure o
 public record FullName(String value) {
     public String initials() {  // returns String (T)
         return value.chars()
-            .filter(Character::isUpperCase)
-            .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append)
-            .toString();
+                    .filter(Character::isUpperCase)
+                    .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append)
+                    .toString();
     }
 }
 ```
@@ -130,13 +130,13 @@ public record Email(String value) {
     // private Email {}  // Not yet supported in Java
 
     private static final Pattern EMAIL_PATTERN = Pattern.compile("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$");
-    private static final Fn1<Cause, String> INVALID_EMAIL = Causes.forValue("Invalid email format: {}");
+    private static final Fn1<Cause, String> INVALID_EMAIL = Causes.forOneValue("Invalid email format: %s");
 
     public static Result<Email> email(String raw) {
         return Verify.ensure(raw, Verify.Is::notNull)
-            .map(String::trim)
-            .flatMap(Verify.ensureFn(INVALID_EMAIL, Verify.Is::matches, EMAIL_PATTERN))
-            .map(Email::new);
+                     .map(String::trim)
+                     .flatMap(Verify.ensureFn(INVALID_EMAIL, Verify.Is::matches, EMAIL_PATTERN))
+                     .map(Email::new);
     }
 }
 ```
@@ -187,13 +187,13 @@ This thread-safety model enables safe concurrent composition without explicit sy
 
 You could, but you'd hit these problems:
 
-| Java Standard Approach | Problem | JBCT Solution |
-|------------------------|---------|---------------|
-| `return null` | Hidden optionality → `NullPointerException` at runtime | `Option<T>` - optionality explicit in type |
-| `Optional<T>` | Can't represent failures (empty vs error), awkward async composition | `Option<T>` for "not found", `Result<T>` for "might fail with typed error" |
-| `try-catch` with exceptions | Invisible control flow, unchecked = hidden, checked = verbose | `Result<T>` - errors are values, type-checked, composable |
-| `CompletableFuture<T>` | Complex error handling (`.exceptionally`, `.handle`), nested hell with `Optional` | `Promise<T>` - consistent with `Result<T>` patterns, simpler composition |
-| `CompletableFuture<Optional<T>>` | Forbidden anti-pattern - two levels of "might not have value" | Use `Promise<T>` (failure in Promise) or `Promise<Option<T>>` sparingly |
+| Java Standard Approach           | Problem                                                                           | JBCT Solution                                                              |
+|----------------------------------|-----------------------------------------------------------------------------------|----------------------------------------------------------------------------|
+| `return null`                    | Hidden optionality → `NullPointerException` at runtime                            | `Option<T>` - optionality explicit in type                                 |
+| `Optional<T>`                    | Can't represent failures (empty vs error), awkward async composition              | `Option<T>` for "not found", `Result<T>` for "might fail with typed error" |
+| `try-catch` with exceptions      | Invisible control flow, unchecked = hidden, checked = verbose                     | `Result<T>` - errors are values, type-checked, composable                  |
+| `CompletableFuture<T>`           | Complex error handling (`.exceptionally`, `.handle`), nested hell with `Optional` | `Promise<T>` - consistent with `Result<T>` patterns, simpler composition   |
+| `CompletableFuture<Optional<T>>` | Forbidden anti-pattern - two levels of "might not have value"                     | Use `Promise<T>` (failure in Promise) or `Promise<Option<T>>` sparingly    |
 
 **Example of the problem:**
 
@@ -244,12 +244,12 @@ Traditional Java mixes these concerns. A method returning `User` might throw exc
 
 **Decision table:**
 
-| Sync? | Can Fail? | May Be Absent? | Return Type |
-|-------|-----------|----------------|-------------|
-| Yes   | No        | No             | `T`         |
-| Yes   | No        | Yes            | `Option<T>` |
-| Yes   | Yes       | No             | `Result<T>` |
-| Async | Yes       | No             | `Promise<T>`|
+| Sync?  | Can Fail?  | May Be Absent?  | Return Type  |
+|--------|------------|-----------------|--------------|
+| Yes    | No         | No              | `T`          |
+| Yes    | No         | Yes             | `Option<T>`  |
+| Yes    | Yes        | No              | `Result<T>`  |
+| Async  | Yes        | No              | `Promise<T>` |
 
 This clarity is what makes AI-assisted development tractable. When generating code, an AI doesn't need to infer whether error handling is needed - the return type declares it. When reading code, a human doesn't need to trace execution paths to find hidden failure modes - they're in the type signature.
 
@@ -380,7 +380,7 @@ import org.pragmatica.lang.Functions.Fn2;
 - `Result.allOf(list)` - Aggregate list of Results
 - `Verify.ensure(value, predicate)` - Validate value
 - `Verify.ensureFn(cause, predicate, params...)` - Validate with custom error
-- `Causes.forValue("message: {}")` - Create cause factory
+- `Causes.forOneValue("message: %s")` - Create cause factory
 - `Number.parseInt(raw)`, `DateTime.parseLocalDate(raw)` - Safe parsing
 
 ---

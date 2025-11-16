@@ -99,10 +99,10 @@ Functional composition:
 ```java
 public Result<String> processUser(String email) {
     return Result.success(email)
-        .map(String::trim)
-        .map(String::toLowerCase)
-        .flatMap(this::validate)
-        .flatMap(this::save);
+                 .map(String::trim)
+                 .map(String::toLowerCase)
+                 .flatMap(this::validate)
+                 .flatMap(this::save);
 }
 ```
 
@@ -144,9 +144,9 @@ if (email != null) {
 
 // Smart Wrapper: WRAPPER checks, WRAPPER decides
 Result<String> result = Result.success(email)
-    .map(String::trim)          // "Trim, if value is present"
-    .flatMap(this::validate)    // "Validate, if trim succeeded"
-    .flatMap(this::save);       // "Save, if validate succeeded"
+                              .map(String::trim)        // "Trim, if value is present"
+                              .flatMap(this::validate)  // "Validate, if trim succeeded"
+                              .flatMap(this::save);     // "Save, if validate succeeded"
 ```
 
 You're saying: "Here's what to do with the value... **if** you have one and **when** you're ready."
@@ -194,8 +194,8 @@ if (email != null) {
 With Smart Wrappers, **you describe transformations**, the wrapper handles control flow:
 ```java
 Result.success(email)
-    .flatMap(this::validate)
-    .flatMap(this::save);
+      .flatMap(this::validate)
+      .flatMap(this::save);
 // "Validate, then save - but only if each step succeeds"
 ```
 
@@ -266,11 +266,11 @@ Think of your code as a series of **pipes** through which **values** flow:
 ```java
 // Water (value) flows through pipes (functions)
 public Result<Response> execute(Request request) {
-    return ValidRequest.validRequest(request)     // Pipe 1: validation
-        .flatMap(this::checkPermissions)      // Pipe 2: authorization
-        .flatMap(this::processRequest)        // Pipe 3: business logic
-        .flatMap(this::saveResult)            // Pipe 4: persistence
-        .map(this::buildResponse);            // Pipe 5: formatting
+    return ValidRequest.validRequest(request)            // Pipe 1: validation
+                       .flatMap(this::checkPermissions)  // Pipe 2: authorization
+                       .flatMap(this::processRequest)    // Pipe 3: business logic
+                       .flatMap(this::saveResult)        // Pipe 4: persistence
+                       .map(this::buildResponse);        // Pipe 5: formatting
 }
 ```
 
@@ -314,10 +314,8 @@ private DiscountResult applyRules(Cart cart, List<DiscountRule> rules) {
         applied.add(rule.apply(mutableCart));
     }
 
-    return new DiscountResult(
-        mutableCart.toImmutable(),  // Immutable result
-        List.copyOf(applied)
-    );
+    return new DiscountResult(mutableCart.toImmutable(),  // Immutable result
+                              List.copyOf(applied));
 }
 ```
 
@@ -563,7 +561,7 @@ public record Email(String value) {
 ```java
 // Errors are typed values, not thrown
 public sealed interface UserError extends Cause {
-    enum NotFound implements UserError { INSTANCE; }
+    enum NotFound implements UserError { USER_NOT_FOUND; }
     record InvalidEmail(String value) implements UserError {}
 }
 ```
@@ -670,7 +668,7 @@ com.example.app/
 @Test
 void validation_fails_forInvalidInput() {
     ValidRequest.validRequest(badRequest)
-        .onSuccess(Assertions::fail);
+                .onSuccess(Assertions::fail);
 }
 
 // Test successes

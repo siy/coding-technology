@@ -104,7 +104,7 @@ Valid objects are constructed only when validation succeeds. Make invalid states
 ```java
 public record Email(String value) {
     private static final Pattern EMAIL_PATTERN = Pattern.compile("^[a-z0-9+_.-]+@[a-z0-9.-]+$");
-    private static final Fn1<Cause, String> INVALID_EMAIL = Causes.forValue("Invalid email format: {}");
+    private static final Fn1<Cause, String> INVALID_EMAIL = Causes.forOneValue("Invalid email format: %s");
 
     public static Result<Email> email(String raw) {
         return Verify.ensure(raw, Verify.Is::notNull)
@@ -1233,7 +1233,7 @@ record ValidRequest(Email email, Password password, Option<ReferralCode> referra
 ```java
 public record Email(String value) {
     private static final Pattern EMAIL_PATTERN = Pattern.compile("^[a-z0-9+_.-]+@[a-z0-9.-]+$");
-    private static final Fn1<Cause, String> INVALID_EMAIL = Causes.forValue("Invalid email format: {}");
+    private static final Fn1<Cause, String> INVALID_EMAIL = Causes.forOneValue("Invalid email format: %s");
 
     public static Result<Email> email(String raw) {
         return Verify.ensure(raw, Verify.Is::notNull)
@@ -1466,7 +1466,7 @@ Before generating code, verify:
 - [ ] Stubs use type declarations, not casts
 - [ ] Use `cause.result()` and `cause.promise()` instead of `Result.failure()` and `Promise.failure()`
 - [ ] Use `result.async()` instead of `Promise.promise(() -> result)`
-- [ ] Extract inline string constants to named constants with `Causes.forValue(...)`
+- [ ] Extract inline string constants to named constants with `Causes.forOneValue(...)`
 - [ ] Use case factories return lambdas directly, NEVER nested record implementations
 - [ ] Use `Result.unitResult()` for successful `Result<Unit>`
 - [ ] Use method references for exception mappers: `Error::cause` not `e -> Error.cause(e)`

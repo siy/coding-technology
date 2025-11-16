@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [2.0.0] - 2024-11-13
+## [2.0.0] - 2025-11-13
 
 **Major release: Thread Safety, Concurrency, and Series v2.0.0 (100% Parity)**
 

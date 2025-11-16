@@ -459,4 +459,4 @@ In [Part 3: Parse, Don't Validate](part-03-parse-dont-validate.md), you'll learn
 
 ---
 
-**Version:** 2.0.0 (2025-01-13) | **Part of:** [Java Backend Coding Technology Series](INDEX.md)
+**Version:** 2.0.0 (2025-11-13) | **Part of:** [Java Backend Coding Technology Series](INDEX.md)

@@ -670,4 +670,4 @@ In [Part 8: Testing in Practice](part-08-testing-practice.md), you'll learn adva
 
 ---
 
-**Version:** 2.0.0 (2025-01-13) | **Part of:** [Java Backend Coding Technology Series](INDEX.md)
+**Version:** 2.0.0 (2025-11-13) | **Part of:** [Java Backend Coding Technology Series](INDEX.md)

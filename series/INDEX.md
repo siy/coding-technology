@@ -205,7 +205,7 @@ Looking for specific patterns? Jump directly to the relevant part using the topi
 
 ## Series Version
 
-**Version 2.0.0** (2025-01-13)
+**Version 2.0.0** (2025-11-13)
 - **Series restructured from 6 to 9 parts:**
   - Part 2 split into 2A (Four Return Types), 2B (Parse Don't Validate), 2C (Error Handling)
   - Part 5 split into 5A (Testing Philosophy), 5B (Testing Practice)

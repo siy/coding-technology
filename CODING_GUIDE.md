@@ -2241,10 +2241,10 @@ DO keep the sequence flat and readable:
 ```java
 // DO: Linear, one step per line
 return validate.apply(request)
-    .flatMap(step1::apply)
-    .flatMap(step2::apply)
-    .flatMap(step3::apply)
-    .flatMap(step4::apply);
+               .flatMap(step1::apply)
+               .flatMap(step2::apply)
+               .flatMap(step3::apply)
+               .flatMap(step4::apply);
 ```
 
 ### Fork-Join
@@ -2324,11 +2324,9 @@ Returns `Promise<List<Result<T>>>`  -  unlike `Promise.all()` which fails fast, 
 ```java
 // Racing multiple data sources, using the first successful response
 Promise<ExchangeRate> fetchRate(Currency from, Currency to) {
-    return Promise.any(
-        primaryRateProvider.getRate(from, to),
-        secondaryRateProvider.getRate(from, to),
-        fallbackRateProvider.getRate(from, to)
-    );
+    return Promise.any(primaryRateProvider.getRate(from, to), 
+                       secondaryRateProvider.getRate(from, to), 
+                       fallbackRateProvider.getRate(from, to));
 }
 ```
 
@@ -2365,10 +2363,8 @@ Fork-Join has a crucial constraint: **all branches must be truly independent wit
 Example design issue uncovered by Fork-Join:
 ```java
 // ❌ WRONG: Logical dependency
-Promise.all(
-    fetchUserProfile(userId),           // Returns User
-    fetchUserPreferences(userId)        // Needs User.timezone from profile!
-)
+Promise.all(fetchUserProfile(userId),      // Returns User
+            fetchUserPreferences(userId))  // Needs User.timezone from profile!
 ```
 
 The dependency reveals that `UserPreferences` should either:
@@ -2382,18 +2378,16 @@ Example thread safety violation:
 private final DiscountContext context = new DiscountContext();  // Mutable, shared
 
 Promise<Result> calculate() {
-    return Promise.all(
-        applyBogo(cart, context),      // DATA RACE
-        applyPercentOff(cart, context)  // DATA RACE - both branches mutate context
-    ).map(this::merge);
+    return Promise.all(applyBogo(cart, context),        // DATA RACE
+                       applyPercentOff(cart, context))  // DATA RACE - both branches mutate context
+                  .map(this::merge);
 }
 
 // ✅ CORRECT: Immutable inputs
 Promise<Result> calculate(Cart cart) {
-    return Promise.all(
-        applyBogo(cart),          // Immutable cart input
-        applyPercentOff(cart)     // Immutable cart input
-    ).map(this::mergeDiscounts);  // Combine immutable results
+    return Promise.all(applyBogo(cart),        // Immutable cart input
+                       applyPercentOff(cart))  // Immutable cart input
+                  .map(this::mergeDiscounts);  // Combine immutable results
 }
 ```
 
@@ -2413,11 +2407,10 @@ Before using Fork-Join, verify operations are truly independent using this check
 
 ```java
 // Example 1: Different data sources, no shared state
-Promise.all(
-    fetchUser(userId),           // User database
-    fetchOrders(userId),         // Order database
-    fetchNotifications(userId)   // Notification service
-).map(Dashboard::new);
+Promise.all(fetchUser(userId),           // User database
+            fetchOrders(userId),         // Order database
+            fetchNotifications(userId))  // Notification service
+        .map(Dashboard::new);
 
 // Why independent:
 // - Different datasources (no locking conflicts)
@@ -2428,12 +2421,10 @@ Promise.all(
 
 ```java
 // Example 2: Different computations on same immutable input
-Promise.all(
-    validateInventory(cart),      // Check stock levels
-    calculateShipping(cart),      // Compute shipping cost
-    applyDiscounts(cart)          // Calculate discounts
-).map((inventory, shipping, discounts) ->
-    new OrderSummary(cart, inventory, shipping, discounts));
+Promise.all(validateInventory(cart),  // Check stock levels
+            calculateShipping(cart),  // Compute shipping cost
+            applyDiscounts(cart)      // Calculate discounts
+       .map((inventory, shipping, discounts) -> new OrderSummary(cart, inventory, shipping, discounts));
 
 // Why independent:
 // - Cart is immutable (read-only input)
@@ -2446,10 +2437,8 @@ Promise.all(
 
 ```java
 // Example 1: Output of one needed by another
-Promise.all(
-    hashPassword(password),              // Expensive hashing
-    checkPasswordStrength(password)      // Could reuse hash
-)
+Promise.all(hashPassword(password),           // Expensive hashing
+            checkPasswordStrength(password))  // Could reuse hash
 
 // Problem: checkPasswordStrength might benefit from reusing hash
 // Fix: Run sequentially, pass hash to strength check
@@ -2459,32 +2448,32 @@ hashPassword(password)
 
 ```java
 // Example 2: One operation's success affects another
-Promise.all(
-    reserveInventory(productId, quantity),  // Locks inventory
-    chargePayment(paymentInfo)              // Charges credit card
-)
+Promise.all(reserveInventory(productId, quantity),  // Locks inventory
+            chargePayment(paymentInfo))             // Charges credit card
 
 // Problem: If inventory fails, payment already charged
 // Fix: Use Sequencer - reserve first, then charge
 reserveInventory(productId, quantity)
-    .flatMap(reservation -> chargePayment(paymentInfo)
-        .map(payment -> new PurchaseResult(reservation, payment)))
+      .flatMap(reservation -> chargeAndCreateResult(reservation, paymentInfo))
+
+private Promise<PurchaseResult> chargeAndCreateResult(Reservation reservation, PaymentInfo
+        paymentInfo) {
+    return chargePayment(paymentInfo)
+            .map(payment -> new PurchaseResult(reservation, payment));
+}
 ```
 
 ```java
 // Example 3: Shared mutable context
 var discountContext = new DiscountContext();  // MUTABLE
-Promise.all(
-    applyLoyaltyDiscount(cart, discountContext),   // Mutates context
-    applyPromoDiscount(cart, discountContext)      // DATA RACE
-)
+Promise.all(applyLoyaltyDiscount(cart, discountContext),   // Mutates context
+            applyPromoDiscount(cart, discountContext))     // DATA RACE
 
 // Problem: Both operations mutate shared context concurrently
 // Fix: Make context immutable, merge results functionally
-Promise.all(
-    applyLoyaltyDiscount(cart),    // Returns DiscountResult
-    applyPromoDiscount(cart)       // Returns DiscountResult
-).map((loyalty, promo) -> DiscountResult.merge(loyalty, promo))
+Promise.all(applyLoyaltyDiscount(cart),  // Returns DiscountResult
+            applyPromoDiscount(cart))    // Returns DiscountResult
+       .map(DiscountResult::merge)
 ```
 
 **Checklist Questions:**
@@ -2535,10 +2524,9 @@ Ask yourself these questions before using Fork-Join:
 DON'T use Fork-Join when there are hidden dependencies:
 ```java
 // DON'T: These aren't actually independent
-Promise.all(
-    allocateInventory(orderId),   // Might lock inventory
-    chargePayment(paymentToken)   // Should only charge if inventory succeeds
-).flatMap((inventory, payment) -> confirmOrder(inventory, payment));
+Promise.all(allocateInventory(orderId),   // Might lock inventory
+            chargePayment(paymentToken))  // Should only charge if inventory succeeds
+       .flatMap((inventory, payment) -> confirmOrder(inventory, payment));
 ```
 
 If inventory allocation fails, we've already charged the customer. These steps have a logical dependency: charge only after successful allocation. Use a Sequencer.
@@ -2546,10 +2534,9 @@ If inventory allocation fails, we've already charged the customer. These steps h
 DON'T ignore errors in Fork-Join branches:
 ```java
 // DON'T: Silently swallowing failures
-Promise.all(
-    fetchPrimary(id).recover(err -> Option.none()),  // Hides failure
-    fetchSecondary(id).recover(err -> Option.none())
-).flatMap((primary, secondary) -> /* ... */);
+Promise.all(fetchPrimary(id).recover(err -> Option.none()),  // Hides failure
+            fetchSecondary(id).recover(err -> Option.none()))
+       .flatMap((primary, secondary) -> /* ... */);
 ```
 
 If both fail, the combiner gets two `none()` values with no indication that anything went wrong. Let failures propagate or model the "best-effort" case explicitly:
@@ -2568,10 +2555,9 @@ Now the type says "we tried to fetch both, either might be missing," and the com
 DON'T mutate input data in parallel branches:
 ```java
 // ❌ WRONG: Mutating shared input
-Promise.all(
-    applyDiscount(cart),      // Mutates cart.subtotal
-    calculateTax(cart)        // Reads cart.subtotal - RACE CONDITION
-).map(this::combine);
+Promise.all(applyDiscount(cart),  // Mutates cart.subtotal
+            calculateTax(cart))   // Reads cart.subtotal - RACE CONDITION
+       .map(this::combine);
 
 private Promise<Discount> applyDiscount(Cart cart) {
     cart.setSubtotal(cart.subtotal().subtract(discount));  // DATA RACE
@@ -2579,10 +2565,9 @@ private Promise<Discount> applyDiscount(Cart cart) {
 }
 
 // ✅ CORRECT: Create new instances
-Promise.all(
-    applyDiscount(cart),
-    calculateTax(cart)
-).map(this::combine);
+Promise.all(applyDiscount(cart),
+            calculateTax(cart))
+       .map(this::combine);
 
 private Promise<Discount> applyDiscount(Cart cart) {
     var discountAmount = calculateDiscountFor(cart);
@@ -2609,10 +2594,10 @@ private ReportData buildReportData(User user, List<Sale> sales, Inventory invent
 // Called from a Sequencer:
 public Promise<Report> generateReport(ReportRequest request) {
     return ValidRequest.validRequest(request)
-                  .async()
-                  .flatMap(this::fetchReportData)  // Fork-Join extracted
-                  .flatMap(this::computeMetrics)
-                  .flatMap(this::formatReport);
+                       .async()
+                       .flatMap(this::fetchReportData)  // Fork-Join extracted
+                       .flatMap(this::computeMetrics)
+                       .flatMap(this::formatReport);
 }
 ```
 
@@ -2693,10 +2678,9 @@ Now each function has one level of branching. Much clearer.
 ```java
 // DON'T: Ternary in lambda (violates Single Pattern per Function)
 return fetchUser(userId)
-    .flatMap(user -> user.isActive()
-        ? processActiveUser(user)
-        : UserError.InactiveAccount.INSTANCE.result()
-    );
+            .flatMap(user -> user.isActive()
+                ? processActiveUser(user)
+                : UserError.InactiveAccount.INSTANCE.result());
 
 // DO: Extract condition to named function
 return fetchUser(userId)
@@ -2778,11 +2762,9 @@ Mapping collections:
 ```java
 // Transforming a list of raw inputs to domain objects
 Result<List<Email>> parseEmails(List<String> rawEmails) {
-    return Result.allOf(
-        rawEmails.stream()
-            .map(Email::email)
-            .toList()
-    );
+    return Result.allOf(rawEmails.stream()
+                                 .map(Email::email)
+                                 .toList());
 }
 ```
 
@@ -2792,9 +2774,9 @@ Filtering and transforming:
 ```java
 List<ActiveUser> activeUsers(List<User> users) {
     return users.stream()
-        .filter(User::isActive)
-        .map(this::toActiveUser)
-        .toList();
+                .filter(User::isActive)
+                .map(this::toActiveUser)
+                .toList();
 }
 
 private ActiveUser toActiveUser(User user) {
@@ -2811,11 +2793,9 @@ Sequential:
 // Process orders one at a time
 Promise<List<Receipt>> processOrders(List<Order> orders) {
     return orders.stream()
-        .reduce(
-            Promise.success(new ArrayList<Receipt>()),
-            (promiseAcc, order) -> promiseAcc.flatMap(acc -> addReceipt(acc, order)),
-            (p1, p2) -> p1  // Won't be used in sequential reduction
-        );
+                 .reduce(Promise.success(new ArrayList<Receipt>()),
+                         (promiseAcc, order) -> promiseAcc.flatMap(acc -> addReceipt(acc, order)),
+                         (p1, p2) -> p1);  // Won't be used in sequential reduction
 }
 
 private Promise<List<Receipt>> addReceipt(List<Receipt> acc, Order order) {
@@ -2830,11 +2810,9 @@ Parallel (when orders are independent):
 ```java
 // Process orders in parallel
 Promise<List<Receipt>> processOrders(List<Order> orders) {
-    return Promise.allOf(
-        orders.stream()
-            .map(this::processOrder)
-            .toList()
-    );
+    return Promise.allOf(orders.stream()
+                               .map(this::processOrder)
+                               .toList());
 }
 ```
 
@@ -2870,9 +2848,9 @@ for (String raw : rawEmails) {
 Use `Result.allOf`:
 ```java
 // DO: Declarative collection
-Result<List<Email>> emails = Result.allOf(
-    rawEmails.stream().map(Email::email).toList()
-);
+Result<List<Email>> emails = Result.allOf(rawEmails.stream()
+                                                   .map(Email::email)
+                                                   .toList());
 ```
 
 DO keep iteration focused on transformation:
@@ -2880,16 +2858,14 @@ DO keep iteration focused on transformation:
 // DO: Pure transformation
 List<OrderSummary> summarize(List<Order> orders) {
     return orders.stream()
-        .map(this::toOrderSummary)
-        .toList();
+                 .map(this::toOrderSummary)
+                 .toList();
 }
 
 private OrderSummary toOrderSummary(Order order) {
-    return new OrderSummary(
-        order.id(),
-        order.total(),
-        order.itemCount()
-    );
+    return new OrderSummary(order.id(), 
+                            order.total(), 
+                            order.itemCount());
 }
 ```
 
@@ -2918,25 +2894,21 @@ public interface FetchUserProfile {
 class UserServiceClient implements FetchUserProfile {
     public Promise<Profile> apply(UserId userId) {
         return httpClient.get("/users/" + userId.value())
-            .map(this::parseProfile);
+                         .map(this::parseProfile);
     }
 }
 
 // Applying a retry aspect at construction:
-static ProcessUserData processUserData(..., UserServiceClient userServiceClient, ...) { {
+static ProcessUserData processUserData(..., UserServiceClient userServiceClient, ...) {
     // Values also can come from passed config
     var retryPolicy = RetryPolicy.builder()
-        .maxAttempts(3)                     
-        .backoff(exponential(100, 2.0))
-        .build();
+                                 .maxAttempts(3)
+                                 .backoff(exponential(100, 2.0))
+                                 .build();
 
-    var fetchWithRetry = withRetry(retryPolicy, userServiceClient);
-
-    return new processUserData(
-        validateInput,
-        fetchWithRetry,  // Decorated step
-        processData
-    );
+    return request -> validateInput.apply(request), 
+                                   .flatMap(withRetry(retryPolicy, userServiceClient)::apply),  // Decorated step
+                                   .flatMap(processData::apply);
 }
 ```
 
@@ -2981,15 +2953,11 @@ var decoratedStep = withMetrics(metricsPolicy,
 
 Or use a helper:
 ```java
-var decoratedStep = composeAspects(
-    List.of(
-        metrics(metricsPolicy),
-        timeout(timeoutPolicy),
-        circuitBreaker(breakerPolicy),
-        retry(retryPolicy)
-    ),
-    rawStep
-);
+var decoratedStep = composeAspects(List.of(metrics(metricsPolicy), 
+                                           timeout(timeoutPolicy), 
+                                           circuitBreaker(breakerPolicy), 
+                                           retry(retryPolicy)), 
+                                   rawStep);
 ```
 
 **Implementing Aspects: How They Work**
@@ -3004,24 +2972,22 @@ import static org.pragmatica.lang.utils.Retry.BackoffStrategy;
 import static org.pragmatica.lang.io.TimeSpan.timeSpan;
 
 // Retry aspect wraps a step that returns Promise
-public static <T, R> Fn1<Promise<R>, T> withRetry(
-    int maxAttempts,
-    BackoffStrategy strategy,
-    Fn1<Promise<R>, T> step
-) {
+public static <T, R> Fn1<Promise<R>, T> withRetry(int maxAttempts, 
+                                                  BackoffStrategy strategy, 
+                                                  Fn1<Promise<R>, T> step) {
     var retry = Retry.create()
-        .attempts(maxAttempts)
-        .strategy(strategy);
+                     .attempts(maxAttempts)
+                     .strategy(strategy);
 
     return input -> retry.execute(() -> step.apply(input));
 }
 
 // Usage: retry failing network calls
 var backoff = BackoffStrategy.exponential()
-    .initialDelay(timeSpan(100).millis())
-    .maxDelay(timeSpan(5).seconds())
-    .factor(2.0)
-    .withJitter();
+                             .initialDelay(timeSpan(100).millis())
+                             .maxDelay(timeSpan(5).seconds())
+                             .factor(2.0)
+                             .withJitter();
 
 FetchUserProfile fetchWithRetry = withRetry(3, backoff, fetchUserProfile);
 ```
@@ -3038,17 +3004,15 @@ FetchUserProfile fetchWithRetry = withRetry(3, backoff, fetchUserProfile);
 import org.pragmatica.lang.utils.CircuitBreaker;
 
 // Circuit breaker aspect protects against cascading failures
-public static <T, R> Fn1<Promise<R>, T> withCircuitBreaker(
-    CircuitBreaker breaker,
-    Fn1<Promise<R>, T> step
-) {
+public static <T, R> Fn1<Promise<R>, T> withCircuitBreaker(CircuitBreaker breaker, 
+                                                           Fn1<Promise<R>, T> step) {
     return input -> breaker.execute(() -> step.apply(input));
 }
 
 // Usage: protect against unstable service
 var breaker = CircuitBreaker.create()
-    .failureThreshold(5)          // Open after 5 failures
-    .timeout(timeSpan(30).seconds());  // Stay open for 30s
+                            .failureThreshold(5)          // Open after 5 failures
+                            .timeout(timeSpan(30).seconds());  // Stay open for 30s
 
 FetchOrders fetchWithBreaker = withCircuitBreaker(breaker, fetchOrders);
 ```
@@ -3057,10 +3021,8 @@ FetchOrders fetchWithBreaker = withCircuitBreaker(breaker, fetchOrders);
 
 ```java
 // Timeout aspect adds deadline to operation
-public static <T, R> Fn1<Promise<R>, T> withTimeout(
-    TimeSpan timeout,
-    Fn1<Promise<R>, T> step
-) {
+public static <T, R> Fn1<Promise<R>, T> withTimeout(TimeSpan timeout, 
+                                                    Fn1<Promise<R>, T> step) {
     return input -> step.apply(input).timeout(timeout);
 }
 
@@ -3072,22 +3034,13 @@ FetchData fetchWithTimeout = withTimeout(timeSpan(5).seconds(), fetchData);
 
 ```java
 // Metrics aspect tracks execution time and outcomes
-public static <T, R> Fn1<Promise<R>, T> withMetrics(
-    String operationName,
-    Fn1<Promise<R>, T> step
-) {
+public static <T, R> Fn1<Promise<R>, T> withMetrics(String operationName, 
+                                                    Fn1<Promise<R>, T> step) {
     return input -> {
         var start = System.nanoTime();
 
         return step.apply(input)
-            .onResult(result -> {
-                var duration = System.nanoTime() - start;
-                if (result.isSuccess()) {
-                    metrics.recordSuccess(operationName, duration);
-                } else {
-                    metrics.recordFailure(operationName, duration, result.cause());
-                }
-            });
+                   .onResult(result -> metrics.recordResult(operationName, result, System.nanoTime() - start));
     };
 }
 
@@ -3099,17 +3052,15 @@ CheckEmail checkWithMetrics = withMetrics("check_email", checkEmail);
 
 ```java
 // Logging aspect adds structured logging
-public static <T, R> Fn1<Promise<R>, T> withLogging(
-    Logger log,
-    String operation,
-    Fn1<Promise<R>, T> step
-) {
+public static <T, R> Fn1<Promise<R>, T> withLogging(Logger log, 
+                                                    String operation, 
+                                                    Fn1<Promise<R>, T> step) {
     return input -> {
         log.info("Starting: {}", operation);
 
         return step.apply(input)
-            .onSuccess(result -> log.info("Success: {} -> {}", operation, result))
-            .onFailure(cause -> log.warn("Failure: {} -> {}", operation, cause.message()));
+                   .onSuccess(result -> log.info("Success: {} -> {}", operation, result))
+                   .onFailure(cause -> log.warn("Failure: {} -> {}", operation, cause.message()));
     };
 }
 ```
@@ -3118,10 +3069,7 @@ public static <T, R> Fn1<Promise<R>, T> withLogging(
 
 ```java
 // Helper to compose multiple aspects
-public static <T, R> Fn1<Promise<R>, T> composeAspects(
-    List<Fn1<Fn1<Promise<R>, T>, Fn1<Promise<R>, T>>> aspects,
-    Fn1<Promise<R>, T> step
-) {
+public static <T, R> Fn1<Promise<R>, T> composeAspects(List<Fn1<Fn1<Promise<R>, T>, Fn1<Promise<R>, T>>> aspects, Fn1<Promise<R>, T> step) {
     Fn1<Promise<R>, T> result = step;
     // Apply aspects in reverse order (innermost to outermost)
     for (int i = aspects.size() - 1; i >= 0; i--) {
@@ -3131,14 +3079,10 @@ public static <T, R> Fn1<Promise<R>, T> composeAspects(
 }
 
 // Usage with aspect factories
-var decorated = composeAspects(
-    List.of(
-        s -> withMetrics("operation", s),
-        s -> withTimeout(timeSpan(10).seconds(), s),
-        s -> withRetry(3, exponentialBackoff, s)
-    ),
-    rawStep
-);
+var decorated = composeAspects(List.of(s -> withMetrics("operation", s), 
+                                       s -> withTimeout(timeSpan(10).seconds(), s), 
+                                       s -> withRetry(3, exponentialBackoff, s)), 
+                               rawStep);
 ```
 
 **Key insights:**
@@ -3167,11 +3111,9 @@ void retryAspect_retriesOnFailure() {
 // Use case test (aspect-agnostic)
 @Test
 void loginUser_success() {
-    var useCase = LoginUser.loginUser(
-        mockValidate,
-        mockCheckCreds,
-        mockGenerateToken
-    );
+    var useCase = LoginUser.loginUser(mockValidate, 
+                                      mockCheckCreds, 
+                                      mockGenerateToken);
 
     var result = useCase.execute(validRequest).await();
 
@@ -3217,7 +3159,7 @@ static <I, O> Fn1<I, Promise<O>> withRetry(RetryPolicy policy, Fn1<I, Promise<O>
 
 // Compose by wrapping:
 var decorated = withTimeout(timeSpan(5).seconds(),
-                    withRetry(retryPolicy, rawStep));
+                            withRetry(retryPolicy, rawStep));
 ```
 
 ---
@@ -3226,14 +3168,14 @@ var decorated = withTimeout(timeSpan(5).seconds(),
 
 This table summarizes thread safety rules for each pattern. For detailed explanations, see [Immutability and Thread Confinement](#immutability-and-thread-confinement) and individual pattern sections.
 
-| Pattern | Thread Safety Model | Local Mutable State | Input Data | Result Data |
-|---------|---------------------|---------------------|------------|-------------|
-| **Leaf** | Thread confinement (single invocation) | ✅ Safe - confined to function scope | ❌ Must be read-only | ✅ Must be immutable |
-| **Sequencer** | Sequential execution (steps don't overlap) | ✅ Safe - confined to each step | ❌ Must be read-only | ✅ Must be immutable |
-| **Fork-Join** | Parallel execution (no synchronization) | ✅ Safe - confined within each branch | ❌ **MUST be immutable** | ✅ Must be immutable |
-| **Iteration (Sequential)** | Single-threaded (operations execute sequentially) | ✅ Safe - accumulators OK | ❌ Must be read-only | ✅ Must be immutable |
-| **Iteration (Parallel)** | Parallel execution (no synchronization) | ✅ Safe - confined within each operation | ❌ **MUST be immutable** | ✅ Must be immutable |
-| **Condition** | Depends on branch pattern | Follow pattern rules for each branch | ❌ Must be read-only | ✅ Must be immutable |
+| Pattern                    | Thread Safety Model                               | Local Mutable State                     | Input Data              | Result Data         |
+|----------------------------|---------------------------------------------------|-----------------------------------------|-------------------------|---------------------|
+| **Leaf**                   | Thread confinement (single invocation)            | ✅ Safe - confined to function scope     | ❌ Must be read-only     | ✅ Must be immutable |
+| **Sequencer**              | Sequential execution (steps don't overlap)        | ✅ Safe - confined to each step          | ❌ Must be read-only     | ✅ Must be immutable |
+| **Fork-Join**              | Parallel execution (no synchronization)           | ✅ Safe - confined within each branch    | ❌ **MUST be immutable** | ✅ Must be immutable |
+| **Iteration (Sequential)** | Single-threaded (operations execute sequentially) | ✅ Safe - accumulators OK                | ❌ Must be read-only     | ✅ Must be immutable |
+| **Iteration (Parallel)**   | Parallel execution (no synchronization)           | ✅ Safe - confined within each operation | ❌ **MUST be immutable** | ✅ Must be immutable |
+| **Condition**              | Depends on branch pattern                         | Follow pattern rules for each branch    | ❌ Must be read-only     | ✅ Must be immutable |
 
 **Key Principles:**
 - **Input data is always read-only** - never mutate parameters
@@ -3498,9 +3440,7 @@ void validation_succeeds_forValidInput() {
 
     ValidRequest.validRequest(request)
                 .onFailure(Assertions::fail)  // Fail if unexpectedly fails
-                .onSuccess(valid -> {
-                    assertEquals("valid@example.com", valid.email().value());
-                });
+                .onSuccess(valid -> assertEquals("valid@example.com", valid.email().value()));
 }
 ```
 
@@ -3530,19 +3470,19 @@ void execute_succeeds_forValidInput() {
 
 **Thread Safety in Tests:**
 
-Mutable test state is acceptable because **test execution is single-threaded**. Each test runs in isolation with its own mutable accumulators, call logs, or test data builders:
+Mutable test state is acceptable because **individual test execution is single-threaded**. Each test runs in isolation with its own mutable accumulators, call logs, or test data builders:
 
 ```java
 @Test
 void execute_appliesDiscounts_inCorrectOrder() {
     var callLog = new ArrayList<String>();  // Mutable test state - safe
 
-    DiscountRule bogo = createLoggingRule("BOGO", callLog);
-    DiscountRule percent = createLoggingRule("PERCENT", callLog);
+    var bogo = createLoggingRule("BOGO", callLog);
+    var percent = createLoggingRule("PERCENT", callLog);
 
     calculateDiscounts.apply(new CartWithRules(cart, List.of(bogo, percent)))
-        .await()
-        .onFailure(Assertions::fail);
+                      .await()
+                      .onFailure(Assertions::fail);
 
     assertEquals(List.of("BOGO", "PERCENT"), callLog);  // Verify call order
 }
@@ -3698,7 +3638,7 @@ interface CheckCredentials {
 static UserLogin userLogin(CheckCredentials checkCredentials) {
     return request -> ValidRequest.validRequest(request)
                                   .flatMap(checkCredentials::apply)
-                                  .map(creds -> new Response("stub-token"));
+                                  .map(_ -> new Response("stub-token"));
 }
 ```
 
@@ -4031,21 +3971,17 @@ public Option<User> findUser(UserId id) {
 
 // Spring Data JPA example
 public Option<User> findByEmail(Email email) {
-    return Option.option(
-        userRepository.findByEmail(email.value())  // JPA returns null if not found
-    );
+    return Option.option(userRepository.findByEmail(email.value()));  // JPA returns null if not found
 }
 
 // JDBC ResultSet example
 public Option<User> loadUser(UserId id) {
-    return Promise.lift(
-        DatabaseError::cause,
-        () -> {
-            ResultSet rs = executeQuery(id);
-            User user = rs.next() ? mapUser(rs) : null;  // null if not found
-            return Option.option(user);  // Wrap before returning
-        }
-    );
+    return Promise.lift(DatabaseError::cause, 
+                        () -> {
+                                  ResultSet rs = executeQuery(id);
+                                  User user = rs.next() ? mapUser(rs) : null;  // null if not found
+                                  return Option.option(user);  // Wrap before returning
+                        });
 }
 ```
 
@@ -4058,24 +3994,19 @@ When persisting to databases with nullable columns, convert `Option<T>` to null 
 ```java
 // Adapter layer - JOOQ insert with optional field
 public Promise<Unit> saveUser(User user) {
-    return Promise.lift(
-        DatabaseError::cause,
-        () -> {
-            dsl.insertInto(USERS)
-                .set(USERS.ID, user.id().value())
-                .set(USERS.EMAIL, user.email().value())
-                .set(USERS.REFERRAL_CODE,
-                    user.refCode().map(ReferralCode::value).orElse(null))  // Option → nullable column
-                .execute();
-            return Unit.unit();
-        }
-    );
+    return Promise.lift(DatabaseError::cause,
+                        () -> {
+                                  dsl.insertInto(USERS)
+                                     .set(USERS.ID, user.id().value())
+                                     .set(USERS.EMAIL, user.email().value())
+                                     .set(USERS.REFERRAL_CODE, user.refCode().map(ReferralCode::value).orElse(null))  // Option → nullable column
+                                     .execute();
+                                  return Unit.unit();
+                        });
 }
 
 // JDBC PreparedStatement example
-PreparedStatement stmt = connection.prepareStatement(
-    "INSERT INTO users (id, email, referral_code) VALUES (?, ?, ?)"
-);
+PreparedStatement stmt = connection.prepareStatement("INSERT INTO users (id, email, referral_code) VALUES (?, ?, ?)");
 stmt.setString(1, user.id().value());
 stmt.setString(2, user.email().value());
 stmt.setString(3, user.refCode().map(ReferralCode::value).orElse(null));  // Option → null
@@ -4193,14 +4124,14 @@ public Result<User> enrichUser(User user) {
 
 ### Summary
 
-| Context | Null Usage | Correct Approach |
-|---------|-----------|------------------|
-| Return values from JBCT code | ❌ Never | Use `Option<T>` |
-| Parameters between JBCT components | ❌ Never | Use `Option<T>` or required types |
-| Wrapping external API returns | ✅ Allowed | `Option.option(nullable)` immediately |
-| Writing to nullable DB columns | ✅ Allowed | `.orElse(null)` at write boundary |
-| Test inputs for validation | ✅ Allowed | Test null rejection |
-| "Unknown" or "absent" semantics | ❌ Never | Use `Option<T>` or `Result<T>` |
+| Context                            | Null Usage | Correct Approach                      |
+|------------------------------------|------------|---------------------------------------|
+| Return values from JBCT code       | ❌ Never    | Use `Option<T>`                       |
+| Parameters between JBCT components | ❌ Never    | Use `Option<T>` or required types     |
+| Wrapping external API returns      | ✅ Allowed  | `Option.option(nullable)` immediately |
+| Writing to nullable DB columns     | ✅ Allowed  | `.orElse(null)` at write boundary     |
+| Test inputs for validation         | ✅ Allowed  | Test null rejection                   |
+| "Unknown" or "absent" semantics    | ❌ Never    | Use `Option<T>` or `Result<T>`        |
 
 **Core Principle**: Null exists only at system boundaries (adapters). Inside JBCT code, absence is represented by `Option.none()`, never null.
 
@@ -4233,7 +4164,7 @@ import static com.example.domain.Email.email;
 var result = email(raw);  // Clear what's being created
 ```
 
-This pattern is grep-friendly and unambiguous - searching for `Email.email` finds all email construction sites.
+This pattern is grep-friendly and unambiguous - searching for `Email.email` or `email(` finds all email construction sites.
 
 **Implementation patterns:**
 
@@ -4242,8 +4173,8 @@ This pattern is grep-friendly and unambiguous - searching for `Email.email` find
 record Email(String value) {
     public static Result<Email> email(String raw) {
         return Verify.ensure(raw, Verify.Is::notNull)
-            .map(String::trim)
-            .map(Email::new);
+                     .map(String::trim)
+                     .map(Email::new);
     }
 }
 ```
@@ -4274,9 +4205,9 @@ static RegisterUser registerUser(CheckEmail checkEmail, SaveUser saveUser) {
         @Override
         public Promise<Response> execute(Request request) {
             return ValidRequest.validRequest(request)
-                .async()
-                .flatMap(checkEmail::apply)
-                .flatMap(saveUser::apply);
+                               .async()
+                               .flatMap(checkEmail::apply)
+                               .flatMap(saveUser::apply);
         }
     }
     return new registerUser(checkEmail, saveUser);
@@ -4391,48 +4322,48 @@ Use these pre-defined verbs to maintain consistent abstraction levels across you
 
 **Zone 2 Verbs (Step Interfaces - Orchestration):**
 
-| Verb | When to Use | JBCT Example |
-|------|-------------|--------------|
-| `validate` | Checking rules/constraints | `ValidateInput.apply()` |
-| `process` | Transforming or interpreting data | `ProcessPayment.apply()` |
-| `handle` | Coordinating reactions to input/events | `HandleRefund.apply()` |
-| `transform` | Converting between representations | `TransformOrder.apply()` |
-| `apply` | Changing state using parameters | `ApplyDiscount.apply()` |
-| `check` | Verifying conditions (returns Result<Unit>) | `CheckInventory.apply()` |
-| `build` | Assembling complex objects | `BuildReport.apply()` |
-| `resolve` | Determining ambiguous cases | `ResolveAddress.apply()` |
-| `load` | Retrieving data for use | `LoadUserProfile.apply()` |
-| `save` | Persisting changes | `SaveOrder.apply()` |
-| `sync` | Aligning systems or datasets | `SyncInventory.apply()` |
-| `notify` | Informing others of events | `NotifyUser.apply()` |
-| `manage` | Supervising lifecycle or multiple sub-tasks | `ManageSession.apply()` |
-| `configure` | Setting up with flexible options | `ConfigureSettings.apply()` |
-| `initialize` | Preparing for first use | `InitializeConnection.apply()` |
+| Verb         | When to Use                                 | JBCT Example                   |
+|--------------|---------------------------------------------|--------------------------------|
+| `validate`   | Checking rules/constraints                  | `ValidateInput.apply()`        |
+| `process`    | Transforming or interpreting data           | `ProcessPayment.apply()`       |
+| `handle`     | Coordinating reactions to input/events      | `HandleRefund.apply()`         |
+| `transform`  | Converting between representations          | `TransformOrder.apply()`       |
+| `apply`      | Changing state using parameters             | `ApplyDiscount.apply()`        |
+| `check`      | Verifying conditions (returns Result<Unit>) | `CheckInventory.apply()`       |
+| `build`      | Assembling complex objects                  | `BuildReport.apply()`          |
+| `resolve`    | Determining ambiguous cases                 | `ResolveAddress.apply()`       |
+| `load`       | Retrieving data for use                     | `LoadUserProfile.apply()`      |
+| `save`       | Persisting changes                          | `SaveOrder.apply()`            |
+| `sync`       | Aligning systems or datasets                | `SyncInventory.apply()`        |
+| `notify`     | Informing others of events                  | `NotifyUser.apply()`           |
+| `manage`     | Supervising lifecycle or multiple sub-tasks | `ManageSession.apply()`        |
+| `configure`  | Setting up with flexible options            | `ConfigureSettings.apply()`    |
+| `initialize` | Preparing for first use                     | `InitializeConnection.apply()` |
 
 **Zone 3 Verbs (Leaves - Implementation):**
 
-| Verb | Typical Use | JBCT Example |
-|------|-------------|--------------|
-| `get` | Retrieve a value | `getTimestamp()` |
-| `set` | Assign a value | `setHeader()` |
-| `fetch` | Pull from external source | `fetchWeatherData()` |
-| `parse` | Break down structured input | `parseJson()` |
-| `format` | Build structured output | `formatDate()` |
-| `calculate` | Perform computation | `calculateTax()` |
-| `convert` | Transform between types | `convertToUtc()` |
-| `map` | Apply logic to value | `mapToDto()` |
-| `filter` | Reduce based on criteria | `filterActive()` |
-| `hash` | Cryptographic transformation | `hashPassword()` |
-| `encode`/`decode` | Serialization | `decodeToken()` |
-| `extract` | Pull piece from larger structure | `extractDomain()` |
-| `split`/`join` | String/array manipulation | `splitPath()`, `joinTags()` |
-| `log` | Track information | `logError()` |
-| `send` | Transmit over network | `sendEmail()` |
-| `receive` | Handle incoming data | `receivePayload()` |
-| `read` | Access from file/disk/memory | `readConfigFile()` |
-| `write` | Persist to disk or memory | `writeLogToFile()` |
-| `add` | Append or increment | `addItemToCart()` |
-| `remove` | Delete or detach | `removeUser()` |
+| Verb              | Typical Use                      | JBCT Example                |
+|-------------------|----------------------------------|-----------------------------|
+| `get`             | Retrieve a value                 | `getTimestamp()`            |
+| `set`             | Assign a value                   | `setHeader()`               |
+| `fetch`           | Pull from external source        | `fetchWeatherData()`        |
+| `parse`           | Break down structured input      | `parseJson()`               |
+| `format`          | Build structured output          | `formatDate()`              |
+| `calculate`       | Perform computation              | `calculateTax()`            |
+| `convert`         | Transform between types          | `convertToUtc()`            |
+| `map`             | Apply logic to value             | `mapToDto()`                |
+| `filter`          | Reduce based on criteria         | `filterActive()`            |
+| `hash`            | Cryptographic transformation     | `hashPassword()`            |
+| `encode`/`decode` | Serialization                    | `decodeToken()`             |
+| `extract`         | Pull piece from larger structure | `extractDomain()`           |
+| `split`/`join`    | String/array manipulation        | `splitPath()`, `joinTags()` |
+| `log`             | Track information                | `logError()`                |
+| `send`            | Transmit over network            | `sendEmail()`               |
+| `receive`         | Handle incoming data             | `receivePayload()`          |
+| `read`            | Access from file/disk/memory     | `readConfigFile()`          |
+| `write`           | Persist to disk or memory        | `writeLogToFile()`          |
+| `add`             | Append or increment              | `addItemToCart()`           |
+| `remove`          | Delete or detach                 | `removeUser()`              |
 
 **Naming Patterns:**
 
@@ -4670,21 +4601,30 @@ public interface RegisterUser {
 
     Promise<Response> execute(Request request);
 
-    static RegisterUser registerUser(
-        CheckEmailUniqueness checkEmail,
-        HashPassword hashPassword,
-        SaveUser saveUser,
-        GenerateToken generateToken
-    ) {
+    interface CheckEmailUniqueness {
+        Promise<ValidRequest> apply(ValidRequest valid);
+    }
+
+    interface CreateValidUser {
+        Promise<ValidUser> apply(ValidRequest valid);
+    }
+
+    interface SaveUser {
+        Promise<User> apply(ValidUser validUser);
+    }
+
+    interface GenerateToken {
+        Promise<Response> apply(User user);
+    }
+
+    static RegisterUser registerUser(CheckEmailUniqueness checkEmail,
+                                     CreateValidUser createValidUser,
+                                     SaveUser saveUser,
+                                     GenerateToken generateToken) {
         return request -> ValidRequest.validRequest(request)
                                       .async()
                                       .flatMap(checkEmail::apply)
-                                      .flatMap(valid -> hashPassword.apply(valid.password())
-                                                                    .async()
-                                                                    .map(hashed -> new ValidUser(
-                                                                        valid.email(),
-                                                                        hashed,
-                                                                        valid.referralCode())))
+                                      .flatMap(createValidUser::apply)
                                       .flatMap(saveUser::apply)
                                       .flatMap(generateToken::apply);
     }
@@ -4711,11 +4651,9 @@ record ValidRequest(Email email, Password password, Option<ReferralCode> referra
 If we had cross-field rules (e.g., "premium referral codes require 10+ char passwords"), we'd add them in the second factory, with the same name but accepting already valid individual fields:
 
 ```java
-public static Result<ValidRequest> validRequest(
-    Email email,
-    Password password,
-    Option<ReferralCode> referralCode
-) {
+public static Result<ValidRequest> validRequest(Email email, 
+                                                Password password, 
+                                                Option<ReferralCode> referralCode) {
     return Result.all(checkPremiumPasswordRequirement(password, referralCode))
                  .map(_ -> toValidRequest(email, password, referralCode));
 }
@@ -4724,19 +4662,14 @@ private static ValidRequest toValidRequest(Email email, Password password, Optio
     return new ValidRequest(email, password, referralCode);
 }
 
-private static Result<Unit> checkPremiumPasswordRequirement(
-    Password password,
-    Option<ReferralCode> referralCode
-) {
-    return referralCode.match(
-        code -> checkPremiumPassword(code, password),
-        Result::unitResult
-    );
+private static Result<Unit> checkPremiumPasswordRequirement(Password password, 
+                                                            Option<ReferralCode> referralCode) {
+    return referralCode.match(code -> checkPremiumPassword(code, password), Result::unitResult);
 }
 
 private static Result<Unit> checkPremiumPassword(ReferralCode code, Password password) {
     return isPremiumWithWeakPassword(code, password)
-        ? RegistrationError.WeakPasswordForPremium.INSTANCE.result()
+        ? RegistrationError.General.WEAK_PASSWORD_FOR_PREMIUM.result()
         : Result.unitResult();
 }
 
@@ -4761,10 +4694,10 @@ public record Email(String value) {
 
     public static Result<Email> email(String raw) {
         return Verify.ensure(raw, Verify.Is::notNull)
-            .map(String::trim)
-            .map(String::toLowerCase)
-            .flatMap(Verify.ensureFn(INVALID_EMAIL, Verify.Is::matches, EMAIL_PATTERN))
-            .map(Email::new);
+                     .map(String::trim)
+                     .map(String::toLowerCase)
+                     .flatMap(Verify.ensureFn(INVALID_EMAIL, Verify.Is::matches, EMAIL_PATTERN))
+                     .map(Email::new);
     }
 }
 ```
@@ -4782,10 +4715,10 @@ public record Password(String value) {
 
     public static Result<Password> password(String raw) {
         return Verify.ensure(raw, Verify.Is::notNull)
-            .flatMap(Verify.ensureFn(TOO_SHORT, Verify.Is::lenBetween, 8, 128))
-            .flatMap(ensureUppercase())
-            .flatMap(ensureDigit())
-            .map(Password::new);
+                     .flatMap(Verify.ensureFn(TOO_SHORT, Verify.Is::lenBetween, 8, 128))
+                     .flatMap(ensureUppercase())
+                     .flatMap(ensureDigit())
+                     .map(Password::new);
     }
 
     private static Fn1<Result<String>, String> ensureUppercase() {
@@ -4844,19 +4777,24 @@ public interface CheckEmailUniqueness {
     Promise<ValidRequest> apply(ValidRequest request);
 }
 
-// Step 2: Hash password (sync, so we lift in the sequencer)
+// Step 2: Hash password (sync)
 public interface HashPassword {
     Result<HashedPassword> apply(Password password);
 }
 
-// Step 3: Save the user
-public interface SaveUser {
-    Promise<UserId> apply(ValidUser user);
+// Step 3: Create valid user with hashed password
+public interface CreateValidUser {
+    Promise<ValidUser> apply(ValidRequest valid);
 }
 
-// Step 4: Generate a confirmation token
+// Step 4: Save the user
+public interface SaveUser {
+    Promise<User> apply(ValidUser user);
+}
+
+// Step 5: Generate a confirmation token
 public interface GenerateToken {
-    Promise<Response> apply(UserId userId);
+    Promise<Response> apply(User user);
 }
 ```
 
@@ -4865,6 +4803,7 @@ Supporting types:
 record ValidUser(Email email, HashedPassword hashed, Option<ReferralCode> refCode) {}
 record HashedPassword(String value) {}
 record UserId(String value) {}
+record User(UserId id, Email email) {}
 record ConfirmationToken(String value) {}
 ```
 
@@ -4882,7 +4821,7 @@ class EmailUniquenessChecker implements CheckEmailUniqueness {
 
     private Promise<ValidRequest> checkNotExists(boolean exists, ValidRequest request) {
         return exists
-            ? RegistrationError.EmailAlreadyRegistered.INSTANCE.promise()
+            ? RegistrationError.General.EMAIL_ALREADY_REGISTERED.promise()
             : Promise.success(request);
     }
 }
@@ -4894,11 +4833,32 @@ class BcryptPasswordHasher implements HashPassword {
     private final BCryptPasswordEncoder encoder;
 
     public Result<HashedPassword> apply(Password password) {
-        return Result.lift1(
-            RegistrationError.PasswordHashingFailed::cause,
-            encoder::encode,
-            password.value()
-        ).map(HashedPassword::new);
+        return Result.lift1(RegistrationError.PasswordHashingFailed::cause, 
+                            encoder::encode, 
+                            password.value())
+                     .map(HashedPassword::new);
+    }
+}
+```
+
+**CreateValidUser (sequencer step):**
+```java
+class ValidUserCreator implements CreateValidUser {
+    private final HashPassword hashPassword;
+
+    ValidUserCreator(HashPassword hashPassword) {
+        this.hashPassword = hashPassword;
+    }
+
+    @Override
+    public Promise<ValidUser> apply(ValidRequest valid) {
+        return hashPassword.apply(valid.password())
+                           .async()
+                           .map(hashed -> createValidUser(valid, hashed));
+    }
+
+    private ValidUser createValidUser(ValidRequest valid, HashedPassword hashed) {
+        return new ValidUser(valid.email(), hashed, valid.referralCode());
     }
 }
 ```
@@ -4908,21 +4868,21 @@ class BcryptPasswordHasher implements HashPassword {
 class JooqUserRepository implements SaveUser {
     private final DSLContext dsl;
 
-    public Promise<UserId> apply(ValidUser user) {
-        return Promise.lift(
-            RepositoryError.DatabaseFailure::cause,
-            () -> {
-                String id = dsl.insertInto(USERS)
-                    .set(USERS.EMAIL, user.email().value())
-                    .set(USERS.PASSWORD_HASH, user.hashed().value())
-                    .set(USERS.REFERRAL_CODE, user.refCode().map(ReferralCode::value).orElse(null))
-                    .returningResult(USERS.ID)
-                    .fetchSingle()
-                    .value1();
+    public Promise<User> apply(ValidUser user) {
+        return Promise.lift(RepositoryError.DatabaseFailure::cause, 
+                            () -> saveUser(user));
+    }
 
-                return new UserId(id);
-            }
-        );
+    private User saveUser(ValidUser user) {
+        String id = dsl.insertInto(USERS)
+                       .set(USERS.EMAIL, user.email().value())
+                       .set(USERS.PASSWORD_HASH, user.hashed().value())
+                       .set(USERS.REFERRAL_CODE, user.refCode().map(ReferralCode::value).orElse(null))
+                       .returningResult(USERS.ID)
+                       .fetchSingle()
+                       .value1();
+
+        return new User(new UserId(id), user.email());
     }
 }
 ```
@@ -4932,10 +4892,10 @@ class JooqUserRepository implements SaveUser {
 class TokenServiceClient implements GenerateToken {
     private final HttpClient httpClient;
 
-    public Promise<Response> apply(UserId userId) {
-        return httpClient.post("/tokens/confirm", Map.of("userId", userId.value()))
-            .map(resp -> buildResponse(userId, resp))
-            .recover(this::mapTokenError);
+    public Promise<Response> apply(User user) {
+        return httpClient.post("/tokens/confirm", Map.of("userId", user.id().value()))
+                         .map(resp -> buildResponse(user.id(), resp))
+                         .recover(this::mapTokenError);
     }
 
     private Response buildResponse(UserId userId, Map<String, String> resp) {
@@ -4943,7 +4903,7 @@ class TokenServiceClient implements GenerateToken {
     }
 
     private Promise<Response> mapTokenError(Throwable err) {
-        return RegistrationError.TokenGenerationFailed.cause(err).promise();
+        return RegistrationError.General.TOKEN_GENERATION_FAILED.promise();
     }
 }
 ```
@@ -4957,35 +4917,27 @@ import org.pragmatica.lang.Cause;
 
 public sealed interface RegistrationError extends Cause {
 
-    enum EmailAlreadyRegistered implements RegistrationError {
-        INSTANCE;
+    enum General implements RegistrationError {
+        EMAIL_ALREADY_REGISTERED("Email already registered"),
+        WEAK_PASSWORD_FOR_PREMIUM("Premium referral codes require passwords of at least 10 characters"),
+        TOKEN_GENERATION_FAILED("Token generation failed");
 
-        @Override
-        public String message() {
-            return "Email already registered";
+        private final String message;
+
+        General(String message) {
+            this.message = message;
         }
-    }
-
-    enum WeakPasswordForPremium implements RegistrationError {
-        INSTANCE;
 
         @Override
         public String message() {
-            return "Premium referral codes require passwords of at least 10 characters";
+            return message;
         }
     }
 
     record PasswordHashingFailed(Throwable cause) implements RegistrationError {
         @Override
         public String message() {
-            return "Password hashing failed";
-        }
-    }
-
-    record TokenGenerationFailed(Throwable cause) implements RegistrationError {
-        @Override
-        public String message() {
-            return "Token generation failed";
+            return "Password hashing failed: " + Causes.fromThrowable(cause);
         }
     }
 }
@@ -5060,20 +5012,17 @@ void execute_succeeds_forValidInput() {
 ```java
 @Test
 void execute_fails_whenEmailAlreadyExists() {
-    CheckEmailUniqueness checkEmail = req ->
-        RegistrationError.EmailAlreadyRegistered.INSTANCE.promise();
+    CheckEmailUniqueness checkEmail = req -> RegistrationError.EmailAlreadyRegistered.INSTANCE.promise();
     HashPassword hashPassword = pwd -> Result.success(new HashedPassword("hashed"));
     SaveUser saveUser = user -> Promise.success(new UserId("user-123"));
-    GenerateToken generateToken = id -> Promise.success(
-        new Response(id, new ConfirmationToken("token-456"))
-    );
+    GenerateToken generateToken = id -> Promise.success(new Response(id, new ConfirmationToken("token-456")));
 
     var useCase = RegisterUser.registerUser(checkEmail, hashPassword, saveUser, generateToken);
     var request = new Request("existing@example.com", "Valid1234", null);
 
     useCase.execute(request)
-          .await()
-          .onSuccess(Assertions::fail);
+           .await()
+           .onSuccess(Assertions::fail);
 }
 ```
 
@@ -5105,17 +5054,15 @@ public interface GetUserProfile {
 
     Promise<Response> execute(Request request);
 
-    interface FetchUser { Promise<User> apply(UserId userId); }
+    interface FetchUser { 
+        Promise<User> apply(UserId userId); 
+    }
 
     static GetUserProfile getUserProfile(FetchUser fetchUser) {
         return request -> UserId.userId(request.userId())
                                 .async()
                                 .flatMap(fetchUser::apply)
-                                .map(user -> new Response(
-                                    user.id().value(),
-                                    user.email().value(),
-                                    user.displayName()
-                                ));
+                                .map(user -> new Response(user.id().value(), user.email().value(), user.displayName()));
     }
 }
 ```
@@ -5143,26 +5090,20 @@ public class UserController {
         var request = new GetUserProfile.Request(userId);
 
         return getUserProfile.execute(request)
-            .await()  // Block (or use reactive types in real Spring WebFlux)
-            .match(
-                response -> ResponseEntity.ok(response),
-                cause -> toErrorResponse(cause)
-            );
+                             .await()  // Block (or use reactive types in real Spring WebFlux)
+                             .fold(response -> ResponseEntity.ok(response), cause -> toErrorResponse(cause));
     }
 
     private ResponseEntity<?> toErrorResponse(Cause cause) {
         return switch (cause) {
-            case ProfileError.UserNotFound _ ->
-                ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("error", cause.message()));
+            case ProfileError.UserNotFound _ -> ResponseEntity.status(HttpStatus.NOT_FOUND)
+                                                              .body(Map.of("error", cause.message()));
 
-            case ProfileError.InvalidUserId _ ->
-                ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(Map.of("error", cause.message()));
+            case ProfileError.InvalidUserId _ -> ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                                                               .body(Map.of("error", cause.message()));
 
-            default ->
-                ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "Internal server error"));
+            default -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                                     .body(Map.of("error", "Internal server error"));
         };
     }
 }
@@ -5191,25 +5132,21 @@ public class JooqUserRepository implements GetUserProfile.FetchUser {
     }
 
     public Promise<User> apply(UserId userId) {
-        return Promise.lift(
-            ProfileError.DatabaseFailure::cause,
-            () -> dsl.selectFrom(USERS)
-                .where(USERS.ID.eq(userId.value()))
-                .fetchOptional()
-        ).flatMap(optRecord ->
-            optRecord
-                .map(this::toDomain)
-                .orElse(ProfileError.UserNotFound.INSTANCE.promise())
+        return Promise.lift(ProfileError.DatabaseFailure::cause, 
+                            () -> dsl.selectFrom(USERS)
+                                     .where(USERS.ID.eq(userId.value()))
+                                     .fetchOptional())
+                      .flatMap(optRecord -> optRecord.map(this::toDomain)
+                                                     .orElse(ProfileError.UserNotFound.INSTANCE.promise())
         );
     }
 
     private Promise<User> toDomain(Record record) {
-        return Result.all(
-            UserId.userId(record.get(USERS.ID)),
-            Email.email(record.get(USERS.EMAIL)),
-            Result.success(record.get(USERS.DISPLAY_NAME))
-        ).async()
-         .map(User::new);
+        return Result.all(UserId.userId(record.get(USERS.ID)), 
+                          Email.email(record.get(USERS.EMAIL)), 
+                          Result.success(record.get(USERS.DISPLAY_NAME)))
+                     .async()
+                     .map(User::new);
     }
 }
 ```

@@ -639,13 +639,10 @@ Combine recovery with feature detection:
 
 ```java
 public Promise<Dashboard> loadDashboard(UserId userId) {
-    return Promise.all(
-        loadUserProfile(userId),
-        loadRecentOrders(userId).or(List.of()),      // Empty list if fails
-        loadRecommendations(userId).or(List.of())    // Empty list if fails
-    ).map((profile, orders, recommendations) ->
-        new Dashboard(profile, orders, recommendations)
-    );
+    return Promise.all(loadUserProfile(userId),
+                       loadRecentOrders(userId).or(List.of()),
+                       loadRecommendations(userId).or(List.of()))
+                  .map(Dashboard::new);
 }
 ```
 
@@ -854,13 +851,13 @@ Use `Result.all(...)` or `Promise.all(...)` to combine multiple independent oper
 Result<ValidRequest> validated = Result.all(Email.email(raw.email()),
                                              Password.password(raw.password()),
                                              ReferralCode.referralCode(raw.referralCode()))
-                                       .flatMap(ValidRequest::new);
+                                       .map(ValidRequest::new);
 
 // Async: run independent queries in parallel
 Promise<Report> report = Promise.all(userRepo.findById(userId),
                                      orderRepo.findByUser(userId),
                                      inventoryService.getAvailableItems())
-                                .flatMap(this::generateReport);
+                                .map(this::generateReport);
 ```
 
 If any input fails, `all()` fails immediately (fail-fast for Promise) or collects failures (CompositeCause for Result).

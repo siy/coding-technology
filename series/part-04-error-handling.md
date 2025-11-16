@@ -188,7 +188,7 @@ public class JdbcUserRepository implements FindUser {
     @Override
     public Promise<User> findById(UserId id) {
         return Promise.lift(
-            CoreError::database,  // Convert SQLException → domain Cause
+            RepositoryError.DatabaseFailure::new,  // Convert SQLException → domain Cause
             () -> jdbcTemplate.queryForObject(
                 "SELECT * FROM users WHERE id = ?",
                 new Object[]{id.value()},
@@ -233,7 +233,7 @@ public interface UserRepository {
 class JpaUserRepository implements UserRepository {
     public Promise<Option<User>> findByEmail(Email email) {
         return Promise.lift(
-            RepositoryError::fromDatabaseException,
+            RepositoryError.DatabaseFailure::new,
             () -> entityManager.createQuery("SELECT u FROM User u WHERE u.email = :email", UserEntity.class)
                                .setParameter("email", email.value())
                                .getResultList()
@@ -344,7 +344,7 @@ public Option<User> findByEmail(Email email) {
 ```java
 public Promise<Option<User>> loadUser(UserId id) {
     return Promise.lift(
-        DatabaseError::cause,
+        RepositoryError.DatabaseFailure::new,
         () -> {
             ResultSet rs = executeQuery(id);
             User user = rs.next() ? mapUser(rs) : null;  // null if not found
@@ -364,7 +364,7 @@ When persisting to databases with nullable columns, convert `Option<T>` to null 
 // Adapter layer - JOOQ insert with optional field
 public Promise<Unit> saveUser(User user) {
     return Promise.lift(
-        DatabaseError::cause,
+        RepositoryError.DatabaseFailure::new,
         () -> {
             dsl.insertInto(USERS)
                 .set(USERS.ID, user.id().value())
@@ -1097,11 +1097,11 @@ Wrapping throwing code:
 ```java
 // Result.lift - Sync exceptions → Result
 Result.lift(Integer::parseInt, raw)
-Result.lift(ErrorType::cause, () -> riskyOperation())
+Result.lift(RepositoryError.DatabaseFailure::new, () -> riskyOperation())
 Result.lift(ThrowingRunnable)  // → Result<Unit>
 
 // Promise.lift - Async exceptions → Promise
-Promise.lift(DatabaseError::cause, () -> jdbcQuery())
+Promise.lift(RepositoryError.DatabaseFailure::new, () -> jdbcQuery())
 Promise.lift(() -> riskyAsyncOperation())
 Promise.lift(ThrowingRunnable)  // → Promise<Unit>
 
@@ -1289,7 +1289,7 @@ public Promise<Result<User>> loadUser(UserId id) {
 // DO: Promise already handles failures
 public Promise<User> loadUser(UserId id) {
     return Promise.lift(
-        DatabaseError::cause,
+        RepositoryError.DatabaseFailure::new,
         () -> userRepository.findById(id)
     );
 }
@@ -1356,7 +1356,7 @@ public Result<Optional<Theme>> findTheme(UserId id) {
 // DO: Use Option for monadic composition
 public Result<Option<Theme>> findTheme(UserId id) {
     return Result.lift(
-        DatabaseError::cause,
+        RepositoryError.DatabaseFailure::new,
         () -> Option.option(repository.findTheme(id))
     );
 }

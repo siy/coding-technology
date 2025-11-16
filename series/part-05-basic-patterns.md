@@ -442,7 +442,7 @@ class PostgresUserRepository implements UserRepository {
 
     public Promise<Option<User>> findByEmail(Email email) {
         return Promise.lift(
-            e -> RepositoryError.DatabaseFailure.cause(e),
+            RepositoryError.DatabaseFailure::new,
             () -> {
                 try (var conn = dataSource.getConnection();
                      var stmt = conn.prepareStatement("SELECT * FROM users WHERE email = ?")) {

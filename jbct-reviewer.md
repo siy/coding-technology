@@ -242,7 +242,7 @@ public User findUser(UserId id) throws UserNotFoundException {
 ```java
 public Promise<User> findUser(UserId id) {
     return Promise.lift(
-        UserError.DatabaseFailure::cause,
+        UserError.DatabaseFailure::new,
         () -> jdbcTemplate.queryForObject(...)
     );
 }
@@ -270,7 +270,7 @@ public Promise<User> findUser(UserId id) {
 
 **Prefer:**
 - Constructor references: `Email::new` over `v -> new Email(v)`
-- Method references: `Error::cause` over `e -> Error.cause(e)`
+- Exception mapping: `ErrorType.RecordName::new` over `e -> ErrorType.RecordName.cause(e)`
 - Extract complex logic to named methods
 
 #### Zone-Based Abstraction Check
@@ -401,6 +401,30 @@ private Promise<User> recoverNetworkError(Cause cause) {
 - [ ] Multi-case pattern matching uses comma-separated cases: `case A ignored, B ignored ->`
 - [ ] Error Cause instances are static final constants, not inline constructions
 - [ ] Complex `.recover()` logic extracted to named recovery methods
+- [ ] Exception mapping uses constructor references: `ErrorType.RecordName::new`
+- [ ] Fixed-message errors grouped into single `enum General`
+
+**Error structure pattern:**
+
+```java
+// ✅ CORRECT: General enum for fixed messages
+public sealed interface RegistrationError extends Cause {
+    enum General implements RegistrationError {
+        EMAIL_ALREADY_REGISTERED("Email already registered"),
+        WEAK_PASSWORD_FOR_PREMIUM("Premium codes require 10+ char passwords");
+
+        private final String message;
+        General(String message) { this.message = message; }
+        @Override public String message() { return message; }
+    }
+
+    record PasswordHashingFailed(Throwable cause) implements RegistrationError { ... }
+}
+
+// ❌ WRONG: Separate singleton enums
+enum EmailAlreadyRegistered implements RegistrationError { INSTANCE; ... }
+enum WeakPasswordForPremium implements RegistrationError { INSTANCE; ... }
+```
 
 ### 5. Use Case Factories Return Lambdas
 
@@ -507,7 +531,7 @@ public static Price applyDiscount(Price original, Discount discount) {
 // Adapter leaf (I/O)
 public Promise<User> apply(UserId id) {
     return Promise.lift(
-        DbError.QueryFailed::cause,
+        DbError.QueryFailed::new,
         () -> dsl.selectFrom(USERS).where(USERS.ID.eq(id.value())).fetchOne()
     ).flatMap(record -> record != null
         ? Promise.success(toUser(record))

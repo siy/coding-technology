@@ -251,7 +251,7 @@ Atomic unit - single responsibility, no composition:
 ```java
 public Promise<User> findUser(UserId id) {
     return Promise.lift(
-        DatabaseError::cause,
+        RepositoryError.DatabaseFailure::new,
         () -> jdbcTemplate.queryForObject(...)
     );
 }
@@ -348,13 +348,13 @@ Option.all(opt1, opt2, opt3)
 ```java
 // Lift exceptions in adapters
 Promise.lift(
-    DatabaseError::cause,
+    RepositoryError.DatabaseFailure::new,
     () -> jdbcTemplate.queryForObject(...)
 );
 
-// With custom exception mapper
+// With custom exception mapper (constructor reference preferred)
 Result.lift(
-    e -> CustomError.from(e),
+    CustomError.ProcessingFailed::new,
     () -> riskyOperation()
 );
 ```
@@ -420,6 +420,29 @@ com.example.app/
 - Value objects used by 2+ use cases → `domain/shared/`
 - Steps (interfaces) → always inside use case
 - Errors → sealed interface inside use case
+
+**Error Structure (General enum pattern):**
+```java
+public sealed interface RegistrationError extends Cause {
+    // Group fixed-message errors into single enum
+    enum General implements RegistrationError {
+        EMAIL_ALREADY_REGISTERED("Email already registered"),
+        WEAK_PASSWORD_FOR_PREMIUM("Premium codes require 10+ char passwords");
+
+        private final String message;
+        General(String message) { this.message = message; }
+        @Override public String message() { return message; }
+    }
+
+    // Records for errors with data (e.g., Throwable)
+    record PasswordHashingFailed(Throwable cause) implements RegistrationError {
+        @Override public String message() { return "Password hashing failed"; }
+    }
+}
+
+// Usage
+RegistrationError.General.EMAIL_ALREADY_REGISTERED.promise()
+```
 
 ## Testing Patterns
 

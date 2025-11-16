@@ -196,6 +196,56 @@ return passwordMatches(user, password)
     : LoginError.InvalidCredentials.INSTANCE.result();
 ```
 
+**Group fixed-message errors into single enum**:
+
+When multiple fixed-message errors exist, group them into one enum:
+
+```java
+public sealed interface RegistrationError extends Cause {
+    enum General implements RegistrationError {
+        EMAIL_ALREADY_REGISTERED("Email already registered"),
+        WEAK_PASSWORD_FOR_PREMIUM("Premium codes require 10+ char passwords"),
+        TOKEN_GENERATION_FAILED("Token generation failed");
+
+        private final String message;
+
+        General(String message) {
+            this.message = message;
+        }
+
+        @Override
+        public String message() {
+            return message;
+        }
+    }
+
+    // Records for errors with data
+    record PasswordHashingFailed(Throwable cause) implements RegistrationError {
+        @Override
+        public String message() {
+            return "Password hashing failed: " + Causes.fromThrowable(cause);
+        }
+    }
+}
+
+// Usage
+RegistrationError.General.EMAIL_ALREADY_REGISTERED.promise()
+RegistrationError.General.TOKEN_GENERATION_FAILED.result()
+```
+
+**Exception mapping with constructor references**:
+
+When wrapping exceptions, use constructor references:
+
+```java
+// Record with Throwable parameter
+record DatabaseFailure(Throwable cause) implements RepositoryError { ... }
+
+// Use constructor reference in lift
+Promise.lift(RepositoryError.DatabaseFailure::new, () -> jdbcQuery())
+Result.lift1(RepositoryError.DatabaseFailure::new, encoder::encode, value)
+```
+
 ### 4. Single Pattern Per Function
 
 Every function implements **exactly one** pattern:

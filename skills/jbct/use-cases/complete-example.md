@@ -90,12 +90,13 @@ public record Password(String value) {
 ```java
 package com.example.domain.shared;
 
+import org.pragmatica.lang.parse.Network;
+
 public record UserId(UUID value) {
     private UserId {}
 
     public static Result<UserId> userId(String raw) {
-        return Result.lift(() -> UUID.fromString(raw))
-            .mapFailure(e -> Causes.forValue("Invalid user ID: {}").apply(raw))
+        return Network.parseUUID(raw)
             .map(UserId::new);
     }
 

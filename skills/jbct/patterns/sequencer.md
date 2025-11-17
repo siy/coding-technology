@@ -44,6 +44,23 @@ public interface RegisterUser extends UseCase.WithPromise<Response, Request> {
 }
 ```
 
+## Thread Safety
+
+**Sequencer is thread-safe through sequential execution.** Each step completes before the next begins. Mutable local state within a step is safe (thread-confined).
+
+```java
+// OK - Mutable accumulator within single step
+private List<Item> processItems(List<Item> items) {
+    var processed = new ArrayList<Item>();  // Thread-confined
+    for (var item : items) {
+        processed.add(transform(item));
+    }
+    return List.copyOf(processed);  // Return immutable
+}
+```
+
+**Rule:** Mutable state is safe within a single sequential step, but inputs/outputs between steps must be immutable.
+
 ## Critical Rules
 
 ### 1. Use flatMap for Dependent Steps

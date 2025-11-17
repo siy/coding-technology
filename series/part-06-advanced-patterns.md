@@ -1,8 +1,8 @@
-# Part 4: Advanced Patterns & Testing
+# Part 6: Advanced Patterns & Testing
 
-**Series:** [Java Backend Coding Technology](INDEX.md) | **Part:** 4 of 6
+**Series:** [Java Backend Coding Technology](INDEX.md) | **Part:** 6 of 9
 
-**Previous:** [Part 3: Basic Patterns & Structure](part-03-basic-patterns.md) | **Next:** [Part 5: Testing Strategy](part-05-testing-strategy.md)
+**Previous:** [Part 5: Basic Patterns & Structure](part-05-basic-patterns.md) | **Next:** [Part 7: Testing Philosophy & Evolution](part-07-testing-philosophy.md)
 
 ---
 
@@ -62,26 +62,14 @@ public interface ProcessOrder {
         Result<Response> apply(Payment payment);
     }
 
-    static ProcessOrder processOrder(
-        ValidateInput validate,
-        ReserveInventory reserve,
-        ProcessPayment processPayment,
-        ConfirmOrder confirm
-    ) {
-        record processOrder(
-            ValidateInput validate,
-            ReserveInventory reserve,
-            ProcessPayment processPayment,
-            ConfirmOrder confirm
-        ) implements ProcessOrder {
-            public Result<Response> execute(Request request) {
-                return validate.apply(request)        // Step 1
-                    .flatMap(reserve::apply)          // Step 2
-                    .flatMap(processPayment::apply)   // Step 3
-                    .flatMap(confirm::apply);         // Step 4
-            }
-        }
-        return new processOrder(validate, reserve, processPayment, confirm);
+    static ProcessOrder processOrder(ValidateInput validate,
+                                     ReserveInventory reserve,
+                                     ProcessPayment processPayment,
+                                     ConfirmOrder confirm) {
+        return request -> validate.apply(request)                 // Step 1
+                                  .flatMap(reserve::apply)        // Step 2
+                                  .flatMap(processPayment::apply) // Step 3
+                                  .flatMap(confirm::apply);       // Step 4
     }
 }
 ```
@@ -94,11 +82,11 @@ Same structure, different types:
 
 ```java
 public Promise<Response> execute(Request request) {
-    return ValidateInput.validate(request)  // returns Result<ValidInput>
-        .async()                            // lift to Promise<ValidInput>
-        .flatMap(reserve::apply)            // returns Promise<Reservation>
-        .flatMap(processPayment::apply)     // returns Promise<Payment>
-        .flatMap(confirm::apply);           // returns Promise<Response>
+    return ValidateInput.validate(request)              // returns Result<ValidInput>
+                        .async()                        // lift to Promise<ValidInput>
+                        .flatMap(reserve::apply)        // returns Promise<Reservation>
+                        .flatMap(processPayment::apply) // returns Promise<Payment>
+                        .flatMap(confirm::apply);       // returns Promise<Response>
 }
 ```
 
@@ -115,20 +103,32 @@ interface ProcessPayment {
 }
 
 // Implementation delegates to a sub-sequencer
-class CreditCardPaymentProcessor implements ProcessPayment {
-    private final AuthorizeCard authorizeCard;
-    private final CaptureFunds captureFunds;
-    private final RecordTransaction recordTransaction;
+interface CreditCardPaymentProcessor extends ProcessPayment {
+    interface AuthorizeCard {
+        Promise<Reservation> apply(Reservation reservation);
+    }
+    interface CaptureFunds {
+        Promise<Reservation> apply(Reservation reservation);
+    }
+    interface RecordTransaction {
+        Promise<Payment> apply(Reservation reservation);
+    }
 
-    public Promise<Payment> apply(Reservation reservation) {
-        return authorizeCard.apply(reservation)
-            .flatMap(captureFunds::apply)
-            .flatMap(recordTransaction::apply);
+    static CreditCardPaymentProcessor creditCardPaymentProcessor(AuthorizeCard authorizeCard,
+                                                                 CaptureFunds captureFunds,
+                                                                 RecordTransaction recordTransaction) {
+        return (reservation) -> authorizeCard.apply(reservation)
+                                             .flatMap(captureFunds::apply)
+                                             .flatMap(recordTransaction::apply);
     }
 }
 ```
 
 Now `CreditCardPaymentProcessor` is itself a Sequencer with three steps. The top-level use case remains a clean 4-step chain.
+
+### Thread Safety
+
+Sequencer pattern is **thread-safe through sequential execution** - steps execute one after another, never in parallel. Each step is isolated and thread-confined. Mutable local state within individual steps is safe because steps don't overlap. Data passed between steps must be immutable (see Part 1: [Immutability and Thread Confinement](part-01-foundations.md#immutability-and-thread-confinement)).
 
 ### Common Mistakes
 
@@ -152,14 +152,41 @@ The conditional logic is hidden inside the lambda. Extract it:
 ```java
 // DO: Extract to the named function (Single Level of Abstraction)
 return validate.apply(request)
-    .flatMap(this::applyDiscountIfEligible)
-    .flatMap(reserve::apply)
-    .flatMap(processPayment::apply);
+               .flatMap(this::applyDiscountIfEligible)
+               .flatMap(reserve::apply)
+               .flatMap(processPayment::apply);
 
 private Result<ValidRequest> applyDiscountIfEligible(ValidRequest request) {
     return request.isPremiumUser()
         ? applyDiscount(request)
         : Result.success(request);
+}
+```
+
+**DON'T use instanceof chains - use switch expressions:**
+```java
+// DON'T: instanceof chain in recover lambda
+return fetchUserProfile(userId)
+    .recover(cause -> {
+        if (cause instanceof NotFound) {
+            return createDefaultProfile(userId);
+        }
+        if (cause instanceof PermissionDenied) {
+            return createGuestProfile(userId);
+        }
+        return cause.promise();
+    });
+
+// DO: Extract to named method with switch expression
+return fetchUserProfile(userId)
+    .recover(this::recoverWithDefaultProfile);
+
+private Promise<Profile> recoverWithDefaultProfile(Cause cause) {
+    return switch (cause) {
+        case NotFound ignored -> createDefaultProfile(userId);
+        case PermissionDenied ignored -> createGuestProfile(userId);
+        default -> cause.promise();
+    };
 }
 ```
 
@@ -181,10 +208,10 @@ Extract the Fork-Join:
 ```java
 // DO: Extract Fork-Join to its own step
 return validate.apply(request)
-    .flatMap(this::fetchUserAndProduct)  // Fork-Join inside this step
-    .flatMap(reserve::apply)
-    .flatMap(processPayment::apply);
-
+               .flatMap(this::fetchUserAndProduct)  // Fork-Join inside this step
+               .flatMap(reserve::apply)
+               .flatMap(processPayment::apply);
+            
 private Promise<ReservationInput> fetchUserAndProduct(ValidRequest request) {
     return Promise.all(fetchUser(request.userId()),
                        fetchProduct(request.productId()))
@@ -196,10 +223,10 @@ private Promise<ReservationInput> fetchUserAndProduct(ValidRequest request) {
 ```java
 // DO: Linear, one step per line
 return validate.apply(request)
-    .flatMap(step1::apply)
-    .flatMap(step2::apply)
-    .flatMap(step3::apply)
-    .flatMap(step4::apply);
+               .flatMap(step1::apply)
+               .flatMap(step2::apply)
+               .flatMap(step3::apply)
+               .flatMap(step4::apply);
 ```
 
 ---
@@ -223,11 +250,9 @@ Not concurrent, just collects multiple Results:
 ```java
 // Validating multiple independent fields
 Result<ValidRequest> validated = Result.all(Email.email(raw.email()),
-                                             Password.password(raw.password()),
-                                             AccountId.accountId(raw.accountId()))
-                                        .flatMap((email, password, accountId) ->
-                                            ValidRequest.create(email, password, accountId)
-                                        );
+                                            Password.password(raw.password()),
+                                            AccountId.accountId(raw.accountId()))
+                                       .flatMap(ValidRequest::new);
 ```
 
 If all succeed, you get a tuple of values to pass to the combiner. If any fail, you get a `CompositeCause` containing all failures (not just the first).
@@ -244,8 +269,8 @@ Promise<Dashboard> buildDashboard(UserId userId) {
 }
 
 private Dashboard createDashboard(Profile profile,
-                                   List<Order> orders,
-                                   List<Notification> notifications) {
+                                  List<Order> orders,
+                                  List<Notification> notifications) {
     return new Dashboard(profile, orders, notifications);
 }
 ```
@@ -289,11 +314,9 @@ Returns `Promise<List<Result<T>>>` - unlike `Promise.all()` which fails fast, `a
 ```java
 // Racing multiple data sources, using the first successful response
 Promise<ExchangeRate> fetchRate(Currency from, Currency to) {
-    return Promise.any(
-        primaryRateProvider.getRate(from, to),
-        secondaryRateProvider.getRate(from, to),
-        fallbackRateProvider.getRate(from, to)
-    );
+    return Promise.any(primaryRateProvider.getRate(from, to), 
+                       secondaryRateProvider.getRate(from, to), 
+                       fallbackRateProvider.getRate(from, to));
 }
 ```
 
@@ -311,21 +334,27 @@ Returns the first successfully completed Promise, canceling remaining operations
 - When you need results sequentially for logging/debugging (use Sequencer)
 - When one operation's input depends on another's output (definitely Sequencer)
 
-### Design Validation Through Independence
+### Independence and Thread Safety: Two Views of the Same Requirement
 
-Fork-Join has a crucial constraint: **all branches must be truly independent**. This constraint acts as a design quality check. When you try to write a Fork-Join and discover hidden dependencies, it reveals design issues:
+Fork-Join has a crucial constraint: **all branches must be truly independent with immutable inputs**. This constraint serves two purposes simultaneously - it's both a design quality check and a thread safety guarantee.
+
+**View 1: Design Independence** - When you try to write a Fork-Join and discover hidden dependencies, it reveals design issues:
 
 - **Data redundancy:** If branch A needs data from branch B, maybe that data should be provided upfront, not fetched separately.
 - **Incorrect data organization:** Dependencies often signal that data is split across sources when it should be colocated.
 - **Missing abstraction:** Hidden dependencies may indicate a missing concept that would eliminate the coupling.
 
+**View 2: Thread Safety** - Parallel execution requires immutable inputs to prevent data races:
+
+- **All input data MUST be immutable** - no shared mutable state between parallel branches.
+- **Local mutable state is safe** - thread-confined accumulators, builders within each branch are fine.
+- **Results must be immutable** - data returned from branches will be combined, must be thread-safe.
+
 Example design issue uncovered by Fork-Join:
 ```java
-// Attempting Fork-Join reveals a problem
-Promise.all(
-    fetchUserProfile(userId),           // Returns User
-    fetchUserPreferences(userId)        // Needs User.timezone from profile!
-)
+// ❌ WRONG: Logical dependency
+Promise.all(fetchUserProfile(userId),      // Returns User
+            fetchUserPreferences(userId))  // Needs User.timezone from profile!
 ```
 
 The dependency reveals that `UserPreferences` should either:
@@ -333,17 +362,41 @@ The dependency reveals that `UserPreferences` should either:
 2. Not need `User.timezone` (incorrect data organization - timezone should be stored with preferences)
 3. Accept `timezone` as explicit input (surfacing the dependency in the type signature)
 
-When Fork-Join feels forced or unnatural, trust that instinct - it's often exposing a design problem that should be fixed, not worked around.
+Example thread safety violation:
+```java
+// ❌ WRONG: Shared mutable state
+private final DiscountContext context = new DiscountContext();  // Mutable, shared
+
+Promise<Result> calculate() {
+    return Promise.all(applyBogo(cart, context),       // DATA RACE
+                       applyPercentOff(cart, context))  // DATA RACE - both branches mutate context
+                  .map(this::merge);
+}
+
+// ✅ CORRECT: Immutable inputs
+Promise<Result> calculate(Cart cart) {
+    return Promise.all(applyBogo(cart),        // Immutable cart input
+                       applyPercentOff(cart))  // Immutable cart input
+                  .map(this::mergeDiscounts);  // Combine immutable results
+}
+```
+
+When Fork-Join feels forced or unnatural, trust that instinct - it's often exposing a design problem (hidden dependencies) or safety issue (shared mutable state) that should be fixed, not worked around.
+
+**Pattern-specific safety rules:**
+- **Fork-Join:** All inputs MUST be immutable (parallel execution, no synchronization).
+- **Sequencer, Leaf, Iteration:** Local mutable state is safe (thread-confined to operation).
+- **Input parameters:** Always treat as read-only, regardless of pattern.
+- **Results:** Always return immutable data.
 
 ### Common Mistakes
 
 **DON'T use Fork-Join when there are hidden dependencies:**
 ```java
 // DON'T: These aren't actually independent
-Promise.all(
-    allocateInventory(orderId),   // Might lock inventory
-    chargePayment(paymentToken)   // Should only charge if inventory succeeds
-).flatMap((inventory, payment) -> confirmOrder(inventory, payment));
+Promise.all(allocateInventory(orderId),   // Might lock inventory
+            chargePayment(paymentToken))  // Should only charge if inventory succeeds
+       .flatMap((inventory, payment) -> confirmOrder(inventory, payment));
 ```
 
 If inventory allocation fails, we've already charged the customer. These steps have a logical dependency: charge only after successful allocation. Use a Sequencer.
@@ -351,10 +404,9 @@ If inventory allocation fails, we've already charged the customer. These steps h
 **DON'T ignore errors in Fork-Join branches:**
 ```java
 // DON'T: Silently swallowing failures
-Promise.all(
-    fetchPrimary(id).recover(err -> Option.none()),  // Hides failure
-    fetchSecondary(id).recover(err -> Option.none())
-).flatMap((primary, secondary) -> /* ... */);
+Promise.all(fetchPrimary(id).recover(err -> Option.none()),  // Hides failure
+            fetchSecondary(id).recover(err -> Option.none()))
+        .flatMap((primary, secondary) -> /* ... */);
 ```
 
 If both fail, the combiner gets two `none()` values with no indication that anything went wrong. Let failures propagate or model the "best-effort" case explicitly:
@@ -369,6 +421,31 @@ Promise.all(fetchPrimary(id).map(Option::some).recover(err -> Promise.success(Op
 ```
 
 Now the type says "we tried to fetch both, either might be missing," and the combiner can decide whether to proceed or fail based on business rules.
+
+**DON'T mutate input data in parallel branches:**
+```java
+// ❌ WRONG: Mutating shared input
+Promise.all(applyDiscount(cart),  // Mutates cart.subtotal
+            calculateTax(cart))   // Reads cart.subtotal - RACE CONDITION
+       .map(this::combine);
+
+private Promise<Discount> applyDiscount(Cart cart) {
+    cart.setSubtotal(cart.subtotal().subtract(discount));  // DATA RACE
+    return Promise.success(new Discount(discount));
+}
+
+// ✅ CORRECT: Create new instances
+Promise.all(applyDiscount(cart),
+            calculateTax(cart))
+        .map(this::combine);
+
+private Promise<Discount> applyDiscount(Cart cart) {
+    var discountAmount = calculateDiscountFor(cart);
+    return Promise.success(new Discount(cart, discountAmount));  // Returns new data
+}
+```
+
+Input data must be treated as read-only. If you need to "modify" data, create new instances with the modifications.
 
 **DO keep Fork-Join local and focused:**
 ```java
@@ -386,11 +463,11 @@ private ReportData buildReportData(User user, List<Sale> sales, Inventory invent
 
 // Called from a Sequencer:
 public Promise<Report> generateReport(ReportRequest request) {
-    return ValidRequest.validate(request)
-                  .async()
-                  .flatMap(this::fetchReportData)  // Fork-Join extracted
-                  .flatMap(this::computeMetrics)
-                  .flatMap(this::formatReport);
+    return ValidRequest.validRequest(request)
+                       .async()
+                       .flatMap(this::fetchReportData)  // Fork-Join extracted
+                       .flatMap(this::computeMetrics)
+                       .flatMap(this::formatReport);
 }
 ```
 
@@ -423,7 +500,7 @@ public interface FetchUserProfile {
 class UserServiceClient implements FetchUserProfile {
     public Promise<Profile> apply(UserId userId) {
         return httpClient.get("/users/" + userId.value())
-            .map(this::parseProfile);
+                         .map(this::parseProfile);
     }
 }
 
@@ -431,17 +508,13 @@ class UserServiceClient implements FetchUserProfile {
 static ProcessUserData processUserData(..., UserServiceClient userServiceClient, ...) {
     // Values also can come from passed config
     var retryPolicy = RetryPolicy.builder()
-        .maxAttempts(3)
-        .backoff(exponential(100, 2.0))
-        .build();
+                                 .maxAttempts(3)
+                                 .backoff(exponential(100, 2.0))
+                                 .build();
 
-    var fetchWithRetry = withRetry(retryPolicy, userServiceClient);
-
-    return new processUserData(
-        validateInput,
-        fetchWithRetry,  // Decorated step
-        processData
-    );
+    return new processUserData(validateInput,
+                               withRetry(retryPolicy, userServiceClient),  // Decorated step
+                               processData);
 }
 ```
 
@@ -478,23 +551,16 @@ Order matters. Typical ordering (outermost to innermost):
 var decoratedStep = withMetrics(metricsPolicy,
     withTimeout(timeoutPolicy,
         withCircuitBreaker(breakerPolicy,
-            withRetry(retryPolicy, rawStep)
-        )
-    )
-);
+            withRetry(retryPolicy, rawStep))));
 ```
 
 Or use a helper:
 ```java
-var decoratedStep = composeAspects(
-    List.of(
-        metrics(metricsPolicy),
-        timeout(timeoutPolicy),
-        circuitBreaker(breakerPolicy),
-        retry(retryPolicy)
-    ),
-    rawStep
-);
+var decoratedStep = composeAspects(List.of(metrics(metricsPolicy), 
+                                           timeout(timeoutPolicy), 
+                                           circuitBreaker(breakerPolicy), 
+                                           retry(retryPolicy)), 
+                                   rawStep);
 ```
 
 ### Testing Aspects
@@ -518,11 +584,9 @@ void retryAspect_retriesOnFailure() {
 // Use case test (aspect-agnostic)
 @Test
 void loginUser_success() {
-    var useCase = LoginUser.loginUser(
-        mockValidate,
-        mockCheckCreds,
-        mockGenerateToken
-    );
+    var useCase = LoginUser.loginUser(mockValidate, 
+                                      mockCheckCreds, 
+                                      mockGenerateToken);
 
     var result = useCase.execute(validRequest).await();
 
@@ -537,9 +601,8 @@ void loginUser_success() {
 ```java
 // DON'T: Retry logic inside the step
 Promise<Profile> fetchProfile(UserId id) {
-    return retryWithBackoff(() ->
-        httpClient.get("/users/" + id.value())
-    ).map(this::parseProfile);
+    return retryWithBackoff(() -> httpClient.get("/users/" + id.value()))
+            .map(this::parseProfile);
 }
 ```
 
@@ -573,6 +636,194 @@ var decorated = withTimeout(timeSpan(5).seconds(),
 
 ---
 
+## Thread Safety Quick Reference
+
+Understanding thread safety is essential when working with asynchronous patterns (Promise, Fork-Join). This section consolidates the thread safety guarantees for all JBCT patterns.
+
+### Core Rules
+
+**Two principles ensure thread safety:**
+
+1. **Immutable at boundaries**: All data passed between functions (parameters, return values) must be immutable
+2. **Thread confinement**: Mutable state is allowed within a single-threaded execution path (sequential patterns)
+
+These rules mean you can use mutable local variables in sequential code, but any data shared across threads must be immutable.
+
+### Pattern-by-Pattern Safety Guarantees
+
+**Leaf (Sequential)** - Thread-safe through sequential execution:
+```java
+// ✅ SAFE: Mutable local state OK
+public Result<Order> calculateTotal(Cart cart) {
+    var total = 0.0;  // Mutable local variable
+    for (Item item : cart.items()) {
+        total += item.price();  // Sequential mutation
+    }
+    return Result.success(new Order(cart, total));
+}
+```
+- Mutable local state confined to single thread
+- Input (`cart`) is read-only
+- Output (`Order`) is immutable
+
+**Sequencer (Sequential)** - Thread-safe, mutable local state OK:
+```java
+// ✅ SAFE: Each step runs sequentially
+return ValidRequest.validRequest(request)
+                   .async()
+                   .flatMap(checkEmail::apply)    // Runs first
+                   .flatMap(hashPassword::apply)  // Runs second (after first completes)
+                   .flatMap(saveUser::apply);     // Runs third (after second completes)
+```
+- Steps execute in order, never concurrently
+- Each step can use mutable local state
+- Promise resolution is a synchronization point
+
+**Fork-Join (Parallel)** - Requires strict immutability:
+```java
+// ✅ SAFE: Immutable cart passed to both operations
+Promise.all(applyBogo(cart),          // cart is immutable
+            applyPercentOff(cart))    // cart is immutable
+       .map(this::mergeDiscounts);
+
+// ❌ UNSAFE: Shared mutable context creates data race
+private final DiscountContext context = new DiscountContext();  // Mutable!
+Promise.all(applyBogo(cart, context),     // Both access context
+            applyPercentOff(cart, context))  // DATA RACE - undefined behavior
+       .map(this::merge);
+```
+- All parallel operations receive immutable inputs
+- No shared mutable state between parallel operations
+- Results merged after all complete
+
+**Condition (Sequential)** - Thread-safe, no shared mutable state:
+```java
+// ✅ SAFE: Only one branch executes
+return user.isPremium()
+    ? processPremium(user)
+    : processBasic(user);
+```
+- Branches never execute concurrently
+- Each branch can use mutable local state
+
+**Iteration (Sequential)** - Thread-safe through sequential processing:
+```java
+// ✅ SAFE: Stream processes sequentially
+var results = items.stream()
+                   .map(Item::validate)  // Sequential
+                   .toList();
+```
+- Stream operations sequential by default
+- Parallel streams require immutable inputs (use with caution)
+
+**Aspects (Inherits)** - Safety depends on wrapped operation:
+```java
+// ✅ SAFE: Aspect preserves underlying safety
+var retried = withRetry(retryPolicy, sequentialStep);  // Still sequential
+var retried = withRetry(retryPolicy, forkJoinStep);    // Still parallel
+```
+- Decorators don't change concurrency model
+- Retry/timeout/metrics don't introduce shared state
+
+### Promise Resolution Thread Safety
+
+Promise resolution has exactly-once semantics with built-in synchronization:
+
+```java
+Promise<User> promise = Promise.promise();
+
+// Thread 1
+promise.resolve(Result.success(user));
+
+// Thread 2
+promise.resolve(Result.success(anotherUser));  // Ignored - already resolved
+```
+
+- First `resolve()` wins, subsequent calls ignored
+- `flatMap`/`map` chains wait for resolution before executing
+- Resolution acts as synchronization point for sequential chains
+
+### Common Mistakes
+
+**Mistake 1: Shared mutable state in Fork-Join**
+
+```java
+// ❌ WRONG: Mutable list shared across parallel operations
+private final List<String> errors = new ArrayList<>();
+
+Promise.all(validateEmail(request).onFailure(e -> errors.add(e.message())),     // DATA RACE
+            validatePassword(request).onFailure(e -> errors.add(e.message())))  // DATA RACE
+       .map(this::process);
+```
+
+**Fix:** Use immutable results and combine after:
+```java
+// ✅ CORRECT: Each operation returns its own result
+Promise.all(validateEmail(request),
+            validatePassword(request))
+       .map((emailResult, passwordResult) -> combineResults(emailResult, passwordResult));
+```
+
+**Mistake 2: Assuming sequential execution in Promise.all**
+
+```java
+// ❌ WRONG: Assuming order
+Promise.all(incrementCounter(), incrementCounter())  // May execute concurrently!
+```
+
+Promise.all runs operations in parallel. If order matters, use Sequencer.
+
+### Independence Validation Checklist
+
+Use this checklist (from Fork-Join pattern) to verify parallel operations are truly independent:
+
+- [ ] **No shared mutable state** - Operations don't modify shared objects
+- [ ] **No execution order dependency** - Results same regardless of execution order
+- [ ] **Immutable inputs** - All parameters are immutable or read-only
+- [ ] **Side effects independent** - I/O operations don't conflict (different database rows, files, etc.)
+- [ ] **No hidden coupling** - No shared caches, connection pools with state, etc.
+
+If any checkbox fails, use Sequencer instead of Fork-Join.
+
+### When to Use Mutable State
+
+**Allowed:**
+- Local variables in sequential patterns (Leaf, Sequencer, Condition, Iteration)
+- Builders constructing immutable objects
+- Accumulators in sequential loops
+
+**Forbidden:**
+- Shared across parallel operations (Fork-Join)
+- Passed between use case steps
+- Returned from functions (return immutable copy instead)
+
+### Testing for Thread Safety
+
+Mutable test fixtures are acceptable - tests execute sequentially:
+
+```java
+// ✅ SAFE: Test-scoped mutable state
+@Test
+void execute_succeeds_forValidInput() {
+    List<String> callLog = new ArrayList<>();  // Mutable, but test-scoped
+
+    CheckEmail checkEmail = req -> {
+        callLog.add("email");  // Sequential execution
+        return Promise.success(req);
+    };
+
+    useCase.execute(request)
+           .await()
+           .onSuccess(response -> assertEquals(List.of("email"), callLog));
+}
+```
+
+Tests are sequential, so mutable fixtures don't create races.
+
+**Key Takeaway:** JBCT's thread safety is simple - immutable at boundaries, sequential by default, explicit parallelism only in Fork-Join with strict immutability requirements. Follow the patterns, and thread safety emerges naturally.
+
+---
+
 ## Summary: Complete Pattern Toolkit
 
 You now have the complete pattern toolkit for building production use cases:
@@ -602,11 +853,31 @@ With these patterns, you can structure any backend use case:
 
 ---
 
+## Common Mistakes
+
+**Sequencer Pattern:**
+- ❌ Mixing patterns in one function (Sequencer suddenly doing Fork-Join - extract to separate function)
+- ❌ More than 5 steps (extract sub-sequences or group related steps)
+- ❌ Using `.await()` to block instead of `.flatMap()` to compose
+
+**Fork-Join Pattern:**
+- ❌ Hidden dependencies (output of one operation needed by another - use Sequencer instead)
+- ❌ Shared mutable state between parallel operations (data races - use immutable inputs)
+- ❌ Ignoring independence validation (see Part 4's "Validating Independence" checklist)
+
+**Aspects Pattern:**
+- ❌ Mixing aspects with business logic (keep cross-cutting concerns separate)
+- ❌ Wrong aspect order (metrics should be outermost, retry innermost)
+
+**Key insight:** Independence validation prevents most Fork-Join mistakes. If unsure whether operations are independent, use Sequencer—premature parallelization causes subtle bugs.
+
+---
+
 ## What's Next?
 
 You've learned the patterns and basic testing approach. Now it's time to dive deep into testing strategy.
 
-In **[Part 5: Testing Strategy & Evolutionary Approach →](part-05-testing-strategy.md)**, you'll learn:
+In **[Part 7: Testing Philosophy & Evolution →](part-07-testing-philosophy.md)** and **[Part 8: Testing in Practice](part-08-testing-practice.md)**, you'll learn:
 
 - **Evolutionary Testing**: How to grow tests alongside implementation
 - **Integration-First Testing**: Why test composition, not components
@@ -615,14 +886,14 @@ In **[Part 5: Testing Strategy & Evolutionary Approach →](part-05-testing-stra
 - **What to Test Where**: Value objects vs leaves vs use cases
 - **Migration Guide**: From traditional unit testing to this approach
 
-Part 5 completes your testing knowledge before we build production systems in Part 6.
+Parts 5A and 5B complete your testing knowledge before we build production systems in Part 6.
 
 ---
 
 **Series Navigation**
 
-[← Part 3: Basic Patterns & Structure](part-03-basic-patterns.md) | [Index](INDEX.md) | [Part 5: Testing Strategy →](part-05-testing-strategy.md)
+[← Part 5: Basic Patterns & Structure](part-05-basic-patterns.md) | [Index](INDEX.md) | [Part 7: Testing Philosophy & Evolution →](part-07-testing-philosophy.md)
 
 ---
 
-**Version:** 1.0.0 (2025-10-05) | **Part of:** [Java Backend Coding Technology Series](INDEX.md)
+**Version:** 2.0.0 (2025-11-13) | **Part of:** [Java Backend Coding Technology Series](INDEX.md)

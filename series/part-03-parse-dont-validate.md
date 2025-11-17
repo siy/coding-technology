@@ -442,8 +442,8 @@ public record CardNumber(String value) {
 
     public static Result<CardNumber> cardNumber(String raw) {
         return Verify.ensure(raw, Verify.Is::notBlank)
-            .flatMap(Verify.ensureFn(INVALID, Verify.Is::matches, CARD_PATTERN))
-            .map(CardNumber::new);
+                     .flatMap(Verify.ensureFn(INVALID, Verify.Is::matches, CARD_PATTERN))
+                     .map(CardNumber::new);
     }
 }
 ```
@@ -461,7 +461,7 @@ public class UserController {
         // Add new parsing layer that converts DTO → use case request
         var request = new RegisterUser.Request(dto.email(), dto.password());
         return registerUser.execute(request)
-            .fold(this::errorResponse, this::successResponse);
+                           .fold(this::errorResponse, this::successResponse);
     }
 }
 
@@ -516,9 +516,6 @@ public class UseCase implements RegisterUser {
 ```
 
 **Key insight:** Start at the edges (controllers, API boundaries) and work inward. Your existing service layer can stay mostly unchanged while you build the new domain layer alongside it. Over time, the service layer shrinks as logic moves to use cases and value objects.
-
----
-
 
 ---
 

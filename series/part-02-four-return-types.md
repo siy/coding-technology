@@ -313,9 +313,9 @@ Promise<Result<User>> loadUser(UserId id) { /* ... */ }
 
 // Caller must unwrap twice:
 loadUser(id)
-    .flatMap(resultUser -> resultUser.match(
-        user -> Promise.success(user),
-        Cause::promise
+    .flatMap(resultUser -> resultUser.fold(
+        Cause::promise,
+        user -> Promise.success(user)
     ));  // Absurd ceremony
 ```
 

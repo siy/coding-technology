@@ -89,16 +89,16 @@ public Result<Report> generateReport(ReportRequest request) {
 // DON'T: Mixing Sequencer and Fork-Join
 public Result<Report> generateReport(ReportRequest request) {
     return ValidRequest.validRequest(request)
-        .flatMap(valid -> {
-            // Sequencer starts here
-            var userData = fetchUserData(valid.userId());
-            var salesData = fetchSalesData(valid.dateRange());
-
-            // Wait, now we're doing Fork-Join?
-            return Result.all(userData, salesData)
-                .flatMap((user, sales) -> computeMetrics(user, sales))
-                .flatMap(this::formatReport);  // Back to Sequencer
-        });
+                       .flatMap(valid -> {
+                            // Sequencer starts here
+                            var userData = fetchUserData(valid.userId());
+                            var salesData = fetchSalesData(valid.dateRange());
+                
+                            // Wait, now we're doing Fork-Join?
+                            return Result.all(userData, salesData)
+                                         .flatMap((user, sales) -> computeMetrics(user, sales))
+                                         .flatMap(this::formatReport);  // Back to Sequencer
+                        });
 }
 ```
 
@@ -110,9 +110,9 @@ This function starts as a Sequencer (validate → fetch user → fetch sales →
 // DO: One pattern per function
 public Result<Report> generateReport(ReportRequest request) {
     return ValidRequest.validRequest(request)
-        .flatMap(this::fetchReportData)
-        .flatMap(this::computeMetrics)
-        .flatMap(this::formatReport);
+                       .flatMap(this::fetchReportData)
+                       .flatMap(this::computeMetrics)
+                       .flatMap(this::formatReport);
 }
 
 private Result<ReportData> fetchReportData(ValidRequest request) {
@@ -181,9 +181,13 @@ return fetchUser(userId)
     .map(this::buildResponse);
 
 private Promise<User> checkAdminAccess(User user) {
-    return user.isActive() && user.hasPermission("admin")
-        ? Promise.success(user)
-        : AccessError.InsufficientPermissions.INSTANCE.promise();
+    return isActiveAdministrator(user)
+            ? Promise.success(user)
+            : AccessError.InsufficientPermissions.INSTANCE.promise();
+}
+
+private boolean isActiveAdministrator(User user) {
+    return user.isActive() && user.hasPermission("admin");
 }
 
 private Promise<Dashboard> loadAdminDashboard(User user) {
@@ -198,8 +202,8 @@ private Response buildResponse(Dashboard dashboard) {
 
 private List<Alert> filterUrgentAlerts(List<Alert> alerts) {
     return alerts.stream()
-        .filter(Alert::isUrgent)
-        .toList();
+                 .filter(Alert::isUrgent)
+                 .toList();
 }
 ```
 
@@ -295,8 +299,7 @@ private Promise<Data> recoverExpectedErrors(Cause cause) {
 // DON'T: Inline construction with fixed strings
 private Promise<User> recoverNetworkError(Cause cause) {
     return switch (cause) {
-        case NetworkError.Timeout ignored ->
-            new ServiceUnavailable("Timed out").promise();
+        case NetworkError.Timeout ignored -> new ServiceUnavailable("Timed out").promise();
         default -> cause.promise();
     };
 }
@@ -343,20 +346,20 @@ Maintaining "single level of abstraction" becomes mechanical when you think of y
 ```java
 // ✅ GOOD - All steps at Zone 2 (orchestration level)
 public Promise<Response> execute(Request request) {
-    return ValidRequest.validRequest(request)  // Zone 2: validate
-        .async()
-        .flatMap(this::processCredentials)      // Zone 2: process
-        .flatMap(this::saveUser)                // Zone 2: save
-        .flatMap(this::sendConfirmation);       // Zone 2: send (orchestration)
+    return ValidRequest.validRequest(request)              // Zone 2: validate
+                       .async()
+                       .flatMap(this::processCredentials)  // Zone 2: process
+                       .flatMap(this::saveUser)            // Zone 2: save
+                       .flatMap(this::sendConfirmation);   // Zone 2: send (orchestration)
 }
 
 // ❌ BAD - Mixing Zone 2 and Zone 3 in same chain
 public Promise<Response> execute(Request request) {
-    return ValidRequest.validRequest(request)  // Zone 2
-        .async()
-        .flatMap(this::hashPassword)            // Zone 3 - too specific!
-        .flatMap(this::saveUser)                // Zone 2
-        .flatMap(this::fetchConfirmToken);      // Zone 3 - too specific!
+    return ValidRequest.validRequest(request)              // Zone 2
+                       .async()
+                       .flatMap(this::hashPassword)        // Zone 3 - too specific!
+                       .flatMap(this::saveUser)            // Zone 2
+                       .flatMap(this::fetchConfirmToken);  // Zone 3 - too specific!
 }
 ```
 
@@ -372,9 +375,9 @@ A simple way to verify your abstraction levels: read your code aloud by adding "
 //  then we process payment,
 //  then we send confirmation."
 return ValidRequest.validRequest(request)
-    .async()
-    .flatMap(this::processPayment)
-    .flatMap(this::sendConfirmation);
+                   .async()
+                   .flatMap(this::processPayment)
+                   .flatMap(this::sendConfirmation);
 ```
 
 If adding "to" makes it sound awkward or overly detailed ("to hash password, then to save to database, then to fetch from cache"), you're mixing abstraction levels.
@@ -415,11 +418,9 @@ public static Result<Unit> checkInventory(Product product, Quantity requested) {
 
 // Data transformation leaf
 public static OrderSummary toSummary(Order order) {
-    return new OrderSummary(
-        order.id(),
-        order.totalAmount(),
-        order.items().size()
-    );
+    return new OrderSummary(order.id(), 
+                            order.totalAmount(), 
+                            order.items().size());
 }
 ```
 
@@ -441,19 +442,17 @@ class PostgresUserRepository implements UserRepository {
     private final DataSource dataSource;
 
     public Promise<Option<User>> findByEmail(Email email) {
-        return Promise.lift(
-            RepositoryError.DatabaseFailure::new,
-            () -> {
-                try (var conn = dataSource.getConnection();
-                     var stmt = conn.prepareStatement("SELECT * FROM users WHERE email = ?")) {
-
-                    stmt.setString(1, email.value());
-                    var rs = stmt.executeQuery();
-
-                    return rs.next() ? mapUser(rs) : null;
-                }
-            }
-        ).map(Option::option);
+        return Promise.lift(RepositoryError.DatabaseFailure::new, 
+                            () -> {
+                                try (var conn = dataSource.getConnection();
+                                     var stmt = conn.prepareStatement("SELECT * FROM users WHERE email = ?")) {
+                
+                                    stmt.setString(1, email.value());
+                                    var rs = stmt.executeQuery();
+                
+                                    return rs.next() ? mapUser(rs) : null;
+                                }
+                            }).map(Option::option);
     }
 
     private User mapUser(ResultSet rs) throws SQLException {
@@ -525,10 +524,10 @@ public record Email(String value) {
     // DO: One clear responsibility
     public static Result<Email> email(String raw) {
         return Verify.ensure(raw, Verify.Is::notNull)
-            .map(String::trim)
-            .map(String::toLowerCase)
-            .flatMap(Verify.ensureFn(INVALID_EMAIL, Verify.Is::matches, EMAIL_PATTERN))
-            .map(Email::new);
+                     .map(String::trim)
+                     .map(String::toLowerCase)
+                     .flatMap(Verify.ensureFn(INVALID_EMAIL, Verify.Is::matches, EMAIL_PATTERN))
+                     .map(Email::new);
     }
 }
 ```
@@ -624,8 +623,7 @@ Use `map`, `flatMap`, and `filter` on your monadic types (Result, Option, Promis
 return fetchUser(userId)
     .flatMap(user -> user.isActive()
         ? processActiveUser(user)
-        : UserError.InactiveAccount.INSTANCE.result()
-    );
+        : UserError.InactiveAccount.INSTANCE.result());
 
 // DO: Extract condition to named function
 return fetchUser(userId)
@@ -710,11 +708,9 @@ Result<Data> fetchData(Source source) {
 ```java
 // Transforming a list of raw inputs to domain objects
 Result<List<Email>> parseEmails(List<String> rawEmails) {
-    return Result.allOf(
-        rawEmails.stream()
-            .map(Email::email)
-            .toList()
-    );
+    return Result.allOf(rawEmails.stream()
+                                 .map(Email::email)
+                                 .toList());
 }
 ```
 
@@ -725,9 +721,9 @@ Result<List<Email>> parseEmails(List<String> rawEmails) {
 ```java
 List<ActiveUser> activeUsers(List<User> users) {
     return users.stream()
-        .filter(User::isActive)
-        .map(this::toActiveUser)
-        .toList();
+                .filter(User::isActive)
+                .map(this::toActiveUser)
+                .toList();
 }
 
 private ActiveUser toActiveUser(User user) {
@@ -770,11 +766,9 @@ private <T> List<T> appendToList(List<T> list, T element) {
 ```java
 // Process orders in parallel
 Promise<List<Receipt>> processOrders(List<Order> orders) {
-    return Promise.allOf(
-        orders.stream()
-            .map(this::processOrder)
-            .toList()
-    );
+    return Promise.allOf(orders.stream()
+                               .map(this::processOrder)
+                               .toList());
 }
 ```
 
@@ -928,19 +922,19 @@ Earlier we introduced the three-zone framework. Each zone has its own verb vocab
 
 Use these when naming step interfaces:
 
-| Verb | When to Use | Example |
-|------|-------------|---------|
-| `validate` | Checking rules/constraints | `ValidateInput` |
-| `process` | Transforming or interpreting data | `ProcessPayment` |
-| `handle` | Coordinating reactions to events | `HandleRefund` |
-| `transform` | Converting between representations | `TransformOrder` |
-| `apply` | Changing state using parameters | `ApplyDiscount` |
-| `check` | Verifying conditions | `CheckInventory` |
-| `load` | Retrieving data for use | `LoadUserProfile` |
-| `save` | Persisting changes | `SaveOrder` |
-| `manage` | Supervising lifecycle | `ManageSession` |
-| `configure` | Setting up with options | `ConfigureSettings` |
-| `initialize` | Preparing for first use | `InitializeConnection` |
+| Verb         | When to Use                        | Example                |
+|--------------|------------------------------------|------------------------|
+| `validate`   | Checking rules/constraints         | `ValidateInput`        |
+| `process`    | Transforming or interpreting data  | `ProcessPayment`       |
+| `handle`     | Coordinating reactions to events   | `HandleRefund`         |
+| `transform`  | Converting between representations | `TransformOrder`       |
+| `apply`      | Changing state using parameters    | `ApplyDiscount`        |
+| `check`      | Verifying conditions               | `CheckInventory`       |
+| `load`       | Retrieving data for use            | `LoadUserProfile`      |
+| `save`       | Persisting changes                 | `SaveOrder`            |
+| `manage`     | Supervising lifecycle              | `ManageSession`        |
+| `configure`  | Setting up with options            | `ConfigureSettings`    |
+| `initialize` | Preparing for first use            | `InitializeConnection` |
 
 **Zone 3 Verbs (Leaves - Implementation):**
 

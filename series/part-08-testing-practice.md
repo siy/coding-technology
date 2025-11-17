@@ -144,10 +144,8 @@ void execute_fails_forWeakPassword(String password, String expectedReason) {
 
 ```java
 @Property
-void execute_succeeds_forAllValidInputs(
-    @ForAll("validEmails") String email,
-    @ForAll("validPasswords") String password
-) {
+void execute_succeeds_forAllValidInputs(@ForAll("validEmails") String email, 
+                                        @ForAll("validPasswords") String password) {
     var request = TestData.request()
                           .withEmail(email)
                           .withPassword(password)
@@ -169,10 +167,9 @@ Arbitrary<String> validEmails() {
 @Provide
 Arbitrary<String> validPasswords() {
     // Generate passwords matching validation rules
-    return Combinators.combine(
-        Arbitraries.strings().alpha().numeric(),
-        Arbitraries.of("!", "@", "#", "$")
-    ).as((base, special) -> base + special + "A1");
+    return Combinators.combine(Arbitraries.strings().alpha().numeric(), 
+                               Arbitraries.of("!", "@", "#", "$"))
+                      .as((base, special) -> base + special + "A1");
 }
 ```
 
@@ -310,20 +307,21 @@ class JooqUserRepositoryTest {
 ### The Testing Pyramid for This Technology
 
 ```
-       /\
-      /  \   E2E Tests (few)
-     /____\  - Through REST/messaging layer
-    /      \ - Real database (Testcontainers)
-   /        \ - Smoke tests, critical paths
-  /__________\
-  /          \ Integration Tests (many)
- /            \ - Use case test vectors
-/              \ - All business logic assembled
-/________________\ - Only adapters stubbed
-/                  \ Unit Tests (some)
-/                    \ - Value objects (all)
-/______________________\ - Complex business leaves
-                         - Adapter contracts
+             /\
+            /  \ 
+           /____\ E2E Tests (few) 
+          /      \ - Through REST/messaging layer
+         /        \ - Real database (Testcontainers)
+        /__________\ - Smoke tests, critical paths
+       /            \ Integration Tests (many)
+      /              \ - Use case test vectors
+     /                \ - All business logic assembled
+    /__________________\ - Only adapters stubbed
+   /                    \ Unit Tests (some)
+  /                      \ - Value objects (all)
+ /                        \ - Complex business leaves
+/--------------------------\ - Adapter contracts
+                          
 ```
 
 **This is inverted from traditional pyramid** - we have MORE integration tests than unit tests.
@@ -754,22 +752,6 @@ After Migration:
 ✅ **What to test where** (value objects vs leaves vs use cases vs adapters)
 ✅ **Test utilities** that eliminate boilerplate
 ✅ **Migration path** from traditional unit testing
-
----
-
-### What's Next
-
-**Part 9: Production Systems**
-
-Now that you know how to test, let's put it all together: complete use case walkthrough from requirements to deployment, project structure, and framework integration.
-
-**[Continue to Part 9: Production Systems →](part-09-production-systems.md)**
-
----
-
-**Copyright © 2025 Sergiy Yevtushenko**
-
-This work is licensed under the [MIT License](https://github.com/siy/coding-technology/blob/main/LICENSE).
 
 ---
 

@@ -1293,7 +1293,7 @@ public User loginUser(String email, String password) throws
     }
 
     User user = userRepo.findByEmail(email)
-        .orElseThrow(() -> new CredentialMismatchException());
+                        .orElseThrow(() -> new CredentialMismatchException());
 
     if (user.isLocked()) {
         throw new AccountLockedException(user.getId());
@@ -1375,18 +1375,20 @@ public interface UserRepository {
 }
 
 // Implementation (adapter leaf)
-class JpaUserRepository implements UserRepository {
+record JpaUserRepository(EntityManager entityManager) implements UserRepository {
     public Promise<Option<User>> findByEmail(Email email) {
-        return Promise.lift(
-            RepositoryError::fromDatabaseException,
-            () -> entityManager.createQuery("SELECT u FROM User u WHERE u.email = :email", UserEntity.class)
-                               .setParameter("email", email.value())
-                               .getResultList()
-                               .stream()
-                               .findFirst()
-                               .map(this::toDomain)
-                               .orElse(Option.none())
-        );
+        return Promise.lift(RepositoryError::fromDatabaseException, 
+                            () -> retrieveUser(email));
+    }
+    
+    private User retrieveUser(Email email) {
+        return entityManager.createQuery("SELECT u FROM User u WHERE u.email = :email", UserEntity.class)
+                            .setParameter("email", email.value())
+                            .getResultList()
+                            .stream()
+                            .findFirst()
+                            .map(this::toDomain)
+                            .orElse(Option.none());
     }
 }
 ```
@@ -1822,9 +1824,9 @@ Promise<Result<User>> loadUser(UserId id) { /* ... */ }
 
 // Caller must unwrap twice:
 loadUser(id)
-    .flatMap(resultUser -> resultUser.match(
-        user -> Promise.success(user),
-        Cause::promise
+    .flatMap(resultUser -> resultUser.fold(
+        Cause::promise,
+        user -> Promise.success(user)
     ));  // Absurd ceremony
 ```
 
@@ -2164,13 +2166,26 @@ Suppose `processPayment` actually needs to: authorize card → capture funds →
 // Original step interface
 interface ProcessPayment {
     Promise<Payment> apply(Reservation reservation);
+}
 
-    static ProcessPayment processPayment(AuthorizeCard authorizeCard,
-                                         CaptureFunds captureFunds,
-                                         RecordTransaction recordTransaction) {
-        return reservation -> authorizeCard.apply(reservation)
-                                           .flatMap(captureFunds::apply)
-                                           .flatMap(recordTransaction::apply);
+// Implementation delegates to a sub-sequencer
+interface CreditCardPaymentProcessor extends ProcessPayment {
+    interface AuthorizeCard {
+        Promise<Reservation> apply(Reservation reservation);
+    }
+    interface CaptureFunds {
+        Promise<Reservation> apply(Reservation reservation);
+    }
+    interface RecordTransaction {
+        Promise<Payment> apply(Reservation reservation);
+    }
+
+    static CreditCardPaymentProcessor creditCardPaymentProcessor(AuthorizeCard authorizeCard,
+                                                                 CaptureFunds captureFunds,
+                                                                 RecordTransaction recordTransaction) {
+        return (reservation) -> authorizeCard.apply(reservation)
+                                             .flatMap(captureFunds::apply)
+                                             .flatMap(recordTransaction::apply);
     }
 }
 ```
@@ -4656,23 +4671,9 @@ If we had cross-field rules (e.g., "premium referral codes require 10+ char pass
 public static Result<ValidRequest> validRequest(Email email, 
                                                 Password password, 
                                                 Option<ReferralCode> referralCode) {
-    return Result.all(checkPremiumPasswordRequirement(password, referralCode))
-                 .map(_ -> toValidRequest(email, password, referralCode));
-}
-
-private static ValidRequest toValidRequest(Email email, Password password, Option<ReferralCode> referralCode) {
-    return new ValidRequest(email, password, referralCode);
-}
-
-private static Result<Unit> checkPremiumPasswordRequirement(Password password, 
-                                                            Option<ReferralCode> referralCode) {
-    return referralCode.match(code -> checkPremiumPassword(code, password), Result::unitResult);
-}
-
-private static Result<Unit> checkPremiumPassword(ReferralCode code, Password password) {
     return isPremiumWithWeakPassword(code, password)
-        ? RegistrationError.General.WEAK_PASSWORD_FOR_PREMIUM.result()
-        : Result.unitResult();
+            ? RegistrationError.General.WEAK_PASSWORD_FOR_PREMIUM.result()
+            : Result.success(_ -> new ValidRequest(email, password, referralCode));
 }
 
 private static boolean isPremiumWithWeakPassword(ReferralCode code, Password password) {
@@ -4705,10 +4706,13 @@ public record Email(String value) {
 ```
 
 **Password:**
+
 ```java
 package com.example.app.domain.shared;
 
 import org.pragmatica.lang.*;
+
+import java.util.function.Predicate;
 
 public record Password(String value) {
     private static final Cause TOO_SHORT = Causes.cause("Password must be at least 8 characters");
@@ -4718,21 +4722,25 @@ public record Password(String value) {
     public static Result<Password> password(String raw) {
         return Verify.ensure(raw, Verify.Is::notNull)
                      .flatMap(Verify.ensureFn(TOO_SHORT, Verify.Is::lenBetween, 8, 128))
-                     .flatMap(ensureUppercase())
-                     .flatMap(ensureDigit())
+                     .flatMap(Password::ensureUppercase)
+                     .flatMap(Password::ensureDigit)
                      .map(Password::new);
     }
 
-    private static Fn1<Result<String>, String> ensureUppercase() {
-        return raw -> raw.chars().anyMatch(Character::isUpperCase)
-            ? Result.success(raw)
-            : MISSING_UPPERCASE.result();
+    private static Result<String> ensureUppercase(String raw) {
+        return contains(raw, Character::isUpperCase)
+                ? Result.success(raw)
+                : MISSING_UPPERCASE.result();
     }
 
-    private static Fn1<Result<String>, String> ensureDigit() {
-        return raw -> raw.chars().anyMatch(Character::isDigit)
-            ? Result.success(raw)
-            : MISSING_DIGIT.result();
+    private static Result<String> ensureDigit(String raw) {
+        return contains(raw, Character::isDigit)
+                ? Result.success(raw)
+                : MISSING_DIGIT.result();
+    }
+
+    private static boolean contains(CharSequence sequence, IntPredicate predicate) {
+        return sequence.chars().anyMatch(predicate);
     }
 
     public int length() {
@@ -4813,50 +4821,45 @@ record ConfirmationToken(String value) {}
 
 **CheckEmailUniqueness (adapter leaf):**
 ```java
-class EmailUniquenessChecker implements CheckEmailUniqueness {
-    private final UserRepository userRepo;
-
-    public Promise<ValidRequest> apply(ValidRequest request) {
-        return userRepo.existsByEmail(request.email())
-            .flatMap(exists -> checkNotExists(exists, request));
+interface CheckEmailUniqueness {
+    Promise<ValidRequest> apply(ValidRequest request);
+    
+    static CheckEmailUniqueness checkEmailUniqueness(UserRepository repository) {
+        return request -> repository.findByEmail(request.email())
+                                    .flatMap(user -> checkPresence(user, request));        
     }
-
-    private Promise<ValidRequest> checkNotExists(boolean exists, ValidRequest request) {
-        return exists
-            ? RegistrationError.General.EMAIL_ALREADY_REGISTERED.promise()
-            : Promise.success(request);
+    
+    static Promise<ValidRequest> checkPresence(Option<User> user, ValidRequest request) {
+        return user.isPresent() 
+                ? RegistrationError.General.EMAIL_ALREADY_REGISTERED.promise()
+                : Promise.success(request);
     }
 }
 ```
 
 **HashPassword (business leaf):**
 ```java
-class BcryptPasswordHasher implements HashPassword {
-    private final BCryptPasswordEncoder encoder;
-
-    public Result<HashedPassword> apply(Password password) {
-        return Result.lift1(RegistrationError.PasswordHashingFailed::cause, 
-                            encoder::encode, 
-                            password.value())
-                     .map(HashedPassword::new);
+interface HashPassword {
+    Result<HashedPassword> apply(Password password);
+    
+    static HashPassword hashPassword(BCryptPasswordEncoder encoder) {
+        return password -> Result.lift1(RegistrationError.PasswordHashingFailed::new, 
+                                        encoder::encode, 
+                                        password.value())
+                                 .map(HashedPassword::new);
     }
 }
 ```
 
 **CreateValidUser (sequencer step):**
 ```java
-class ValidUserCreator implements CreateValidUser {
-    private final HashPassword hashPassword;
-
-    ValidUserCreator(HashPassword hashPassword) {
-        this.hashPassword = hashPassword;
-    }
-
-    @Override
-    public Promise<ValidUser> apply(ValidRequest valid) {
-        return hashPassword.apply(valid.password())
-                           .async()
-                           .map(hashed -> createValidUser(valid, hashed));
+interface CreateValidUser {
+    Promise<ValidUser> apply(ValidRequest valid);
+    
+    static CreateValidUser createValidUser(HashPassword hashPassword) {
+        return valid -> hashPassword.apply(valid.password())
+                                    .map(hashed -> createValidUser(valid, hashed))
+                                    .async();
     }
 
     private ValidUser createValidUser(ValidRequest valid, HashedPassword hashed) {
@@ -4918,7 +4921,6 @@ package com.example.app.usecase.registeruser;
 import org.pragmatica.lang.Cause;
 
 public sealed interface RegistrationError extends Cause {
-
     enum General implements RegistrationError {
         EMAIL_ALREADY_REGISTERED("Email already registered"),
         WEAK_PASSWORD_FOR_PREMIUM("Premium referral codes require passwords of at least 10 characters"),
@@ -5052,7 +5054,11 @@ import org.pragmatica.lang.*;
 
 public interface GetUserProfile {
     record Request(String userId) {}
-    record Response(String userId, String email, String displayName) {}
+    record Response(String userId, String email, String displayName) {
+        static Response fromUser(User user) {
+            return new Response(user.id().value(), user.email().value(), user.displayName());
+        }
+    }
 
     Promise<Response> execute(Request request);
 
@@ -5064,7 +5070,7 @@ public interface GetUserProfile {
         return request -> UserId.userId(request.userId())
                                 .async()
                                 .flatMap(fetchUser::apply)
-                                .map(user -> new Response(user.id().value(), user.email().value(), user.displayName()));
+                                .map(Response::fromUser);
     }
 }
 ```

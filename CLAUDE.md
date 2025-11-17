@@ -500,7 +500,8 @@ public record Age(int value) {
 - `.onResultRunAsync(Runnable)`  -  Promise only: async run action regardless of outcome
 - `.withResult(Consumer<Result<T>>)`  -  Promise only: returns self for chaining
 - `.apply(Consumer<T>, Consumer<Cause>)`  -  Result only: bifurcation (onSuccess, onFailure)
-- `.fold(Fn1<R, T> success, Fn1<R, Cause> failure)`  -  Option/Result/Promise: transform both cases
+- `.fold(Fn1<R, Cause> failure, Fn1<R, T> success)`  -  Result/Promise: transform both cases (failure first, then success)
+- `.fold(Supplier<R> empty, Fn1<R, T> present)`  -  Option: transform both cases (empty first, then present)
 
 ### Recovery:
 - `.or(T replacement)`  -  provide fallback value

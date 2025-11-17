@@ -867,25 +867,20 @@ public class UserController {
 
         return getUserProfile.execute(request)
             .await()  // Block (or use reactive types in real Spring WebFlux)
-            .fold(
-                cause -> toErrorResponse(cause),
-                response -> ResponseEntity.ok(response)
-            );
+            .fold(cause -> toErrorResponse(cause), 
+                  response -> ResponseEntity.ok(response));
     }
 
     private ResponseEntity<?> toErrorResponse(Cause cause) {
         return switch (cause) {
-            case ProfileError.UserNotFound _ ->
-                ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("error", cause.message()));
+            case ProfileError.UserNotFound _ -> ResponseEntity.status(HttpStatus.NOT_FOUND)
+                                                              .body(Map.of("error", cause.message()));
 
-            case ProfileError.InvalidUserId _ ->
-                ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(Map.of("error", cause.message()));
+            case ProfileError.InvalidUserId _ -> ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                                                               .body(Map.of("error", cause.message()));
 
-            default ->
-                ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "Internal server error"));
+            default -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                                     .body(Map.of("error", "Internal server error"));
         };
     }
 }
@@ -916,25 +911,20 @@ public class JooqUserRepository implements GetUserProfile.FetchUser {
     }
 
     public Promise<User> apply(UserId userId) {
-        return Promise.lift(
-            ProfileError.DatabaseFailure::cause,
+        return Promise.lift(ProfileError.DatabaseFailure::cause,
             () -> dsl.selectFrom(USERS)
-                .where(USERS.ID.eq(userId.value()))
-                .fetchOptional()
-        ).flatMap(optRecord ->
-            optRecord
-                .map(this::toDomain)
-                .orElse(ProfileError.UserNotFound.INSTANCE.promise())
-        );
+                     .where(USERS.ID.eq(userId.value()))
+                     .fetchOptional()
+                     .flatMap(optRecord -> optRecord.map(this::toDomain)
+                                                    .orElse(ProfileError.UserNotFound.INSTANCE.promise())));
     }
 
     private Promise<User> toDomain(Record record) {
-        return Result.all(
-            UserId.userId(record.get(USERS.ID)),
-            Email.email(record.get(USERS.EMAIL)),
-            Result.success(record.get(USERS.DISPLAY_NAME))
-        ).async()
-         .map(User::new);
+        return Result.all(UserId.userId(record.get(USERS.ID)), 
+                          Email.email(record.get(USERS.EMAIL)), 
+                          Result.success(record.get(USERS.DISPLAY_NAME)))
+                     .map(User::new)
+                     .async();
     }
 }
 ```

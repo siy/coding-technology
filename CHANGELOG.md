@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Template syntax**: Changed `{}` placeholders to `%s` (String.format syntax) in all Causes factory examples
 - **CLAUDE.md API Reference**: Added comprehensive Causes utilities documentation with correct template syntax
 - **ValidOrder examples**: Extracted `calculateTotal()` method to follow Single Level of Abstraction principle
+- **Error type references**: Renamed `UserLoginError` to `LoginError` to match actual interface definitions
+- **UserError interface**: Added `EmailExists` enum constant with consistent naming (`EMAIL_EXISTS`)
 
 ## [2.0.0] - 2025-11-13
 

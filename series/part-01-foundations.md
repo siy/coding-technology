@@ -562,7 +562,7 @@ public record Email(String value) {
 // Errors are typed values, not thrown
 public sealed interface UserError extends Cause {
     enum NotFound implements UserError { USER_NOT_FOUND; }
-    enum EmailExists implements UserError { INSTANCE; }
+    enum EmailExists implements UserError { EMAIL_EXISTS; }
     record InvalidEmail(String value) implements UserError {}
 }
 ```

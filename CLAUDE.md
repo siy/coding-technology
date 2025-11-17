@@ -131,6 +131,74 @@ When writing Java code examples, follow these formatting conventions strictly:
      ).flatMap(this::validateAndCheckStatus);
      ```
 
+5. **Lambda complexity rules**
+   - Lambdas in `map`, `flatMap`, `recover`, `filter` must be minimal
+   - Allowed: method references, simple parameter forwarding, constructor references
+   - Forbidden: conditionals, try-catch, multi-statement blocks
+   - Example:
+     ```java
+     // DO: Extract to named method
+     .recover(this::recoverExpectedErrors)
+
+     private Promise<Data> recoverExpectedErrors(Cause cause) {
+         return switch (cause) {
+             case NotFound ignored, Timeout ignored -> useDefault();
+             default -> cause.promise();
+         };
+     }
+
+     // DON'T: instanceof chain in lambda
+     .recover(cause -> {
+         if (cause instanceof NotFound || cause instanceof Timeout) {
+             return useDefault();
+         }
+         return cause.promise();
+     })
+     ```
+
+6. **Use switch expressions for type matching**
+   - Replace `if (instanceof)` chains with pattern matching switch
+   - Use multi-case matching: `case A ignored, B ignored ->`
+   - Example:
+     ```java
+     // DO
+     private Promise<User> recoverNetworkError(Cause cause) {
+         return switch (cause) {
+             case NetworkError.Timeout ignored -> TIMEOUT.promise();
+             case NetworkError.Connection ignored -> UNREACHABLE.promise();
+             default -> cause.promise();
+         };
+     }
+
+     // DON'T
+     private Promise<User> recoverNetworkError(Cause cause) {
+         if (cause instanceof NetworkError.Timeout) {
+             return TIMEOUT.promise();
+         }
+         if (cause instanceof NetworkError.Connection) {
+             return UNREACHABLE.promise();
+         }
+         return cause.promise();
+     }
+     ```
+
+7. **Extract error constants**
+   - Define Cause instances as static final constants
+   - Never construct inline with fixed strings
+   - Example:
+     ```java
+     // DO
+     private static final Cause TIMEOUT = new ServiceUnavailable("User service timed out");
+     private static final Cause UNREACHABLE = new ServiceUnavailable("User service unreachable");
+
+     // DON'T
+     return switch (cause) {
+         case NetworkError.Timeout ignored ->
+             new ServiceUnavailable("Timed out").promise();
+         default -> cause.promise();
+     };
+     ```
+
 ---
 
 # Pragmatica Lite Core 0.8.3 API Reference
@@ -238,6 +306,24 @@ All accept optional `exceptionMapper: Fn1<Cause, Throwable>` (defaults to `Cause
 - **`Promise.liftFn3(ThrowingFn3<R, T1, T2, T3> fn)`**  -  returns `Fn3<Promise<R>, T1, T2, T3>`
 
 **Note**: There is NO `Promise.async(Runnable)` method. Use `Promise.lift(ThrowingRunnable)` for async execution of void operations.
+
+### Causes utilities:
+- **`Causes.cause(String message)`**  -  create simple cause with message
+- **`Causes.cause(String message, Option<Cause> source)`**  -  create cause with source
+- **`Causes.fromThrowable(Throwable throwable)`**  -  convert exception to cause (includes stack trace)
+- **`Causes.forOneValue(String template)`**  -  create `Fn1<Cause, T>` factory with `String.format` template
+- **`Causes.forTwoValues(String template)`**  -  create `Fn2<Cause, T1, T2>` factory
+- **`Causes.forThreeValues(String template)`**  -  create `Fn3<Cause, T1, T2, T3>` factory
+- **`Causes.composite(Result<?>...)`**  -  create composite cause from multiple results
+
+**Template syntax**: Uses `String.format` placeholders (`%s`), NOT MessageFormat (`{}`):
+```java
+Causes.forOneValue("Invalid email: %s")           // CORRECT
+Causes.forOneValue("Invalid email: {}")           // WRONG - uses MessageFormat syntax
+Causes.forTwoValues("Range error: %s to %s")      // CORRECT
+```
+
+**DEPRECATED**: `Causes.forValue(String)` - use `Causes.forOneValue(String)` instead (since 0.8.2, for removal)
 
 ## Validation and Parsing Utilities
 
@@ -414,7 +500,8 @@ public record Age(int value) {
 - `.onResultRunAsync(Runnable)`  -  Promise only: async run action regardless of outcome
 - `.withResult(Consumer<Result<T>>)`  -  Promise only: returns self for chaining
 - `.apply(Consumer<T>, Consumer<Cause>)`  -  Result only: bifurcation (onSuccess, onFailure)
-- `.fold(Fn1<R, T> success, Fn1<R, Cause> failure)`  -  Option/Result/Promise: transform both cases
+- `.fold(Fn1<R, Cause> failure, Fn1<R, T> success)`  -  Result/Promise: transform both cases (failure first, then success)
+- `.fold(Supplier<R> empty, Fn1<R, T> present)`  -  Option: transform both cases (empty first, then present)
 
 ### Recovery:
 - `.or(T replacement)`  -  provide fallback value
@@ -463,7 +550,7 @@ public Promise<User> findUser(UserId id) {
 ### Lifting sync Result to async Promise:
 ```java
 public Promise<Response> execute(Request request) {
-    return ValidRequest.validate(request)  // returns Result<ValidRequest>
+    return ValidRequest.validRequest(request)  // returns Result<ValidRequest>
                        .async()            // converts to Promise<ValidRequest>
                        .flatMap(step1::apply)
                        .flatMap(step2::apply);
@@ -491,7 +578,7 @@ Promise<User> promise = optUser.async(UserError.NotFound.INSTANCE);
 void validation_fails_forInvalidInput() {
     var request = new Request("invalid", "data");
 
-    ValidRequest.validate(request)
+    ValidRequest.validRequest(request)
                 .onSuccess(Assertions::fail);  // Fail test if unexpectedly succeeds
 }
 ```
@@ -502,7 +589,7 @@ void validation_fails_forInvalidInput() {
 void validation_succeeds_forValidInput() {
     var request = new Request("valid@example.com", "Valid1234");
 
-    ValidRequest.validate(request)
+    ValidRequest.validRequest(request)
                 .onFailure(Assertions::fail)  // Fail test if unexpectedly fails
                 .onSuccess(valid -> {
                     assertEquals("valid@example.com", valid.email().value());

@@ -57,6 +57,34 @@ public Result<ValidRequest> validate(Request request) {
 
 **Key difference**: `Result.all` accumulates all failures (CompositeCause), while `Promise.all` fails fast on first error.
 
+## Thread Safety
+
+**Fork-Join requires strict immutability.** All parallel operations must receive immutable inputs. Shared mutable state creates data races.
+
+### ❌ Data Race Example
+
+```java
+// WRONG - Shared mutable context
+private final DiscountContext context = new DiscountContext();
+
+Promise.all(
+    applyBogo(cart, context),      // Mutates context
+    applyPercentOff(cart, context)  // DATA RACE - concurrent mutation
+).map(this::merge);
+```
+
+### ✅ Correct: Immutable Inputs
+
+```java
+// CORRECT - Immutable cart passed to both
+Promise.all(
+    applyBogo(cart),          // cart is immutable
+    applyPercentOff(cart)     // cart is immutable
+).map(this::mergeDiscounts);
+```
+
+**Rule:** If parallel operations share any data, that data MUST be immutable (records, immutable collections, value objects).
+
 ## Critical Rules
 
 ### 1. Operations Must Be Independent

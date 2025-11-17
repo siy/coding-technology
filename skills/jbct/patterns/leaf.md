@@ -121,6 +121,24 @@ public Promise<Unit> publishEvent(OrderPlaced event) {
 }
 ```
 
+## Thread Safety
+
+**Leaf operations are thread-safe through confinement.** Each leaf operation executes independently without shared mutable state.
+
+- **Business logic leaves**: Pure functions or thread-confined mutable state
+- **I/O adapter leaves**: Framework handles thread safety (connection pools, etc.)
+
+```java
+// OK - Mutable local state (thread-confined)
+private User mapToUser(ResultSet rs) throws SQLException {
+    var attributes = new HashMap<String, String>();  // Thread-confined
+    // Build user from result set
+    return new User(...);  // Immutable result
+}
+```
+
+**Rule:** Leaf operations can use mutable local state internally, but must return immutable results.
+
 ## Critical Rules
 
 ### 1. Single Responsibility

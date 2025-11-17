@@ -38,11 +38,14 @@ const MARKDOWN_FILES = [
 const SERIES_FILES = [
   'INDEX.md',
   'part-01-foundations.md',
-  'part-02-core-principles.md',
-  'part-03-basic-patterns.md',
-  'part-04-advanced-patterns.md',
-  'part-05-testing-strategy.md',
-  'part-06-production-systems.md'
+  'part-02-four-return-types.md',
+  'part-03-parse-dont-validate.md',
+  'part-04-error-handling.md',
+  'part-05-basic-patterns.md',
+  'part-06-advanced-patterns.md',
+  'part-07-testing-philosophy.md',
+  'part-08-testing-practice.md',
+  'part-09-production-systems.md'
 ];
 
 // Helper functions

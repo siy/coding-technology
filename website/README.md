@@ -101,11 +101,14 @@ The HTML template uses these placeholders:
 
 - `series/INDEX.md` → `series/index.html`
 - `series/part-01-foundations.md` → `series/part-01-foundations.html`
-- `series/part-02-core-principles.md` → `series/part-02-core-principles.html`
-- `series/part-03-basic-patterns.md` → `series/part-03-basic-patterns.html`
-- `series/part-04-advanced-patterns.md` → `series/part-04-advanced-patterns.html`
-- `series/part-05-testing-strategy.md` → `series/part-05-testing-strategy.html`
-- `series/part-06-production-systems.md` → `series/part-06-production-systems.html`
+- `series/part-02-four-return-types.md` → `series/part-02-four-return-types.html`
+- `series/part-03-parse-dont-validate.md` → `series/part-03-parse-dont-validate.html`
+- `series/part-04-error-handling.md` → `series/part-04-error-handling.html`
+- `series/part-05-basic-patterns.md` → `series/part-05-basic-patterns.html`
+- `series/part-06-advanced-patterns.md` → `series/part-06-advanced-patterns.html`
+- `series/part-07-testing-philosophy.md` → `series/part-07-testing-philosophy.html`
+- `series/part-08-testing-practice.md` → `series/part-08-testing-practice.html`
+- `series/part-09-production-systems.md` → `series/part-09-production-systems.html`
 
 ## Development
 

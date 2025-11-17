@@ -1,8 +1,8 @@
-# Part 6: Building Production Systems
+# Part 9: Building Production Systems
 
-**Series:** [Java Backend Coding Technology](INDEX.md) | **Part:** 6 of 6
+**Series:** [Java Backend Coding Technology](INDEX.md) | **Part:** 9 of 9
 
-**Previous:** [Part 5: Testing Strategy](part-05-testing-strategy.md) | **Complete Series:** [Index](INDEX.md)
+**Previous:** [Part 8: Testing in Practice](part-08-testing-practice.md) | **Complete Series:** [Index](INDEX.md)
 
 ---
 
@@ -69,21 +69,30 @@ public interface RegisterUser {
 
     Promise<Response> execute(Request request);
 
-    static RegisterUser registerUser(
-        CheckEmailUniqueness checkEmail,
-        HashPassword hashPassword,
-        SaveUser saveUser,
-        GenerateToken generateToken
-    ) {
+    interface CheckEmailUniqueness {
+        Promise<ValidRequest> apply(ValidRequest valid);
+    }
+
+    interface CreateValidUser {
+        Promise<ValidUser> apply(ValidRequest valid);
+    }
+
+    interface SaveUser {
+        Promise<User> apply(ValidUser validUser);
+    }
+
+    interface GenerateToken {
+        Promise<Response> apply(User user);
+    }
+
+    static RegisterUser registerUser(CheckEmailUniqueness checkEmail,
+                                     CreateValidUser createValidUser,
+                                     SaveUser saveUser,
+                                     GenerateToken generateToken) {
         return request -> ValidRequest.validRequest(request)
                                       .async()
                                       .flatMap(checkEmail::apply)
-                                      .flatMap(valid -> hashPassword.apply(valid.password())
-                                                                    .async()
-                                                                    .map(hashed -> new ValidUser(
-                                                                        valid.email(),
-                                                                        hashed,
-                                                                        valid.referralCode())))
+                                      .flatMap(createValidUser::apply)
                                       .flatMap(saveUser::apply)
                                       .flatMap(generateToken::apply);
     }
@@ -123,14 +132,14 @@ public record Email(String value) {
     // private Email {}  // Not yet supported in Java
 
     private static final Pattern EMAIL_PATTERN = Pattern.compile("^[a-z0-9+_.-]+@[a-z0-9.-]+$");
-    private static final Fn1<Cause, String> INVALID_EMAIL = Causes.forValue("Invalid email format: {}");
+    private static final Fn1<Cause, String> INVALID_EMAIL = Causes.forOneValue("Invalid email format: %s");
 
     public static Result<Email> email(String raw) {
         return Verify.ensure(raw, Verify.Is::notNull)
-            .map(String::trim)
-            .map(String::toLowerCase)
-            .flatMap(Verify.ensureFn(INVALID_EMAIL, Verify.Is::matches, EMAIL_PATTERN))
-            .map(Email::new);
+                     .map(String::trim)
+                     .map(String::toLowerCase)
+                     .flatMap(Verify.ensureFn(INVALID_EMAIL, Verify.Is::matches, EMAIL_PATTERN))
+                     .map(Email::new);
     }
 }
 ```
@@ -144,34 +153,40 @@ package com.example.app.domain.shared;
 import org.pragmatica.lang.*;
 
 public record Password(String value) {
-    // private Password {}  // Not yet supported in Java
-
-    private static final Fn1<Cause, String> TOO_SHORT = Causes.forValue("Password must be at least 8 characters");
-    private static final Fn1<Cause, String> MISSING_UPPERCASE = Causes.forValue("Password must contain uppercase letter");
-    private static final Fn1<Cause, String> MISSING_DIGIT = Causes.forValue("Password must contain digit");
+    private static final Cause TOO_SHORT = Causes.cause("Password must be at least 8 characters");
+    private static final Cause MISSING_UPPERCASE = Causes.cause("Password must contain uppercase letter");
+    private static final Cause MISSING_DIGIT = Causes.cause("Password must contain digit");
 
     public static Result<Password> password(String raw) {
         return Verify.ensure(raw, Verify.Is::notNull)
-            .flatMap(Verify.ensureFn(TOO_SHORT, Verify.Is::lenBetween, 8, 128))
-            .flatMap(ensureUppercase())
-            .flatMap(ensureDigit())
-            .map(Password::new);
+                     .flatMap(Verify.ensureFn(TOO_SHORT, Verify.Is::lenBetween, 8, 128))
+                     .flatMap(Password::ensureUppercase)
+                     .flatMap(Password::ensureDigit)
+                     .map(Password::new);
     }
 
-    private static Fn1<Result<String>, String> ensureUppercase() {
-        return raw -> raw.chars().anyMatch(Character::isUpperCase)
-            ? Result.success(raw)
-            : MISSING_UPPERCASE.apply(raw).result();
+    private static Result<String> ensureUppercase(String raw) {
+        return contains(raw, Character::isUpperCase)
+                ? Result.success(raw)
+                : MISSING_UPPERCASE.result();
     }
 
-    private static Fn1<Result<String>, String> ensureDigit() {
-        return raw -> raw.chars().anyMatch(Character::isDigit)
-            ? Result.success(raw)
-            : MISSING_DIGIT.apply(raw).result();
+    private static Result<String> ensureDigit(String raw) {
+        return contains(raw, Character::isDigit)
+                ? Result.success(raw)
+                : MISSING_DIGIT.result();
+    }
+
+    private static boolean contains(CharSequence sequence, IntPredicate predicate) {
+        return sequence.chars().anyMatch(predicate);
     }
 
     public int length() {
         return value.length();
+    }
+
+    public boolean contains(Username username) {
+        return value.toLowerCase().contains(username.value().toLowerCase());
     }
 }
 ```
@@ -191,8 +206,8 @@ public record ReferralCode(String value) {
         return switch (raw) {
             case null, "" -> Result.success(Option.none());
             default -> Verify.ensure(raw.trim(), Verify.Is::matches, REFERRAL_PATTERN)
-                .map(ReferralCode::new)
-                .map(Option::some);
+                             .map(ReferralCode::new)
+                             .map(Option::some);
         };
     }
 
@@ -242,18 +257,18 @@ record ConfirmationToken(String value) {}
 
 **CheckEmailUniqueness (adapter leaf):**
 ```java
-class EmailUniquenessChecker implements CheckEmailUniqueness {
-    private final UserRepository userRepo;
+interface CheckEmailUniqueness {
+    Promise<ValidRequest> apply(ValidRequest request);
 
-    public Promise<ValidRequest> apply(ValidRequest request) {
-        return userRepo.existsByEmail(request.email())
-            .flatMap(exists -> checkNotExists(exists, request));
+    static CheckEmailUniqueness checkEmailUniqueness(UserRepository repository) {
+        return request -> repository.findByEmail(request.email())
+                                    .flatMap(user -> checkPresence(user, request));
     }
 
-    private Promise<ValidRequest> checkNotExists(boolean exists, ValidRequest request) {
-        return exists
-            ? RegistrationError.EmailAlreadyRegistered.INSTANCE.promise()
-            : Promise.success(request);
+    static Promise<ValidRequest> checkPresence(Option<User> user, ValidRequest request) {
+        return user.isPresent()
+                ? RegistrationError.General.EMAIL_ALREADY_REGISTERED.promise()
+                : Promise.success(request);
     }
 }
 ```
@@ -262,15 +277,14 @@ class EmailUniquenessChecker implements CheckEmailUniqueness {
 
 **HashPassword (business leaf):**
 ```java
-class BcryptPasswordHasher implements HashPassword {
-    private final BCryptPasswordEncoder encoder;
+interface HashPassword {
+    Result<HashedPassword> apply(Password password);
 
-    public Result<HashedPassword> apply(Password password) {
-        return Result.lift1(
-            RegistrationError.PasswordHashingFailed::cause,
-            encoder::encode,
-            password.value()
-        ).map(HashedPassword::new);
+    static HashPassword hashPassword(BCryptPasswordEncoder encoder) {
+        return password -> Result.lift1(RegistrationError.PasswordHashingFailed::new,
+                                        encoder::encode,
+                                        password.value())
+                                 .map(HashedPassword::new);
     }
 }
 ```
@@ -282,21 +296,21 @@ Uses `Result.lift1` to handle potential exceptions from BCrypt.
 class JooqUserRepository implements SaveUser {
     private final DSLContext dsl;
 
-    public Promise<UserId> apply(ValidUser user) {
-        return Promise.lift(
-            RepositoryError.DatabaseFailure::cause,
-            () -> {
-                String id = dsl.insertInto(USERS)
-                    .set(USERS.EMAIL, user.email().value())
-                    .set(USERS.PASSWORD_HASH, user.hashed().value())
-                    .set(USERS.REFERRAL_CODE, user.refCode().map(ReferralCode::value).orElse(null))
-                    .returningResult(USERS.ID)
-                    .fetchSingle()
-                    .value1();
+    public Promise<User> apply(ValidUser user) {
+        return Promise.lift(RepositoryError.DatabaseFailure::cause,
+                            () -> saveUser(user));
+    }
 
-                return new UserId(id);
-            }
-        );
+    private User saveUser(ValidUser user) {
+        String id = dsl.insertInto(USERS)
+                       .set(USERS.EMAIL, user.email().value())
+                       .set(USERS.PASSWORD_HASH, user.hashed().value())
+                       .set(USERS.REFERRAL_CODE, user.refCode().map(ReferralCode::value).orElse(null))
+                       .returningResult(USERS.ID)
+                       .fetchSingle()
+                       .value1();
+
+        return new User(new UserId(id), user.email());
     }
 }
 ```
@@ -308,10 +322,10 @@ Uses `Promise.lift` to handle JOOQ exceptions, converts to domain Cause.
 class TokenServiceClient implements GenerateToken {
     private final HttpClient httpClient;
 
-    public Promise<Response> apply(UserId userId) {
-        return httpClient.post("/tokens/confirm", Map.of("userId", userId.value()))
-            .map(resp -> buildResponse(userId, resp))
-            .recover(this::mapTokenError);
+    public Promise<Response> apply(User user) {
+        return httpClient.post("/tokens/confirm", Map.of("userId", user.id().value()))
+                         .map(resp -> buildResponse(user.id(), resp))
+                         .recover(this::mapTokenError);
     }
 
     private Response buildResponse(UserId userId, Map<String, String> resp) {
@@ -319,7 +333,7 @@ class TokenServiceClient implements GenerateToken {
     }
 
     private Promise<Response> mapTokenError(Throwable err) {
-        return RegistrationError.TokenGenerationFailed.cause(err).promise();
+        return RegistrationError.General.TOKEN_GENERATION_FAILED.promise();
     }
 }
 ```
@@ -332,36 +346,27 @@ package com.example.app.usecase.registeruser;
 import org.pragmatica.lang.Cause;
 
 public sealed interface RegistrationError extends Cause {
+    enum General implements RegistrationError {
+        EMAIL_ALREADY_REGISTERED("Email already registered"),
+        WEAK_PASSWORD_FOR_PREMIUM("Premium referral codes require passwords of at least 10 characters"),
+        TOKEN_GENERATION_FAILED("Token generation failed");
 
-    enum EmailAlreadyRegistered implements RegistrationError {
-        INSTANCE;
+        private final String message;
 
-        @Override
-        public String message() {
-            return "Email already registered";
+        General(String message) {
+            this.message = message;
         }
-    }
-
-    enum WeakPasswordForPremium implements RegistrationError {
-        INSTANCE;
 
         @Override
         public String message() {
-            return "Premium referral codes require passwords of at least 10 characters";
+            return message;
         }
     }
 
     record PasswordHashingFailed(Throwable cause) implements RegistrationError {
         @Override
         public String message() {
-            return "Password hashing failed";
-        }
-    }
-
-    record TokenGenerationFailed(Throwable cause) implements RegistrationError {
-        @Override
-        public String message() {
-            return "Token generation failed";
+            return "Password hashing failed: " + Causes.fromThrowable(cause);
         }
     }
 }
@@ -371,7 +376,7 @@ Sealed interface ensures exhaustive pattern matching. Each error is a typed valu
 
 ### Step 7: Testing
 
-> **Note:** This section shows basic test examples. For comprehensive testing strategy including evolutionary testing, test organization, and utilities, see **[Part 5: Testing Strategy](part-05-testing-strategy.md)**.
+> **Note:** This section shows basic test examples. For comprehensive testing strategy including evolutionary testing, test organization, and utilities, see **[Part 7: Testing Philosophy](part-07-testing-philosophy.md)** and **[Part 8: Testing in Practice](part-08-testing-practice.md)**.
 
 **Validation tests:**
 ```java
@@ -603,6 +608,194 @@ com.example.app.config/
 └── ProfileConfig.java  # @Bean methods connecting pieces
 ```
 
+### Module Organization (Multi-Module Projects)
+
+For larger projects or teams, splitting into multiple modules provides compile-time boundaries and clearer separation of concerns. This is **optional** - single-module projects work fine for most teams.
+
+#### When to Use Modules
+
+Consider multi-module structure when:
+- **Team size**: 5+ developers working on same codebase
+- **Deployment units**: Different components deploy independently (microservices)
+- **Compile-time enforcement**: Need hard boundaries between layers (prevent accidental adapter→domain dependencies)
+- **Build performance**: Modules enable incremental compilation
+- **Reusability**: Shared domain logic used across multiple applications
+
+**When single module is sufficient:**
+- Small to medium teams (< 5 developers)
+- Monolithic deployment
+- Package conventions provide sufficient structure
+- Build time is acceptable (< 30 seconds)
+
+#### Module Structure
+
+Standard multi-module layout:
+
+```
+my-app/                           # Root project
+├── my-app-domain/                # Module 1: Domain logic
+│   └── src/main/java/
+│       └── com.example.app/
+│           └── domain/
+│               └── shared/       # Shared value objects
+│                   ├── Email.java
+│                   ├── UserId.java
+│                   └── Money.java
+├── my-app-application/           # Module 2: Use cases
+│   └── src/main/java/
+│       └── com.example.app/
+│           └── usecase/
+│               ├── registeruser/
+│               │   └── RegisterUser.java
+│               └── getprofile/
+│                   └── GetProfile.java
+├── my-app-adapters/              # Module 3: Infrastructure
+│   └── src/main/java/
+│       └── com.example.app/
+│           └── adapter/
+│               ├── rest/         # HTTP controllers
+│               ├── persistence/  # Database
+│               └── messaging/    # Event bus
+└── my-app-bootstrap/             # Module 4: Main application
+    └── src/main/java/
+        └── com.example.app/
+            ├── Application.java  # Spring Boot main
+            └── config/           # Wiring
+```
+
+#### Module Dependencies
+
+**Dependency rules** (enforced by build tool):
+
+```
+domain         → (no dependencies)
+  ↑
+application    → domain
+  ↑
+adapters       → application, domain
+  ↑
+bootstrap      → adapters, application, domain
+```
+
+- **domain**: Pure value objects, no external dependencies
+- **application**: Use cases, depends only on domain
+- **adapters**: Implementation, depends on application & domain
+- **bootstrap**: Assembly, depends on everything
+
+**Gradle example:**
+
+```gradle
+// settings.gradle
+rootProject.name = 'my-app'
+include 'my-app-domain'
+include 'my-app-application'
+include 'my-app-adapters'
+include 'my-app-bootstrap'
+
+// my-app-domain/build.gradle
+dependencies {
+    implementation 'org.pragmatica-lite:core:0.8.3'
+}
+
+// my-app-application/build.gradle
+dependencies {
+    implementation project(':my-app-domain')
+    implementation 'org.pragmatica-lite:core:0.8.3'
+}
+
+// my-app-adapters/build.gradle
+dependencies {
+    implementation project(':my-app-domain')
+    implementation project(':my-app-application')
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.jooq:jooq'
+}
+
+// my-app-bootstrap/build.gradle
+dependencies {
+    implementation project(':my-app-domain')
+    implementation project(':my-app-application')
+    implementation project(':my-app-adapters')
+    implementation 'org.springframework.boot:spring-boot-starter'
+}
+```
+
+**Maven example:**
+
+```xml
+<!-- Root pom.xml -->
+<modules>
+    <module>my-app-domain</module>
+    <module>my-app-application</module>
+    <module>my-app-adapters</module>
+    <module>my-app-bootstrap</module>
+</modules>
+
+<!-- my-app-application/pom.xml -->
+<dependencies>
+    <dependency>
+        <groupId>com.example</groupId>
+        <artifactId>my-app-domain</artifactId>
+        <version>${project.version}</version>
+    </dependency>
+</dependencies>
+```
+
+#### Where Types Go
+
+| Type                            | Module                                  | Rationale                      |
+|---------------------------------|-----------------------------------------|--------------------------------|
+| Shared value objects            | `domain`                                | Used across multiple use cases |
+| Use case-specific value objects | `application` (inside use case package) | Used by single use case        |
+| Use case interfaces             | `application`                           | Business logic orchestration   |
+| Step interfaces                 | `application` (inside use case)         | Part of use case               |
+| Adapter interfaces              | `application` (inside use case)         | Contract for adapters          |
+| Adapter implementations         | `adapters`                              | Infrastructure concerns        |
+| Controllers/REST                | `adapters`                              | HTTP inbound                   |
+| Repositories                    | `adapters`                              | Database outbound              |
+| Configuration/wiring            | `bootstrap`                             | Assembly                       |
+
+#### Benefits of Multi-Module
+
+**Compile-time safety:**
+```java
+// ❌ This won't compile - adapters can't depend on each other
+// (assuming proper module boundaries)
+package com.example.app.adapter.rest;
+import com.example.app.adapter.persistence.UserRepositoryImpl;  // COMPILE ERROR
+```
+
+**Incremental builds:**
+- Change in `domain` → rebuild application, adapters, bootstrap
+- Change in `adapters` → rebuild only bootstrap (faster)
+
+**Deployment flexibility:**
+- Package `bootstrap` as executable JAR
+- Reuse `domain` in multiple applications
+- Deploy adapters separately (different databases per environment)
+
+#### When NOT to Use Modules
+
+**Don't use modules if:**
+- Single developer or very small team
+- Build time already fast
+- Package conventions working well
+- Additional complexity not justified
+
+**Alternative:** Package structure with ArchUnit tests to enforce boundaries:
+
+```java
+// Single module with ArchUnit enforcement
+@Test
+void adapters_shouldNotDependOnEachOther() {
+    noClasses().that().resideInAPackage("..adapter.rest..")
+        .should().dependOnClassesThat().resideInAPackage("..adapter.persistence..")
+        .check(classes);
+}
+```
+
+Module organization is a **scaling strategy** - adopt when needed, not prematurely.
+
 ---
 
 ## Framework Integration
@@ -627,7 +820,11 @@ import org.pragmatica.lang.*;
 
 public interface GetUserProfile {
     record Request(String userId) {}
-    record Response(String userId, String email, String displayName) {}
+    record Response(String userId, String email, String displayName) {
+        static Response fromUser(User user) {
+            return new Response(user.id().value(), user.email().value(), user.displayName());
+        }
+    }
 
     Promise<Response> execute(Request request);
 
@@ -639,11 +836,7 @@ public interface GetUserProfile {
         return request -> UserId.userId(request.userId())
                                 .async()
                                 .flatMap(fetchUser::apply)
-                                .map(user -> new Response(
-                                    user.id().value(),
-                                    user.email().value(),
-                                    user.displayName()
-                                ));
+                                .map(Response::fromUser);
     }
 }
 ```
@@ -674,25 +867,20 @@ public class UserController {
 
         return getUserProfile.execute(request)
             .await()  // Block (or use reactive types in real Spring WebFlux)
-            .match(
-                response -> ResponseEntity.ok(response),
-                cause -> toErrorResponse(cause)
-            );
+            .fold(cause -> toErrorResponse(cause), 
+                  response -> ResponseEntity.ok(response));
     }
 
     private ResponseEntity<?> toErrorResponse(Cause cause) {
         return switch (cause) {
-            case ProfileError.UserNotFound _ ->
-                ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("error", cause.message()));
+            case ProfileError.UserNotFound _ -> ResponseEntity.status(HttpStatus.NOT_FOUND)
+                                                              .body(Map.of("error", cause.message()));
 
-            case ProfileError.InvalidUserId _ ->
-                ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(Map.of("error", cause.message()));
+            case ProfileError.InvalidUserId _ -> ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                                                               .body(Map.of("error", cause.message()));
 
-            default ->
-                ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "Internal server error"));
+            default -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                                     .body(Map.of("error", "Internal server error"));
         };
     }
 }
@@ -723,25 +911,20 @@ public class JooqUserRepository implements GetUserProfile.FetchUser {
     }
 
     public Promise<User> apply(UserId userId) {
-        return Promise.lift(
-            ProfileError.DatabaseFailure::cause,
+        return Promise.lift(ProfileError.DatabaseFailure::cause,
             () -> dsl.selectFrom(USERS)
-                .where(USERS.ID.eq(userId.value()))
-                .fetchOptional()
-        ).flatMap(optRecord ->
-            optRecord
-                .map(this::toDomain)
-                .orElse(ProfileError.UserNotFound.INSTANCE.promise())
-        );
+                     .where(USERS.ID.eq(userId.value()))
+                     .fetchOptional()
+                     .flatMap(optRecord -> optRecord.map(this::toDomain)
+                                                    .orElse(ProfileError.UserNotFound.INSTANCE.promise())));
     }
 
     private Promise<User> toDomain(Record record) {
-        return Result.all(
-            UserId.userId(record.get(USERS.ID)),
-            Email.email(record.get(USERS.EMAIL)),
-            Result.success(record.get(USERS.DISPLAY_NAME))
-        ).async()
-         .map(User::new);
+        return Result.all(UserId.userId(record.get(USERS.ID)), 
+                          Email.email(record.get(USERS.EMAIL)), 
+                          Result.success(record.get(USERS.DISPLAY_NAME)))
+                     .map(User::new)
+                     .async();
     }
 }
 ```
@@ -863,10 +1046,10 @@ Welcome to the future of backend development. Code that's predictable, testable,
 
 **Series Navigation**
 
-[← Part 4: Advanced Patterns & Testing](part-04-advanced-patterns.md) | [Series Index](INDEX.md) | [Complete Guide →](../CODING_GUIDE.md)
+[← Part 8: Testing in Practice](part-08-testing-practice.md) | [Series Index](INDEX.md) | [Complete Guide →](../CODING_GUIDE.md)
 
 ---
 
-**Version:** 1.0.0 (2025-10-05) | **Part of:** [Java Backend Coding Technology Series](INDEX.md)
+**Version:** 2.0.0 (2025-11-13) | **Part of:** [Java Backend Coding Technology Series](INDEX.md)
 
 **Series Complete!** Return to [Index](INDEX.md) to review any part or see [CODING_GUIDE.md](../CODING_GUIDE.md) for the complete reference.

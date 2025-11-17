@@ -1,6 +1,6 @@
 # Part 1: Introduction & Foundations
 
-**Series:** [Java Backend Coding Technology](INDEX.md) | **Part:** 1 of 6 | **Next:** [Part 2: Core Principles](part-02-core-principles.md)
+**Series:** [Java Backend Coding Technology](INDEX.md) | **Part:** 1 of 9 | **Next:** [Part 2: The Four Return Types](part-02-four-return-types.md)
 
 ---
 
@@ -99,10 +99,10 @@ Functional composition:
 ```java
 public Result<String> processUser(String email) {
     return Result.success(email)
-        .map(String::trim)
-        .map(String::toLowerCase)
-        .flatMap(this::validate)
-        .flatMap(this::save);
+                 .map(String::trim)
+                 .map(String::toLowerCase)
+                 .flatMap(this::validate)
+                 .flatMap(this::save);
 }
 ```
 
@@ -144,9 +144,9 @@ if (email != null) {
 
 // Smart Wrapper: WRAPPER checks, WRAPPER decides
 Result<String> result = Result.success(email)
-    .map(String::trim)          // "Trim, if value is present"
-    .flatMap(this::validate)    // "Validate, if trim succeeded"
-    .flatMap(this::save);       // "Save, if validate succeeded"
+                              .map(String::trim)        // "Trim, if value is present"
+                              .flatMap(this::validate)  // "Validate, if trim succeeded"
+                              .flatMap(this::save);     // "Save, if validate succeeded"
 ```
 
 You're saying: "Here's what to do with the value... **if** you have one and **when** you're ready."
@@ -194,8 +194,8 @@ if (email != null) {
 With Smart Wrappers, **you describe transformations**, the wrapper handles control flow:
 ```java
 Result.success(email)
-    .flatMap(this::validate)
-    .flatMap(this::save);
+      .flatMap(this::validate)
+      .flatMap(this::save);
 // "Validate, then save - but only if each step succeeds"
 ```
 
@@ -236,9 +236,13 @@ class User {
 Functional programming **makes data transparent** and treats functions as transformations:
 
 ```java
-public record User(String email) {  // Immutable data
-    public User withEmail(String newEmail) {
-        return new User(newEmail);  // Returns new instance
+public record User(UserId id, Email email, UserName name, Status status) {  // Immutable data with value objects
+    public User withEmail(Email newEmail) {
+        return new User(id, newEmail, name, status);  // Returns new instance, other fields unchanged
+    }
+
+    public User withStatus(Status newStatus) {
+        return new User(id, email, name, newStatus);  // Only status changed
     }
 }
 ```
@@ -262,11 +266,11 @@ Think of your code as a series of **pipes** through which **values** flow:
 ```java
 // Water (value) flows through pipes (functions)
 public Result<Response> execute(Request request) {
-    return ValidRequest.validate(request)     // Pipe 1: validation
-        .flatMap(this::checkPermissions)      // Pipe 2: authorization
-        .flatMap(this::processRequest)        // Pipe 3: business logic
-        .flatMap(this::saveResult)            // Pipe 4: persistence
-        .map(this::buildResponse);            // Pipe 5: formatting
+    return ValidRequest.validRequest(request)            // Pipe 1: validation
+                       .flatMap(this::checkPermissions)  // Pipe 2: authorization
+                       .flatMap(this::processRequest)    // Pipe 3: business logic
+                       .flatMap(this::saveResult)        // Pipe 4: persistence
+                       .map(this::buildResponse);        // Pipe 5: formatting
 }
 ```
 
@@ -281,6 +285,45 @@ This mental model makes code structure **visual and predictable**:
 - Linear flow: top to bottom
 - No hidden branching: if you see 5 steps, there are 5 steps
 - Error handling: automatic, not scattered through if-checks
+
+### Immutability and Thread Confinement
+
+This technology's thread safety guarantees rest on one critical requirement: **all input data passed to operations must be treated as immutable and read-only**. This isn't about dogmatic functional purity - it's about maintaining safety guarantees that make concurrent code predictable.
+
+**Thread confinement** (i.e., data accessed by exactly one thread) is the key safety mechanism. When data stays within a single operation's scope, mutable state is safe. When data crosses operation boundaries - especially with patterns that enable parallelism - it must be immutable.
+
+**What MUST be immutable:**
+- Data passed between parallel operations (Fork-Join pattern - see Part 4)
+- Input parameters to any operation (read-only contract)
+- Response types returned from use cases (may be cached/reused)
+- Value objects used as map keys or in collections
+- Data crossing Promise boundaries when parallel execution is possible
+
+**What CAN be mutable (thread-confined):**
+- Local state within single operation (accumulators, builders)
+- Working objects within adapter boundaries (before domain conversion)
+- State confined to sequential patterns (Leaf, Sequencer, Iteration steps)
+
+**Example - Safe local mutable state:**
+```java
+private DiscountResult applyRules(Cart cart, List<DiscountRule> rules) {
+    var mutableCart = cart.toMutable();  // Local working copy
+    var applied = new ArrayList<>();     // Local accumulator
+
+    for (var rule : rules) {
+        applied.add(rule.apply(mutableCart));
+    }
+
+    return new DiscountResult(mutableCart.toImmutable(),  // Immutable result
+                              List.copyOf(applied));
+}
+```
+
+**Why safe:** `mutableCart` and `applied` are local variables, thread-confined to this method. Input `cart` remains unmodified (read-only). Result is immutable.
+
+**Key principle:** Mutability is safe when state is **thread-confined** (accessed by single thread). Sequential patterns (Sequencer, Leaf, Iteration) guarantee isolation between steps, making local mutable state safe within each step. Parallel patterns (Fork-Join) require immutable inputs because no such isolation exists.
+
+Detailed pattern-specific safety rules are covered in Part 3 and Part 4. For now, remember: **input data is read-only, local working data can be mutable, output data is immutable**.
 
 ---
 
@@ -357,13 +400,13 @@ This series teaches you a complete technology for writing backend Java code. By 
 - Why business logic never throws exceptions
 - How to compose operations without nesting complexity
 
-### Part 3: Basic Patterns & Structure
+### Part 5: Basic Patterns & Structure
 - The two structural rules that prevent most bugs
 - Five patterns that cover 80% of daily coding
 - How to refactor mechanically when patterns don't match
 - When to extract functions and where to put them
 
-### Part 4: Advanced Patterns & Testing
+### Part 6: Advanced Patterns & Testing
 - The Sequencer pattern that structures 90% of business logic
 - Fork-Join for parallel operations
 - How to add cross-cutting concerns without mixing responsibilities
@@ -425,8 +468,8 @@ The goal: **teach you enough to build production backend systems with predictabl
 
 **Practical application**:
 - After Part 2: Try converting a simple function to use Result<T>
-- After Part 3: Refactor a small module to follow Single Level of Abstraction
-- After Part 4: Implement a complete use case with Sequencer pattern
+- After Part 5: Refactor a small module to follow Single Level of Abstraction
+- After Part 9: Implement a complete use case with Sequencer pattern
 - After Part 5: Structure a new service using vertical slicing
 
 ---
@@ -467,6 +510,201 @@ Library documentation: https://central.sonatype.com/artifact/org.pragmatica-lite
 
 ---
 
+## Quick Reference
+
+This section provides at-a-glance reference for the core concepts you'll learn throughout the series. Bookmark this page for quick lookup while coding.
+
+### The Four Return Kinds
+
+Every function returns exactly one of these:
+
+| Type | Meaning | Use When | Example |
+|------|---------|----------|---------|
+| `T` | Sync, can't fail, always present | Pure computation | `String initials()` |
+| `Option<T>` | Sync, can't fail, may be absent | Optional value | `Option<Theme> findTheme()` |
+| `Result<T>` | Sync, can fail (validation/business) | Validation, business rules | `Result<Email> email(String)` |
+| `Promise<T>` | Async, can fail (I/O/external) | Database, HTTP, file I/O | `Promise<User> loadUser()` |
+
+**Critical:** Never `Promise<Result<T>>` - Promise already handles failures.
+
+### Pattern Decision Tree
+
+Choose your pattern based on the situation:
+
+```
+Is this a single atomic operation?
+├─ Yes → Leaf pattern
+└─ No → Does it involve multiple operations?
+    ├─ Yes → Are they independent (can run in parallel)?
+    │   ├─ Yes → Fork-Join pattern
+    │   └─ No → Sequencer pattern
+    └─ No → Does it branch based on condition?
+        ├─ Yes → Condition pattern
+        └─ No → Does it process a collection?
+            ├─ Yes → Iteration pattern
+            └─ No → Need cross-cutting concerns? → Aspects pattern
+```
+
+### Core Principles Summary
+
+**Parse, Don't Validate:**
+```java
+// Factory method validates, constructor is private
+public record Email(String value) {
+    public static Result<Email> email(String raw) {
+        return validate(raw).map(Email::new);
+    }
+}
+```
+
+**No Business Exceptions:**
+```java
+// Errors are typed values, not thrown
+public sealed interface UserError extends Cause {
+    enum NotFound implements UserError { USER_NOT_FOUND; }
+    enum EmailExists implements UserError { EMAIL_EXISTS; }
+    record InvalidEmail(String value) implements UserError {}
+}
+```
+
+**Single Level of Abstraction:**
+```java
+// ✅ Lambdas contain only method references
+.flatMap(this::validateInput)
+.flatMap(this::processPayment)
+
+// ❌ No complex logic in lambdas
+.flatMap(user -> { /* nested logic */ })  // WRONG
+```
+
+### Common Type Transformations
+
+Moving between the four return types:
+
+```java
+// Option → Result
+option.toResult(cause)        // or .await(cause)
+
+// Option → Promise
+option.async(cause)
+
+// Result → Promise
+result.async()
+
+// Promise → Result (blocking - use with caution)
+promise.await()
+promise.await(timeout)
+
+// Cause → Result/Promise (prefer over constructors)
+cause.result()                // Recommended
+cause.promise()               // Recommended
+```
+
+### Aggregation Quick Reference
+
+Combining multiple operations:
+
+```java
+// Result.all - Accumulates ALL failures
+Result.all(result1, result2, result3)
+    .map((v1, v2, v3) -> combine(v1, v2, v3));
+
+// Promise.all - Fail-fast on FIRST failure
+Promise.all(promise1, promise2, promise3)
+    .map((v1, v2, v3) -> combine(v1, v2, v3));
+
+// Option.all - Fail-fast on FIRST empty
+Option.all(opt1, opt2, opt3)
+    .map((v1, v2, v3) -> combine(v1, v2, v3));
+```
+
+### Naming Conventions
+
+```java
+// Factory methods: TypeName.typeName
+Email.email(raw)
+Password.password(raw)
+
+// Validated inputs: Valid prefix
+record ValidRequest(Email email, Password password) {}
+
+// Step interfaces (Zone 2): orchestration verbs
+interface ValidateInput { ... }
+interface ProcessPayment { ... }
+
+// Leaves (Zone 3): implementation verbs
+private Hash hashPassword(Password pwd) { ... }
+private Data fetchFromCache(Key key) { ... }
+
+// Tests: methodName_outcome_condition
+void email_fails_forInvalidFormat() {}
+```
+
+### Project Structure (Vertical Slicing)
+
+```
+com.example.app/
+├── usecase/
+│   ├── registeruser/         # Self-contained slice
+│   │   ├── RegisterUser.java # Use case + factory
+│   │   └── [internal types]  # Steps, errors, validated inputs
+│   └── loginuser/
+│       └── LoginUser.java
+├── domain/
+│   └── shared/               # Reusable value objects ONLY
+│       ├── Email.java
+│       └── UserId.java
+└── adapter/
+    ├── rest/                 # Inbound adapters
+    ├── persistence/          # Outbound adapters
+    └── messaging/
+```
+
+**Placement Rule:** If used by single use case → inside use case package. If used by 2+ → `domain/shared/`.
+
+### Testing Pattern
+
+```java
+// Test failures
+@Test
+void validation_fails_forInvalidInput() {
+    ValidRequest.validRequest(badRequest)
+                .onSuccess(Assertions::fail);
+}
+
+// Test successes
+@Test
+void validation_succeeds_forValidInput() {
+    ValidRequest.validRequest(goodRequest)
+        .onFailure(Assertions::fail)
+        .onSuccess(valid -> assertEquals(...));
+}
+
+// Async tests
+@Test
+void execute_succeeds_forValidInput() {
+    useCase.execute(request)
+        .await()
+        .onFailure(Assertions::fail)
+        .onSuccess(response -> assertEquals(...));
+}
+```
+
+### When to Use Each Pattern
+
+| Pattern | Use Case | Example |
+|---------|----------|---------|
+| **Leaf** | Single operation | Hash password, calculate total, query database |
+| **Sequencer** | Dependent steps (A→B→C) | Validate → save → notify |
+| **Fork-Join** | Independent parallel ops | Load user + orders + notifications |
+| **Condition** | Branching logic | Premium vs basic user processing |
+| **Iteration** | Process collection | Validate list of items |
+| **Aspects** | Cross-cutting concerns | Retry, timeout, metrics, logging |
+
+This reference covers the essentials. Each topic is explained in depth in subsequent parts. Refer back here when you need a quick reminder.
+
+---
+
 ## Key Principles to Remember
 
 As you progress through this series, keep these principles in mind:
@@ -489,16 +727,16 @@ You now understand:
 - What you'll learn in this series
 - How to approach the learning path
 
-**Next:** [Part 2: Core Principles](part-02-core-principles.md)
+**Next:** [Part 2: The Four Return Types](part-02-four-return-types.md)
 
-In Part 2, we'll dive into the four return types that form the foundation of everything else: T, Option<T>, Result<T>, and Promise<T>. You'll learn when to use each one, how they compose, and why these four types are all you need.
+In Part 2A, we'll dive into the four return types that form the foundation of everything else: T, Option<T>, Result<T>, and Promise<T>. You'll learn when to use each one, how they compose, and why these four types are all you need.
 
 ---
 
 **Series Navigation**
 
-← *You are at Part 1* | [Index](INDEX.md) | [Part 2: Core Principles →](part-02-core-principles.md)
+← *You are at Part 1* | [Index](INDEX.md) | [Part 2: The Four Return Types →](part-02-four-return-types.md)
 
 ---
 
-**Version:** 1.0.0 (2025-10-05) | **Part of:** [Java Backend Coding Technology Series](INDEX.md)
+**Version:** 2.0.0 (2025-11-13) | **Part of:** [Java Backend Coding Technology Series](INDEX.md)

@@ -1,6 +1,6 @@
 # Java Backend Coding Technology
 
-> **Version 1.8.2** | [Full Changelog](CHANGELOG.md)
+> **Version 2.0.0** | [Full Changelog](CHANGELOG.md)
 
 A framework-agnostic methodology for writing predictable, testable Java backend code optimized for human-AI collaboration.
 
@@ -80,13 +80,16 @@ Traditional software development relies on "best practices." These are subjectiv
 
 **New to this technology?** Start with the learning series:
 
-1. **[Series Index](series/INDEX.md)** - Overview and navigation for the 6-part learning series
+1. **[Series Index](series/INDEX.md)** - Overview and navigation for the 9-part learning series
 2. **[Part 1: Foundations](series/part-01-foundations.md)** - Mental model and core ideas
-3. **[Part 2: Core Principles](series/part-02-core-principles.md)** - Four return types, parse-don't-validate, no business exceptions
-4. **[Part 3: Basic Patterns](series/part-03-basic-patterns.md)** - Leaf, Condition, Iteration
-5. **[Part 4: Advanced Patterns](series/part-04-advanced-patterns.md)** - Sequencer, Fork-Join, Aspects, Testing basics
-6. **[Part 5: Testing Strategy](series/part-05-testing-strategy.md)** - Evolutionary testing, integration-first approach, test organization
-7. **[Part 6: Production Systems](series/part-06-production-systems.md)** - Complete use case walkthrough, project structure, framework integration
+3. **[Part 2: The Four Return Types](series/part-02-four-return-types.md)** - T, Option, Result, Promise
+4. **[Part 3: Parse, Don't Validate](series/part-03-parse-dont-validate.md)** - Making invalid states unrepresentable
+5. **[Part 4: Error Handling & Composition](series/part-04-error-handling.md)** - Errors as values, null policy, monadic rules
+6. **[Part 5: Basic Patterns](series/part-05-basic-patterns.md)** - Leaf, Condition, Iteration
+7. **[Part 6: Advanced Patterns](series/part-06-advanced-patterns.md)** - Sequencer, Fork-Join, Aspects
+8. **[Part 7: Testing Philosophy](series/part-07-testing-philosophy.md)** - Integration-first, evolutionary testing
+9. **[Part 8: Testing in Practice](series/part-08-testing-practice.md)** - Organization, examples, migration
+10. **[Part 9: Production Systems](series/part-09-production-systems.md)** - Complete walkthrough, project structure, frameworks
 
 **Need the complete reference?** See **[CODING_GUIDE.md](CODING_GUIDE.md)** - comprehensive technical documentation with all patterns, principles, and examples.
 
@@ -117,8 +120,8 @@ public record Email(String value) {
     // private Email {}  // Not yet supported in Java
 
     private static final Cause EMAIL_REQUIRED = Causes.cause("Email is required");
-    private static final Fn1<Cause, String> EMAIL_BLANK = Causes.forValue("Email cannot be blank: %s");
-    private static final Fn1<Cause, String> INVALID_FORMAT = Causes.forValue("Invalid email format: %s");
+    private static final Fn1<Cause, String> EMAIL_BLANK = Causes.forOneValue("Email cannot be blank: %s");
+    private static final Fn1<Cause, String> INVALID_FORMAT = Causes.forOneValue("Invalid email format: %s");
 
     public static Result<Email> email(String raw) {
         return Verify.ensure(EMAIL_REQUIRED, raw, Verify.Is::notNull)
@@ -140,7 +143,9 @@ Pick a method that can fail in business-meaningful ways.
 ```java
 public User findUser(String id) throws UserNotFoundException {
     User user = repository.findById(id);
-    if (user == null) throw new UserNotFoundException(id);
+    if (user == null) {
+        throw new UserNotFoundException(id);
+    }
     return user;
 }
 // Caller doesn't know it throws without reading docs/code
@@ -148,14 +153,14 @@ public User findUser(String id) throws UserNotFoundException {
 
 **After:**
 ```java
-public Result<User> findUser(UserId id) {
-    return repository.findById(id)  // Returns Option<User>
-        .toResult(UserNotFound.cause(id));
+public Promise<User> findUser(UserId id) {
+    return repository.findById(id)  // Returns Promise<Option<User>>
+        .flatMap(opt -> opt.async(USER_NOT_FOUND)); // Replace missing value with corresponding business error
 }
-// Compiler forces caller to handle failure case
+// Compiler forces caller to handle the failure case
 ```
 
-**Win:** Failures are type-safe. No hidden exceptions. Clear intent.
+**Win:** Failures are type-safe. No hidden exceptions. Async I/O explicit in return type.
 
 ### 3. Convert One Test
 
@@ -164,11 +169,15 @@ Make one test more readable using functional assertions.
 **Before:**
 ```java
 @Test
-void testValidation() {
-    Result<Email> result = Email.email("invalid");
-    assertTrue(result.isFailure());
-    // Or worse: try-catch with @Test(expected = ...)
+void testEmailValidation() {
+    try {
+        validateEmail("invalid");
+        fail("Should have thrown exception");
+    } catch (ValidationException e) {
+        assertTrue(e.getMessage().contains("email"));
+    }
 }
+// Verbose, requires manual assertion, easy to forget fail()
 ```
 
 **After:**
@@ -176,18 +185,18 @@ void testValidation() {
 @Test
 void email_rejectsInvalidFormat() {
     Email.email("invalid")
-        .onSuccess(Assertions::fail);  // Fail if unexpectedly succeeds
+         .onSuccess(Assertions::fail);  // Fail if unexpectedly succeeds
 }
 
 @Test
 void email_acceptsValidFormat() {
     Email.email("user@example.com")
-        .onFailure(Assertions::fail)  // Fail if unexpectedly fails
-        .onSuccess(email -> assertEquals("user@example.com", email.value()));
+         .onFailure(Assertions::fail)  // Fail if unexpectedly fails
+         .onSuccess(email -> assertEquals("user@example.com", email.value()));
 }
 ```
 
-**Win:** Clear test intent. Better failure messages. More readable.
+**Win:** Clear test intent. No try-catch boilerplate. Better failure messages.
 
 ---
 
@@ -204,8 +213,9 @@ void email_acceptsValidFormat() {
   - Naming conventions, testing patterns, project structure
   - Complete use case walkthrough with Spring Boot and JOOQ integration
 
-- **[series/](series/)** - Progressive learning path (6 parts, ~25 pages each)
-  - Part 5 covers comprehensive testing strategy
+- **[series/](series/)** - Progressive learning path (9 parts)
+  - Parts 2-4 cover core principles (split for digestibility)
+  - Parts 7-8 cover comprehensive testing strategy
   - Designed for sequential reading
   - Builds concepts incrementally
   - Ideal for onboarding and teaching
@@ -221,7 +231,8 @@ void email_acceptsValidFormat() {
 ### Changelog & Versioning
 
 - **[CHANGELOG.md](CHANGELOG.md)** - Version history following [Keep a Changelog](https://keepachangelog.com/)
-  - Current version: 1.8.2
+  - Current version: 2.0.0 (2025-11-13)
+  - Major release: Thread safety, concurrency, and 9-part series restructuring
   - Semantic versioning for documentation releases
 
 ## 🔧 For AI Collaboration
@@ -241,12 +252,12 @@ void email_acceptsValidFormat() {
 
 Ready-to-use configurations for specialized code assistance:
 
-- **[jbct-coder.md](https://raw.githubusercontent.com/siy/coding-technology/main/jbct-coder.md)** - Code generation subagent
+- **[jbct-coder.md](jbct-coder.md)** - Code generation subagent
   - Generates JBCT-compliant code from requirements
   - Enforces Four Return Kinds, Parse Don't Validate, structural patterns
   - **Installation**: Download and place in `~/.claude/agents/jbct-coder.md`
 
-- **[jbct-reviewer.md](https://raw.githubusercontent.com/siy/coding-technology/main/jbct-reviewer.md)** - Code review subagent
+- **[jbct-reviewer.md](jbct-reviewer.md)** - Code review subagent
   - Reviews code for JBCT compliance and best practices
   - Checks patterns, naming conventions, project structure
   - Provides actionable feedback with examples
@@ -259,14 +270,17 @@ Ready-to-use configurations for specialized code assistance:
 ```
 coding-technology/
 ├── CODING_GUIDE.md              # Complete technical reference
-├── series/                       # 6-part learning series
+├── series/                       # 9-part learning series
 │   ├── INDEX.md                 # Series overview and navigation
 │   ├── part-01-foundations.md
-│   ├── part-02-core-principles.md
-│   ├── part-03-basic-patterns.md
-│   ├── part-04-advanced-patterns.md
-│   ├── part-05-testing-strategy.md
-│   └── part-06-production-systems.md
+│   ├── part-02-four-return-types.md
+│   ├── part-03-parse-dont-validate.md
+│   ├── part-04-error-handling.md
+│   ├── part-05-basic-patterns.md
+│   ├── part-06-advanced-patterns.md
+│   ├── part-07-testing-philosophy.md
+│   ├── part-08-testing-practice.md
+│   └── part-09-production-systems.md
 ├── MANAGEMENT_PERSPECTIVE.md    # Business case and ROI
 ├── CHANGELOG.md                 # Version history
 ├── skills/                      # Claude Code skills
@@ -278,11 +292,11 @@ coding-technology/
 ├── examples/                    # Java code examples
 │   └── [Maven projects demonstrating patterns]
 ├── sources/                     # Research materials
-│   ├── articles/               # Reference articles
-│   ├── code/                   # Code snippets
-│   └── patterns/               # Pattern documentation
+│   ├── articles/                # Reference articles
+│   ├── code/                    # Code snippets
+│   └── patterns/                # Pattern documentation
 ├── templates/                   # Reusable templates
-└── PL_IMPROVEMENTS.md          # Pragmatica Lite enhancement backlog
+└── PL_IMPROVEMENTS.md           # Pragmatica Lite enhancement backlog
 ```
 
 ## 🤝 Contributing
@@ -346,6 +360,6 @@ You are free to:
 
 ---
 
-**Version:** 1.8.2 | **Last Updated:** 2025-11-09 | **[Full Changelog](CHANGELOG.md)**
+**Version:** 2.0.0 | **Last Updated:** 2025-11-10 | **[Full Changelog](CHANGELOG.md)**
 
 **Copyright © 2025 Sergiy Yevtushenko. Released under the [MIT License](LICENSE).**

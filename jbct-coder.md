@@ -1487,9 +1487,9 @@ public class UserController {
     public ResponseEntity<?> register(@RequestBody RegisterUser.Request request) {
         return registerUser.execute(request)
             .await()
-            .match(
-                response -> ResponseEntity.ok(response),
-                cause -> toErrorResponse(cause)
+            .fold(
+                cause -> toErrorResponse(cause),
+                response -> ResponseEntity.ok(response)
             );
     }
 

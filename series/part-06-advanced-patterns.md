@@ -62,26 +62,14 @@ public interface ProcessOrder {
         Result<Response> apply(Payment payment);
     }
 
-    static ProcessOrder processOrder(
-        ValidateInput validate,
-        ReserveInventory reserve,
-        ProcessPayment processPayment,
-        ConfirmOrder confirm
-    ) {
-        record processOrder(
-            ValidateInput validate,
-            ReserveInventory reserve,
-            ProcessPayment processPayment,
-            ConfirmOrder confirm
-        ) implements ProcessOrder {
-            public Result<Response> execute(Request request) {
-                return validate.apply(request)        // Step 1
-                    .flatMap(reserve::apply)          // Step 2
-                    .flatMap(processPayment::apply)   // Step 3
-                    .flatMap(confirm::apply);         // Step 4
-            }
-        }
-        return new processOrder(validate, reserve, processPayment, confirm);
+    static ProcessOrder processOrder(ValidateInput validate,
+                                     ReserveInventory reserve,
+                                     ProcessPayment processPayment,
+                                     ConfirmOrder confirm) {
+        return request -> validate.apply(request)                 // Step 1
+                                  .flatMap(reserve::apply)        // Step 2
+                                  .flatMap(processPayment::apply) // Step 3
+                                  .flatMap(confirm::apply);       // Step 4
     }
 }
 ```
@@ -94,11 +82,11 @@ Same structure, different types:
 
 ```java
 public Promise<Response> execute(Request request) {
-    return ValidateInput.validate(request)  // returns Result<ValidInput>
-        .async()                            // lift to Promise<ValidInput>
-        .flatMap(reserve::apply)            // returns Promise<Reservation>
-        .flatMap(processPayment::apply)     // returns Promise<Payment>
-        .flatMap(confirm::apply);           // returns Promise<Response>
+    return ValidateInput.validate(request)              // returns Result<ValidInput>
+                        .async()                        // lift to Promise<ValidInput>
+                        .flatMap(reserve::apply)        // returns Promise<Reservation>
+                        .flatMap(processPayment::apply) // returns Promise<Payment>
+                        .flatMap(confirm::apply);       // returns Promise<Response>
 }
 ```
 
@@ -115,15 +103,23 @@ interface ProcessPayment {
 }
 
 // Implementation delegates to a sub-sequencer
-class CreditCardPaymentProcessor implements ProcessPayment {
-    private final AuthorizeCard authorizeCard;
-    private final CaptureFunds captureFunds;
-    private final RecordTransaction recordTransaction;
+interface CreditCardPaymentProcessor extends ProcessPayment {
+    interface AuthorizeCard {
+        Promise<Reservation> apply(Reservation reservation);
+    }
+    interface CaptureFunds {
+        Promise<Reservation> apply(Reservation reservation);
+    }
+    interface RecordTransaction {
+        Promise<Payment> apply(Reservation reservation);
+    }
 
-    public Promise<Payment> apply(Reservation reservation) {
-        return authorizeCard.apply(reservation)
-            .flatMap(captureFunds::apply)
-            .flatMap(recordTransaction::apply);
+    static CreditCardPaymentProcessor creditCardPaymentProcessor(AuthorizeCard authorizeCard,
+                                                                 CaptureFunds captureFunds,
+                                                                 RecordTransaction recordTransaction) {
+        return (reservation) -> authorizeCard.apply(reservation)
+                                             .flatMap(captureFunds::apply)
+                                             .flatMap(recordTransaction::apply);
     }
 }
 ```
@@ -156,9 +152,9 @@ The conditional logic is hidden inside the lambda. Extract it:
 ```java
 // DO: Extract to the named function (Single Level of Abstraction)
 return validate.apply(request)
-    .flatMap(this::applyDiscountIfEligible)
-    .flatMap(reserve::apply)
-    .flatMap(processPayment::apply);
+               .flatMap(this::applyDiscountIfEligible)
+               .flatMap(reserve::apply)
+               .flatMap(processPayment::apply);
 
 private Result<ValidRequest> applyDiscountIfEligible(ValidRequest request) {
     return request.isPremiumUser()
@@ -212,10 +208,10 @@ Extract the Fork-Join:
 ```java
 // DO: Extract Fork-Join to its own step
 return validate.apply(request)
-    .flatMap(this::fetchUserAndProduct)  // Fork-Join inside this step
-    .flatMap(reserve::apply)
-    .flatMap(processPayment::apply);
-
+               .flatMap(this::fetchUserAndProduct)  // Fork-Join inside this step
+               .flatMap(reserve::apply)
+               .flatMap(processPayment::apply);
+            
 private Promise<ReservationInput> fetchUserAndProduct(ValidRequest request) {
     return Promise.all(fetchUser(request.userId()),
                        fetchProduct(request.productId()))
@@ -227,10 +223,10 @@ private Promise<ReservationInput> fetchUserAndProduct(ValidRequest request) {
 ```java
 // DO: Linear, one step per line
 return validate.apply(request)
-    .flatMap(step1::apply)
-    .flatMap(step2::apply)
-    .flatMap(step3::apply)
-    .flatMap(step4::apply);
+               .flatMap(step1::apply)
+               .flatMap(step2::apply)
+               .flatMap(step3::apply)
+               .flatMap(step4::apply);
 ```
 
 ---
@@ -254,11 +250,9 @@ Not concurrent, just collects multiple Results:
 ```java
 // Validating multiple independent fields
 Result<ValidRequest> validated = Result.all(Email.email(raw.email()),
-                                             Password.password(raw.password()),
-                                             AccountId.accountId(raw.accountId()))
-                                        .flatMap((email, password, accountId) ->
-                                            ValidRequest.create(email, password, accountId)
-                                        );
+                                            Password.password(raw.password()),
+                                            AccountId.accountId(raw.accountId()))
+                                       .flatMap(ValidRequest::new);
 ```
 
 If all succeed, you get a tuple of values to pass to the combiner. If any fail, you get a `CompositeCause` containing all failures (not just the first).
@@ -275,8 +269,8 @@ Promise<Dashboard> buildDashboard(UserId userId) {
 }
 
 private Dashboard createDashboard(Profile profile,
-                                   List<Order> orders,
-                                   List<Notification> notifications) {
+                                  List<Order> orders,
+                                  List<Notification> notifications) {
     return new Dashboard(profile, orders, notifications);
 }
 ```
@@ -320,11 +314,9 @@ Returns `Promise<List<Result<T>>>` - unlike `Promise.all()` which fails fast, `a
 ```java
 // Racing multiple data sources, using the first successful response
 Promise<ExchangeRate> fetchRate(Currency from, Currency to) {
-    return Promise.any(
-        primaryRateProvider.getRate(from, to),
-        secondaryRateProvider.getRate(from, to),
-        fallbackRateProvider.getRate(from, to)
-    );
+    return Promise.any(primaryRateProvider.getRate(from, to), 
+                       secondaryRateProvider.getRate(from, to), 
+                       fallbackRateProvider.getRate(from, to));
 }
 ```
 
@@ -361,10 +353,8 @@ Fork-Join has a crucial constraint: **all branches must be truly independent wit
 Example design issue uncovered by Fork-Join:
 ```java
 // ❌ WRONG: Logical dependency
-Promise.all(
-    fetchUserProfile(userId),           // Returns User
-    fetchUserPreferences(userId)        // Needs User.timezone from profile!
-)
+Promise.all(fetchUserProfile(userId),      // Returns User
+            fetchUserPreferences(userId))  // Needs User.timezone from profile!
 ```
 
 The dependency reveals that `UserPreferences` should either:
@@ -378,18 +368,16 @@ Example thread safety violation:
 private final DiscountContext context = new DiscountContext();  // Mutable, shared
 
 Promise<Result> calculate() {
-    return Promise.all(
-        applyBogo(cart, context),      // DATA RACE
-        applyPercentOff(cart, context)  // DATA RACE - both branches mutate context
-    ).map(this::merge);
+    return Promise.all(applyBogo(cart, context),       // DATA RACE
+                       applyPercentOff(cart, context))  // DATA RACE - both branches mutate context
+                  .map(this::merge);
 }
 
 // ✅ CORRECT: Immutable inputs
 Promise<Result> calculate(Cart cart) {
-    return Promise.all(
-        applyBogo(cart),          // Immutable cart input
-        applyPercentOff(cart)     // Immutable cart input
-    ).map(this::mergeDiscounts);  // Combine immutable results
+    return Promise.all(applyBogo(cart),        // Immutable cart input
+                       applyPercentOff(cart))  // Immutable cart input
+                  .map(this::mergeDiscounts);  // Combine immutable results
 }
 ```
 
@@ -406,10 +394,9 @@ When Fork-Join feels forced or unnatural, trust that instinct - it's often expos
 **DON'T use Fork-Join when there are hidden dependencies:**
 ```java
 // DON'T: These aren't actually independent
-Promise.all(
-    allocateInventory(orderId),   // Might lock inventory
-    chargePayment(paymentToken)   // Should only charge if inventory succeeds
-).flatMap((inventory, payment) -> confirmOrder(inventory, payment));
+Promise.all(allocateInventory(orderId),   // Might lock inventory
+            chargePayment(paymentToken))  // Should only charge if inventory succeeds
+       .flatMap((inventory, payment) -> confirmOrder(inventory, payment));
 ```
 
 If inventory allocation fails, we've already charged the customer. These steps have a logical dependency: charge only after successful allocation. Use a Sequencer.
@@ -417,10 +404,9 @@ If inventory allocation fails, we've already charged the customer. These steps h
 **DON'T ignore errors in Fork-Join branches:**
 ```java
 // DON'T: Silently swallowing failures
-Promise.all(
-    fetchPrimary(id).recover(err -> Option.none()),  // Hides failure
-    fetchSecondary(id).recover(err -> Option.none())
-).flatMap((primary, secondary) -> /* ... */);
+Promise.all(fetchPrimary(id).recover(err -> Option.none()),  // Hides failure
+            fetchSecondary(id).recover(err -> Option.none()))
+        .flatMap((primary, secondary) -> /* ... */);
 ```
 
 If both fail, the combiner gets two `none()` values with no indication that anything went wrong. Let failures propagate or model the "best-effort" case explicitly:
@@ -439,10 +425,9 @@ Now the type says "we tried to fetch both, either might be missing," and the com
 **DON'T mutate input data in parallel branches:**
 ```java
 // ❌ WRONG: Mutating shared input
-Promise.all(
-    applyDiscount(cart),      // Mutates cart.subtotal
-    calculateTax(cart)        // Reads cart.subtotal - RACE CONDITION
-).map(this::combine);
+Promise.all(applyDiscount(cart),  // Mutates cart.subtotal
+            calculateTax(cart))   // Reads cart.subtotal - RACE CONDITION
+       .map(this::combine);
 
 private Promise<Discount> applyDiscount(Cart cart) {
     cart.setSubtotal(cart.subtotal().subtract(discount));  // DATA RACE
@@ -450,10 +435,9 @@ private Promise<Discount> applyDiscount(Cart cart) {
 }
 
 // ✅ CORRECT: Create new instances
-Promise.all(
-    applyDiscount(cart),
-    calculateTax(cart)
-).map(this::combine);
+Promise.all(applyDiscount(cart),
+            calculateTax(cart))
+        .map(this::combine);
 
 private Promise<Discount> applyDiscount(Cart cart) {
     var discountAmount = calculateDiscountFor(cart);
@@ -480,10 +464,10 @@ private ReportData buildReportData(User user, List<Sale> sales, Inventory invent
 // Called from a Sequencer:
 public Promise<Report> generateReport(ReportRequest request) {
     return ValidRequest.validRequest(request)
-                  .async()
-                  .flatMap(this::fetchReportData)  // Fork-Join extracted
-                  .flatMap(this::computeMetrics)
-                  .flatMap(this::formatReport);
+                       .async()
+                       .flatMap(this::fetchReportData)  // Fork-Join extracted
+                       .flatMap(this::computeMetrics)
+                       .flatMap(this::formatReport);
 }
 ```
 
@@ -516,7 +500,7 @@ public interface FetchUserProfile {
 class UserServiceClient implements FetchUserProfile {
     public Promise<Profile> apply(UserId userId) {
         return httpClient.get("/users/" + userId.value())
-            .map(this::parseProfile);
+                         .map(this::parseProfile);
     }
 }
 
@@ -524,17 +508,13 @@ class UserServiceClient implements FetchUserProfile {
 static ProcessUserData processUserData(..., UserServiceClient userServiceClient, ...) {
     // Values also can come from passed config
     var retryPolicy = RetryPolicy.builder()
-        .maxAttempts(3)
-        .backoff(exponential(100, 2.0))
-        .build();
+                                 .maxAttempts(3)
+                                 .backoff(exponential(100, 2.0))
+                                 .build();
 
-    var fetchWithRetry = withRetry(retryPolicy, userServiceClient);
-
-    return new processUserData(
-        validateInput,
-        fetchWithRetry,  // Decorated step
-        processData
-    );
+    return new processUserData(validateInput,
+                               withRetry(retryPolicy, userServiceClient),  // Decorated step
+                               processData);
 }
 ```
 
@@ -571,23 +551,16 @@ Order matters. Typical ordering (outermost to innermost):
 var decoratedStep = withMetrics(metricsPolicy,
     withTimeout(timeoutPolicy,
         withCircuitBreaker(breakerPolicy,
-            withRetry(retryPolicy, rawStep)
-        )
-    )
-);
+            withRetry(retryPolicy, rawStep))));
 ```
 
 Or use a helper:
 ```java
-var decoratedStep = composeAspects(
-    List.of(
-        metrics(metricsPolicy),
-        timeout(timeoutPolicy),
-        circuitBreaker(breakerPolicy),
-        retry(retryPolicy)
-    ),
-    rawStep
-);
+var decoratedStep = composeAspects(List.of(metrics(metricsPolicy), 
+                                           timeout(timeoutPolicy), 
+                                           circuitBreaker(breakerPolicy), 
+                                           retry(retryPolicy)), 
+                                   rawStep);
 ```
 
 ### Testing Aspects
@@ -611,11 +584,9 @@ void retryAspect_retriesOnFailure() {
 // Use case test (aspect-agnostic)
 @Test
 void loginUser_success() {
-    var useCase = LoginUser.loginUser(
-        mockValidate,
-        mockCheckCreds,
-        mockGenerateToken
-    );
+    var useCase = LoginUser.loginUser(mockValidate, 
+                                      mockCheckCreds, 
+                                      mockGenerateToken);
 
     var result = useCase.execute(validRequest).await();
 
@@ -630,9 +601,8 @@ void loginUser_success() {
 ```java
 // DON'T: Retry logic inside the step
 Promise<Profile> fetchProfile(UserId id) {
-    return retryWithBackoff(() ->
-        httpClient.get("/users/" + id.value())
-    ).map(this::parseProfile);
+    return retryWithBackoff(() -> httpClient.get("/users/" + id.value()))
+            .map(this::parseProfile);
 }
 ```
 
@@ -700,10 +670,10 @@ public Result<Order> calculateTotal(Cart cart) {
 ```java
 // ✅ SAFE: Each step runs sequentially
 return ValidRequest.validRequest(request)
-    .async()
-    .flatMap(checkEmail::apply)      // Runs first
-    .flatMap(hashPassword::apply)    // Runs second (after first completes)
-    .flatMap(saveUser::apply);       // Runs third (after second completes)
+                   .async()
+                   .flatMap(checkEmail::apply)    // Runs first
+                   .flatMap(hashPassword::apply)  // Runs second (after first completes)
+                   .flatMap(saveUser::apply);     // Runs third (after second completes)
 ```
 - Steps execute in order, never concurrently
 - Each step can use mutable local state
@@ -714,13 +684,13 @@ return ValidRequest.validRequest(request)
 // ✅ SAFE: Immutable cart passed to both operations
 Promise.all(applyBogo(cart),          // cart is immutable
             applyPercentOff(cart))    // cart is immutable
-    .map(this::mergeDiscounts);
+       .map(this::mergeDiscounts);
 
 // ❌ UNSAFE: Shared mutable context creates data race
 private final DiscountContext context = new DiscountContext();  // Mutable!
 Promise.all(applyBogo(cart, context),     // Both access context
             applyPercentOff(cart, context))  // DATA RACE - undefined behavior
-    .map(this::merge);
+       .map(this::merge);
 ```
 - All parallel operations receive immutable inputs
 - No shared mutable state between parallel operations
@@ -740,8 +710,8 @@ return user.isPremium()
 ```java
 // ✅ SAFE: Stream processes sequentially
 var results = items.stream()
-    .map(Item::validate)  // Sequential
-    .toList();
+                   .map(Item::validate)  // Sequential
+                   .toList();
 ```
 - Stream operations sequential by default
 - Parallel streams require immutable inputs (use with caution)
@@ -781,10 +751,9 @@ promise.resolve(Result.success(anotherUser));  // Ignored - already resolved
 // ❌ WRONG: Mutable list shared across parallel operations
 private final List<String> errors = new ArrayList<>();
 
-Promise.all(
-    validateEmail(request).onFailure(e -> errors.add(e.message())),  // DATA RACE
-    validatePassword(request).onFailure(e -> errors.add(e.message()))  // DATA RACE
-).map(this::process);
+Promise.all(validateEmail(request).onFailure(e -> errors.add(e.message())),     // DATA RACE
+            validatePassword(request).onFailure(e -> errors.add(e.message())))  // DATA RACE
+       .map(this::process);
 ```
 
 **Fix:** Use immutable results and combine after:
@@ -792,7 +761,7 @@ Promise.all(
 // ✅ CORRECT: Each operation returns its own result
 Promise.all(validateEmail(request),
             validatePassword(request))
-    .map((emailResult, passwordResult) -> combineResults(emailResult, passwordResult));
+       .map((emailResult, passwordResult) -> combineResults(emailResult, passwordResult));
 ```
 
 **Mistake 2: Assuming sequential execution in Promise.all**
@@ -844,8 +813,8 @@ void execute_succeeds_forValidInput() {
     };
 
     useCase.execute(request)
-        .await()
-        .onSuccess(response -> assertEquals(List.of("email"), callLog));
+           .await()
+           .onSuccess(response -> assertEquals(List.of("email"), callLog));
 }
 ```
 

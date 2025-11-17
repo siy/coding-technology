@@ -136,8 +136,8 @@ void execute_appliesDiscounts_inCorrectOrder() {
     DiscountRule percent = createLoggingRule("PERCENT", callLog);
 
     calculateDiscounts.apply(new CartWithRules(cart, List.of(bogo, percent)))
-        .await()
-        .onFailure(Assertions::fail);
+                      .await()
+                      .onFailure(Assertions::fail);
 
     assertEquals(List.of("BOGO", "PERCENT"), callLog);  // Verify call order
 }

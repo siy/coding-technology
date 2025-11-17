@@ -53,7 +53,7 @@ public User loginUser(String email, String password) throws
     }
 
     User user = userRepo.findByEmail(email)
-        .orElseThrow(() -> new CredentialMismatchException());
+                        .orElseThrow(() -> new CredentialMismatchException());
 
     if (user.isLocked()) {
         throw new AccountLockedException(user.getId());
@@ -79,18 +79,14 @@ public User loginUser(String email, String password) throws
 ```java
 // DO: Failures as typed values
 public Result<User> loginUser(String emailRaw, String passwordRaw) {
-    return validateCredentials(emailRaw, passwordRaw)
-        .flatMap(this::validateAndCheckStatus);
-}
-
-private Result<Tuple2<Email, Password>> validateCredentials(String emailRaw, String passwordRaw) {
     return Result.all(Email.email(emailRaw),
-                      Password.password(passwordRaw));
+                      Password.password(passwordRaw))
+                 .flatMap(this::validateAndCheckStatus);
 }
 
 private Result<User> validateAndCheckStatus(Email email, Password password) {
     return checkCredentials(email, password)
-                 .flatMap(this::checkAccountStatus);
+            .flatMap(this::checkAccountStatus);
 }
 
 private Result<User> checkCredentials(Email email, Password password) {
@@ -100,14 +96,14 @@ private Result<User> checkCredentials(Email email, Password password) {
 
 private Result<User> validatePassword(User user, Password password) {
     return passwordMatches(user, password)
-        ? Result.success(user)
-        : LoginError.InvalidCredentials.INSTANCE.result();
+            ? Result.success(user)
+            : LoginError.InvalidCredentials.INSTANCE.result();
 }
 
 private Result<User> checkAccountStatus(User user) {
     return user.isLocked()
-        ? new LoginError.AccountLocked(user.id()).result()
-        : Result.success(user);
+            ? new LoginError.AccountLocked(user.id()).result()
+            : Result.success(user);
 }
 ```
 
@@ -142,7 +138,7 @@ Failures compose: `Result.all(Email.email(...), Password.password(...))` collect
 ```java
 // If both fail:
 Result.all(Email.email("not-an-email"),
-          Password.password("weak"))
+           Password.password("weak"))
       .flatMap(this::processLogin);
 
 // Returns: CompositeCause([
@@ -187,14 +183,10 @@ These are **assertions** about code correctness, not business scenarios. If they
 public class JdbcUserRepository implements FindUser {
     @Override
     public Promise<User> findById(UserId id) {
-        return Promise.lift(
-            RepositoryError.DatabaseFailure::new,  // Convert SQLException → domain Cause
-            () -> jdbcTemplate.queryForObject(
-                "SELECT * FROM users WHERE id = ?",
-                new Object[]{id.value()},
-                this::mapUser
-            )
-        );
+        return Promise.lift(RepositoryError.DatabaseFailure::new,  // Convert SQLException → domain Cause
+                            () -> jdbcTemplate.queryForObject("SELECT * FROM users WHERE id = ?", 
+                                                              new Object[]{id.value()}, 
+                                                              this::mapUser));
     }
 }
 ```
@@ -209,12 +201,12 @@ Framework exceptions (SQLException, IOException, etc.) are technical failures. *
 
 **The key distinction:**
 
-| Scenario | Use |
-|----------|-----|
-| **Business failure** (invalid input, not found, unauthorized) | `Result<T>` or `Promise<T>` with typed `Cause` |
+| Scenario                                                       | Use                                                                       |
+|----------------------------------------------------------------|---------------------------------------------------------------------------|
+| **Business failure** (invalid input, not found, unauthorized)  | `Result<T>` or `Promise<T>` with typed `Cause`                            |
 | **Programming error** (null where shouldn't be, invalid state) | Unchecked exception (`IllegalArgumentException`, `IllegalStateException`) |
-| **Framework/library exception** at boundary | Catch in adapter, convert to `Result`/`Promise` |
-| **Unrecoverable JVM error** | Let it propagate, don't catch |
+| **Framework/library exception** at boundary                    | Catch in adapter, convert to `Result`/`Promise`                           |
+| **Unrecoverable JVM error**                                    | Let it propagate, don't catch                                             |
 
 **Rule of thumb:** If a user action can trigger it, it's not an exception—it's a business failure that belongs in `Result`/`Promise`.
 
@@ -232,16 +224,14 @@ public interface UserRepository {
 // Implementation (adapter leaf)
 class JpaUserRepository implements UserRepository {
     public Promise<Option<User>> findByEmail(Email email) {
-        return Promise.lift(
-            RepositoryError.DatabaseFailure::new,
-            () -> entityManager.createQuery("SELECT u FROM User u WHERE u.email = :email", UserEntity.class)
-                               .setParameter("email", email.value())
-                               .getResultList()
-                               .stream()
-                               .findFirst()
-                               .map(this::toDomain)
-                               .orElse(Option.none())
-        );
+        return Promise.lift(RepositoryError.DatabaseFailure::new, 
+                            () -> entityManager.createQuery("SELECT u FROM User u WHERE u.email = :email", UserEntity.class)
+                                               .setParameter("email", email.value())
+                                               .getResultList()
+                                               .stream()
+                                               .findFirst()
+                                               .map(this::toDomain)
+                                               .orElse(Option.none()));
     }
 }
 ```
@@ -334,23 +324,19 @@ public Option<User> findUser(UserId id) {
 **Spring Data JPA example:**
 ```java
 public Option<User> findByEmail(Email email) {
-    return Option.option(
-        userRepository.findByEmail(email.value())  // JPA returns null if not found
-    );
+    return Option.option(userRepository.findByEmail(email.value())); // JPA returns null if not found
 }
 ```
 
 **JDBC ResultSet example:**
 ```java
 public Promise<Option<User>> loadUser(UserId id) {
-    return Promise.lift(
-        RepositoryError.DatabaseFailure::new,
-        () -> {
-            ResultSet rs = executeQuery(id);
-            User user = rs.next() ? mapUser(rs) : null;  // null if not found
-            return Option.option(user);  // Wrap before returning
-        }
-    );
+    return Promise.lift(RepositoryError.DatabaseFailure::new, 
+                        () -> {
+                                  ResultSet rs = executeQuery(id);
+                                  User user = rs.next() ? mapUser(rs) : null;  // null if not found
+                                  return Option.option(user);  // Wrap before returning
+                        });
 }
 ```
 
@@ -364,25 +350,22 @@ When persisting to databases with nullable columns, convert `Option<T>` to null 
 // Adapter layer - JOOQ insert with optional field
 public Promise<Unit> saveUser(User user) {
     return Promise.lift(
-        RepositoryError.DatabaseFailure::new,
-        () -> {
-            dsl.insertInto(USERS)
-                .set(USERS.ID, user.id().value())
-                .set(USERS.EMAIL, user.email().value())
-                .set(USERS.REFERRAL_CODE,
-                    user.refCode().map(ReferralCode::value).orElse(null))  // Option → nullable column
-                .execute();
-            return Unit.unit();
-        }
-    );
+            RepositoryError.DatabaseFailure::new, 
+            () -> {
+                       dsl.insertInto(USERS)
+                          .set(USERS.ID, user.id().value())
+                          .set(USERS.EMAIL, user.email().value())
+                          .set(USERS.REFERRAL_CODE, 
+                               user.refCode().map(ReferralCode::value).orElse(null))  // Option → nullable column
+                          .execute();
+                          return Unit.unit();
+            });
 }
 ```
 
 **JDBC PreparedStatement example:**
 ```java
-PreparedStatement stmt = connection.prepareStatement(
-    "INSERT INTO users (id, email, referral_code) VALUES (?, ?, ?)"
-);
+PreparedStatement stmt = connection.prepareStatement("INSERT INTO users (id, email, referral_code) VALUES (?, ?, ?)");
 stmt.setString(1, user.id().value());
 stmt.setString(2, user.email().value());
 stmt.setString(3, user.refCode().map(ReferralCode::value).orElse(null));  // Option → null
@@ -435,9 +418,8 @@ public Result<Order> processOrder(User user, Cart cart) {
 
 // ✅ CORRECT - Explicit optionality when needed
 public Result<Order> processOrder(User user, Option<Cart> cart) {
-    return cart
-        .toResult(OrderError.EmptyCart.INSTANCE)
-        .flatMap(c -> validateAndProcess(user, c));
+    return cart.toResult(OrderError.EmptyCart.INSTANCE)
+               .flatMap(c -> validateAndProcess(user, c));
 }
 ```
 
@@ -474,7 +456,9 @@ Business logic always uses typed returns:
 // ❌ WRONG - Returning null from business logic
 public User enrichUser(User user) {
     Profile profile = loadProfile(user.id());
-    if (profile == null) return null;  // Don't return null!
+    if (profile == null) {
+        return null;  // Don't return null!
+    }
     return user.withProfile(profile);
 }
 
@@ -494,14 +478,14 @@ public Result<User> enrichUser(User user) {
 
 ### Summary
 
-| Context | Null Usage | Correct Approach |
-|---------|-----------|------------------|
-| Return values from JBCT code | ❌ Never | Use `Option<T>` |
-| Parameters between JBCT components | ❌ Never | Use `Option<T>` or required types |
-| Wrapping external API returns | ✅ Allowed | `Option.option(nullable)` immediately |
-| Writing to nullable DB columns | ✅ Allowed | `.orElse(null)` at write boundary |
-| Test inputs for validation | ✅ Allowed | Test null rejection |
-| "Unknown" or "absent" semantics | ❌ Never | Use `Option<T>` or `Result<T>` |
+| Context                            | Null Usage | Correct Approach                      |
+|------------------------------------|------------|---------------------------------------|
+| Return values from JBCT code       | ❌ Never    | Use `Option<T>`                       |
+| Parameters between JBCT components | ❌ Never    | Use `Option<T>` or required types     |
+| Wrapping external API returns      | ✅ Allowed  | `Option.option(nullable)` immediately |
+| Writing to nullable DB columns     | ✅ Allowed  | `.orElse(null)` at write boundary     |
+| Test inputs for validation         | ✅ Allowed  | Test null rejection                   |
+| "Unknown" or "absent" semantics    | ❌ Never    | Use `Option<T>` or `Result<T>`        |
 
 **Core Principle**: Null exists only at system boundaries (adapters). Inside JBCT code, absence is represented by `Option.none()`, never null.
 
@@ -559,8 +543,8 @@ Use `.orElse()` when you want to try an alternative operation that returns the s
 // Try cache, then database, then in-memory
 public Promise<User> findUser(UserId id) {
     return cacheRepository.find(id)      // Promise<User>
-        .orElse(databaseRepository.find(id))  // Try DB if cache fails
-        .orElse(Promise.success(User.GUEST)); // Final fallback
+                          .orElse(databaseRepository.find(id))  // Try DB if cache fails
+                          .orElse(Promise.success(User.GUEST)); // Final fallback
 }
 
 // Result version
@@ -595,15 +579,9 @@ public Result<User> findUserOrGuest(UserId id) {
 public Promise<Order> processOrder(OrderRequest request) {
     return paymentService.charge(request)
         .recover(cause -> switch (cause) {
-            case PaymentError.InsufficientFunds _ ->
-                // Async alternative: split payment
-                splitPaymentService.process(request);
-            case PaymentError.TemporaryFailure _ ->
-                // Retry once
-                Promise.success(request).flatMap(paymentService::charge);
-            default ->
-                // Can't recover
-                Promise.failure(cause);
+            case PaymentError.InsufficientFunds _ -> splitPaymentService.process(request); // Async alternative: split payment
+            case PaymentError.TemporaryFailure _ -> Promise.success(request).flatMap(paymentService::charge); // Retry once
+            default -> Promise.failure(cause);  // Can't recover
         });
 }
 ```
@@ -616,17 +594,11 @@ public interface LoadConfig {
 
     Promise<Config> load();
 
-    static LoadConfig loadConfig(
-        LoadFromFile loadFile,
-        LoadFromEnv loadEnv
-    ) {
+    static LoadConfig loadConfig(LoadFromFile loadFile, 
+                                 LoadFromEnv loadEnv) {
         return () -> loadFile.apply()
-            .orElse(loadEnv.apply())
-            .or(() -> new Config(
-                "https://api.default.com",
-                30,
-                true
-            ));
+                             .orElse(loadEnv.apply())
+                             .or(() -> new Config("https://api.default.com", 30, true));
     }
 }
 ```
@@ -650,13 +622,13 @@ Here, profile is **required** (must succeed), but orders and recommendations gra
 
 ### Common Patterns Summary
 
-| Pattern | Method | Use When |
-|---------|--------|----------|
-| Default value | `.or(value)` | Fixed fallback available |
-| Lazy default | `.or(() -> compute())` | Fallback is expensive to create |
-| Alternative operation | `.orElse(M<T>)` | Try another source/service |
-| Conditional recovery | `.recover(cause -> ...)` | Transform specific errors to success |
-| Graceful degradation | `.or(emptyValue)` | Feature optional, show partial data |
+| Pattern               | Method                   | Use When                             |
+|-----------------------|--------------------------|--------------------------------------|
+| Default value         | `.or(value)`             | Fixed fallback available             |
+| Lazy default          | `.or(() -> compute())`   | Fallback is expensive to create      |
+| Alternative operation | `.orElse(M<T>)`          | Try another source/service           |
+| Conditional recovery  | `.recover(cause -> ...)` | Transform specific errors to success |
+| Graceful degradation  | `.or(emptyValue)`        | Feature optional, show partial data  |
 
 ### When NOT to Recover
 
@@ -695,7 +667,7 @@ When testing functions that return `Result<T>`, use `.onSuccess(Assertions::fail
 @Test
 void email_rejectsInvalidFormat() {
     Email.email("not-an-email")
-        .onSuccess(Assertions::fail);  // Fail test if unexpectedly succeeds
+         .onSuccess(Assertions::fail);  // Fail test if unexpectedly succeeds
 }
 ```
 
@@ -728,11 +700,11 @@ void execute_succeeds_forValidInput() {
     var request = new Request("valid-data");
 
     useCase.execute(request)
-        .await()  // Block until promise resolves
-        .onFailure(Assertions::fail)
-        .onSuccess(response -> {
-            assertEquals("expected", response.value());
-        });
+           .await()  // Block until promise resolves
+           .onFailure(Assertions::fail)
+            .onSuccess(response -> {
+                assertEquals("expected", response.value());
+            });
 }
 ```
 
@@ -744,16 +716,16 @@ Same pattern works for `Option<T>`:
 @Test
 void findUser_returnsEmpty_whenUserNotFound() {
     repository.findUser(unknownId)
-        .onPresent(Assertions::fail);  // Should be empty
+              .onPresent(Assertions::fail);  // Should be empty
 }
 
 @Test
 void findUser_returnsUser_whenUserExists() {
     repository.findUser(knownId)
-        .onEmpty(Assertions::fail)  // Should be present
-        .onPresent(user -> {
-            assertEquals("expected@example.com", user.email());
-        });
+              .onEmpty(Assertions::fail)  // Should be present
+              .onPresent(user -> {
+                  assertEquals("expected@example.com", user.email());
+              });
 }
 ```
 
@@ -812,10 +784,7 @@ Promise<Result<User>> loadUser(UserId id) { /* ... */ }
 
 // Caller must unwrap twice:
 loadUser(id)
-    .flatMap(resultUser -> resultUser.match(
-        user -> Promise.success(user),
-        Cause::promise
-    ));  // Absurd ceremony
+    .flatMap(resultUser -> resultUser.fold(user -> Promise.success(user), Cause::promise));  // Absurd ceremony
 ```
 
 **Right:**
@@ -849,8 +818,8 @@ Use `Result.all(...)` or `Promise.all(...)` to combine multiple independent oper
 ```java
 // Validation: collect multiple field validations
 Result<ValidRequest> validated = Result.all(Email.email(raw.email()),
-                                             Password.password(raw.password()),
-                                             ReferralCode.referralCode(raw.referralCode()))
+                                            Password.password(raw.password()),
+                                            ReferralCode.referralCode(raw.referralCode()))
                                        .map(ValidRequest::new);
 
 // Async: run independent queries in parallel
@@ -864,17 +833,17 @@ If any input fails, `all()` fails immediately (fail-fast for Promise) or collect
 
 ### Composition Cheat Sheet
 
-| You have | You need | Use |
-|----------|----------|-----|
-| `T` | `Option<T>` | `Option.option(value)` |
-| `T` | `Result<T>` | `Result.success(value)` |
-| `T` | `Promise<T>` | `Promise.success(value)` |
-| `Option<T>` | `Result<T>` | `.toResult(cause)` or `.await(cause)` |
-| `Option<T>` | `Promise<T>` | `.async(cause)` |
-| `Result<T>` | `Promise<T>` | `.async()` |
-| Multiple `Result<T>` | Single `Result` | `Result.all(...)` |
-| Multiple `Promise<T>` | Single `Promise` | `Promise.all(...)` |
-| `Collection<Promise<T>>` | `Promise<List<Result<T>>>` | `Promise.allOf(collection)` |
+| You have                 | You need                   | Use                                   |
+|--------------------------|----------------------------|---------------------------------------|
+| `T`                      | `Option<T>`                | `Option.option(value)`                |
+| `T`                      | `Result<T>`                | `Result.success(value)`               |
+| `T`                      | `Promise<T>`               | `Promise.success(value)`              |
+| `Option<T>`              | `Result<T>`                | `.toResult(cause)` or `.await(cause)` |
+| `Option<T>`              | `Promise<T>`               | `.async(cause)`                       |
+| `Result<T>`              | `Promise<T>`               | `.async()`                            |
+| Multiple `Result<T>`     | Single `Result`            | `Result.all(...)`                     |
+| Multiple `Promise<T>`    | Single `Promise`           | `Promise.all(...)`                    |
+| `Collection<Promise<T>>` | `Promise<List<Result<T>>>` | `Promise.allOf(collection)`           |
 
 ### Lambda Rules: Keep Composition Clean
 
@@ -925,8 +894,7 @@ private Promise<Data> recoverExpectedErrors(Cause cause) {
 ```java
 private Promise<Theme> recoverWithDefault(Cause cause) {
     return switch (cause) {
-        case NotFound ignored, Timeout ignored, ServiceUnavailable ignored ->
-            Promise.success(Theme.DEFAULT);
+        case NotFound ignored, Timeout ignored, ServiceUnavailable ignored -> Promise.success(Theme.DEFAULT);
         default -> cause.promise();
     };
 }
@@ -940,8 +908,7 @@ Don't construct `Cause` instances inline with fixed messages. Define them as `st
 // DON'T: Inline construction with fixed strings
 private Promise<User> recoverNetworkError(Cause cause) {
     return switch (cause) {
-        case NetworkError.Timeout ignored ->
-            new ServiceUnavailable("User service timed out").promise();
+        case NetworkError.Timeout ignored -> new ServiceUnavailable("User service timed out").promise();
         default -> cause.promise();
     };
 }
@@ -997,9 +964,10 @@ private Promise<Profile> loadAndEnrichProfile(User user) {
 ```java
 // DON'T: Complex construction in lambda
 .map(dashboard -> {
-    var urgentAlerts = dashboard.alerts().stream()
-        .filter(Alert::isUrgent)
-        .toList();
+    var urgentAlerts = dashboard.alerts()
+                                .stream()
+                                .filter(Alert::isUrgent)
+                                .toList();
     return new Summary(dashboard.metrics(), urgentAlerts);
 })
 
@@ -1065,21 +1033,21 @@ Combining multiple operations:
 ```java
 // Result.all - Accumulates ALL failures (CompositeCause)
 Result.all(result1, result2, result3)
-    .map((v1, v2, v3) -> combine(v1, v2, v3));
+       .map((v1, v2, v3) -> combine(v1, v2, v3));
 
 Result.allOf(List.of(result1, result2, result3))  // From collection
-    .map(list -> process(list));
+      .map(list -> process(list));
 
-// Promise.all - Fail-fast on FIRST failure
+// Promise.all - Accumulates ALL failures (CompositeCause)
 Promise.all(promise1, promise2, promise3)
-    .map((v1, v2, v3) -> combine(v1, v2, v3));
+       .map((v1, v2, v3) -> combine(v1, v2, v3));
 
 Promise.allOf(collection)  // Collection<Promise<T>> → Promise<List<Result<T>>>
-    .map(results -> process(results));
+       .map(results -> process(results));
 
 // Option.all - Fail-fast on FIRST empty
 Option.all(opt1, opt2, opt3)
-    .map((v1, v2, v3) -> combine(v1, v2, v3));
+      .map((v1, v2, v3) -> combine(v1, v2, v3));
 
 // any - First success
 Result.any(result1, result2)    // First success or all failures
@@ -1150,10 +1118,8 @@ Verify.ensure(age, Verify.Is::between, 0, 150)
 Verify.ensure(username, Verify.Is::notBlank)
 
 // Combining multiple checks
-Verify.combine(
-    Verify.ensureFn(TOO_SHORT, Verify.Is::lenBetween, 8, 128),
-    Verify.ensureFn(BLANK, Verify.Is::notBlank)
-)
+Verify.combine(Verify.ensureFn(TOO_SHORT, Verify.Is::lenBetween, 8, 128),
+               Verify.ensureFn(BLANK, Verify.Is::notBlank))
 ```
 
 ### Parse Utilities (Exception-Safe JDK Wrappers)
@@ -1199,9 +1165,8 @@ Text.parseBoolean(raw)            // Result<Boolean>
 public record Age(int value) {
     public static Result<Age> age(String raw) {
         return Number.parseInt(raw)
-            .flatMap(Verify.ensureFn(Causes.cause("Age must be 0-150"),
-                                     Verify.Is::between, 0, 150))
-            .map(Age::new);
+                     .flatMap(Verify.ensureFn(Causes.cause("Age must be 0-150"), Verify.Is::between, 0, 150))
+                     .map(Age::new);
     }
 }
 ```
@@ -1285,10 +1250,8 @@ public Promise<Result<User>> loadUser(UserId id) {
 ```java
 // DO: Promise already handles failures
 public Promise<User> loadUser(UserId id) {
-    return Promise.lift(
-        RepositoryError.DatabaseFailure::new,
-        () -> userRepository.findById(id)
-    );
+    return Promise.lift(RepositoryError.DatabaseFailure::new, 
+                        () -> userRepository.findById(id));
 }
 ```
 
@@ -1300,16 +1263,16 @@ public Promise<User> loadUser(UserId id) {
 ```java
 // DON'T: flatMap expects monadic return
 Result.all(Email.email(emailRaw),
-          Password.password(passwordRaw))
-    .flatMap(ValidRequest::new);  // Constructor returns ValidRequest, not Result<ValidRequest>
+           Password.password(passwordRaw))
+      .flatMap(ValidRequest::new);  // Constructor returns ValidRequest, not Result<ValidRequest>
 ```
 
 ✅ **Correct:**
 ```java
 // DO: Use .map() for constructors
 Result.all(Email.email(emailRaw),
-          Password.password(passwordRaw))
-    .map(ValidRequest::new);
+           Password.password(passwordRaw))
+      .map(ValidRequest::new);
 ```
 
 **Why wrong:** Constructors return `T`, not `Result<T>`. Use `.map()` for plain values, `.flatMap()` for monadic values.
@@ -1352,10 +1315,8 @@ public Result<Optional<Theme>> findTheme(UserId id) {
 ```java
 // DO: Use Option for monadic composition
 public Result<Option<Theme>> findTheme(UserId id) {
-    return Result.lift(
-        RepositoryError.DatabaseFailure::new,
-        () -> Option.option(repository.findTheme(id))
-    );
+    return Result.lift(RepositoryError.DatabaseFailure::new, 
+                       () -> Option.option(repository.findTheme(id)));
 }
 ```
 
@@ -1380,7 +1341,7 @@ public User findUser(Email email) throws UserNotFoundException {
 // DO: Return errors as values
 public Promise<User> findUser(Email email) {
     return repository.find(email)  // Returns Promise<Option<User>>
-        .flatMap(opt -> opt.async(UserNotFound.cause(email)));
+                     .flatMap(opt -> opt.async(UserNotFound.cause(email)));
 }
 ```
 
@@ -1410,8 +1371,8 @@ public class Email {
 public record Email(String value) {
     public static Result<Email> email(String raw) {
         return Verify.ensure(raw, Verify.Is::notNull)
-            .flatMap(Verify.ensureFn(INVALID_EMAIL, Verify.Is::matches, PATTERN))
-            .map(Email::new);
+                     .flatMap(Verify.ensureFn(INVALID_EMAIL, Verify.Is::matches, PATTERN))
+                     .map(Email::new);
     }
 }
 ```
@@ -1435,8 +1396,8 @@ public Result<Response> execute(Request request) {
 // DO: Compose promises without blocking
 public Promise<Response> execute(Request request) {
     return loadUser(request.userId())
-        .flatMap(user -> loadProfile(user.id())
-            .map(profile -> new Response(user, profile)));
+            .flatMap(user -> loadProfile(user.id())
+                    .map(profile -> new Response(user, profile)));
 }
 ```
 

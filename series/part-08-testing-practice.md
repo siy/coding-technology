@@ -451,7 +451,7 @@ void setup() {
 ```java
 @Test
 void execute_fails_whenEmailExists() {
-    CheckEmailUniqueness failing = vr -> UserError.EmailExists.INSTANCE.promise();
+    CheckEmailUniqueness failing = vr -> UserError.EmailExists.EMAIL_EXISTS.promise();
     var useCase = RegisterUser.registerUser(failing);
     var request = new Request("john@example.com", "Valid123");
 

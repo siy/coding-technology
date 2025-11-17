@@ -3325,13 +3325,13 @@ class UserLoginTest {
 
     @Test
     void execute_fails_whenCredentialsInvalid() {
-        CheckCredentials failingCreds = vr -> UserLoginError.InvalidCredentials.INSTANCE.result();
+        CheckCredentials failingCreds = vr -> LoginError.InvalidCredentials.INSTANCE.result();
         var useCase = UserLogin.userLogin(failingCreds, mockStatus, mockToken);
         var request = new Request("john@example.com", "Valid123", null);
 
         useCase.execute(request)
                .onSuccess(Assertions::fail)
-               .onFailure(cause -> assertInstanceOf(UserLoginError.InvalidCredentials.class, cause));
+               .onFailure(cause -> assertInstanceOf(LoginError.InvalidCredentials.class, cause));
     }
 }
 ```
@@ -5153,8 +5153,8 @@ public class JooqUserRepository implements GetUserProfile.FetchUser {
         return Result.all(UserId.userId(record.get(USERS.ID)), 
                           Email.email(record.get(USERS.EMAIL)), 
                           Result.success(record.get(USERS.DISPLAY_NAME)))
-                     .async()
-                     .map(User::new);
+                     .map(User::new)
+                     .async();
     }
 }
 ```

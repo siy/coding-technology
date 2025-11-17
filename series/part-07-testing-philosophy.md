@@ -364,13 +364,13 @@ void setup() {
 ```java
 @Test
 void execute_fails_whenCredentialsInvalid() {
-    CheckCredentials failingCreds = vr -> UserLoginError.InvalidCredentials.INSTANCE.result();
+    CheckCredentials failingCreds = vr -> LoginError.InvalidCredentials.INSTANCE.result();
     var useCase = UserLogin.userLogin(failingCreds);
     var request = new Request("john@example.com", "Valid123", null);
 
     useCase.execute(request)
            .onSuccess(Assertions::fail)
-           .onFailure(cause -> assertInstanceOf(UserLoginError.InvalidCredentials.class, cause));
+           .onFailure(cause -> assertInstanceOf(LoginError.InvalidCredentials.class, cause));
 }
 ```
 
@@ -392,7 +392,7 @@ Example for `CheckAccountStatus`:
 @Test
 void execute_fails_whenAccountInactive() {
     CheckCredentials stubCreds = vr -> Result.success(new Credentials("user-1"));
-    CheckAccountStatus failingStatus = c -> UserLoginError.AccountInactive.INSTANCE.result();
+    CheckAccountStatus failingStatus = c -> LoginError.AccountInactive.INSTANCE.result();
     GenerateToken stubToken = acc -> Result.success(new Response("token"));
 
     var useCase = UserLogin.userLogin(stubCreds, failingStatus, stubToken);
@@ -400,7 +400,7 @@ void execute_fails_whenAccountInactive() {
 
     useCase.execute(request)
            .onSuccess(Assertions::fail)
-           .onFailure(cause -> assertInstanceOf(UserLoginError.AccountInactive.class, cause));
+           .onFailure(cause -> assertInstanceOf(LoginError.AccountInactive.class, cause));
 }
 ```
 

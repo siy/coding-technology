@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.1] - 2025-11-17
+
 ### Fixed
 - **Causes API consistency**: Replaced deprecated `Causes.forValue()` with `Causes.forOneValue()` across all documentation
 - **Template syntax**: Changed `{}` placeholders to `%s` (String.format syntax) in all Causes factory examples

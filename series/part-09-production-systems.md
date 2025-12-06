@@ -1,8 +1,8 @@
 # Part 9: Building Production Systems
 
-**Series:** [Java Backend Coding Technology](INDEX.md) | **Part:** 9 of 9
+**Series:** [Java Backend Coding Technology](INDEX.md) | **Part:** 9 of 10
 
-**Previous:** [Part 8: Testing in Practice](part-08-testing-practice.md) | **Complete Series:** [Index](INDEX.md)
+**Previous:** [Part 8: Testing in Practice](part-08-testing-practice.md) | **Next:** [Part 10: Systematic Application](part-10-systematic-application.md)
 
 ---
 

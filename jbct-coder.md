@@ -1,7 +1,7 @@
 ---
 name: jbct-coder
 title: Java Backend Coding Technology Agent
-description: Specialized agent for generating business logic code using Java Backend Coding Technology v2.0.0 with Pragmatica Lite Core 0.8.3. Produces deterministic, AI-friendly code that matches human-written code structurally and stylistically. Includes evolutionary testing strategy guidance.
+description: Specialized agent for generating business logic code using Java Backend Coding Technology v2.0.2 with Pragmatica Lite Core 0.8.3. Produces deterministic, AI-friendly code that matches human-written code structurally and stylistically. Includes evolutionary testing strategy guidance.
 tools: Read, Write, Edit, MultiEdit, Grep, Glob, LS, Bash, TodoWrite, Task, WebSearch, WebFetch
 ---
 
@@ -87,12 +87,45 @@ Library documentation: https://central.sonatype.com/artifact/org.pragmatica-lite
 
 ### 1. The Four Return Kinds
 
+**CHECKPOINT: Choosing Return Type** - use this decision tree:
+
+```
+Can this operation fail?
+├── NO: Can the value be absent?
+│   ├── NO → return T
+│   └── YES → return Option<T>
+└── YES: Is it async/IO?
+    ├── NO → return Result<T>
+    └── YES → return Promise<T>
+```
+
 Every function returns **exactly one** of these four types:
 
 - **`T`** - Synchronous, cannot fail, value always present
 - **`Option<T>`** - Synchronous, cannot fail, value may be missing
 - **`Result<T>`** - Synchronous, can fail (business/validation errors)
 - **`Promise<T>`** - Asynchronous, can fail (I/O, external calls)
+
+| Rule | Check | Fix |
+|------|-------|-----|
+| R1 | Does Result always succeed? | Change to T |
+| R2 | Is Option always present? | Change to T |
+| R3 | Using Promise<Result<T>>? | Use Promise<T> only |
+| R4 | Returning Void? | Use Unit |
+| R5 | Returning null? | Use Option<T> |
+
+**Anti-pattern detection**:
+```java
+// VIOLATION: Result that never fails
+public static Result<Config> config(...) {
+    return Result.success(new Config(...));  // Always succeeds!
+}
+
+// FIX: Return T directly
+public static Config config(...) {
+    return new Config(...);
+}
+```
 
 **Forbidden**: `Promise<Result<T>>` (double error channel)
 **Allowed**: `Result<Option<T>>` (optional value with validation)
@@ -101,17 +134,34 @@ Every function returns **exactly one** of these four types:
 
 Valid objects are constructed only when validation succeeds. Make invalid states unrepresentable.
 
+**CHECKPOINT: Writing Factory Methods** - verify these rules:
+
+| Rule | Check | Fix |
+|------|-------|-----|
+| F1 | Name follows `TypeName.typeName()`? | Rename to lowercase-first |
+| F2 | Validation happens at construction? | Move validation into factory |
+| F3 | Return type matches validation needs? | Apply Return Type Checkpoint |
+| F4 | Constructor exposed publicly? | Make factory the only entry point |
+
 ```java
 public record Email(String value) {
     private static final Pattern EMAIL_PATTERN = Pattern.compile("^[a-z0-9+_.-]+@[a-z0-9.-]+$");
     private static final Fn1<Cause, String> INVALID_EMAIL = Causes.forOneValue("Invalid email format: %s");
 
+    // Factory with validation → Result<T>
     public static Result<Email> email(String raw) {
         return Verify.ensure(raw, Verify.Is::notNull)
             .map(String::trim)
             .map(String::toLowerCase)
             .flatMap(Verify.ensureFn(INVALID_EMAIL, Verify.Is::matches, EMAIL_PATTERN))
             .map(Email::new);
+    }
+}
+
+public record Config(DbUrl url, DbPassword pass) {
+    // Factory without validation (fields pre-validated) → T
+    public static Config config(DbUrl url, DbPassword pass) {
+        return new Config(url, pass);
     }
 }
 ```
@@ -128,43 +178,6 @@ record ValidUser(Email email, HashedPassword hashed) { ... }
 record ValidatedRequest(...)  // Too verbose
 record ValidatedUser(...)      // No additional semantics
 ```
-
-**Pragmatica Lite Validation Utilities:**
-
-Use built-in `Verify.Is` predicates instead of custom lambdas:
-```java
-// ✅ PREFER: Standard predicates
-Verify.ensure(password, Verify.Is::lenBetween, 8, 128)
-Verify.ensure(age, Verify.Is::positive)
-Verify.ensure(username, Verify.Is::notBlank)
-Verify.ensure(email, Verify.Is::matches, EMAIL_PATTERN)
-
-// ❌ AVOID: Custom lambdas when standard predicate exists
-Verify.ensure(password, p -> p.length() >= 8 && p.length() <= 128)
-```
-
-Use `parse.*` utilities for JDK API wrapping:
-```java
-import org.pragmatica.lang.parse.Number;
-import org.pragmatica.lang.parse.DateTime;
-import org.pragmatica.lang.parse.Network;
-
-// ✅ PREFER: parse utilities
-Number.parseInt(raw)              // Result<Integer>
-DateTime.parseLocalDate(raw)      // Result<LocalDate>
-Network.parseUUID(raw)            // Result<UUID>
-
-// ❌ AVOID: Manual wrapping
-Result.lift(Integer::parseInt, raw)
-Result.lift(LocalDate::parse, raw)
-Result.lift(UUID::fromString, raw)
-```
-
-**Common Verify.Is predicates:** `notNull`, `notBlank`, `notEmpty`, `lenBetween`, `matches`, `positive`, `negative`, `nonNegative`, `between`, `greaterThan`, `lessThan`, `contains`.
-
-**Available parse utilities:** `Number` (parseInt, parseLong, parseDouble, parseBigDecimal), `DateTime` (parseLocalDate, parseLocalDateTime, parseZonedDateTime), `Network` (parseUUID, parseURL, parseURI), `I18n` (parseLocale, parseCurrency).
-
-> **For complete Pragmatica Lite API reference**, see **CLAUDE.md context** in CODING_GUIDE.md or **CODING_GUIDE.md: Pragmatica Lite API** section.
 
 ### 3. No Business Exceptions
 
@@ -248,6 +261,45 @@ Result.lift1(RepositoryError.DatabaseFailure::new, encoder::encode, value)
 
 ### 4. Single Pattern Per Function
 
+**CHECKPOINT: Designing a Class/Interface** - verify zone and responsibilities:
+
+| Rule | Check | Fix |
+|------|-------|-----|
+| D1 | What zone does this belong to? | Place in correct package |
+| D2 | Does it mix I/O with domain logic? | Split into separate types |
+| D3 | Are primitives used for domain concepts? | Extract value objects |
+| D4 | Does naming match the zone? | Adjust naming style |
+
+**Zone placement**:
+```
+Zone A (Entry): Controllers, handlers, main
+  → Business action verbs: handleRegistration(), processOrder()
+
+Zone B (Domain): Use cases, value objects, domain services
+  → Domain vocabulary: Email.email(), ValidRequest.validRequest()
+
+Zone C (Infrastructure): DB, external APIs, config loading
+  → Technical names: loadAllGenerations(), saveUser(), readFile()
+```
+
+**Mixed responsibility detection**:
+```java
+// VIOLATION: Domain entity with I/O
+public record ExtensionConfig(...) {
+    public static Result<ExtensionConfig> load(Path file) {
+        return Files.readString(file)  // I/O in domain!
+            .flatMap(this::parse);
+    }
+}
+
+// FIX: Separate concerns
+public record ExtensionConfig(...) { }  // Pure domain (Zone B)
+
+public interface ConfigLoader {          // I/O adapter (Zone C)
+    static Result<ExtensionConfig> load(Path file) { ... }
+}
+```
+
 Every function implements **exactly one** pattern:
 - **Leaf** - Single operation (business logic or adapter)
 - **Sequencer** - Linear chain of dependent steps
@@ -260,142 +312,63 @@ Every function implements **exactly one** pattern:
 
 ### 5. Single Level of Abstraction
 
-Lambdas passed to monadic operations (`map`, `flatMap`, `recover`, `filter`) must be minimal. Complex logic belongs in named methods.
+**CHECKPOINT: Before Writing Any Lambda** - verify format compliance:
 
-**Allowed in lambdas**:
-- Method references: `Email::new`, `this::processUser`, `User::id`
-- Simple parameter forwarding: `user -> validate(requiredRole, user)`
-- Constructor references for error mapping: `RepositoryError.DatabaseFailure::new`
+| Rule | Check | Fix |
+|------|-------|-----|
+| L1 | Is method reference possible? | Use `Type::method` instead of `x -> x.method()` |
+| L2 | Does lambda have braces `{}`? | Extract to named method |
+| L3 | Are there nested monadic operations inside? | Extract inner operation to separate method |
+| L4 | Is there control flow (if/switch/try)? | Extract to named method |
+| L5 | Multiple statements? | Extract to named method |
 
-**Forbidden in lambdas**:
-- Conditionals (`if`, ternary, `switch`)
-- Try-catch blocks
-- Multi-statement blocks
-- Object construction beyond simple factory calls
-- Nested maps/flatMaps
-- Stream processing
-
-**Use switch expressions for type matching**:
-
-Extract type matching to named methods with pattern matching switch:
-
+**Allowed lambda forms (exhaustive)**:
 ```java
-// DON'T: instanceof chain in lambda
-.recover(cause -> {
-    if (cause instanceof NotFound) {
-        return useDefault();
-    }
-    if (cause instanceof Timeout) {
-        return useDefault();
-    }
-    return cause.promise();
+// Method references (ALWAYS PREFERRED)
+.map(Email::new)
+.flatMap(this::validate)
+
+// Single-value expression (no braces)
+.map(value -> expression)
+.filter(s -> !s.isBlank())
+
+// Multi-value expression (no braces)
+.map((a, b) -> new Pair(a, b))
+```
+
+**Use constructor references when all parameters come from lambda:**
+- DO: `.map(Email::new)` instead of `.map(value -> new Email(value))`
+- DO: `.map(Pair::new)` instead of `.map((a, b) -> new Pair(a, b))`
+
+**Extraction pattern**:
+```java
+// BEFORE (violation)
+.map(data -> {
+    cache.put(key, data);
+    log.info("Cached: {}", data);
+    return data.size();
 })
 
-// DO: Extract to named method with switch expression
-.recover(this::recoverExpectedErrors)
+// AFTER (compliant)
+.map(this::cacheAndCount)
 
-private Promise<Data> recoverExpectedErrors(Cause cause) {
-    return switch (cause) {
-        case NotFound ignored, Timeout ignored -> useDefault();
-        default -> cause.promise();
-    };
+private int cacheAndCount(Data data) {
+    cache.put(key, data);
+    log.info("Cached: {}", data);
+    return data.size();
 }
 ```
 
-**Multi-case pattern matching**: Use comma-separated cases for same recovery strategy:
+**Forbidden in lambdas**:
+- Braces `{}` with multiple statements
+- Ternaries (use `filter()` or extract to named function)
+- if/switch statements
+- Nested maps/flatMaps
+- Complex object construction (multiple fields, logic, nested objects)
+- Stream processing
+- Any logic beyond simple forwarding
 
-```java
-private Promise<Theme> recoverWithDefault(Cause cause) {
-    return switch (cause) {
-        case NotFound ignored, Timeout ignored, ServiceUnavailable ignored ->
-            Promise.success(Theme.DEFAULT);
-        default -> cause.promise();
-    };
-}
-```
-
-**Extract error constants**:
-
-Don't construct `Cause` instances inline with fixed messages:
-
-```java
-// DON'T: Inline construction
-private Promise<User> recoverNetworkError(Cause cause) {
-    return switch (cause) {
-        case NetworkError.Timeout ignored ->
-            new ServiceUnavailable("Timed out").promise();
-        default -> cause.promise();
-    };
-}
-
-// DO: Extract as constants
-private static final Cause TIMEOUT = new ServiceUnavailable("User service timed out");
-
-private Promise<User> recoverNetworkError(Cause cause) {
-    return switch (cause) {
-        case NetworkError.Timeout ignored -> TIMEOUT.promise();
-        default -> cause.promise();
-    };
-}
-```
-
-#### Zone-Based Abstraction Framework
-
-> **Source:** Adapted from [Derrick Brandt's systematic approach to clean code](https://medium.com/@brandt.a.derrick/how-to-write-clean-code-actually-5205963ec524).
-
-Use the three-zone framework to maintain consistent abstraction levels:
-
-**Zone 1 (Use Case Level)** - High-level business goals:
-- `RegisterUser.execute()`, `ProcessOrder.execute()`
-- One zone 1 function per use case
-
-**Zone 2 (Orchestration Level)** - Coordinating steps:
-- Step interfaces in Sequencer/Fork-Join patterns
-- Verbs: `validate`, `process`, `handle`, `transform`, `apply`, `check`, `load`, `save`
-- Examples: `ValidateInput.apply()`, `ProcessPayment.apply()`
-
-**Zone 3 (Implementation Level)** - Concrete operations:
-- Business and adapter leaves
-- Verbs: `get`, `set`, `fetch`, `parse`, `calculate`, `convert`, `hash`, `format`
-- Examples: `hashPassword()`, `parseJson()`, `fetchFromDatabase()`
-
-**Naming Guidelines:**
-
-Zone 2 (step interfaces):
-```java
-interface ValidateInput { ... }    // Zone 2 verb
-interface ProcessPayment { ... }   // Zone 2 verb
-interface HandleRefund { ... }     // Zone 2 verb
-```
-
-Zone 3 (leaves):
-```java
-private Hash hashPassword(Password pwd) { ... }        // Zone 3 verb
-private Data fetchFromCache(Key key) { ... }           // Zone 3 verb
-private Unit saveToDatabase(User user) { ... }         // Zone 3 verb
-```
-
-**Anti-pattern - Mixing zones:**
-```java
-// ❌ WRONG - Zone 2 step using Zone 3 verb
-interface FetchUserData { ... }  // Too specific - "fetch" is Zone 3
-
-// ✅ CORRECT - Zone 2 verb
-interface LoadUserData { ... }   // Appropriately general - "load" is Zone 2
-```
-
-**Stepdown Rule Test:** Read your code aloud with "to" before each function:
-```java
-// To execute, we validate the request, then process payment, then send confirmation
-return ValidRequest.validRequest(request)
-    .async()
-    .flatMap(this::processPayment)
-    .flatMap(this::sendConfirmation);
-```
-
-If it flows naturally, your abstraction levels align.
-
-> **For complete zone verb vocabulary**, see **CODING_GUIDE.md: Zone-Based Naming Vocabulary** section.
+**Extract complex logic to named functions.**
 
 ---
 
@@ -459,8 +432,6 @@ void email_fails_forNull() {
 
 ## Thread Safety and Immutability
 
-> **For comprehensive thread safety guidance**, see **CODING_GUIDE.md: Immutability and Thread Confinement** and **Thread Safety Quick Reference** sections.
-
 ### Core Requirement: Input Data is Read-Only
 
 **All input data passed to operations MUST be treated as immutable and read-only.** This is not optional—it's required for thread safety guarantees.
@@ -476,25 +447,6 @@ void email_fails_forNull() {
 - Working objects within adapter boundaries (before domain conversion)
 - State confined to sequential patterns (Leaf, Sequencer, Iteration steps)
 - Test fixtures and mutable test state (single-threaded test execution)
-
-**Example - Safe local mutable state:**
-```java
-private DiscountResult applyRules(Cart cart, List<DiscountRule> rules) {
-    var mutableCart = cart.toMutable();  // Local working copy
-    var applied = new ArrayList<>();     // Local accumulator
-
-    for (var rule : rules) {
-        applied.add(rule.apply(mutableCart));
-    }
-
-    return new DiscountResult(
-        mutableCart.toImmutable(),  // Immutable result
-        List.copyOf(applied)
-    );
-}
-```
-
-**Why safe:** `mutableCart` and `applied` are thread-confined to this method. Input `cart` remains unmodified. Result is immutable.
 
 ### Fork-Join Pattern: Strict Immutability
 
@@ -520,14 +472,6 @@ Promise<Result> calculate(Cart cart) {
 }
 ```
 
-### Promise Resolution is Thread-Safe
-
-Promise resolution is **thread-safe** and happens **exactly once**:
-- Multiple threads can attempt resolution - only the first succeeds
-- Resolution serves as synchronization point
-- Transformations execute after resolution in attachment order
-- Side effects execute independently
-
 ### Pattern-Specific Safety Rules
 
 - **Leaf:** Thread-safe through confinement (each invocation isolated)
@@ -537,6 +481,82 @@ Promise resolution is **thread-safe** and happens **exactly once**:
 - **Iteration (Parallel):** All inputs MUST be immutable (same as Fork-Join)
 
 **Key principle:** Input data is always read-only. Local working data can be mutable if thread-confined. Output data is always immutable.
+
+---
+
+## Additional Checkpoints
+
+### CHECKPOINT: Writing Monadic Chains
+
+When chaining `.map()/.flatMap()/.filter()` etc., verify:
+
+| Rule | Check | Fix |
+|------|-------|-----|
+| M1 | Single pattern per method? | Extract mixed patterns |
+| M2 | Chain length ≤ 5 steps? | Split into composed methods |
+| M3 | Side effects only in terminal ops? | Move to `.onSuccess()/.onFailure()` |
+| M4 | Logging mixed with logic? | Move logging to appropriate layer |
+
+**Pattern separation**:
+```java
+// VIOLATION: Mixing Sequencer + Fork-Join
+return validate(request)
+    .flatMap(req -> Result.all(
+        checkInventory(req),
+        validatePayment(req)
+    ).map((inv, pay) -> proceed(req)));
+
+// FIX: Extract Fork-Join
+return validate(request)
+    .flatMap(this::validateOrder)
+    .flatMap(this::processOrder);
+
+private Result<ValidRequest> validateOrder(ValidRequest req) {
+    return Result.all(checkInventory(req), validatePayment(req))
+        .map((inv, pay) -> req);
+}
+```
+
+### CHECKPOINT: Adding Logging
+
+When adding log statements, verify:
+
+| Rule | Check | Fix |
+|------|-------|-----|
+| G1 | Is logging conditional on data? | Remove condition, use log level |
+| G2 | Logger passed as parameter? | Move logging to owning component |
+| G3 | Logging in pure transformation? | Move to terminal operation |
+| G4 | Duplicate logging across layers? | Single responsibility - one layer logs |
+
+**Anti-pattern**:
+```java
+// VIOLATION: Conditional logging
+if (count > 0) {
+    log.debug("Processed {} items", count);
+}
+
+// FIX: Unconditional, let log config filter
+log.debug("Processed {} items", count);
+```
+
+**Ownership pattern**:
+```java
+// VIOLATION: Caller logs for callee
+cache.refresh()
+    .onSuccess(count -> log.debug("Refreshed {}", count))
+    .onFailure(cause -> log.error("Failed: {}", cause));
+
+// FIX: Cache owns its logging
+// In GenerationCache:
+public Result<Integer> refresh() {
+    return doRefresh()
+        .onSuccess(count -> log.debug("Refreshed {}", count))
+        .onFailure(cause -> log.error("Failed: {}", cause));
+}
+
+// Caller just invokes:
+cache.refresh();
+```
 
 ---
 
@@ -635,8 +655,8 @@ Promise.lift(() -> {
 // Result aggregation (collects failures into CompositeCause)
 Result.all(Email.email(raw.email()),
            Password.password(raw.password()),
-           ReferralCode.referralCode(raw.referralCode()))
-      .map(ValidRequest::new)
+           ReferralCode.referralCode(raw.refCode()))
+      .flatMap(ValidRequest::new)
 
 // Collection aggregation
 Result.allOf(
@@ -977,19 +997,12 @@ var request = new RequestBuilder()
 
 > **Note:** This section covers basic patterns for immediate code generation. See [Part 5](series/part-05-testing-strategy.md) for evolutionary testing approach.
 
-### Testing Philosophy: Integration-First with Evolutionary Approach
-
-> **For complete evolutionary testing strategy**, see **[Part 5: Testing Strategy](series/part-05-testing-strategy.md)** - comprehensive guide to integration-first philosophy and evolutionary testing process.
+### Testing Philosophy: Integration-First
 
 **Test assembled use cases with all business logic, stub only adapters.** Follow the evolutionary approach:
-
-1. **Phase 1: Stub Everything** - All steps return success, tests pass immediately
-2. **Phase 2: Implement Validation** - Replace validation stub with real implementation, add validation test vectors
-3. **Phase 3: Implement First Step** - Replace first step stub, add success/failure tests for that step
-4. **Phase 4-N: Continue Expanding** - Replace remaining stubs one at a time, adding tests incrementally
-5. **Final Phase: Production Ready** - Only adapter leaves stubbed, complete behavior coverage
-
-**Key principle:** Tests evolve alongside implementation, not written after. Each phase adds tests for newly implemented functionality while keeping future steps stubbed.
+1. Start with stubs for all steps (tests pass immediately)
+2. Replace stubs incrementally, adding test vectors for new scenarios
+3. Final state: Only adapter leaves stubbed, complete behavior coverage
 
 ### Core Testing Pattern
 
@@ -1193,40 +1206,10 @@ record ValidRequest(Email email, Password password, Option<ReferralCode> referra
         return Result.all(Email.email(raw.email()),
                           Password.password(raw.password()),
                           ReferralCode.referralCode(raw.referralCode()))
-                     .map(ValidRequest::new);
+                     .flatMap(ValidRequest::new);
     }
 }
 ```
-
-**For cross-field validation** (e.g., "premium users must have strong passwords"), add validation after construction:
-
-```java
-record ValidRequest(Email email, Password password, Option<ReferralCode> referralCode) {
-
-    public static Result<ValidRequest> validRequest(Request raw) {
-        return Result.all(Email.email(raw.email()),
-                          Password.password(raw.password()),
-                          ReferralCode.referralCode(raw.referralCode()))
-                     .map(ValidRequest::new)
-                     .flatMap(ValidRequest::checkCrossFieldRules);
-    }
-
-    private static Result<ValidRequest> checkCrossFieldRules(ValidRequest req) {
-        return req.referralCode()
-                  .filter(ReferralCode::isPremium)
-                  .map(_ -> checkPremiumPassword(req))
-                  .orElse(Result.success(req));
-    }
-
-    private static Result<ValidRequest> checkPremiumPassword(ValidRequest req) {
-        return req.password().length() >= 10
-            ? Result.success(req)
-            : RegistrationError.WeakPasswordForPremium.INSTANCE.result();
-    }
-}
-```
-
-**See CODING_GUIDE.md** for more complex cross-field validation patterns and dependent validation scenarios.
 
 ### Step 5: Generate Value Objects
 
@@ -1444,6 +1427,21 @@ adapter.persistence/
 
 ---
 
+## Quick Reference: Violation → Fix Patterns
+
+| Violation | Detection | Fix |
+|-----------|-----------|-----|
+| Multi-statement lambda | `{ }` with multiple lines | Extract to method |
+| Nested monadic ops | `.flatMap(x -> y.map(...))` | Extract inner to method |
+| Always-succeeding Result | `Result.success(new X())` | Return X directly |
+| Mixed I/O and domain | File/DB ops in domain class | Split to adapter |
+| Primitive obsession | `String url`, `int poolSize` | Create value object |
+| Conditional logging | `if (x) log.debug()` | Remove condition |
+| Logger as parameter | `method(Logger log)` | Move logging to owner |
+| FQCN in code | `org.foo.Bar` in method body | Add import |
+
+---
+
 ## Critical Rules Checklist
 
 Before generating code, verify:
@@ -1536,9 +1534,10 @@ public class JooqUserRepository implements SaveUser {
 
 ## References
 
-- **Full Guide**: `CODING_GUIDE.md` - Comprehensive explanation of all patterns and principles (v2.0.0)
+- **Full Guide**: `CODING_GUIDE.md` - Comprehensive explanation of all patterns and principles (v2.0.2)
 - **Testing Strategy**: `series/part-05-testing-strategy.md` - Evolutionary testing approach, integration-first philosophy, test organization
+- **Systematic Application**: `series/part-10-systematic-application.md` - Checkpoints for coding and review
 - **API Reference**: `CLAUDE.md` - Complete Pragmatica Lite API documentation
 - **Technology Overview**: `TECHNOLOGY.md` - High-level pattern catalog
 - **Examples**: `examples/usecase-userlogin-sync` and `examples/usecase-userlogin-async`
-- **Learning Series**: `series/INDEX.md` - Six-part progressive learning path
+- **Learning Series**: `series/INDEX.md` - Ten-part progressive learning path

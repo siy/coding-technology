@@ -118,11 +118,46 @@ void email_fails_forNull() {
 
 ### 1. The Four Return Kinds
 
+**CHECKPOINT: Choosing Return Type** - use this decision tree:
+
+```
+Can this operation fail?
+├── NO: Can the value be absent?
+│   ├── NO → return T
+│   └── YES → return Option<T>
+└── YES: Is it async/IO?
+    ├── NO → return Result<T>
+    └── YES → return Promise<T>
+```
+
 **Every function returns exactly one of:**
 - **`T`** - Synchronous, cannot fail, value always present (pure computation)
 - **`Option<T>`** - Synchronous, cannot fail, value may be missing
 - **`Result<T>`** - Synchronous, can fail (validation/business errors as typed `Cause`)
 - **`Promise<T>`** - Asynchronous, can fail (I/O, external services)
+
+**Return Type Verification Rules:**
+
+| Rule | Check | Fix |
+|------|-------|-----|
+| R1 | Does Result always succeed? | Change to T |
+| R2 | Is Option always present? | Change to T |
+| R3 | Using Promise<Result<T>>? | Use Promise<T> only |
+| R4 | Returning Void? | Use Unit |
+| R5 | Returning null? | Use Option<T> |
+
+**Anti-pattern detection**:
+```java
+// VIOLATION: Result that never fails
+public static Result<Config> config(...) {
+    return Result.success(new Config(...));  // Always succeeds!
+}
+
+// FIX: Return T directly
+public static Config config(...) {
+    return new Config(...);
+}
+```
 
 **Critical Rules:**
 - ❌ **FORBIDDEN**: `Promise<Result<T>>` - failures flow through Promise directly
@@ -132,6 +167,15 @@ void email_fails_forNull() {
 
 ### 2. Parse, Don't Validate
 
+**CHECKPOINT: Writing Factory Methods** - verify these rules:
+
+| Rule | Check | Fix |
+|------|-------|-----|
+| F1 | Name follows `TypeName.typeName()`? | Rename to lowercase-first |
+| F2 | Validation happens at construction? | Move validation into factory |
+| F3 | Return type matches validation needs? | Apply Return Type Checkpoint |
+| F4 | Constructor exposed publicly? | Make factory the only entry point |
+
 **Make invalid states unrepresentable** - validation happens at construction time:
 
 ```java
@@ -140,11 +184,19 @@ public record Email(String value) {
     private static final Fn1<Cause, String> INVALID_EMAIL =
         Causes.forOneValue("Invalid email: %s");
 
+    // Factory with validation → Result<T>
     public static Result<Email> email(String raw) {
         return Verify.ensure(raw, Verify.Is::notNull)
             .map(String::trim)
             .flatMap(Verify.ensureFn(INVALID_EMAIL, Verify.Is::matches, PATTERN))
             .map(Email::new);
+    }
+}
+
+// ✅ CORRECT: Factory without validation (fields pre-validated) → T
+public record Config(DbUrl url, DbPassword pass) {
+    public static Config config(DbUrl url, DbPassword pass) {
+        return new Config(url, pass);
     }
 }
 
@@ -242,38 +294,13 @@ public User findUser(UserId id) throws UserNotFoundException {
 ```java
 public Promise<User> findUser(UserId id) {
     return Promise.lift(
-        UserError.DatabaseFailure::new,
+        UserError.DatabaseFailure::cause,
         () -> jdbcTemplate.queryForObject(...)
     );
 }
 ```
 
-### 4. Monadic Composition Rules
-
-**Single Level of Abstraction** - lambdas contain only method references or simple forwarding:
-
-```java
-// ✅ CORRECT: Method reference
-.map(Email::new)
-.flatMap(this::validateUser)
-.onSuccess(user -> logger.info("User: {}", user.id()))
-
-// ❌ WRONG: Complex logic in lambda
-.flatMap(req -> {
-    if (req.isPremium()) {
-        return validatePremium(req);
-    } else {
-        return validateBasic(req);
-    }
-})  // Extract to named method
-```
-
-**Prefer:**
-- Constructor references: `Email::new` over `v -> new Email(v)`
-- Exception mapping: `ErrorType.RecordName::new` over `e -> ErrorType.RecordName.cause(e)`
-- Extract complex logic to named methods
-
-#### Zone-Based Abstraction Check
+### 4. Zone-Based Abstraction Check
 
 > **Source:** Adapted from [Derrick Brandt's systematic approach to clean code](https://medium.com/@brandt.a.derrick/how-to-write-clean-code-actually-5205963ec524).
 
@@ -337,96 +364,119 @@ If it doesn't flow naturally, abstraction levels likely mixed.
 - [ ] Sequencer chains maintain same abstraction level (all Zone 2)
 - [ ] Code passes stepdown rule test (reads naturally with "to")
 
-### Lambda Complexity Checks
+### 5. Monadic Composition Rules
 
-Lambdas passed to `map`, `flatMap`, `recover`, `filter` must be minimal:
+**Single Level of Abstraction** - lambdas contain only method references or simple forwarding:
 
-**Allowed:**
-- [ ] Method references: `Email::new`, `this::processUser`, `User::id`
-- [ ] Simple parameter forwarding: `user -> validate(requiredRole, user)`
-- [ ] Constructor references for error mapping: `RepositoryError.DatabaseFailure::new`
+#### ALLOWED LAMBDA FORMATS (EXHAUSTIVE LIST)
 
-**Forbidden - Flag these violations:**
-- [ ] No conditionals (`if`, ternary, `switch`) in lambdas
-- [ ] No try-catch blocks in lambdas
-- [ ] No multi-statement blocks in lambdas
-- [ ] No object construction beyond simple factory calls
-- [ ] No nested maps/flatMaps
+**Only these lambda forms are permitted:**
 
-❌ **instanceof chains in lambdas:**
 ```java
-// BAD
-.recover(cause -> {
-    if (cause instanceof NotFound || cause instanceof Timeout) {
-        return useDefault();
-    }
-    return cause.promise();
+// ✅ Method references (ALWAYS PREFERRED)
+.map(Email::new)
+.flatMap(this::validateUser)
+.map(String::trim)
+
+// ✅ Single-value lambda with expression (no braces)
+.map(value -> expression)
+.filter(item -> item.isValid())
+.onSuccess(user -> logger.info("User: {}", user.id()))
+
+// ✅ Multi-value lambda with expression (no braces)
+.map((a, b) -> expression)
+.map((temp, unit) -> new Temperature(temp, unit))
+```
+
+#### FORBIDDEN LAMBDA FORMATS
+
+```java
+// ❌ FORBIDDEN: Multi-statement lambda with braces
+.map(value -> {
+    doSomething();
+    return result;
 })
 
-// GOOD: Extract with switch expression
-.recover(this::recoverExpectedErrors)
+// ❌ FORBIDDEN: Any lambda with braces containing multiple statements
+.onSuccess(result -> {
+    logger.info("Success: {}", result);
+    cache.put(key, result);
+})
 
-private Promise<T> recoverExpectedErrors(Cause cause) {
-    return switch (cause) {
-        case NotFound ignored, Timeout ignored -> useDefault();
-        default -> cause.promise();
-    };
-}
-```
+// ❌ FORBIDDEN: Nested operations within lambda
+.flatMap(cmd -> cmdJson.subject().map(subj -> new String[]{cmd, subj}))
 
-❌ **Inline Cause construction with fixed strings:**
-```java
-// BAD
-private Promise<User> recoverNetworkError(Cause cause) {
-    return switch (cause) {
-        case NetworkError.Timeout ignored ->
-            new ServiceUnavailable("Timed out").promise();
-        default -> cause.promise();
-    };
-}
+// ❌ FORBIDDEN: Lambda when method reference is possible
+.map(v -> new Email(v))        // Use Email::new
+.map(e -> Error.cause(e))      // Use Error::cause
+.map(s -> s.trim())            // Use String::trim
 
-// GOOD: Extract as constants
-private static final Cause TIMEOUT = new ServiceUnavailable("User service timed out");
-
-private Promise<User> recoverNetworkError(Cause cause) {
-    return switch (cause) {
-        case NetworkError.Timeout ignored -> TIMEOUT.promise();
-        default -> cause.promise();
-    };
-}
-```
-
-**Review Rules:**
-- [ ] Type matching uses switch expressions, not instanceof chains
-- [ ] Multi-case pattern matching uses comma-separated cases: `case A ignored, B ignored ->`
-- [ ] Error Cause instances are static final constants, not inline constructions
-- [ ] Complex `.recover()` logic extracted to named recovery methods
-- [ ] Exception mapping uses constructor references: `ErrorType.RecordName::new`
-- [ ] Fixed-message errors grouped into single `enum General`
-
-**Error structure pattern:**
-
-```java
-// ✅ CORRECT: General enum for fixed messages
-public sealed interface RegistrationError extends Cause {
-    enum General implements RegistrationError {
-        EMAIL_ALREADY_REGISTERED("Email already registered"),
-        WEAK_PASSWORD_FOR_PREMIUM("Premium codes require 10+ char passwords");
-
-        private final String message;
-        General(String message) { this.message = message; }
-        @Override public String message() { return message; }
+// ❌ FORBIDDEN: Try-with-resources or control flow in lambda
+.map(is -> {
+    try (is) {
+        return new String(is.readAllBytes());
     }
+})
 
-    record PasswordHashingFailed(Throwable cause) implements RegistrationError { ... }
-}
-
-// ❌ WRONG: Separate singleton enums
-enum EmailAlreadyRegistered implements RegistrationError { INSTANCE; ... }
-enum WeakPasswordForPremium implements RegistrationError { INSTANCE; ... }
+// ❌ FORBIDDEN: Conditional logic in lambda
+.map(count -> {
+    if (count > 0) {
+        log.debug("Count: {}", count);
+    }
+    return count;
+})
 ```
 
-### 5. Use Case Factories Return Lambdas
+#### FIX PATTERN: Extract to Named Method
+
+**Before** (violation):
+```java
+.map(generations -> {
+    cache.putAll(generations);
+    lastRefreshTime.set(Instant.now());
+    log.info("Pre-loaded {} generations into cache", generations.size());
+    return generations.size();
+})
+```
+
+**After** (compliant):
+```java
+.map(this::preloadGenerations);
+
+private int preloadGenerations(Map<String, Generation> generations) {
+    cache.putAll(generations);
+    lastRefreshTime.set(Instant.now());
+    log.info("Pre-loaded {} generations into cache", generations.size());
+    return generations.size();
+}
+```
+
+#### FIX PATTERN: Flatten Nested Operations
+
+**Before** (violation):
+```java
+return cmdJson.command()
+    .flatMap(cmd -> cmdJson.subject().map(subj -> new String[]{cmd, subj}))
+    .toResult(MISSING_FIELD);
+```
+
+**After** (compliant):
+```java
+return cmdJson.command()
+    .flatMap(cmd -> buildFieldArray(cmd, cmdJson.subject()))
+    .toResult(MISSING_FIELD);
+
+private Option<String[]> buildFieldArray(String command, Option<String> subject) {
+    return subject.map(subj -> new String[]{command, subj});
+}
+```
+
+**Preference hierarchy:**
+1. Method references: `Email::new`, `this::validate`, `String::trim`
+2. Single expression lambdas: `value -> expression` (no braces)
+3. Extract to named method if either above doesn't fit
+
+### 6. Use Case Factories Return Lambdas
 
 **CRITICAL:** Use case and step factories must return lambdas directly, NEVER nested record implementations:
 
@@ -464,8 +514,6 @@ static RegisterUser registerUser(CheckEmail checkEmail, SaveUser saveUser) {
 
 ## THREAD SAFETY AND IMMUTABILITY
 
-> **Critical for v2.0.0:** All JBCT code must follow thread safety rules. See CODING_GUIDE.md: Thread Safety Quick Reference.
-
 ### Core Requirement: Input Data is Read-Only
 
 **All input parameters MUST be treated as immutable and read-only.** Check for violations:
@@ -497,6 +545,46 @@ private Cart processCart(Cart cart) {
 - State confined to sequential patterns (Leaf, Sequencer, Iteration steps)
 - Test fixtures (single-threaded test execution)
 
+### Fork-Join Thread Safety
+
+**When reviewing Fork-Join, always check for shared mutable state and input mutation:**
+
+❌ **Shared mutable state between branches:**
+```java
+// BAD - Data race
+private final DiscountContext context = new DiscountContext();  // Mutable
+
+Promise<Result> calculate() {
+    return Promise.all(
+        applyBogo(cart, context),      // Mutates context
+        applyPercentOff(cart, context)  // Mutates context - DATA RACE
+    ).map(this::merge);
+}
+
+// GOOD - Immutable inputs
+Promise<Result> calculate(Cart cart) {
+    return Promise.all(
+        applyBogo(cart),          // cart is immutable
+        applyPercentOff(cart)     // cart is immutable
+    ).map(this::mergeDiscounts);
+}
+```
+
+❌ **Mutating input parameters:**
+```java
+// BAD - Mutating shared input
+Promise.all(
+    applyDiscount(cart),      // Mutates cart.subtotal
+    calculateTax(cart)        // Reads cart.subtotal - RACE
+)
+
+// GOOD - Treat inputs as read-only, return new data
+Promise.all(
+    applyDiscount(cart),      // Returns new Discount, doesn't mutate cart
+    calculateTax(cart)        // Returns new Tax, doesn't mutate cart
+)
+```
+
 ### Pattern-Specific Rules
 
 - **Leaf:** Thread-safe through confinement (each invocation isolated)
@@ -505,9 +593,63 @@ private Cart processCart(Cart cart) {
 - **Iteration (Sequential):** Local mutable accumulators safe (single-threaded)
 - **Iteration (Parallel):** All inputs MUST be immutable (same as Fork-Join)
 
-**When reviewing Fork-Join, always check for shared mutable state and input mutation.**
+**Key rule:** All inputs to Fork-Join MUST be immutable. Local mutable state within each branch is safe (thread-confined).
 
----
+## JBCT CLASS DESIGN
+
+**CHECKPOINT: Designing a Class/Interface** - verify zone and responsibilities:
+
+| Rule | Check | Fix |
+|------|-------|-----|
+| D1 | What zone does this belong to? | Place in correct package |
+| D2 | Does it mix I/O with domain logic? | Split into separate types |
+| D3 | Are primitives used for domain concepts? | Extract value objects |
+| D4 | Does naming match the zone? | Adjust naming style |
+
+**Zone placement**:
+```
+Zone A (Entry): Controllers, handlers, main
+  → Business action verbs: handleRegistration(), processOrder()
+
+Zone B (Domain): Use cases, value objects, domain services
+  → Domain vocabulary: Email.email(), ValidRequest.validRequest()
+
+Zone C (Infrastructure): DB, external APIs, config loading
+  → Technical names: loadAllGenerations(), saveUser(), readFile()
+```
+
+**Mixed responsibility detection**:
+```java
+// VIOLATION: Domain entity with I/O
+public record ExtensionConfig(...) {
+    public static Result<ExtensionConfig> load(Path file) {
+        return Files.readString(file)  // I/O in domain!
+            .flatMap(this::parse);
+    }
+}
+
+// FIX: Separate concerns
+public record ExtensionConfig(...) { }  // Pure domain (Zone B)
+
+public interface ConfigLoader {          // I/O adapter (Zone C)
+    static Result<ExtensionConfig> load(Path file) { ... }
+}
+```
+
+**Primitive obsession detection**:
+```java
+// VIOLATION: Using primitives for domain concepts
+public record Config(String dbUrl, int poolSize) { }
+
+// FIX: Extract value objects with validation
+public record DbUrl(String value) {
+    public static Result<DbUrl> dbUrl(String raw) { ... }
+}
+public record PoolSize(int value) {
+    public static Result<PoolSize> poolSize(int raw) { ... }
+}
+public record Config(DbUrl dbUrl, PoolSize poolSize) { }
+```
 
 ## JBCT STRUCTURAL PATTERNS
 
@@ -531,7 +673,7 @@ public static Price applyDiscount(Price original, Discount discount) {
 // Adapter leaf (I/O)
 public Promise<User> apply(UserId id) {
     return Promise.lift(
-        DbError.QueryFailed::new,
+        DbError.QueryFailed::cause,
         () -> dsl.selectFrom(USERS).where(USERS.ID.eq(id.value())).fetchOne()
     ).flatMap(record -> record != null
         ? Promise.success(toUser(record))
@@ -607,46 +749,6 @@ return Promise.all(
 
 **Branches must be independent** - no data flow between them.
 
-**Thread Safety: Fork-Join requires immutable inputs** - check for:
-
-❌ **Shared mutable state between branches:**
-```java
-// BAD - Data race
-private final DiscountContext context = new DiscountContext();  // Mutable
-
-Promise<Result> calculate() {
-    return Promise.all(
-        applyBogo(cart, context),      // Mutates context
-        applyPercentOff(cart, context)  // Mutates context - DATA RACE
-    ).map(this::merge);
-}
-
-// GOOD - Immutable inputs
-Promise<Result> calculate(Cart cart) {
-    return Promise.all(
-        applyBogo(cart),          // cart is immutable
-        applyPercentOff(cart)     // cart is immutable
-    ).map(this::mergeDiscounts);
-}
-```
-
-❌ **Mutating input parameters:**
-```java
-// BAD - Mutating shared input
-Promise.all(
-    applyDiscount(cart),      // Mutates cart.subtotal
-    calculateTax(cart)        // Reads cart.subtotal - RACE
-)
-
-// GOOD - Treat inputs as read-only, return new data
-Promise.all(
-    applyDiscount(cart),      // Returns new Discount, doesn't mutate cart
-    calculateTax(cart)        // Returns new Tax, doesn't mutate cart
-)
-```
-
-**Key rule:** All inputs to Fork-Join MUST be immutable. Local mutable state within each branch is safe (thread-confined).
-
 ### Pattern 4: Condition
 
 **Routing logic, no transformation** - use ternary or `filter()`:
@@ -691,6 +793,80 @@ for (var item : items) {
 }
 ```
 
+## JBCT COMPOSITION RULES
+
+### CHECKPOINT: Writing Monadic Chains
+
+When chaining `.map()/.flatMap()/.filter()` etc., verify:
+
+| Rule | Check | Fix |
+|------|-------|-----|
+| M1 | Single pattern per method? | Extract mixed patterns |
+| M2 | Chain length ≤ 5 steps? | Split into composed methods |
+| M3 | Side effects only in terminal ops? | Move to `.onSuccess()/.onFailure()` |
+| M4 | Logging mixed with logic? | Move logging to appropriate layer |
+
+**Pattern separation**:
+```java
+// VIOLATION: Mixing Sequencer + Fork-Join
+return validate(request)
+    .flatMap(req -> Result.all(
+        checkInventory(req),
+        validatePayment(req)
+    ).map((inv, pay) -> proceed(req)));
+
+// FIX: Extract Fork-Join
+return validate(request)
+    .flatMap(this::validateOrder)
+    .flatMap(this::processOrder);
+
+private Result<ValidRequest> validateOrder(ValidRequest req) {
+    return Result.all(checkInventory(req), validatePayment(req))
+        .map((inv, pay) -> req);
+}
+```
+
+### CHECKPOINT: Adding Logging
+
+When reviewing log statements, check:
+
+| Rule | Check | Fix |
+|------|-------|-----|
+| G1 | Is logging conditional on data? | Remove condition, use log level |
+| G2 | Logger passed as parameter? | Move logging to owning component |
+| G3 | Logging in pure transformation? | Move to terminal operation |
+| G4 | Duplicate logging across layers? | Single responsibility - one layer logs |
+
+**Anti-pattern detection**:
+```java
+// VIOLATION: Conditional logging
+if (count > 0) {
+    log.debug("Processed {} items", count);
+}
+
+// FIX: Unconditional, let log config filter
+log.debug("Processed {} items", count);
+```
+
+**Ownership pattern**:
+```java
+// VIOLATION: Caller logs for callee
+cache.refresh()
+    .onSuccess(count -> log.debug("Refreshed {}", count))
+    .onFailure(cause -> log.error("Failed: {}", cause));
+
+// FIX: Cache owns its logging
+// In GenerationCache:
+public Result<Integer> refresh() {
+    return doRefresh()
+        .onSuccess(count -> log.debug("Refreshed {}", count))
+        .onFailure(cause -> log.error("Failed: {}", cause));
+}
+
+// Caller just invokes:
+cache.refresh();
+```
+
 ## JBCT PROJECT STRUCTURE
 
 ### Vertical Slicing
@@ -730,6 +906,90 @@ com.example.app/
 - **Never**: Use case → adapter dependency, adapter → adapter dependency
 
 ## JBCT NAMING CONVENTIONS
+
+### Zoned Naming
+
+JBCT uses **three zones** with distinct naming conventions. Verify each class uses naming appropriate to its zone.
+
+#### Zone A: Application Entry (Controllers, Handlers, Main)
+
+**Characteristics:**
+- Entry points that receive external requests
+- Framework integration code (Spring controllers, HTTP handlers)
+- No business logic, only delegation
+
+**Naming Style:** camelCase, business-oriented, action verbs
+```java
+// ✅ CORRECT Zone A naming
+handleRegistration(request)
+processOrder(orderId)
+submitPayment(paymentRequest)
+
+// ❌ WRONG - too technical for Zone A
+executeRegistrationUseCase(request)
+invokeOrderProcessor(orderId)
+```
+
+#### Zone B: Domain Logic (Use Cases, Value Objects, Domain Services)
+
+**Characteristics:**
+- Business rules and validation
+- Value objects with parse-don't-validate
+- Use case composition
+
+**Naming Style:** camelCase, domain terms, business vocabulary
+```java
+// ✅ CORRECT Zone B naming
+Email.email(raw)
+ValidRequest.validRequest(input)
+RegisterUser.registerUser(dependencies)
+checkEmailAvailability(email)
+hashPassword(password)
+
+// ❌ WRONG - too technical for Zone B
+Email.createEmailInstance(raw)
+Email.parseAndValidateEmail(raw)
+validateAndTransformRequest(input)
+```
+
+#### Zone C: Infrastructure/Adapters (Database, External APIs, Messaging)
+
+**Characteristics:**
+- I/O operations
+- External system integration
+- Technical implementation details
+
+**Naming Style:** Technical names appropriate to external systems
+```java
+// ✅ CORRECT Zone C naming
+findByEmail(email)           // Repository method
+saveUser(user)               // Persistence
+publishEvent(event)          // Messaging
+fetchUserProfile(userId)     // External API
+
+// Query methods follow SQL/persistence conventions
+loadAllGenerations()
+loadUpdatedGenerations(since)
+```
+
+#### Zone Boundary Rules
+
+```java
+// Zone A → Zone B: Business terms
+controller.handleRegistration(request)  // Zone A
+    → useCase.execute(request)          // Zone B
+
+// Zone B → Zone C: Technical delegation
+useCase.execute(request)                // Zone B
+    → repository.saveUser(user)         // Zone C
+    → emailService.sendWelcome(user)    // Zone C
+```
+
+**Review Checklist:**
+- [ ] Zone A classes use action verbs, business-oriented names
+- [ ] Zone B classes use domain vocabulary, factory pattern naming
+- [ ] Zone C classes use technical/infrastructure naming
+- [ ] No zone mixing (business terms in adapters, technical terms in domain)
 
 ### Factory Naming
 
@@ -828,6 +1088,15 @@ ValidRequest.validRequest(valid)
 
 ## REVIEW METHODOLOGY
 
+**THOROUGHNESS REQUIREMENT**: You must read EVERY source file completely and check EVERY method, EVERY lambda, EVERY class. Missing violations is unacceptable. The goal is 100% detection rate.
+
+### Step 0: File Discovery (MANDATORY FIRST STEP)
+
+Before reviewing, enumerate ALL files to review:
+1. Use `Glob` to find all Java source files: `**/*.java`
+2. Read EVERY file - no skipping, no sampling
+3. Track which files have been reviewed
+
 ### Step 1: JBCT Pattern Compliance
 
 **Check all code against:**
@@ -837,8 +1106,22 @@ ValidRequest.validRequest(valid)
   - [ ] Constructor references only in factory methods or `.map()` after validation
 - [ ] No Business Exceptions (errors via `Result`/`Promise`)
 - [ ] Single Level of Abstraction (lambdas simple)
+- [ ] Zone-Based Abstraction (Zone 2 verbs for steps, Zone 3 for leaves)
 - [ ] Patterns identified correctly (Leaf, Sequencer, Fork-Join, Condition, Iteration)
 - [ ] No pattern mixing in single function
+
+### Step 1.5: Lambda Audit (CRITICAL - CHECK EVERY LAMBDA)
+
+**For EVERY lambda in the codebase, verify:**
+- [ ] No braces `{}` containing multiple statements
+- [ ] No nested monadic operations (flatMap/map inside lambda)
+- [ ] Method reference used when possible
+- [ ] No try-with-resources or control flow
+
+**Audit process:**
+1. Search for `->` in each file
+2. For each lambda found, check format against allowed list
+3. Document file:line for every violation
 
 ### Step 2: Structural Review
 
@@ -855,6 +1138,21 @@ ValidRequest.validRequest(valid)
 - [ ] Validated inputs: `Valid` prefix (not `Validated`)
 - [ ] Test names: `methodName_outcome_condition`
 - [ ] Acronyms: Treated as words (camelCase)
+
+### Step 3.5: Zoned Naming Audit
+
+**For EVERY class, determine its zone and verify naming:**
+
+| Zone | Location | Naming Style |
+|------|----------|--------------|
+| A | Controllers, handlers, main | Business action verbs |
+| B | Domain, use cases, value objects | Domain vocabulary |
+| C | Adapters, repositories, clients | Technical/infrastructure |
+
+**Audit process:**
+1. Classify each class into Zone A, B, or C
+2. Check all method names match zone conventions
+3. Flag any zone mixing (e.g., technical names in domain layer)
 
 ### Step 4: Build Configuration Review
 
@@ -1052,6 +1350,19 @@ void validRequest_fails_forInvalidEmail() {
 **Naming Corrections**: [Main naming convention fixes]
 **Testing Additions**: [Essential tests to add]
 ```
+
+## QUICK REFERENCE: Violation → Fix Patterns
+
+| Violation | Detection | Fix |
+|-----------|-----------|-----|
+| Multi-statement lambda | `{ }` with multiple lines | Extract to method |
+| Nested monadic ops | `.flatMap(x -> y.map(...))` | Extract inner to method |
+| Always-succeeding Result | `Result.success(new X())` | Return X directly |
+| Mixed I/O and domain | File/DB ops in domain class | Split to adapter |
+| Primitive obsession | `String url`, `int poolSize` | Create value object |
+| Conditional logging | `if (x) log.debug()` | Remove condition |
+| Logger as parameter | `method(Logger log)` | Move logging to owner |
+| FQCN in code | `org.foo.Bar` in method body | Add import |
 
 ## COMMUNICATION GUIDELINES
 

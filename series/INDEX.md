@@ -1,10 +1,10 @@
 # Java Backend Coding Technology: Complete Learning Series
 
-**Based on:** [CODING_GUIDE.md](../CODING_GUIDE.md) v2.0.0
+**Based on:** [CODING_GUIDE.md](../CODING_GUIDE.md) v2.0.2
 
 ## About This Series
 
-This nine-part series teaches you how to write backend Java code that's predictable, testable, and optimized for human-AI collaboration. Whether you're a junior developer learning functional composition or a senior engineer evaluating architectural approaches, this series provides a complete, progressive education in structural standardization.
+This ten-part series teaches you how to write backend Java code that's predictable, testable, and optimized for human-AI collaboration. Whether you're a junior developer learning functional composition or a senior engineer evaluating architectural approaches, this series provides a complete, progressive education in structural standardization.
 
 **Who this is for:**
 - Junior developers learning backend development
@@ -180,6 +180,23 @@ Build a complete use case from requirements to deployment and learn how to integ
 
 ---
 
+### [Part 10: Systematic Application Guide](part-10-systematic-application.md)
+**~30 min read** | *Checkpoints for coding and review*
+
+Apply JBCT consistently through systematic checkpoints that catch violations early.
+
+**Topics:**
+- 8 checkpoints covering lambdas, return types, factories, class design, chains, logging, review, and implementation patterns
+- Quick reference violation → fix tables
+- Application order for new code and reviews
+- Nested record vs lambda pattern decision tree
+- Conditional Option composition
+- Validation ownership rules
+
+**Key takeaway:** Systematic verification through checkpoints ensures 100% JBCT compliance without heroic effort.
+
+---
+
 ## Learning Paths
 
 ### Fast Track (Senior Developers)
@@ -204,6 +221,13 @@ Looking for specific patterns? Jump directly to the relevant part using the topi
 - **Feedback**: [GitHub Issues](https://github.com/siy/coding-technology/issues)
 
 ## Series Version
+
+**Version 2.0.2** (2025-12-06)
+- **Added Part 10: Systematic Application Guide**
+  - 8 checkpoints for coding and review
+  - Violation → fix quick reference tables
+  - Implementation patterns (nested record vs lambda, conditional Option composition)
+  - Application order for new code and reviews
 
 **Version 2.0.0** (2025-11-13)
 - **Series restructured from 6 to 9 parts:**

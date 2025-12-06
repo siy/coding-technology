@@ -7,6 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.2] - 2025-12-06
+
+### Added
+- **Part 10: Systematic Application Guide** - New series part with checkpoints for coding and review
+  - 8 checkpoints covering lambdas, return types, factories, class design, chains, logging, review, and implementation patterns
+  - Quick reference violation → fix tables
+  - Application order for new code and reviews
+  - Nested record vs lambda pattern decision tree
+  - Conditional Option composition patterns
+  - Validation ownership rules
+
+### Changed
+- **Series expanded from 9 to 10 parts** with systematic application guide
+- **jbct-coder.md v2.0.2**
+  - Added Thread Safety and Immutability section with Fork-Join safety rules
+  - Added grouped error enum pattern (`enum General` for fixed-message errors)
+  - Added exception mapping with constructor references pattern
+  - Updated `Causes.forValue()` to `Causes.forOneValue()` (deprecated name fix)
+  - Updated `.match()` to `.fold()` in controller example (correct API)
+  - Added Part 10 to references
+- **jbct-reviewer.md v2.0.2**
+  - Added Thread Safety and Immutability section with Fork-Join checks
+  - Added Zone-Based Abstraction Check section with Derrick Brandt attribution
+  - Added direct constructor invocation check (bypassing factory methods)
+  - Added Verify.Is/parse utilities usage checks
+  - Updated `Causes.forValue()` to `Causes.forOneValue()` (deprecated name fix)
+  - Enhanced review methodology with zone-based abstraction verification
+- Updated series INDEX.md to reflect 10-part structure
+- Synced subagents with hivemq-assignment project updates
+- Copied updated subagents to system location (~/.claude/agents/)
+
 ## [2.0.1] - 2025-11-17
 
 ### Fixed

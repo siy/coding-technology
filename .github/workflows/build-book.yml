@@ -1,0 +1,44 @@
+name: Build Book PDF
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'book/**'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'book/**'
+  workflow_dispatch:
+
+jobs:
+  build-pdf:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install pandoc
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pandoc
+
+      - name: Install TeX Live
+        run: |
+          sudo apt-get install -y texlive-xetex texlive-fonts-recommended texlive-fonts-extra
+
+      - name: Build PDF
+        working-directory: ./book
+        run: |
+          chmod +x build-pdf.sh
+          ./build-pdf.sh
+
+      - name: Upload PDF artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: jbct-book
+          path: book/jbct-book.pdf
+          retention-days: 30

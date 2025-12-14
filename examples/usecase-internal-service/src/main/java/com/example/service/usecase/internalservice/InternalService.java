@@ -64,7 +64,7 @@ public interface InternalService {
             BUSINESS_RULE_ERROR("Illegal combination of values", 6);
 
             private final String message;
-            private int code;
+            private final int code;
 
             BusinessRuleError(String message, int code) {
                 this.message = message;
@@ -88,10 +88,13 @@ public interface InternalService {
     // Here is the place for cross-field validation.
     record ValidRequest(Value1 value1, Value2 value2) {
         public static Result<ValidRequest> validRequest(Request request) {
-            if (request.value1().isBusiness() || request.value2().hasTwo()) {
-                return BusinessRuleError.BUSINESS_RULE_ERROR.result();
-            }
-            return Result.success(new ValidRequest(request.value1(), request.value2()));
+            return isBusinessRequestWithTwo(request)
+                    ? BusinessRuleError.BUSINESS_RULE_ERROR.result()
+                    : Result.success(new ValidRequest(request.value1(), request.value2()));
+        }
+
+        private static boolean isBusinessRequestWithTwo(Request request) {
+            return request.value1().isBusiness() || request.value2().hasTwo();
         }
     }
 

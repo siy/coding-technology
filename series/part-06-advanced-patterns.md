@@ -350,6 +350,15 @@ Fork-Join has a crucial constraint: **all branches must be truly independent wit
 - **Local mutable state is safe** - thread-confined accumulators, builders within each branch are fine.
 - **Results must be immutable** - data returned from branches will be combined, must be thread-safe.
 
+**View 3: Infrastructure Independence** - Type-level independence is not the same as infrastructure-level independence. Operations that appear independent at the code level may conflict at the infrastructure level:
+
+- **Database locks:** Two queries may deadlock on shared rows
+- **Rate limits:** Parallel API calls may exhaust quotas
+- **Connection pools:** Parallel operations may compete for connections
+- **Transactions:** Operations in the same transaction may have ordering requirements
+
+Validate infrastructure constraints, not just type signatures.
+
 Example design issue uncovered by Fork-Join:
 ```java
 // ❌ WRONG: Logical dependency
@@ -556,12 +565,45 @@ var decoratedStep = withMetrics(metricsPolicy,
 
 Or use a helper:
 ```java
-var decoratedStep = composeAspects(List.of(metrics(metricsPolicy), 
-                                           timeout(timeoutPolicy), 
-                                           circuitBreaker(breakerPolicy), 
-                                           retry(retryPolicy)), 
+var decoratedStep = composeAspects(List.of(metrics(metricsPolicy),
+                                           timeout(timeoutPolicy),
+                                           circuitBreaker(breakerPolicy),
+                                           retry(retryPolicy)),
                                    rawStep);
 ```
+
+### Operational Semantics
+
+**Timeout Behavior:**
+- **Logical timeout:** Promise resolves with `TimeoutError` after deadline
+- **Actual cancellation:** The underlying operation may continue running
+- **Rule:** Timeout doesn't guarantee resource cleanup—idempotent operations are safer
+
+**Retry Semantics:**
+- **Idempotency required:** Retried operations must be safe to repeat
+- **State changes:** Non-idempotent operations (money transfers, order creation) need idempotency keys
+- **Backoff:** Exponential backoff prevents thundering herd
+
+```java
+// Safe: idempotent read
+withRetry(policy, () -> fetchUser(id))
+
+// Unsafe without idempotency key
+withRetry(policy, () -> createOrder(request))  // DON'T - may create duplicates
+
+// Safe: idempotent write with key
+withRetry(policy, () -> createOrder(request, idempotencyKey))  // DO
+```
+
+**Composition Order Semantics:**
+
+| Order | Meaning |
+|-------|---------|
+| Metrics → Timeout → Retry → Operation | Metrics count total time; timeout applies to all retries |
+| Timeout → Metrics → Retry → Operation | Timeout per attempt; metrics count each retry |
+| Retry → Timeout → Operation | Each attempt has own timeout |
+
+**Rule:** Define composition order based on what you want to observe and control. Document your choice.
 
 ### Testing Aspects
 

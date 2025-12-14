@@ -1,0 +1,62 @@
+---
+title: "Java Backend Coding Technology"
+subtitle: "Unified Code Through Functional Composition"
+author: "Sergiy Yevtushenko"
+date: "2025"
+lang: en
+documentclass: book
+classoption:
+  - oneside
+  - 10pt
+papersize: letter
+geometry:
+  - margin=1in
+  - bindingoffset=0.5in
+fontsize: 10pt
+mainfont: "DejaVu Serif"
+sansfont: "DejaVu Sans"
+monofont: "DejaVu Sans Mono"
+linestretch: 1.15
+toc: true
+toc-depth: 2
+numbersections: false
+secnumdepth: 0
+highlight-style: tango
+code-block-font-size: \small
+links-as-notes: false
+colorlinks: true
+linkcolor: black
+urlcolor: blue
+header-includes:
+  - |
+    ```{=latex}
+    \usepackage{listings}
+    \usepackage{fancyhdr}
+    \usepackage{titlesec}
+    \usepackage{parskip}
+
+    % Chapter formatting
+    \titleformat{\chapter}[display]
+      {\normalfont\huge\bfseries}{\chaptertitlename\ \thechapter}{20pt}{\Huge}
+    \titlespacing*{\chapter}{0pt}{0pt}{40pt}
+
+    % Header/footer
+    \pagestyle{fancy}
+    \fancyhf{}
+    \fancyhead[L]{\leftmark}
+    \fancyhead[R]{\thepage}
+    \renewcommand{\headrulewidth}{0.4pt}
+
+    % Code listing style
+    \lstset{
+      basicstyle=\small\ttfamily,
+      breaklines=true,
+      breakatwhitespace=true,
+      tabsize=4,
+      showstringspaces=false,
+      frame=single,
+      frameround=tttt,
+      backgroundcolor=\color{gray!10}
+    }
+    ```
+---

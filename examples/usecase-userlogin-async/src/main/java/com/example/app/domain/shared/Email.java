@@ -13,8 +13,8 @@ import static org.pragmatica.lang.Verify.ensureFn;
 
 public record Email(String value) {
     private static final Pattern EMAIL = Pattern.compile("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$");
-    private static final Fn1<Cause, String> MISSING_EMAIL = Causes.forValue("Missing email address");
-    private static final Fn1<Cause, String> INVALID_EMAIL = Causes.forValue("Invalid email address {}");
+    private static final Fn1<Cause, String> MISSING_EMAIL = Causes.forOneValue("Missing email address");
+    private static final Fn1<Cause, String> INVALID_EMAIL = Causes.forOneValue("Invalid email address {}");
 
     // Pattern: VO factory named after type; normalize + ensure invariants
     public static Result<Email> email(String raw) {

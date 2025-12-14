@@ -15,7 +15,12 @@ public record ReferralCode(String value) {
     public static Result<Option<ReferralCode>> referralCode(String raw) {
         return raw == null
                 ? Result.success(Option.none())
-                : ensure(raw, Verify.Is::matches, REF).map(ReferralCode::new)
-                                                      .map(Option::option);
+                : parseReferralCode(raw);
+    }
+
+    private static Result<Option<ReferralCode>> parseReferralCode(String raw) {
+        return ensure(raw, Verify.Is::matches, REF)
+                .map(ReferralCode::new)
+                .map(Option::option);
     }
 }

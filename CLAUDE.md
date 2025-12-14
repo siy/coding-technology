@@ -201,22 +201,22 @@ When writing Java code examples, follow these formatting conventions strictly:
 
 ---
 
-# Pragmatica Lite Core 0.8.3 API Reference
+# Pragmatica Lite Core 0.8.4 API Reference
 
-This section documents the actual API methods available in Pragmatica Lite Core 0.8.3.
+This section documents the actual API methods available in Pragmatica Lite Core 0.8.4.
 
 **Maven:**
 ```xml
 <dependency>
    <groupId>org.pragmatica-lite</groupId>
    <artifactId>core</artifactId>
-   <version>0.8.3</version>
+   <version>0.8.4</version>
 </dependency>
 ```
 
 **Gradle:**
 ```gradle
-implementation 'org.pragmatica-lite:core:0.8.3'
+implementation 'org.pragmatica-lite:core:0.8.4'
 ```
 
 Library documentation: https://central.sonatype.com/artifact/org.pragmatica-lite/core
@@ -444,14 +444,14 @@ public record Age(int value) {
 ### Result.all (accumulates failures in CompositeCause):
 - `Result.all(Result<T1>)` → `Mapper1<T1>` with `.map()` / `.flatMap()` / `.async()`
 - `Result.all(Result<T1>, Result<T2>)` → `Mapper2<T1, T2>`
-- ... up to `Mapper9` (9 parameters)
+- ... up to `Mapper15` (15 parameters)
 - `Result.allOf(Result<T>...)` → `Result<List<T>>` (varargs)
 - `Result.allOf(List<Result<T>>)` → `Result<List<T>>`
 
 ### Promise.all (fail-fast on first failure):
 - `Promise.all(Promise<T1>)` → `Mapper1<T1>` with `.map()` / `.flatMap()`
 - `Promise.all(Promise<T1>, Promise<T2>)` → `Mapper2<T1, T2>`
-- ... up to `Mapper9` (9 parameters)
+- ... up to `Mapper15` (15 parameters)
 - `Promise.allOf(Collection<Promise<T>>)` → `Promise<List<Result<T>>>`
 
 ### any methods:
@@ -520,7 +520,8 @@ public record Age(int value) {
 - `.timeout(TimeSpan duration)`  -  add timeout to promise
 - `.mapResult(Fn1<Result<U>, Result<T>>)`  -  transform result (both success and failure)
 - `.replaceResult(Result<U>)`  -  replace result entirely
-- `.trace(Fn1<Cause, Cause>)`  -  transform error cause (alias: `.mapError()`)
+- `.mapError(Fn1<Cause, Cause>)`  -  transform error cause
+- `.trace()`  -  add tracing information (class name and line number) to error cause
 
 ### Query methods:
 - `.isPresent()` / `.isEmpty()`  -  Option only

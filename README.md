@@ -1,6 +1,6 @@
 # Java Backend Coding Technology
 
-> **Version 2.0.3** | [Full Changelog](CHANGELOG.md)
+> **Version 2.0.4** | [Full Changelog](CHANGELOG.md)
 
 A framework-agnostic methodology for writing predictable, testable Java backend code optimized for human-AI collaboration.
 
@@ -231,7 +231,7 @@ void email_acceptsValidFormat() {
 ### Changelog & Versioning
 
 - **[CHANGELOG.md](CHANGELOG.md)** - Version history following [Keep a Changelog](https://keepachangelog.com/)
-  - Current version: 2.0.3 (2025-12-11)
+  - Current version: 2.0.4 (2025-12-14)
   - Major release: Thread safety, concurrency, and 9-part series restructuring
   - Semantic versioning for documentation releases
 
@@ -360,6 +360,6 @@ You are free to:
 
 ---
 
-**Version:** 2.0.3 | **Last Updated:** 2025-12-11 | **[Full Changelog](CHANGELOG.md)**
+**Version:** 2.0.4 | **Last Updated:** 2025-12-14 | **[Full Changelog](CHANGELOG.md)**
 
 **Copyright © 2025 Sergiy Yevtushenko. Released under the [MIT License](LICENSE).**

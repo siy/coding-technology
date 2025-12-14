@@ -1,6 +1,6 @@
 # Java Backend Coding Technology: Complete Learning Series
 
-**Based on:** [CODING_GUIDE.md](../CODING_GUIDE.md) v2.0.3
+**Based on:** [CODING_GUIDE.md](../CODING_GUIDE.md) v2.0.4
 
 ## About This Series
 
@@ -222,7 +222,7 @@ Looking for specific patterns? Jump directly to the relevant part using the topi
 
 ## Series Version
 
-**Version 2.0.3** (2025-12-11)
+**Version 2.0.4** (2025-12-11)
 - **Book feedback fixes** - Improvements based on reviewer feedback
   - Prerequisites clarified (Java 21+, mid/senior developers)
   - Return Type Matrix with allowed/discouraged/forbidden rules

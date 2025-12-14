@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.3] - 2025-12-14
+
 ### Added
 - **Static imports section** - Encouraged use of static imports for factory methods and Pragmatica Lite APIs
   - Added to jbct-coder.md, jbct-reviewer.md, CODING_GUIDE.md, skills/jbct/SKILL.md
@@ -14,16 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Fluent failure creation** - Explicit preference for `cause.result()` over `Result.failure(cause)`
   - Added anti-pattern documentation with examples
   - Updated all code examples to use fluent style
-
-### Changed
-- **Pragmatica Lite Core** updated from 0.8.3 to 0.8.4 in all documentation and examples
-  - New in 0.8.4: Extended `all()`/`Fn`/`Tuple` support from 9 to 15 parameters
-  - New integration modules: HTTP Client, JDBC, R2DBC, JOOQ R2DBC
-- **jbct-coder.md** and **jbct-reviewer.md** synchronized with system agent definitions
-
-## [2.0.3] - 2025-12-11
-
-### Added
+- **Book content** - Complete JBCT book with 19 chapters and 4 appendices
+- **CI workflow** - GitHub Actions workflow to build book PDF
 - **Book feedback fixes** - Comprehensive improvements based on Java 25 reviewer feedback
   - JBCT abbreviation decoded on first use ("Java Backend Coding Technology")
   - Prerequisites updated: Mid-/senior Java developers, Java 21+, FP basics
@@ -39,6 +33,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Interoperability section: Optional→Option, CompletableFuture→Promise, exceptions→Cause
 
 ### Changed
+- **Pragmatica Lite Core** updated from 0.8.3 to 0.8.4 in all documentation and examples
+  - New in 0.8.4: Extended `all()`/`Fn`/`Tuple` support from 9 to 15 parameters
+  - New integration modules: HTTP Client, JDBC, R2DBC, JOOQ R2DBC
+- **jbct-coder.md** and **jbct-reviewer.md** synchronized with system agent definitions
 - **ch01-introduction.md**: Prerequisites, JBCT decode, "Pragmatic Not Pure" section
 - **ch02-four-return-types.md**: Return Type Matrix (allowed/discouraged/forbidden)
 - **ch04-parse-dont-validate.md**: Validation placement guidelines

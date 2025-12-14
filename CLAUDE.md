@@ -521,7 +521,7 @@ public record Age(int value) {
 - `.mapResult(Fn1<Result<U>, Result<T>>)`  -  transform result (both success and failure)
 - `.replaceResult(Result<U>)`  -  replace result entirely
 - `.mapError(Fn1<Cause, Cause>)`  -  transform error cause
-- `.trace(Fn1<Cause, Cause>)`  -  add context to error cause (for debugging)
+- `.trace()`  -  add tracing information (class name and line number) to error cause
 
 ### Query methods:
 - `.isPresent()` / `.isEmpty()`  -  Option only

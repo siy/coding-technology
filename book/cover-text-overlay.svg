@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2100 3000">
+  <!-- Title -->
+  <text x="1050" y="270"
+        font-family="Inter, Roboto, 'Source Sans Pro', sans-serif"
+        font-size="108"
+        font-weight="700"
+        fill="#000000"
+        text-anchor="middle">
+    Java Backend
+  </text>
+  <text x="1050" y="390"
+        font-family="Inter, Roboto, 'Source Sans Pro', sans-serif"
+        font-size="108"
+        font-weight="700"
+        fill="#000000"
+        text-anchor="middle">
+    Coding Technology
+  </text>
+
+  <!-- Subtitle -->
+  <text x="1050" y="510"
+        font-family="Inter, Roboto, 'Source Sans Pro', sans-serif"
+        font-size="48"
+        font-weight="400"
+        fill="#333333"
+        text-anchor="middle">
+    Unified Code Through Functional Composition
+  </text>
+
+  <!-- Author -->
+  <text x="1050" y="2880"
+        font-family="Inter, Roboto, 'Source Sans Pro', sans-serif"
+        font-size="54"
+        font-weight="400"
+        fill="#000000"
+        text-anchor="middle">
+    Sergiy Yevtushenko
+  </text>
+</svg>

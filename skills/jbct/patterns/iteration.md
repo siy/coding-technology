@@ -95,7 +95,7 @@ public Result<List<ValidItem>> validateItems(List<Item> items) {
     for (Item item : items) {
         Result<ValidItem> result = ValidItem.validItem(item);
         if (result.isFailure()) {
-            return result.mapFailure(f -> f);  // Short-circuit on first failure
+            return result.mapError(f -> f);  // Short-circuit on first failure
         }
     }
     return Result.success(validatedItems);

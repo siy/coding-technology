@@ -105,13 +105,13 @@ public record UserId(UUID value) {
             .map(String::trim)
             .flatMap(Verify.ensureFn(INVALID_USER_ID, Verify.Is::notEmpty))
             .flatMap(str -> Result.lift(() -> UUID.fromString(str))
-                                  .mapFailure(e -> INVALID_USER_ID.apply(raw)))
+                                  .mapError(e -> INVALID_USER_ID.apply(raw)))
             .map(UserId::new);
     }
 
     public static Result<UserId> userId(UUID value) {
         return Verify.ensure(value, Verify.Is::notNull)
-            .mapFailure(e -> INVALID_USER_ID.apply("null"))
+            .mapError(e -> INVALID_USER_ID.apply("null"))
             .map(UserId::new);
     }
 }

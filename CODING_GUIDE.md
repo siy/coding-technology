@@ -1250,7 +1250,7 @@ public record UserId(UUID value) {
     public static Result<UserId> userId(String raw) {
         return Verify.ensure(raw, Verify.Is::notBlank)
                      .flatMap(Network::parseUUID)
-                     .mapFailure(_ -> INVALID_ID.apply(raw)) // Convert generic cause into domain-specific one
+                     .mapError(_ -> INVALID_ID.apply(raw)) // Convert generic cause into domain-specific one
                      .map(UserId::new);
     }
 }

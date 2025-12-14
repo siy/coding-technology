@@ -520,7 +520,8 @@ public record Age(int value) {
 - `.timeout(TimeSpan duration)`  -  add timeout to promise
 - `.mapResult(Fn1<Result<U>, Result<T>>)`  -  transform result (both success and failure)
 - `.replaceResult(Result<U>)`  -  replace result entirely
-- `.trace(Fn1<Cause, Cause>)`  -  transform error cause (alias: `.mapError()`)
+- `.mapError(Fn1<Cause, Cause>)`  -  transform error cause
+- `.trace(Fn1<Cause, Cause>)`  -  add context to error cause (for debugging)
 
 ### Query methods:
 - `.isPresent()` / `.isEmpty()`  -  Option only

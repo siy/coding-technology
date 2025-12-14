@@ -202,7 +202,7 @@ Promise<Document> fetchDocumentAsync(String docId) {
             doc -> doc != null,
             () -> new NotFoundException("Document not found: " + docId)
         )
-        .mapFailure(e -> Causes.wrap(e, "Error fetching document: " + docId));
+        .mapError(e -> Causes.wrap(e, "Error fetching document: " + docId));
 }
 ```
 
@@ -221,7 +221,7 @@ Promise<Document> fetchDocumentAsync(String docId) {
 Result<FileData> readFile(Path path) {
     return Result.lift(() -> Files.readAllBytes(path))
         .map(data -> new FileData(path, data))
-        .mapFailure(e -> {
+        .mapError(e -> {
             if (e instanceof IOException) {
                 return Causes.wrap(e, "Failed to read file: " + path);
             } else if (e instanceof SecurityException) {
@@ -257,7 +257,7 @@ Result<Authentication> authenticate(Credentials credentials) {
             }
             return Result.success(new Authentication(token, Instant.now()));
         })
-        .mapFailure(e -> {
+        .mapError(e -> {
             if (e instanceof InvalidCredentialsException) {
                 return Causes.of("Invalid credentials");
             } else if (e instanceof RateLimitedException) {
@@ -287,7 +287,7 @@ Result<DatabaseConnection> getConnection(ConnectionParameters params) {
                 return Result.failure(Causes.wrap(e, "Connection validation failed"));
             }
         })
-        .mapFailure(e -> Causes.wrap(e, "Database connection failed"));
+        .mapError(e -> Causes.wrap(e, "Database connection failed"));
 }
 ```
 
@@ -308,7 +308,7 @@ Result<Order> createOrder(OrderRequest request) {
             r.deliveryAddress(),
             OrderStatus.PENDING
         )))
-        .mapFailure(e -> Causes.wrap(e, "Failed to create order"));
+        .mapError(e -> Causes.wrap(e, "Failed to create order"));
 }
 ```
 
@@ -328,7 +328,7 @@ Promise<ApiResponse> fetchExternalData(String resourceId) {
             }
             return new ApiResponse(response.body(), response.statusCode());
         })
-        .mapFailure(e -> Causes.wrap(e, "Failed to fetch resource: " + resourceId));
+        .mapError(e -> Causes.wrap(e, "Failed to fetch resource: " + resourceId));
 }
 ```
 
@@ -352,7 +352,7 @@ Promise<List<Product>> findProductsByCategory(String category) {
             return products;
         }
     })
-    .mapFailure(e -> Causes.wrap(e, "Database query failed for category: " + category));
+    .mapError(e -> Causes.wrap(e, "Database query failed for category: " + category));
 }
 ```
 
@@ -398,7 +398,7 @@ Promise<Document> fetchDocumentAsync(String docId) {
             doc -> doc != null,
             () -> new NotFoundException("Document not found: " + docId)
         )
-        .mapFailure(e -> Causes.wrap(e, "Error fetching document: " + docId));
+        .mapError(e -> Causes.wrap(e, "Error fetching document: " + docId));
 }
 ```
 

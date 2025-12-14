@@ -253,6 +253,37 @@ Traditional Java mixes these concerns. A method returning `User` might throw exc
 
 This clarity is what makes AI-assisted development tractable. When generating code, an AI doesn't need to infer whether error handling is needed - the return type declares it. When reading code, a human doesn't need to trace execution paths to find hidden failure modes - they're in the type signature.
 
+### Return Type Matrix
+
+**Allowed Return Types:**
+
+| Type | Use Case |
+|------|----------|
+| `T` | Synchronous, cannot fail, always present |
+| `Option<T>` | Synchronous, cannot fail, might be absent |
+| `Result<T>` | Synchronous, can fail |
+| `Promise<T>` | Asynchronous, can fail |
+| `Result<Option<T>>` | Optional value that can fail validation |
+| `Promise<Option<T>>` | Async lookup that might not find anything |
+
+**Discouraged:**
+
+| Type | Why Discouraged |
+|------|-----------------|
+| `Optional<T>` | Use `Option<T>` for consistency |
+| `CompletableFuture<T>` | Use `Promise<T>` for consistent error handling |
+| Framework-specific types | Keep business logic framework-agnostic |
+
+**Forbidden (Double-Monad Nesting):**
+
+| Type | Why Forbidden |
+|------|---------------|
+| `Promise<Result<T>>` | `Promise` already carries failures |
+| `Result<Result<T>>` | Nested failures create unwrapping ceremony |
+| `Option<Option<T>>` | Nested optionality is meaningless |
+
+**Rule:** Each monadic concern appears at most once in a return type.
+
 ### Quick Reference: Choosing the Right Type
 
 **Return `T` when:**
@@ -375,7 +406,7 @@ import org.pragmatica.lang.Functions.Fn2;
 
 **Common patterns:**
 - `Result.success(value)` - Create success
-- `Result.failure(cause)` or `cause.result()` - Create failure
+- `cause.result()` - Create failure (prefer over `Result.failure(cause)`)
 - `Result.all(r1, r2, ...)` - Parallel validation, collect all errors
 - `Result.allOf(list)` - Aggregate list of Results
 - `Verify.ensure(value, predicate)` - Validate value

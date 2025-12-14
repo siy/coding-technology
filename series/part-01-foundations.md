@@ -112,7 +112,7 @@ Why this matters: composition lets you **build complex logic from simple pieces*
 
 ### What Are Smart Wrappers?
 
-In JBCT, we use **Smart Wrappers**—types that wrap values and control how operations are applied to them.
+In **Java Backend Coding Technology (JBCT)**, we use **Smart Wrappers**—types that wrap values and control how operations are applied to them.
 
 > **Note:** In functional programming, these are called *monads*. You'll see both terms used throughout this series, with "Smart Wrapper" being more common early on and "monad" becoming more frequent later. By the end, you'll be comfortable with the correct FP terminology.
 
@@ -285,6 +285,14 @@ This mental model makes code structure **visual and predictable**:
 - Linear flow: top to bottom
 - No hidden branching: if you see 5 steps, there are 5 steps
 - Error handling: automatic, not scattered through if-checks
+
+### Pragmatic, Not Pure
+
+JBCT uses *pragmatic* monads. Monad laws are not required. Purity is not a goal. **Predictability is.**
+
+We borrow functional patterns because they make code more predictable and composable, not because we're pursuing theoretical purity. Side effects happen. I/O is necessary. The goal is to make side effects *explicit* and *isolated*, not to eliminate them.
+
+If you're coming from Haskell or Scala, adjust your expectations: this is practical Java, not academic FP.
 
 ### Immutability and Thread Confinement
 
@@ -497,13 +505,13 @@ Add to your `pom.xml`:
 <dependency>
    <groupId>org.pragmatica-lite</groupId>
    <artifactId>core</artifactId>
-   <version>0.8.3</version>
+   <version>0.8.4</version>
 </dependency>
 ```
 
 Or Gradle:
 ```gradle
-implementation 'org.pragmatica-lite:core:0.8.3'
+implementation 'org.pragmatica-lite:core:0.8.4'
 ```
 
 Library documentation: https://central.sonatype.com/artifact/org.pragmatica-lite/core

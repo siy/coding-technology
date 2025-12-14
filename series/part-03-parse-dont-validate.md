@@ -324,7 +324,7 @@ import org.pragmatica.lang.Functions.Fn2;
 
 **Common patterns:**
 - `Result.success(value)` - Create success
-- `Result.failure(cause)` or `cause.result()` - Create failure
+- `cause.result()` - Create failure (prefer over `Result.failure(cause)`)
 - `Result.all(r1, r2, ...)` - Parallel validation, collect all errors
 - `Result.allOf(list)` - Aggregate list of Results
 - `Verify.ensure(value, predicate)` - Validate value

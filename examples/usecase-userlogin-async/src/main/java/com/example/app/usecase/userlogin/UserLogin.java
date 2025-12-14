@@ -67,8 +67,8 @@ public interface UserLogin {
 
     // Factory named after type (lowerCamel)
     static UserLogin userLogin(CheckCredentials checkCredentials,
-                                        CheckAccountStatus checkAccountStatus,
-                                        GenerateToken generateToken) {
+                               CheckAccountStatus checkAccountStatus,
+                               GenerateToken generateToken) {
 
         return request -> ValidRequest.validRequest(request)
                                       .async()

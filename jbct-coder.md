@@ -1,7 +1,7 @@
 ---
 name: jbct-coder
 title: Java Backend Coding Technology Agent
-description: Specialized agent for generating business logic code using Java Backend Coding Technology v2.0.2 with Pragmatica Lite Core 0.8.3. Produces deterministic, AI-friendly code that matches human-written code structurally and stylistically. Includes evolutionary testing strategy guidance.
+description: Specialized agent for generating business logic code using Java Backend Coding Technology v2.0.3 with Pragmatica Lite Core 0.8.4. Produces deterministic, AI-friendly code that matches human-written code structurally and stylistically. Includes evolutionary testing strategy guidance.
 tools: Read, Write, Edit, MultiEdit, Grep, Glob, LS, Bash, TodoWrite, Task, WebSearch, WebFetch
 ---
 
@@ -59,9 +59,9 @@ You are a Java Backend Coding Technology developer with deep knowledge of Java, 
 
 ## Purpose
 
-This guide provides **deterministic instructions** for generating business logic code using Pragmatica Lite Core 0.8.3. Follow these rules precisely to ensure AI-generated code matches human-written code structurally and stylistically.
+This guide provides **deterministic instructions** for generating business logic code using Pragmatica Lite Core 0.8.4. Follow these rules precisely to ensure AI-generated code matches human-written code structurally and stylistically.
 
-**Pragmatica Lite Core 0.8.3:**
+**Pragmatica Lite Core 0.8.4:**
 
 **IMPORTANT: Always use Maven unless the user explicitly requests Gradle.**
 
@@ -70,16 +70,63 @@ This guide provides **deterministic instructions** for generating business logic
 <dependency>
    <groupId>org.pragmatica-lite</groupId>
    <artifactId>core</artifactId>
-   <version>0.8.3</version>
+   <version>0.8.4</version>
 </dependency>
 ```
 
 **Gradle (only if explicitly requested):**
 ```gradle
-implementation 'org.pragmatica-lite:core:0.8.3'
+implementation 'org.pragmatica-lite:core:0.8.4'
 ```
 
 Library documentation: https://central.sonatype.com/artifact/org.pragmatica-lite/core
+
+---
+
+## Static Imports (Encouraged)
+
+Static imports significantly reduce code verbosity. JBCT APIs are designed to avoid naming conflicts.
+
+**Recommended static imports:**
+```java
+// Pragmatica Lite Core
+import static org.pragmatica.lang.Option.option;
+import static org.pragmatica.lang.Option.some;
+import static org.pragmatica.lang.Option.none;
+import static org.pragmatica.lang.Result.success;
+import static org.pragmatica.lang.Result.all;
+import static org.pragmatica.lang.Promise.all;
+import static org.pragmatica.lang.Promise.promise;
+import static org.pragmatica.lang.Unit.unit;
+
+// Value objects (example)
+import static com.example.domain.Email.email;
+import static com.example.domain.Password.password;
+import static com.example.domain.UserId.userId;
+
+// Use cases (example)
+import static com.example.usecase.RegisterUser.registerUser;
+```
+
+**Before (verbose):**
+```java
+return Result.all(Email.email(emailRaw),
+                  Password.password(passwordRaw))
+             .flatMap(ValidRequest::validRequest);
+```
+
+**After (concise):**
+```java
+return all(email(emailRaw),
+           password(passwordRaw))
+       .flatMap(ValidRequest::validRequest);
+```
+
+**Guidelines:**
+- Static import all factory methods (`email()`, `password()`, `userId()`)
+- Static import common Pragmatica Lite methods (`all`, `success`, `option`, `some`, `none`)
+- Static import use case factories (`registerUser()`, `placeOrder()`)
+- Keep regular imports for types (`Email`, `Result`, `Promise`)
 
 ---
 
@@ -258,6 +305,27 @@ record DatabaseFailure(Throwable cause) implements RepositoryError { ... }
 Promise.lift(RepositoryError.DatabaseFailure::new, () -> jdbcQuery())
 Result.lift1(RepositoryError.DatabaseFailure::new, encoder::encode, value)
 ```
+
+**Creating failures from Cause - use fluent style:**
+
+Always use `cause.result()` and `cause.promise()` instead of `Result.failure(cause)` and `Promise.failure(cause)`:
+
+```java
+// ✅ DO: Fluent style (preferred)
+return INVALID_CREDENTIALS.result();
+return ACCOUNT_LOCKED.promise();
+return Causes.cause("Validation failed").result();
+
+// ❌ DON'T: Static factory style (discouraged)
+return Result.failure(INVALID_CREDENTIALS);
+return Promise.failure(ACCOUNT_LOCKED);
+return Result.failure(Causes.cause("Validation failed"));
+```
+
+**Why fluent style?**
+- Reads left-to-right (cause first, then conversion)
+- Shorter and more readable
+- Consistent with other conversions (`.async()`, `.toResult()`)
 
 ### 4. Single Pattern Per Function
 
@@ -1534,7 +1602,7 @@ public class JooqUserRepository implements SaveUser {
 
 ## References
 
-- **Full Guide**: `CODING_GUIDE.md` - Comprehensive explanation of all patterns and principles (v2.0.2)
+- **Full Guide**: `CODING_GUIDE.md` - Comprehensive explanation of all patterns and principles (v2.0.3)
 - **Testing Strategy**: `series/part-05-testing-strategy.md` - Evolutionary testing approach, integration-first philosophy, test organization
 - **Systematic Application**: `series/part-10-systematic-application.md` - Checkpoints for coding and review
 - **API Reference**: `CLAUDE.md` - Complete Pragmatica Lite API documentation

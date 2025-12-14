@@ -12,7 +12,7 @@
         <maven.compiler.target>25</maven.compiler.target>
         <maven.compiler.release>25</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <pragmatica.version>0.8.3</pragmatica.version>
+        <pragmatica.version>0.8.4</pragmatica.version>
     </properties>
 
     <modules>

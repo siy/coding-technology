@@ -235,9 +235,11 @@ void email_acceptsValidFormat() {
   - Major release: Thread safety, concurrency, and 9-part series restructuring
   - Semantic versioning for documentation releases
 
-## 🔧 For AI Collaboration
+## 🔧 Tools
 
-### Claude Code Skill
+### AI Tools
+
+#### Claude Code Skill
 
 **[skills/jbct/](skills/jbct/)** - Comprehensive JBCT skill for Claude Code:
 - Design, implement, and review JBCT code
@@ -248,7 +250,7 @@ void email_acceptsValidFormat() {
 
 **Usage**: Claude Code will automatically activate the skill when working with Result/Option/Promise types, value objects, use cases, or JBCT patterns.
 
-### Claude Code Subagents
+#### Claude Code Subagents
 
 Ready-to-use configurations for specialized code assistance:
 
@@ -264,6 +266,24 @@ Ready-to-use configurations for specialized code assistance:
   - **Installation**: Download and place in `~/.claude/agents/jbct-reviewer.md`
 
 **Usage**: After installation, Claude Code will automatically use these subagents when appropriate, or invoke explicitly: `"Use jbct-coder to implement..."` or `"Use jbct-reviewer to check..."`
+
+### CLI Tools
+
+#### JBCT CLI & Maven Plugin
+
+**[jbct-cli](https://github.com/siy/jbct-cli)** - Code formatting and linting tools for JBCT:
+- `jbct format` - Format Java code to JBCT style (chain alignment, import grouping)
+- `jbct lint` - Check JBCT compliance with 23 lint rules
+- `jbct check` - Combined format + lint (recommended for CI)
+- `jbct init` - Scaffold new JBCT project with AI tools
+- Maven plugin for build integration
+
+**Quick Install (Linux/macOS):**
+```bash
+curl -fsSL https://raw.githubusercontent.com/siy/jbct-cli/main/install.sh | sh
+```
+
+**Requirements:** Java 25+
 
 ## 📂 Repository Structure
 

@@ -5283,6 +5283,26 @@ That's the technology.
 
 ---
 
+## Tooling
+
+JBCT provides tools for both human developers and AI assistants. For complete documentation and installation instructions, see the [Tools section in README.md](README.md#-tools).
+
+### AI Tools
+
+- **JBCT Skill** - Claude Code skill for learning and quick reference
+- **jbct-coder** - Subagent for generating JBCT-compliant code
+- **jbct-reviewer** - Subagent for code review against JBCT patterns
+
+### CLI Tools
+
+- **JBCT CLI** - Command-line tool for formatting and linting
+  - `jbct format` - Format Java code to JBCT style
+  - `jbct lint` - Check compliance with 23 lint rules
+  - `jbct check` - Combined format + lint (recommended for CI)
+- **Maven Plugin** - Build integration for automated checks
+
+---
+
 ## Version History
 
 For detailed changelog of all versions, see [CHANGELOG.md](https://github.com/siy/coding-technology/blob/main/CHANGELOG.md).

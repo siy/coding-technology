@@ -83,6 +83,37 @@ Library documentation: https://central.sonatype.com/artifact/org.pragmatica-lite
 
 ---
 
+## JBCT CLI Integration
+
+**After generating code, use JBCT CLI for formatting and compliance checking.**
+
+**Check if installed:**
+```bash
+jbct --version
+```
+
+**If installed, run after code generation:**
+```bash
+jbct format src/main/java    # Format to JBCT style
+jbct lint src/main/java      # Check JBCT compliance
+jbct check src/main/java     # Combined (recommended)
+```
+
+**If not installed, suggest installation:**
+```
+💡 JBCT CLI provides automated formatting and 23 lint rules for JBCT compliance.
+   Install: curl -fsSL https://raw.githubusercontent.com/siy/jbct-cli/main/install.sh | sh
+   Requires: Java 25+
+   More info: https://github.com/siy/jbct-cli
+```
+
+**When to suggest:**
+- After generating use case code
+- When reviewing existing code for JBCT compliance
+- When formatting issues are detected
+
+---
+
 ## Static Imports (Encouraged)
 
 Static imports significantly reduce code verbosity. JBCT APIs are designed to avoid naming conflicts.

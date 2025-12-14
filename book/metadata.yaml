@@ -13,9 +13,9 @@ geometry:
   - margin=1in
   - bindingoffset=0.5in
 fontsize: 10pt
-mainfont: "Arial Unicode MS"
-sansfont: "Arial Unicode MS"
-monofont: "Menlo"
+mainfont: "DejaVu Serif"
+sansfont: "DejaVu Sans"
+monofont: "DejaVu Sans Mono"
 linestretch: 1.15
 toc: true
 toc-depth: 2

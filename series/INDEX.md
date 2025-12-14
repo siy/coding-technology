@@ -1,6 +1,6 @@
 # Java Backend Coding Technology: Complete Learning Series
 
-**Based on:** [CODING_GUIDE.md](../CODING_GUIDE.md) v2.0.2
+**Based on:** [CODING_GUIDE.md](../CODING_GUIDE.md) v2.0.3
 
 ## About This Series
 
@@ -221,6 +221,16 @@ Looking for specific patterns? Jump directly to the relevant part using the topi
 - **Feedback**: [GitHub Issues](https://github.com/siy/coding-technology/issues)
 
 ## Series Version
+
+**Version 2.0.3** (2025-12-11)
+- **Book feedback fixes** - Improvements based on reviewer feedback
+  - Prerequisites clarified (Java 21+, mid/senior developers)
+  - Return Type Matrix with allowed/discouraged/forbidden rules
+  - Validation placement guidelines
+  - Fork-Join infrastructure warnings
+  - Aspects operational semantics
+  - Testing speed classification
+  - Interoperability section (Optional, CompletableFuture, exceptions)
 
 **Version 2.0.2** (2025-12-06)
 - **Added Part 10: Systematic Application Guide**

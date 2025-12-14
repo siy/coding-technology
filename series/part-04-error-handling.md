@@ -581,7 +581,7 @@ public Promise<Order> processOrder(OrderRequest request) {
         .recover(cause -> switch (cause) {
             case PaymentError.InsufficientFunds _ -> splitPaymentService.process(request); // Async alternative: split payment
             case PaymentError.TemporaryFailure _ -> Promise.success(request).flatMap(paymentService::charge); // Retry once
-            default -> Promise.failure(cause);  // Can't recover
+            default -> cause.promise();  // Can't recover
         });
 }
 ```
@@ -1001,7 +1001,7 @@ They prevent complexity explosion. With exactly four return types and clear comp
 
 ## Pragmatica Lite API Reference
 
-This section consolidates the essential Pragmatica Lite Core 0.8.3 APIs you'll use daily. For complete API documentation, see [CODING_GUIDE.md: Pragmatica Lite Core 0.8.3 API Reference](../CODING_GUIDE.md).
+This section consolidates the essential Pragmatica Lite Core 0.8.4 APIs you'll use daily. For complete API documentation, see [CODING_GUIDE.md: Pragmatica Lite Core 0.8.4 API Reference](../CODING_GUIDE.md).
 
 ### Type Conversions
 

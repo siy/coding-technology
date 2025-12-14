@@ -7,6 +7,47 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Static imports section** - Encouraged use of static imports for factory methods and Pragmatica Lite APIs
+  - Added to jbct-coder.md, jbct-reviewer.md, CODING_GUIDE.md, skills/jbct/SKILL.md
+  - Reduces code verbosity while maintaining readability
+- **Fluent failure creation** - Explicit preference for `cause.result()` over `Result.failure(cause)`
+  - Added anti-pattern documentation with examples
+  - Updated all code examples to use fluent style
+
+### Changed
+- **Pragmatica Lite Core** updated from 0.8.3 to 0.8.4 in all documentation and examples
+  - New in 0.8.4: Extended `all()`/`Fn`/`Tuple` support from 9 to 15 parameters
+  - New integration modules: HTTP Client, JDBC, R2DBC, JOOQ R2DBC
+- **jbct-coder.md** and **jbct-reviewer.md** synchronized with system agent definitions
+
+## [2.0.3] - 2025-12-11
+
+### Added
+- **Book feedback fixes** - Comprehensive improvements based on Java 25 reviewer feedback
+  - JBCT abbreviation decoded on first use ("Java Backend Coding Technology")
+  - Prerequisites updated: Mid-/senior Java developers, Java 21+, FP basics
+  - "Pragmatic, Not Pure" section clarifying JBCT's non-academic FP approach
+  - Return Type Matrix with allowed/discouraged/forbidden nesting rules
+  - Validation placement guidelines (value object vs ValidRequest vs use case)
+  - Programming errors vs business errors clarification
+  - Null policy consolidation statement
+  - Fork-Join infrastructure-level dependency warnings (DB locks, rate limits)
+  - Aspects operational semantics (timeout, retry, composition order)
+  - Test speed classification (fast/slow integration tests)
+  - Async Promise testing patterns with timeouts
+  - Interoperability section: Optional→Option, CompletableFuture→Promise, exceptions→Cause
+
+### Changed
+- **ch01-introduction.md**: Prerequisites, JBCT decode, "Pragmatic Not Pure" section
+- **ch02-four-return-types.md**: Return Type Matrix (allowed/discouraged/forbidden)
+- **ch04-parse-dont-validate.md**: Validation placement guidelines
+- **ch05-error-handling.md**: Programming vs business errors clarification
+- **ch06-null-policy-recovery.md**: Consolidated null policy statement
+- **ch08-advanced-patterns.md**: Fork-Join infra warnings, Aspects operational semantics
+- **ch11-testing-practice.md**: Test speed classification, async testing patterns
+- **ch17-migration-strategies.md**: Interoperability section (Optional, CF, exceptions)
+
 ## [2.0.2] - 2025-12-06
 
 ### Added

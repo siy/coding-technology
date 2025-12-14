@@ -478,23 +478,52 @@ void execute_succeeds_forValidInput() {
 
 ## Pragmatica Lite Core Library
 
-JBCT uses **Pragmatica Lite Core 0.8.3** for functional types.
+JBCT uses **Pragmatica Lite Core 0.8.4** for functional types.
 
 **Maven (preferred):**
 ```xml
 <dependency>
    <groupId>org.pragmatica-lite</groupId>
    <artifactId>core</artifactId>
-   <version>0.8.3</version>
+   <version>0.8.4</version>
 </dependency>
 ```
 
 **Gradle (only if explicitly requested):**
 ```gradle
-implementation 'org.pragmatica-lite:core:0.8.3'
+implementation 'org.pragmatica-lite:core:0.8.4'
 ```
 
 Library documentation: https://central.sonatype.com/artifact/org.pragmatica-lite/core
+
+### Static Imports (Encouraged)
+
+Static imports reduce code verbosity:
+
+```java
+// Recommended static imports
+import static org.pragmatica.lang.Result.all;
+import static org.pragmatica.lang.Result.success;
+import static com.example.domain.Email.email;
+import static com.example.domain.Password.password;
+
+// Concise code
+return all(email(raw), password(raw)).flatMap(ValidRequest::validRequest);
+```
+
+### Fluent Failure Creation
+
+Use `cause.result()` and `cause.promise()` instead of `Result.failure(cause)`:
+
+```java
+// ✅ DO: Fluent style
+return INVALID_EMAIL.result();
+return USER_NOT_FOUND.promise();
+
+// ❌ DON'T: Static factory style
+return Result.failure(INVALID_EMAIL);
+return Promise.failure(USER_NOT_FOUND);
+```
 
 ## When to Use Specialized Subagents
 

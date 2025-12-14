@@ -31,6 +31,7 @@ const MARKDOWN_FILES = [
   'TECHNOLOGY.md',
   'PL_IMPROVEMENTS.md',
   'jbct-coder.md',
+  'jbct-reviewer.md',
   'CONTACT.md'
 ];
 

@@ -9,7 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2.0.4] - 2025-12-14
 
-_No changes yet._
+### Added
+- **Tools section in README.md** - Reorganized documentation structure
+  - "AI Tools" subsection for Claude Code skill and subagents
+  - "CLI Tools" subsection for jbct-cli and Maven plugin
+- **JBCT CLI integration** - AI tools now aware of jbct-cli
+  - jbct-coder.md: Suggests running `jbct check` after code generation
+  - jbct-reviewer.md: Recommends `jbct check` before manual review
+  - skills/jbct/SKILL.md: References CLI tool for automated checking
+  - All tools suggest installation when CLI not found
+- **Tooling section in CODING_GUIDE.md** - Brief overview pointing to README
+- **jbct-reviewer.md added to website build**
 
 ## [2.0.3] - 2025-12-14
 

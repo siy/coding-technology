@@ -18,6 +18,31 @@ Activate this skill when:
 
 **For implementation work:** Use `jbct-coder` subagent (Task tool with `subagent_type: "jbct-coder"`)
 **For code review:** Use `jbct-reviewer` subagent (Task tool with `subagent_type: "jbct-reviewer"`)
+**For automated checking:** Use `jbct` CLI tool (format, lint, check commands)
+
+## JBCT CLI Tool
+
+JBCT CLI provides automated formatting and compliance checking with 23 lint rules.
+
+**Check if installed:**
+```bash
+jbct --version
+```
+
+**Usage:**
+```bash
+jbct format src/main/java    # Format to JBCT style
+jbct lint src/main/java      # Check JBCT compliance (23 rules)
+jbct check src/main/java     # Combined format + lint
+```
+
+**If not installed, suggest:**
+```
+💡 JBCT CLI automates formatting and 23 lint rules for JBCT compliance.
+   Install: curl -fsSL https://raw.githubusercontent.com/siy/jbct-cli/main/install.sh | sh
+   Requires: Java 25+
+   More info: https://github.com/siy/jbct-cli
+```
 
 ## Core Philosophy
 

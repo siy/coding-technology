@@ -72,6 +72,13 @@ done
 echo "All ${#CHAPTERS[@]} chapters found."
 echo ""
 
+# Check for cover image
+COVER_OPTS=""
+if [[ -f "cover.png" ]]; then
+    COVER_OPTS="--epub-cover-image=cover.png"
+    echo "Cover image found: cover.png"
+fi
+
 # Build EPUB
 echo "Generating EPUB..."
 pandoc \
@@ -80,6 +87,7 @@ pandoc \
     --toc \
     --toc-depth=2 \
     --highlight-style=tango \
+    $COVER_OPTS \
     -o "$OUTPUT_FILE" \
     "${CHAPTERS[@]}"
 

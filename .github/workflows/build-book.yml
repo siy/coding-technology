@@ -1,4 +1,4 @@
-name: Build Book PDF
+name: Build Book
 
 on:
   push:
@@ -36,9 +36,22 @@ jobs:
           chmod +x build-pdf.sh
           ./build-pdf.sh
 
+      - name: Build EPUB
+        working-directory: ./book
+        run: |
+          chmod +x build-epub.sh
+          ./build-epub.sh
+
       - name: Upload PDF artifact
         uses: actions/upload-artifact@v4
         with:
-          name: jbct-book
+          name: jbct-book-pdf
           path: book/jbct-book.pdf
+          retention-days: 30
+
+      - name: Upload EPUB artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: jbct-book-epub
+          path: book/jbct-book.epub
           retention-days: 30

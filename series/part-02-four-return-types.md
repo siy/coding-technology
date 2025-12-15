@@ -143,6 +143,29 @@ public record Email(String value) {
 
 The signature `Result<Email>` tells you: this might fail (invalid format), completes immediately, failure is typed (not an exception).
 
+> **Why Result: Error Handling Philosophy**
+>
+> Error handling logic belongs where business context exists to make decisions. Sometimes that's close to where the error occurred; sometimes the error propagates unchanged because only the caller has enough context to decide. This fundamental truth doesn't depend on the error mechanism—it's about where knowledge lives.
+>
+> Different languages use different mechanisms for error propagation, each with distinct trade-offs in **transparency** (is failure visible?), **ergonomics** (is it pleasant to use?), and **reliability** (does the compiler help?):
+>
+> | Mechanism | Transparency | Ergonomics | Reliability |
+> |-----------|--------------|------------|-------------|
+> | **Checked exceptions** | ✅ Explicit in signature | ❌ Verbose, tight coupling | ✅ Compiler-enforced |
+> | **Unchecked exceptions** | ❌ Hidden in implementation | ⚠️ Acceptable, but mental overhead | ❌ Silent failures |
+> | **Errors as values** (Go) | ✅ Return value visible | ❌ Manual `if err != nil` everywhere | ❌ Easy to ignore |
+> | **Functional (Result/Either)** | ✅ Type signature | ✅ Monadic composition | ✅ Compiler-enforced |
+>
+> **Checked exceptions** couple caller and callee tightly—changes in lower-level methods cascade upward, forcing signature changes throughout the call stack.
+>
+> **Unchecked exceptions** eliminate coupling but hide failure modes. Every method call requires reading implementation to discover what might throw. The mental overhead is constant; the bugs are intermittent.
+>
+> **Errors as values** (Go-style) make failure visible but require manual propagation at every step. Complex scenarios with multiple error sources or interleaved resource management become error-prone boilerplate.
+>
+> **Functional style** (`Result<T>`) combines the best properties: failure is explicit in the type signature (transparent), monadic composition eliminates manual propagation (ergonomic), and the compiler ensures every failure is either handled or propagated (reliable). The "do this if value is available" semantics of `map`/`flatMap` means error handling code only appears where decisions are made—not at every intermediate step.
+>
+> Being absolutely clear about failure possibility isn't pedantry—it's the foundation of maintainable code.
+
 ### `Promise<T>` - Asynchronous, Can Fail, Represents Eventual Success or Failure
 
 Use this for any I/O operation, external service call, or computation that might block. `Promise<T>` is semantically equivalent to `Result<T>` but asynchronous - failures are carried in the Promise itself, not nested inside it. This is Java's answer to Rust's `Future<Result<T>>` without the nesting problem.
@@ -154,6 +177,10 @@ public interface AccountRepository {
 ```
 
 The signature `Promise<Account>` tells you: this completes later (async), might fail (network, database), failure is carried in the Promise.
+
+> **Promise as Async Result**
+>
+> Think of `Promise<T>` as the asynchronous counterpart to `Result<T>`. Both represent operations that can succeed or fail with typed errors. The only difference is timing: `Result<T>` completes immediately, `Promise<T>` completes later. This symmetry is intentional—the same `map`/`flatMap` composition patterns work identically, and converting between them is trivial (`result.async()` lifts to Promise, `promise.await()` blocks to Result). When you understand `Result<T>`, you understand `Promise<T>`.
 
 **Promise Resolution and Thread Safety:**
 

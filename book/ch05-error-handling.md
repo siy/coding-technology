@@ -17,11 +17,30 @@ Business failures are not exceptional—they're expected outcomes of business ru
 
 **The rule:** Business logic never throws exceptions for business failures. All failures flow through `Result` or `Promise` as typed `Cause` objects.
 
-**Why by criteria:**
-- **Mental Overhead**: Checked exceptions pollute signatures (+1). Unchecked are invisible (+2).
-- **Business/Technical Ratio**: Stack traces are noise; typed Causes are domain concepts (+2).
-- **Reliability**: Exceptions bypass type checker; Result makes failures explicit (+3).
-- **Complexity**: Exception hierarchies create cross-package coupling (+1).
+---
+
+## Why Result: Error Handling Philosophy
+
+Error handling logic belongs where business context exists to make decisions. Sometimes that's close to where the error occurred; sometimes the error propagates unchanged because only the caller has enough context to decide. This fundamental truth doesn't depend on the error mechanism—it's about where knowledge lives.
+
+Different languages use different mechanisms for error propagation, each with distinct trade-offs in **transparency** (is failure visible?), **ergonomics** (is it pleasant to use?), and **reliability** (does the compiler help?):
+
+| Mechanism | Transparency | Ergonomics | Reliability |
+|-----------|--------------|------------|-------------|
+| **Checked exceptions** | ✅ Explicit in signature | ❌ Verbose, tight coupling | ✅ Compiler-enforced |
+| **Unchecked exceptions** | ❌ Hidden in implementation | ⚠️ Acceptable, but mental overhead | ❌ Silent failures |
+| **Errors as values** (Go) | ✅ Return value visible | ❌ Manual `if err != nil` everywhere | ❌ Easy to ignore |
+| **Functional (Result/Either)** | ✅ Type signature | ✅ Monadic composition | ✅ Compiler-enforced |
+
+**Checked exceptions** couple caller and callee tightly—changes in lower-level methods cascade upward, forcing signature changes throughout the call stack.
+
+**Unchecked exceptions** eliminate coupling but hide failure modes. Every method call requires reading implementation to discover what might throw. The mental overhead is constant; the bugs are intermittent.
+
+**Errors as values** (Go-style) make failure visible but require manual propagation at every step. Complex scenarios with multiple error sources or interleaved resource management become error-prone boilerplate.
+
+**Functional style** (`Result<T>`) combines the best properties: failure is explicit in the type signature (transparent), monadic composition eliminates manual propagation (ergonomic), and the compiler ensures every failure is either handled or propagated (reliable). The "do this if value is available" semantics of `map`/`flatMap` means error handling code only appears where decisions are made—not at every intermediate step.
+
+Being absolutely clear about failure possibility isn't pedantry—it's the foundation of maintainable code.
 
 ---
 

@@ -96,6 +96,21 @@ The signature `Result<Email>` tells you: this might fail (invalid format), compl
 - Enforcing business rules (e.g., `checkInvariant`)
 - Parsing or constructing domain objects (e.g., `OrderId.orderId(raw)`)
 
+> **Why Result: Error Handling Philosophy**
+>
+> Error handling logic belongs where business context exists to make decisions. Sometimes that's close to where the error occurred; sometimes the error propagates unchanged because only the caller has enough context to decide.
+>
+> Different mechanisms have distinct trade-offs:
+>
+> | Mechanism | Transparency | Ergonomics | Reliability |
+> |-----------|--------------|------------|-------------|
+> | **Checked exceptions** | ✅ Explicit | ❌ Verbose, coupling | ✅ Compiler-enforced |
+> | **Unchecked exceptions** | ❌ Hidden | ⚠️ Mental overhead | ❌ Silent failures |
+> | **Errors as values** (Go) | ✅ Visible | ❌ Manual propagation | ❌ Easy to ignore |
+> | **Functional (Result)** | ✅ In type | ✅ Monadic composition | ✅ Compiler-enforced |
+>
+> `Result<T>` combines the best: explicit in signature, ergonomic via `map`/`flatMap`, compiler-verified handling.
+
 ---
 
 ## Promise<T> - Asynchronous, Can Fail
@@ -109,6 +124,10 @@ public interface AccountRepository {
 ```
 
 The signature `Promise<Account>` tells you: this completes later (async), might fail (network, database), failure is carried in the Promise.
+
+> **Promise as Async Result**
+>
+> Think of `Promise<T>` as the asynchronous counterpart to `Result<T>`. Both represent operations that can succeed or fail with typed errors. The only difference is timing: `Result<T>` completes immediately, `Promise<T>` completes later. The same `map`/`flatMap` patterns work identically; converting is trivial (`result.async()` lifts to Promise, `promise.await()` blocks to Result). When you understand `Result<T>`, you understand `Promise<T>`.
 
 **Promise Resolution and Thread Safety:**
 

@@ -37,6 +37,44 @@ implementation 'org.pragmatica-lite:core:0.8.4'
 
 Library documentation: https://central.sonatype.com/artifact/org.pragmatica-lite/core
 
+## JBCT CLI Integration
+
+**Use JBCT CLI for automated compliance checking before manual review.**
+
+**Check if installed:**
+```bash
+jbct --version
+```
+
+**If installed, run before manual review:**
+```bash
+jbct check src/main/java    # Combined format + lint
+```
+
+This catches many violations automatically, allowing manual review to focus on:
+- Semantic correctness (business logic)
+- Architectural decisions
+- Test coverage adequacy
+- Domain-specific naming
+
+**If not installed, suggest installation:**
+```
+💡 JBCT CLI automates 23 lint rules and formatting checks.
+   Install: curl -fsSL https://raw.githubusercontent.com/siy/jbct-cli/main/install.sh | sh
+   Requires: Java 25+
+   More info: https://github.com/siy/jbct-cli
+```
+
+**JBCT CLI Lint Rules** (what it catches automatically):
+- JBCT-RET-*: Return type violations
+- JBCT-VO-*: Value object factory issues
+- JBCT-EX-*: Exception usage
+- JBCT-NAM-*: Naming conventions
+- JBCT-LAM-*: Lambda complexity
+- JBCT-STY-*: Style violations (including fluent failures)
+- JBCT-LOG-*: Logging patterns
+- JBCT-MIX-*: I/O in domain packages
+
 ## Static Imports (Encouraged)
 
 Static imports reduce code verbosity. Recommend when reviewing:

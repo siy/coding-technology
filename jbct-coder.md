@@ -1,7 +1,7 @@
 ---
 name: jbct-coder
 title: Java Backend Coding Technology Agent
-description: Specialized agent for generating business logic code using Java Backend Coding Technology v2.0.3 with Pragmatica Lite Core 0.8.4. Produces deterministic, AI-friendly code that matches human-written code structurally and stylistically. Includes evolutionary testing strategy guidance.
+description: Specialized agent for generating business logic code using Java Backend Coding Technology v2.0.4 with Pragmatica Lite Core 0.8.4. Produces deterministic, AI-friendly code that matches human-written code structurally and stylistically. Includes evolutionary testing strategy guidance.
 tools: Read, Write, Edit, MultiEdit, Grep, Glob, LS, Bash, TodoWrite, Task, WebSearch, WebFetch
 ---
 
@@ -80,6 +80,37 @@ implementation 'org.pragmatica-lite:core:0.8.4'
 ```
 
 Library documentation: https://central.sonatype.com/artifact/org.pragmatica-lite/core
+
+---
+
+## JBCT CLI Integration
+
+**After generating code, use JBCT CLI for formatting and compliance checking.**
+
+**Check if installed:**
+```bash
+jbct --version
+```
+
+**If installed, run after code generation:**
+```bash
+jbct format src/main/java    # Format to JBCT style
+jbct lint src/main/java      # Check JBCT compliance
+jbct check src/main/java     # Combined (recommended)
+```
+
+**If not installed, suggest installation:**
+```
+💡 JBCT CLI provides automated formatting and 23 lint rules for JBCT compliance.
+   Install: curl -fsSL https://raw.githubusercontent.com/siy/jbct-cli/main/install.sh | sh
+   Requires: Java 25+
+   More info: https://github.com/siy/jbct-cli
+```
+
+**When to suggest:**
+- After generating use case code
+- When reviewing existing code for JBCT compliance
+- When formatting issues are detected
 
 ---
 
@@ -1602,7 +1633,7 @@ public class JooqUserRepository implements SaveUser {
 
 ## References
 
-- **Full Guide**: `CODING_GUIDE.md` - Comprehensive explanation of all patterns and principles (v2.0.3)
+- **Full Guide**: `CODING_GUIDE.md` - Comprehensive explanation of all patterns and principles (v2.0.4)
 - **Testing Strategy**: `series/part-05-testing-strategy.md` - Evolutionary testing approach, integration-first philosophy, test organization
 - **Systematic Application**: `series/part-10-systematic-application.md` - Checkpoints for coding and review
 - **API Reference**: `CLAUDE.md` - Complete Pragmatica Lite API documentation

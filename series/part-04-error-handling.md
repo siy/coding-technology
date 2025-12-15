@@ -28,6 +28,8 @@ Business failures are not exceptional - they're expected outcomes of business ru
 
 **The rule:** Business logic never throws exceptions for business failures. All failures flow through `Result` or `Promise` as typed `Cause` objects.
 
+> **Note:** For a detailed comparison of error handling mechanisms (checked exceptions, unchecked exceptions, Go-style errors, and functional Result), see the "Why Result: Error Handling Philosophy" sidebar in [Part 2: The Four Return Types](part-02-four-return-types.md#result-synchronous-can-fail-represents-businessvalidation-errors).
+
 **Why by criteria:**
 - **Mental Overhead**: Checked exceptions pollute signatures (+1 for Result). Unchecked are invisible - must read implementation (+2 for Result).
 - **Business/Technical Ratio**: Stack traces are technical noise; typed Causes are domain concepts (+2 for Result).

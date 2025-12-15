@@ -377,7 +377,7 @@ public class JooqUserRepository implements SaveUser {
 
 ## Interoperability with Java Standard Library
 
-### Optional<T> → Option<T>
+### `Optional<T>` → Option<T>
 
 ```java
 // Direct conversion
@@ -393,7 +393,7 @@ public Option<User> findById(UserId id) {
 Optional<User> back = option.toOptional();
 ```
 
-### CompletableFuture<T> → Promise<T>
+### `CompletableFuture<T>` → Promise<T>
 
 ```java
 // Wrapping CompletableFuture in adapter

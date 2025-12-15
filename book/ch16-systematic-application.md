@@ -95,9 +95,9 @@ Can this operation fail?
 |------|-------|-----|
 | R1 | Does Result always succeed? | Change to T |
 | R2 | Is Option always present? | Change to T |
-| R3 | Using Promise<Result<T>>? | Use Promise<T> only |
+| R3 | Using `Promise<Result<T>>`? | Use `Promise<T>` only |
 | R4 | Returning Void? | Use Unit |
-| R5 | Returning null? | Use Option<T> |
+| R5 | Returning null? | Use `Option<T>` |
 
 ---
 

@@ -49,7 +49,7 @@ implementation 'org.pragmatica-lite:core:0.8.4'
 
 ## The Four Core Types
 
-### Option<T> - Value May Be Absent
+### `Option<T>` - Value May Be Absent
 
 ```java
 import org.pragmatica.lang.Option;
@@ -63,7 +63,7 @@ Option<User> fromNullable = Option.option(possiblyNullValue);
 
 **Examples:** Cache lookup, optional configuration, search result.
 
-### Result<T> - Operation May Fail
+### `Result<T>` - Operation May Fail
 
 ```java
 import org.pragmatica.lang.Result;
@@ -80,7 +80,7 @@ Result<Email> invalid2 = Causes.cause("Invalid format").result();
 
 **Examples:** Validation, parsing, business rule checks.
 
-### Promise<T> - Async Operation May Fail
+### `Promise<T>` - Async Operation May Fail
 
 ```java
 import org.pragmatica.lang.Promise;

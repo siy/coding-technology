@@ -273,7 +273,7 @@ public Result<User> registerUser(String email, String password) {
 
 ### What JBCT Borrows
 
-- **Two-track model** → Result<T> is exactly this
+- **Two-track model** → `Result<T>` is exactly this
 - **flatMap for composition** → Same chaining style
 - **Errors as values** → Cause instead of exceptions
 
@@ -390,7 +390,7 @@ suspend fun fetchUser(id: UserId): Either<Error, User> =
 
 Arrow-kt demonstrates that these patterns work well in a JVM language. Key insights:
 
-- **Kotlin's coroutines + Either** = Similar to Promise<T>
+- **Kotlin's coroutines + Either** = Similar to `Promise<T>`
 - **Validated type** = Similar to Result.all() accumulation
 - **Typed errors** = Same as JBCT's Cause
 

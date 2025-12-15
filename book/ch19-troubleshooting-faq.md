@@ -550,7 +550,7 @@ public class JooqOrderRepository implements SaveOrder {
 CheckEmail checkEmail = req -> Promise.success(req);
 ```
 
-### "Incompatible types: Result<X> cannot be converted to Result<Y>"
+### "Incompatible types: `Result<X>` cannot be converted to `Result<Y>`"
 
 **Cause:** Using map when flatMap is needed.
 

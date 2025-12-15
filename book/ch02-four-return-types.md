@@ -46,7 +46,7 @@ The signature `String initials()` tells you: this always succeeds, always return
 
 ---
 
-## Option<T> - Synchronous, Cannot Fail, May Be Missing
+## `Option<T>` - Synchronous, Cannot Fail, May Be Missing
 
 Use this when absence is a valid outcome but failure isn't possible. Lookups that might not find anything, optional configuration, nullable database columns when null is semantically meaningful. The key: missing data is normal business behavior, not an error.
 
@@ -65,7 +65,7 @@ The signature `Option<Theme>` tells you: this always succeeds, but the value mig
 
 ---
 
-## Result<T> - Synchronous, Can Fail, Business/Validation Errors
+## `Result<T>` - Synchronous, Can Fail, Business/Validation Errors
 
 Use this when an operation might fail for business or validation reasons. Parsing input, enforcing invariants, business rules that can be violated. Failures are represented as typed `Cause` objects, not exceptions.
 
@@ -113,7 +113,7 @@ The signature `Result<Email>` tells you: this might fail (invalid format), compl
 
 ---
 
-## Promise<T> - Asynchronous, Can Fail
+## `Promise<T>` - Asynchronous, Can Fail
 
 Use this for any I/O operation, external service call, or computation that might block. `Promise<T>` is semantically equivalent to `Result<T>` but asynchronous - failures are carried in the Promise itself, not nested inside it.
 
@@ -263,7 +263,7 @@ public Promise<Response> execute(Request request) {
 }
 ```
 
-### Forbidden Nesting: Promise<Result<T>>
+### Forbidden Nesting: `Promise<Result<T>>`
 
 **`Promise<Result<T>>` is forbidden.** `Promise<T>` already carries failures - nesting `Result` inside creates two error channels.
 
@@ -287,7 +287,7 @@ Promise<User> loadUser(UserId id) { /* ... */ }
 return loadUser(id).flatMap(nextStep);
 ```
 
-### Allowed Nesting: Result<Option<T>>
+### Allowed Nesting: `Result<Option<T>>`
 
 `Result<Option<T>>` is permitted sparingly for "optional value that can fail validation."
 

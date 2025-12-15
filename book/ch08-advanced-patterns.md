@@ -229,7 +229,7 @@ All three fetches run concurrently. The Promise completes when all inputs comple
 
 ### Special Fork-Join Cases
 
-**1. Promise.allOf(Collection<Promise<T>>) - Resilient collection:**
+**1. `Promise.allOf(Collection<Promise<T>>)` - Resilient collection:**
 
 ```java
 // Fetching data from dynamic number of sources
@@ -257,7 +257,7 @@ private Report createReport(List<Result<HealthStatus>> results) {
 
 Returns `Promise<List<Result<T>>>` - unlike `Promise.all()` which fails fast, `allOf()` waits for all promises to complete and collects both successes and failures.
 
-**2. Promise.any(Promise<T>...) - First-success wins:**
+**2. `Promise.any(Promise<T>...)` - First-success wins:**
 
 ```java
 // Racing multiple data sources

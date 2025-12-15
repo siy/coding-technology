@@ -6,7 +6,7 @@ description: "Revolutionary technology for writing deterministic, AI-friendly, h
 
 # Java Backend Coding Technology: Writing Code in the Era of AI
 
-**Version:** 2.0.3 | **Repository:** [github.com/siy/coding-technology](https://github.com/siy/coding-technology) | **Changelog:** [CHANGELOG.md](https://github.com/siy/coding-technology/blob/main/CHANGELOG.md)
+**Version:** 2.0.4 | **Repository:** [github.com/siy/coding-technology](https://github.com/siy/coding-technology) | **Changelog:** [CHANGELOG.md](https://github.com/siy/coding-technology/blob/main/CHANGELOG.md)
 
 ## Introduction: Code in a New Era
 
@@ -720,6 +720,29 @@ public record Email(String value) {
 }
 ```
 
+> **Why Result: Error Handling Philosophy**
+>
+> Error handling logic belongs where business context exists to make decisions. Sometimes that's close to where the error occurred; sometimes the error propagates unchanged because only the caller has enough context to decide. This fundamental truth doesn't depend on the error mechanism—it's about where knowledge lives.
+>
+> Different languages use different mechanisms for error propagation, each with distinct trade-offs in **transparency** (is failure visible?), **ergonomics** (is it pleasant to use?), and **reliability** (does the compiler help?):
+>
+> | Mechanism | Transparency | Ergonomics | Reliability |
+> |-----------|--------------|------------|-------------|
+> | **Checked exceptions** | ✅ Explicit in signature | ❌ Verbose, tight coupling | ✅ Compiler-enforced |
+> | **Unchecked exceptions** | ❌ Hidden in implementation | ⚠️ Acceptable, but mental overhead | ❌ Silent failures |
+> | **Errors as values** (Go) | ✅ Return value visible | ❌ Manual `if err != nil` everywhere | ❌ Easy to ignore |
+> | **Functional (Result/Either)** | ✅ Type signature | ✅ Monadic composition | ✅ Compiler-enforced |
+>
+> **Checked exceptions** couple caller and callee tightly—changes in lower-level methods cascade upward, forcing signature changes throughout the call stack.
+>
+> **Unchecked exceptions** eliminate coupling but hide failure modes. Every method call requires reading implementation to discover what might throw. The mental overhead is constant; the bugs are intermittent.
+>
+> **Errors as values** (Go-style) make failure visible but require manual propagation at every step. Complex scenarios with multiple error sources or interleaved resource management become error-prone boilerplate.
+>
+> **Functional style** (`Result<T>`) combines the best properties: failure is explicit in the type signature (transparent), monadic composition eliminates manual propagation (ergonomic), and the compiler ensures every failure is either handled or propagated (reliable). The "do this if value is available" semantics of `map`/`flatMap` means error handling code only appears where decisions are made—not at every intermediate step.
+>
+> Being absolutely clear about failure possibility isn't pedantry—it's the foundation of maintainable code.
+
 **`Promise<T>`**  - Asynchronous, can fail, represents eventual success or failure.
 
 Use this for any I/O operation, external service call, or computation that might block. `Promise<T>` is semantically equivalent to `Result<T>` but asynchronous - failures are carried in the Promise itself, not nested inside it. This is Java's answer to Rust's `Future<Result<T>>` without the nesting problem.
@@ -729,6 +752,10 @@ public interface AccountRepository {
     Promise<Account> findById(AccountId id);  // async lookup, can fail
 }
 ```
+
+> **Promise as Async Result**
+>
+> Think of `Promise<T>` as the asynchronous counterpart to `Result<T>`. Both represent operations that can succeed or fail with typed errors. The only difference is timing: `Result<T>` completes immediately, `Promise<T>` completes later. This symmetry is intentional—the same `map`/`flatMap` composition patterns work identically, and converting between them is trivial (`result.async()` lifts to Promise, `promise.await()` blocks to Result). When you understand `Result<T>`, you understand `Promise<T>`.
 
 **Promise Resolution and Thread Safety:**
 
@@ -5280,6 +5307,26 @@ The goal isn't perfect code. It's code that's easy to understand, easy to change
 Write code that explains itself. Let structure carry intent. Focus on business logic, not technical ceremony.
 
 That's the technology.
+
+---
+
+## Tooling
+
+JBCT provides tools for both human developers and AI assistants. For complete documentation and installation instructions, see the [Tools section in README.md](README.md#-tools).
+
+### AI Tools
+
+- **JBCT Skill** - Claude Code skill for learning and quick reference
+- **jbct-coder** - Subagent for generating JBCT-compliant code
+- **jbct-reviewer** - Subagent for code review against JBCT patterns
+
+### CLI Tools
+
+- **JBCT CLI** - Command-line tool for formatting and linting
+  - `jbct format` - Format Java code to JBCT style
+  - `jbct lint` - Check compliance with 23 lint rules
+  - `jbct check` - Combined format + lint (recommended for CI)
+- **Maven Plugin** - Build integration for automated checks
 
 ---
 

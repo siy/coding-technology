@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.4] - 2025-12-14
+
+### Added
+- **Tools section in README.md** - Reorganized documentation structure
+  - "AI Tools" subsection for Claude Code skill and subagents
+  - "CLI Tools" subsection for jbct-cli and Maven plugin
+- **JBCT CLI integration** - AI tools now aware of jbct-cli
+  - jbct-coder.md: Suggests running `jbct check` after code generation
+  - jbct-reviewer.md: Recommends `jbct check` before manual review
+  - skills/jbct/SKILL.md: References CLI tool for automated checking
+  - All tools suggest installation when CLI not found
+- **Tooling section in CODING_GUIDE.md** - Brief overview pointing to README
+- **jbct-reviewer.md added to website build**
+- **"Why Result" philosophy section** - Error handling mechanism comparison
+  - Added to CODING_GUIDE.md, series/part-02-four-return-types.md, book/ch02 and ch05
+  - Comparison table: checked/unchecked exceptions, Go-style, functional Result
+  - Explains transparency, ergonomics, reliability trade-offs
+- **"Promise as Async Result" note** - Clarifies Promise/Result relationship
+  - Added to CODING_GUIDE.md, series/part-02, book/ch02
+  - Emphasizes symmetry and conversion patterns
+
 ## [2.0.3] - 2025-12-14
 
 ### Added

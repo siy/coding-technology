@@ -161,14 +161,6 @@
 - 50+ terms defined
 - Quick reference table
 
-**[Appendix D: Quick Reference Cards](appendix-d-quick-reference.md)**
-- Return type selection
-- Type conversions
-- Pattern selection
-- Value object template
-- Use case template
-- Code review checklist
-
 ---
 
 ### Supporting Materials
@@ -188,13 +180,13 @@ Chapters 1-3 → Chapter 4 → Chapter 7 → Chapter 12 → Appendix D
 Chapter 1 → Chapters 7-8 → Chapter 16 → Chapter 17
 
 **Team Lead/Architect:**
-Chapter 1 → Chapter 15 → Chapters 16-18 → Appendix D (Code Review)
+Chapter 1 → Chapter 15 → Chapters 16-18
 
 **Coming from FP background:**
 Chapter 3 → Chapter 18 → Chapters 7-8 → Chapter 15
 
 ---
 
-**Total:** 19 chapters + 4 appendices
+**Total:** 19 chapters + 3 appendices
 **Estimated reading time:** 8-12 hours
 **Practice exercises:** 24 (with solutions)

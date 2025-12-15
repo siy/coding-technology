@@ -58,7 +58,6 @@ CHAPTERS=(
     "appendix-a-api-reference.md"
     "appendix-b-exercises.md"
     "appendix-c-glossary.md"
-    "appendix-d-quick-reference.md"
 )
 
 # Verify all chapters exist

@@ -241,7 +241,7 @@ return ValidRequest.validRequest(request)
            .flatMap(step2);
 ```
 
-### Forbidden: Promise<Result<T>>
+### Forbidden: `Promise<Result<T>>`
 
 `Promise<T>` already carries failures. Never nest:
 
@@ -253,7 +253,7 @@ Promise<Result<User>> loadUser(UserId id)
 Promise<User> loadUser(UserId id)
 ```
 
-### Allowed: Result<Option<T>>
+### Allowed: `Result<Option<T>>`
 
 For optional values that must validate when present:
 

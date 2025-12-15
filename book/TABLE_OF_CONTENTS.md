@@ -14,7 +14,7 @@
 - Foundational concepts: side effects, composition, monads
 
 **[Chapter 2: The Four Return Types](ch02-four-return-types.md)**
-- T, Option<T>, Result<T>, Promise<T>
+- `T`, `Option<T>`, `Result<T>`, `Promise<T>`
 - Type selection criteria
 - Type conversions and lifting
 - Core operations: map, flatMap, fold

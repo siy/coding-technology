@@ -23,9 +23,9 @@ Key takeaways from each chapter for quick review.
 
 **Key Takeaways:**
 - **T** - Pure value, cannot fail, always present
-- **Option<T>** - Value may be absent (cache miss, optional field)
-- **Result<T>** - Synchronous operation may fail with typed error
-- **Promise<T>** - Asynchronous operation may fail
+- `Option<T>` - Value may be absent (cache miss, optional field)
+- `Result<T>` - Synchronous operation may fail with typed error
+- `Promise<T>` - Asynchronous operation may fail
 
 **Decision Rule:**
 ```

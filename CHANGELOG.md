@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.5] - 2025-12-18
+
+### Added
+- **Broader movement acknowledgment** - Added note in Chapter 1 that JBCT is part of a wider industry trend toward compile-time guarantees and type-driven design
+
+### Removed
+- **Appendix D (Quick Reference Cards)** - Removed from book due to EPUB rendering issues
+
 ## [2.0.4] - 2025-12-14
 
 ### Added

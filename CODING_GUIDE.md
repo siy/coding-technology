@@ -40,6 +40,8 @@ The benefits compound:
 
 **Deterministic code generation** becomes possible when the mapping from requirements to code is mechanical. Given a use case specification - inputs, outputs, validation rules, steps - there's essentially one correct structure. Different developers (or AI assistants) should produce nearly identical implementations. This isn't about stifling creativity; it's about channeling creativity into business logic rather than structural decisions.
 
+> **A Broader Movement:** JBCT is not alone in pursuing compile-time guarantees and type-driven design. Similar philosophies appear in database design (7NF type-first approaches), distributed systems, and functional programming communities. The common thread: shift errors from runtime to compile-time, make invalid states unrepresentable, and reduce cognitive load through explicit contracts.
+
 This guide presents the complete technology: the rules, the patterns, the rationale, and the practices. It's framework-agnostic by design - these principles work whether you're building REST APIs with Spring, message processors with plain Java, or anything in between. The framework lives at the edges; the business logic remains pure, testable, and independent.
 
 We'll start with core concepts - the building blocks that make everything else possible. Then we'll explore the pattern catalog that covers almost every situation you'll encounter. A detailed use case walkthrough shows how the pieces fit together. Framework integration demonstrates how to bridge this functional core to the imperative world of web frameworks and databases. Finally, we'll examine common mistakes and how to avoid them.

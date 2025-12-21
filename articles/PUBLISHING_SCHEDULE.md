@@ -10,7 +10,7 @@
 
 | # | Published | Date | Article | File |
 |---|-----------|------|---------|------|
-| 1 | [ ] | Dec 21, 2024 | Pattern-Based Code Review | `pattern-based-code-review-article-v2.md` |
+| 1 | [x] | Dec 21, 2024 | Pattern-Based Code Review | `pattern-based-code-review-article-v2.md` |
 | 2 | [ ] | Jan 2025 | Errors as Values | `errors-as-values.md` |
 | 3 | [ ] | Jan 2025 | Parse, Don't Validate | `parse-dont-validate.md` |
 | 4 | [ ] | Jan 2025 | Integration-First Testing | `integration-first-testing.md` |
@@ -20,6 +20,12 @@
 | 8 | [ ] | Feb 2025 | Patterns as Business Vocabulary | `patterns-as-business-vocabulary.md` |
 | 9 | [ ] | Feb 2025 | Result\<Option\<T\>\> Pattern | `result-option-pattern.md` |
 | 10 | [ ] | Feb 2025 | Legacy Adoption Strategy | `legacy-adoption-strategy.md` |
+
+## Published URLs
+
+| # | dev.to | Medium |
+|---|--------|--------|
+| 1 | https://dev.to/siy/from-subjective-opinions-to-systematic-analysis-pattern-based-code-review-1obm | https://medium.com/@sergiy-yevtushenko/from-subjective-opinions-to-systematic-analysis-pattern-based-code-review-abaa6eeb633f |
 
 ## LinkedIn Announcements
 

@@ -991,6 +991,85 @@ com.example.app/
 - **Domain shared**: Move value objects here when a second use case needs them
 - **Never**: Use case → adapter dependency, adapter → adapter dependency
 
+## JBCT FILE STRUCTURE
+
+### Import Ordering
+
+```
+1. java.*
+2. javax.*
+3. org.pragmatica.*
+4. third-party (org.*, com.* - alphabetically)
+5. project imports
+6. (blank line)
+7. static imports (same grouping order)
+```
+
+### Member Ordering by File Type
+
+**Use Case Interface:**
+1. Public API (Request, Response records)
+2. Execute method
+3. Internal types (ValidRequest + helpers)
+4. Step interfaces
+5. Domain fragments
+6. Factory method
+
+**Value Object:**
+1. Static constants (patterns, cause factories)
+2. Factory method
+3. Helper methods
+
+**Error Interface:**
+1. Enum variants (fixed-message, grouped)
+2. Record variants (errors with data)
+
+**Step Implementation:**
+1. Dependencies (final fields)
+2. Constructor
+3. Interface method(s)
+4. Private helpers
+
+**Utility Interface:**
+1. Constants
+2. Static methods
+3. `unused` record (always last)
+
+### Utility Interface Pattern
+
+**Check for utility classes that should be utility interfaces:**
+
+```java
+// ❌ WRONG: Utility class
+public final class ValidationUtils {
+    private ValidationUtils() {}
+
+    public static Result<String> normalizePhone(String raw) { ... }
+}
+
+// ✅ CORRECT: Utility interface
+public sealed interface ValidationUtils {
+
+    Pattern PHONE_PATTERN = Pattern.compile("^\\+?[0-9]{10,14}$");
+
+    static Result<String> normalizePhone(String raw) { ... }
+
+    record unused() implements ValidationUtils {}
+}
+```
+
+**Key points:**
+- `sealed` prevents external implementation
+- `unused` record satisfies permit requirement
+- No visibility modifiers needed (implicit `public`)
+- No private constructor boilerplate
+
+**Review Checklist:**
+- [ ] Imports follow ordering convention
+- [ ] Members ordered correctly by file type
+- [ ] Utility classes converted to sealed interfaces
+- [ ] `unused` record present in utility interfaces
+
 ## JBCT NAMING CONVENTIONS
 
 ### Zoned Naming
@@ -1216,6 +1295,9 @@ Before reviewing, enumerate ALL files to review:
 - [ ] Package placement correct (use case internal vs domain shared)
 - [ ] Dependency rules followed (no use case → adapter)
 - [ ] Adapters isolated (all I/O at boundaries)
+- [ ] Import ordering follows convention (java → javax → pragmatica → third-party → project → static)
+- [ ] Member ordering correct by file type
+- [ ] Utility classes converted to sealed interfaces with `unused` record
 
 ### Step 3: Naming Review
 
@@ -1449,6 +1531,9 @@ void validRequest_fails_forInvalidEmail() {
 | Conditional logging | `if (x) log.debug()` | Remove condition |
 | Logger as parameter | `method(Logger log)` | Move logging to owner |
 | FQCN in code | `org.foo.Bar` in method body | Add import |
+| Utility class | `final class` + private constructor | Convert to sealed interface + `unused` |
+| Wrong import order | Static imports before regular | Reorder per convention |
+| Wrong member order | Factory after helpers | Reorder per file type rules |
 
 ## COMMUNICATION GUIDELINES
 

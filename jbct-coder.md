@@ -1526,6 +1526,74 @@ adapter.persistence/
 
 ---
 
+## File Structure Guidelines
+
+> **For complete details**, see **[CODING_GUIDE.md: File Structure Guidelines](CODING_GUIDE.md#file-structure-guidelines)**.
+
+### Import Ordering
+
+```
+1. java.*
+2. javax.*
+3. org.pragmatica.*
+4. third-party (org.*, com.* - alphabetically)
+5. project imports
+6. (blank line)
+7. static imports (same grouping order)
+```
+
+### Member Ordering by File Type
+
+**Use Case Interface:**
+1. Public API (Request, Response records)
+2. Execute method
+3. Internal types (ValidRequest + helpers)
+4. Step interfaces
+5. Domain fragments
+6. Factory method
+
+**Value Object:**
+1. Static constants (patterns, cause factories)
+2. Factory method
+3. Helper methods
+
+**Error Interface:**
+1. Enum variants (fixed-message, grouped)
+2. Record variants (errors with data)
+
+**Step Implementation:**
+1. Dependencies (final fields)
+2. Constructor
+3. Interface method(s)
+4. Private helpers
+
+**Utility Interface:**
+1. Constants
+2. Static methods
+3. `unused` record (always last)
+
+### Utility Interface Pattern
+
+Use sealed interfaces with `unused` record instead of utility classes:
+
+```java
+public sealed interface ValidationUtils {
+
+    Pattern PHONE_PATTERN = Pattern.compile("^\\+?[0-9]{10,14}$");
+
+    static Result<String> normalizePhone(String raw) { ... }
+
+    record unused() implements ValidationUtils {}
+}
+```
+
+**Key points:**
+- `sealed` prevents external implementation
+- `unused` record satisfies permit requirement
+- No visibility modifiers needed (implicit `public`)
+
+---
+
 ## Quick Reference: Violation → Fix Patterns
 
 | Violation | Detection | Fix |

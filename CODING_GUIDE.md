@@ -4667,6 +4667,239 @@ com.example.app.config/
 
 ---
 
+## File Structure Guidelines
+
+This section defines the internal structure of JBCT source files. These guidelines ensure consistency across codebases and enable automated linting.
+
+**Scope:** Use case interfaces, step implementations, value objects, error interfaces, and utility interfaces. Adapters are excluded—they are too framework-specific.
+
+### Import Ordering
+
+All JBCT files follow this import order:
+
+```
+1. java.*
+2. javax.*
+3. org.pragmatica.*
+4. third-party (org.*, com.* - alphabetically)
+5. project imports
+6. (blank line)
+7. static imports (same grouping order)
+```
+
+### Use Case Interface
+
+```java
+package com.example.app.usecase.registeruser;
+
+import org.pragmatica.lang.*;
+import com.example.app.domain.shared.*;
+
+public interface RegisterUser {
+
+    // Public API
+    record Request(String email, String password, String referralCode) {}
+    record Response(UserId userId, ConfirmationToken token) {}
+
+    Promise<Response> execute(Request request);
+
+    // Internal types
+    record ValidRequest(Email email, Password password, Option<ReferralCode> referralCode) {
+        public static Result<ValidRequest> validRequest(Request raw) { ... }
+    }
+
+    // Step interfaces
+    interface CheckEmail {
+        Promise<ValidRequest> apply(ValidRequest request);
+    }
+
+    interface SaveUser {
+        Promise<UserId> apply(ValidUser user);
+    }
+
+    // Domain fragments (use case specific)
+    record ValidUser(Email email, HashedPassword hashed, Option<ReferralCode> referralCode) {}
+
+    // Factory
+    static RegisterUser registerUser(CheckEmail checkEmail, SaveUser saveUser) {
+        return request -> ValidRequest.validRequest(request)
+                                      .async()
+                                      .flatMap(checkEmail::apply)
+                                      .flatMap(saveUser::apply);
+    }
+}
+```
+
+**Member order:**
+1. Public API (Request, Response records)
+2. Execute method
+3. Internal types (ValidRequest + validation helpers)
+4. Step interfaces
+5. Domain fragments (records used only by this use case)
+6. Factory method
+
+### Value Object
+
+```java
+package com.example.app.domain.shared;
+
+import java.util.regex.Pattern;
+import org.pragmatica.lang.*;
+
+import static org.pragmatica.lang.Verify.*;
+
+public record Email(String value) {
+
+    // Constants
+    private static final Pattern EMAIL_PATTERN = Pattern.compile("^[a-z0-9+_.-]+@[a-z0-9.-]+$");
+    private static final Fn1<Cause, String> INVALID_EMAIL = Causes.forOneValue("Invalid email: %s");
+
+    // Factory
+    public static Result<Email> email(String raw) {
+        return ensure(raw, Verify.Is::notNull)
+                .map(String::trim)
+                .map(String::toLowerCase)
+                .flatMap(ensureFn(INVALID_EMAIL, Verify.Is::matches, EMAIL_PATTERN))
+                .map(Email::new);
+    }
+
+    // Helpers
+    public String localPart() {
+        int at = value.indexOf('@');
+        return at > 0 ? value.substring(0, at) : value;
+    }
+}
+```
+
+**Member order:**
+1. Static constants (patterns, cause factories)
+2. Factory method
+3. Helper methods
+
+### Error Interface
+
+```java
+package com.example.app.usecase.registeruser;
+
+import org.pragmatica.lang.Cause;
+
+public sealed interface RegistrationError extends Cause {
+
+    // Fixed-message errors (grouped enum)
+    enum General implements RegistrationError {
+        EMAIL_ALREADY_EXISTS("Email already registered"),
+        WEAK_PASSWORD("Password too weak");
+
+        private final String message;
+
+        General(String message) {
+            this.message = message;
+        }
+
+        @Override
+        public String message() {
+            return message;
+        }
+    }
+
+    // Errors with data
+    record DatabaseFailure(Throwable cause) implements RegistrationError {
+        @Override
+        public String message() {
+            return "Database error: " + cause.getMessage();
+        }
+    }
+}
+```
+
+**Member order:**
+1. Enum variants (fixed-message errors, grouped)
+2. Record variants (errors carrying data)
+
+### Step Implementation
+
+```java
+package com.example.app.adapter.persistence;
+
+import org.jooq.DSLContext;
+import com.example.app.usecase.registeruser.RegisterUser.SaveUser;
+
+public class JooqUserRepository implements SaveUser {
+
+    // Dependencies
+    private final DSLContext dsl;
+
+    // Constructor
+    public JooqUserRepository(DSLContext dsl) {
+        this.dsl = dsl;
+    }
+
+    // Interface method
+    @Override
+    public Promise<UserId> apply(ValidUser user) {
+        return Promise.lift(
+            RepositoryError.DatabaseFailure::new,
+            () -> insertUser(user)
+        );
+    }
+
+    // Private helpers
+    private UserId insertUser(ValidUser user) { ... }
+}
+```
+
+**Member order:**
+1. Dependencies (final fields)
+2. Constructor
+3. Interface method(s)
+4. Private helpers
+
+### Utility Interface
+
+```java
+package com.example.app.util;
+
+import java.util.regex.Pattern;
+import org.pragmatica.lang.*;
+
+public sealed interface ValidationUtils {
+
+    // Constants
+    Pattern PHONE_PATTERN = Pattern.compile("^\\+?[0-9]{10,14}$");
+    Fn1<Cause, String> INVALID_PHONE = Causes.forOneValue("Invalid phone: %s");
+
+    // Static methods
+    static Result<String> normalizePhone(String raw) {
+        return Verify.ensure(raw, Verify.Is::notNull)
+                     .map(s -> s.replaceAll("[\\s\\-()]", ""))
+                     .flatMap(Verify.ensureFn(INVALID_PHONE, Verify.Is::matches, PHONE_PATTERN));
+    }
+
+    static boolean isValidCountryCode(String code) {
+        return code != null && code.length() == 2;
+    }
+
+    // Sealed permit (prevents implementation)
+    record unused() implements ValidationUtils {}
+}
+```
+
+**Member order:**
+1. Constants
+2. Static methods (grouped by purpose if many)
+3. `unused` record (always last—prevents implementation)
+
+**Key points:**
+- `sealed` prevents external implementation
+- `unused` record satisfies permit requirement
+- No visibility modifiers needed (implicit `public`)
+
+### Section Separation
+
+Use blank lines to separate logical sections. Comments are optional—use only when they add clarity (e.g., in examples or teaching contexts). Avoid mandatory section markers like `// --- Section ---`.
+
+---
+
 ## Use Case Walkthrough
 
 Let's build a complete use case from scratch: `RegisterUser`. We'll follow the technology step-by-step, showing validation, steps, error handling, and testing.

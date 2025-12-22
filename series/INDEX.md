@@ -173,6 +173,7 @@ Build a complete use case from requirements to deployment and learn how to integ
 - Complete Use Case Walkthrough: RegisterUser from requirements to tests
 - Project Structure & Package Organization: vertical slicing, placement rules
 - Module Organization: multi-module projects, when to use them
+- File Structure Guidelines: import ordering, member ordering by file type, utility interfaces
 - Framework Integration: connecting to Spring Boot and JOOQ
 - Conclusion: where to go next
 

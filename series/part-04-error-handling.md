@@ -1003,7 +1003,7 @@ They prevent complexity explosion. With exactly four return types and clear comp
 
 ## Pragmatica Lite API Reference
 
-This section consolidates the essential Pragmatica Lite Core 0.8.4 APIs you'll use daily. For complete API documentation, see [CODING_GUIDE.md: Pragmatica Lite Core 0.8.4 API Reference](../CODING_GUIDE.md).
+This section consolidates the essential Pragmatica Lite Core 0.8.5 APIs you'll use daily. For complete API documentation, see [CODING_GUIDE.md: Pragmatica Lite Core 0.8.5 API Reference](../CODING_GUIDE.md).
 
 ### Type Conversions
 

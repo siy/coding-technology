@@ -694,13 +694,13 @@ include 'my-app-bootstrap'
 
 // my-app-domain/build.gradle
 dependencies {
-    implementation 'org.pragmatica-lite:core:0.8.4'
+    implementation 'org.pragmatica-lite:core:0.8.5'
 }
 
 // my-app-application/build.gradle
 dependencies {
     implementation project(':my-app-domain')
-    implementation 'org.pragmatica-lite:core:0.8.4'
+    implementation 'org.pragmatica-lite:core:0.8.5'
 }
 
 // my-app-adapters/build.gradle

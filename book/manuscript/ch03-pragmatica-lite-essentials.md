@@ -391,9 +391,9 @@ Verify.ensure(quantity, Verify.Is::lessThanOrEqualTo, 100)
 ```java
 public static Result<Password> password(String raw) {
     return Verify.ensure(raw, Verify.Is::notNull)
-        .flatMap(Verify.ensureFn(TOO_SHORT, Verify.Is::lenBetween, 8, 128))
-        .flatMap(Verify.ensureFn(NO_DIGIT, Verify.Is::matches, DIGIT_PATTERN))
-        .flatMap(Verify.ensureFn(NO_UPPER, Verify.Is::matches, UPPER_PATTERN))
+        .filter(TOO_SHORT, s -> Verify.Is.lenBetween(s, 8, 128))
+        .filter(NO_DIGIT, DIGIT_PATTERN.asMatchPredicate())
+        .filter(NO_UPPER, UPPER_PATTERN.asMatchPredicate())
         .map(Password::new);
 }
 ```

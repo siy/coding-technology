@@ -221,8 +221,8 @@ public record PhoneNumber(String value) {
     public static Result<PhoneNumber> phoneNumber(String raw) {
         return Verify.ensure(raw, Verify.Is::notBlank)
             .map(PhoneNumber::normalize)
-            .flatMap(Verify.ensureFn(INVALID_FORMAT, PhoneNumber::isValidFormat))
-            .flatMap(Verify.ensureFn(INVALID_LENGTH, Verify.Is::lenBetween, 10, 15))
+            .filter(INVALID_FORMAT, PhoneNumber::isValidFormat)
+            .filter(INVALID_LENGTH, s -> Verify.Is.lenBetween(s, 10, 15))
             .map(PhoneNumber::new);
     }
 
@@ -269,7 +269,7 @@ public record DateRange(LocalDate from, LocalDate to) {
 
     private static Result<LocalDate> parseAndValidate(String raw, LocalDate today, Cause pastError) {
         return DateTime.parseLocalDate(raw)
-            .flatMap(Verify.ensureFn(pastError, date -> !date.isBefore(today)));
+            .filter(pastError, date -> !date.isBefore(today));
     }
 
     private static Result<DateRange> validateOrder(LocalDate from, LocalDate to) {
@@ -745,7 +745,7 @@ public record Age(int value) {
 
     public static Result<Age> age(int value) {
         return Verify.ensure(value, Verify.Is::nonNegative)
-            .flatMap(Verify.ensureFn(TOO_OLD, Verify.Is::lessThanOrEqualTo, 150))
+            .filter(TOO_OLD, v -> Verify.Is.lessThanOrEqualTo(v, 150))
             .map(Age::new);
     }
 }

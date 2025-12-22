@@ -1119,9 +1119,9 @@ Verify.ensure(password, Verify.Is::lenBetween, 8, 128)
 Verify.ensure(age, Verify.Is::between, 0, 150)
 Verify.ensure(username, Verify.Is::notBlank)
 
-// Combining multiple checks
-Verify.combine(Verify.ensureFn(TOO_SHORT, Verify.Is::lenBetween, 8, 128),
-               Verify.ensureFn(BLANK, Verify.Is::notBlank))
+// Combining multiple checks with filter
+.filter(TOO_SHORT, s -> Verify.Is.lenBetween(s, 8, 128))
+.filter(BLANK, Verify.Is::notBlank)
 ```
 
 ### Parse Utilities (Exception-Safe JDK Wrappers)
@@ -1167,7 +1167,7 @@ Text.parseBoolean(raw)            // Result<Boolean>
 public record Age(int value) {
     public static Result<Age> age(String raw) {
         return Number.parseInt(raw)
-                     .flatMap(Verify.ensureFn(Causes.cause("Age must be 0-150"), Verify.Is::between, 0, 150))
+                     .filter(Causes.cause("Age must be 0-150"), v -> Verify.Is.between(v, 0, 150))
                      .map(Age::new);
     }
 }
@@ -1373,7 +1373,7 @@ public class Email {
 public record Email(String value) {
     public static Result<Email> email(String raw) {
         return Verify.ensure(raw, Verify.Is::notNull)
-                     .flatMap(Verify.ensureFn(INVALID_EMAIL, Verify.Is::matches, PATTERN))
+                     .filter(INVALID_EMAIL, PATTERN.asMatchPredicate())
                      .map(Email::new);
     }
 }

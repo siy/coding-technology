@@ -120,7 +120,7 @@ public record Email(String value) {
 
     public static Result<Email> email(String raw) {
         return Verify.ensure(raw, Verify.Is::notBlank)
-            .flatMap(Verify.ensureFn(INVALID, Verify.Is::matches, PATTERN))
+            .filter(INVALID, PATTERN.asMatchPredicate())
             .map(Email::new);
     }
 }

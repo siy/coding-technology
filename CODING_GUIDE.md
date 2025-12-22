@@ -1287,7 +1287,7 @@ public record Age(int value) {
 
     public static Result<Age> age(String raw) {
         return Number.parseInt(raw)
-                     .flatMap(Verify.ensureFn(INVALID_RANGE, Verify.Is::between, 0, 150))
+                     .filter(INVALID_RANGE, v -> Verify.Is.between(v, 0, 150))
                      .map(Age::new);
     }
 }
@@ -1297,7 +1297,7 @@ public record BirthDate(LocalDate value) {
 
     public static Result<BirthDate> birthDate(String raw) {
         return DateTime.parseLocalDate(raw)
-                       .flatMap(Verify.ensureFn(FUTURE_DATE, Verify.Is::lessThanOrEqualTo, LocalDate.now()))
+                       .filter(FUTURE_DATE, d -> Verify.Is.lessThanOrEqualTo(d, LocalDate.now()))
                        .map(BirthDate::new);
     }
 }
@@ -2135,7 +2135,7 @@ public record Email(String value) {
         return Verify.ensure(raw, Verify.Is::notNull)
                      .map(String::trim)
                      .map(String::toLowerCase)
-                     .flatMap(Verify.ensureFn(INVALID_EMAIL, Verify.Is::matches, EMAIL_PATTERN))
+                     .filter(INVALID_EMAIL, EMAIL_PATTERN.asMatchPredicate())
                      .map(Email::new);
     }
 }
@@ -4757,7 +4757,7 @@ public record Email(String value) {
         return ensure(raw, Verify.Is::notNull)
                 .map(String::trim)
                 .map(String::toLowerCase)
-                .flatMap(ensureFn(INVALID_EMAIL, Verify.Is::matches, EMAIL_PATTERN))
+                .filter(INVALID_EMAIL, EMAIL_PATTERN.asMatchPredicate())
                 .map(Email::new);
     }
 
@@ -4870,7 +4870,7 @@ public sealed interface ValidationUtils {
     static Result<String> normalizePhone(String raw) {
         return Verify.ensure(raw, Verify.Is::notNull)
                      .map(s -> s.replaceAll("[\\s\\-()]", ""))
-                     .flatMap(Verify.ensureFn(INVALID_PHONE, Verify.Is::matches, PHONE_PATTERN));
+                     .filter(INVALID_PHONE, PHONE_PATTERN.asMatchPredicate());
     }
 
     static boolean isValidCountryCode(String code) {
@@ -5028,7 +5028,7 @@ public record Email(String value) {
         return Verify.ensure(raw, Verify.Is::notNull)
                      .map(String::trim)
                      .map(String::toLowerCase)
-                     .flatMap(Verify.ensureFn(INVALID_EMAIL, Verify.Is::matches, EMAIL_PATTERN))
+                     .filter(INVALID_EMAIL, EMAIL_PATTERN.asMatchPredicate())
                      .map(Email::new);
     }
 }
@@ -5050,7 +5050,7 @@ public record Password(String value) {
 
     public static Result<Password> password(String raw) {
         return Verify.ensure(raw, Verify.Is::notNull)
-                     .flatMap(Verify.ensureFn(TOO_SHORT, Verify.Is::lenBetween, 8, 128))
+                     .filter(TOO_SHORT, s -> Verify.Is.lenBetween(s, 8, 128))
                      .flatMap(Password::ensureUppercase)
                      .flatMap(Password::ensureDigit)
                      .map(Password::new);

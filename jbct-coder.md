@@ -231,7 +231,7 @@ public record Email(String value) {
         return Verify.ensure(raw, Verify.Is::notNull)
             .map(String::trim)
             .map(String::toLowerCase)
-            .flatMap(Verify.ensureFn(INVALID_EMAIL, Verify.Is::matches, EMAIL_PATTERN))
+            .filter(INVALID_EMAIL, EMAIL_PATTERN.asMatchPredicate())
             .map(Email::new);
     }
 }
@@ -1321,7 +1321,7 @@ public record Email(String value) {
         return Verify.ensure(raw, Verify.Is::notNull)
             .map(String::trim)
             .map(String::toLowerCase)
-            .flatMap(Verify.ensureFn(INVALID_EMAIL, Verify.Is::matches, EMAIL_PATTERN))
+            .filter(INVALID_EMAIL, EMAIL_PATTERN.asMatchPredicate())
             .map(Email::new);
     }
 }

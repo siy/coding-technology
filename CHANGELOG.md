@@ -19,6 +19,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - **Medium compatibility** - Replaced tables with lists in article series for better rendering
+- **Pragmatica Lite Core** updated from 0.8.4 to 0.8.5 in all documentation and examples
+  - Breaking: `Verify.ensureFn()` removed - use `.filter(cause, predicate)` instead
+  - New: RateLimiter with Token Bucket algorithm
+  - New: `Result.tryOf()` aliases, `Result.onOk()/onErr()/run()` aliases
+  - New: Instance `all()` methods for for-comprehension style
+  - Migrated 108 `ensureFn` occurrences across 35 files to `filter` pattern
 
 ## [2.0.5] - 2025-12-18
 

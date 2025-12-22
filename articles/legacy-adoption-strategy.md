@@ -73,7 +73,7 @@ Think of your codebase as having two zones:
 <dependency>
     <groupId>org.pragmatica-lite</groupId>
     <artifactId>core</artifactId>
-    <version>0.8.4</version>
+    <version>0.8.5</version>
 </dependency>
 ```
 

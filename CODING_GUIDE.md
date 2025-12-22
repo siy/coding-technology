@@ -582,13 +582,13 @@ public class UserController {
 > <dependency>
 >    <groupId>org.pragmatica-lite</groupId>
 >    <artifactId>core</artifactId>
->    <version>0.8.4</version>
+>    <version>0.8.5</version>
 > </dependency>
 > ```
 >
 > **Gradle:**
 > ```gradle
-> implementation 'org.pragmatica-lite:core:0.8.4'
+> implementation 'org.pragmatica-lite:core:0.8.5'
 > ```
 
 ### The Four Return Kinds

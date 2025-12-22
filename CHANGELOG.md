@@ -7,7 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [2.0.6] - 2025-12-21
+## [2.0.6] - 2025-12-22
+
+### Added
+- **File structure guidelines** - Standardized internal structure for JBCT source files
+  - Import ordering convention (java → javax → pragmatica → third-party → project → static)
+  - Member ordering by file type (use case, value object, error interface, step implementation, utility interface)
+  - Utility interface pattern with sealed + `unused` record
+  - Added to CODING_GUIDE.md, series/part-09, book/ch15, jbct-coder.md, jbct-reviewer.md
+- **Article series for JBCT promotion** - 5-part series for Medium/Dev.to publication
+
+### Changed
+- **Medium compatibility** - Replaced tables with lists in article series for better rendering
 
 ## [2.0.5] - 2025-12-18
 

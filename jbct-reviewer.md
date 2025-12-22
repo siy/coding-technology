@@ -334,7 +334,7 @@ Result.all(Email.email(emailRaw), Password.password(passwordRaw))
 
 // GOOD: Standard predicate
 .flatMap(Verify.ensureFn(TOO_SHORT, Verify.Is::lenBetween, 8, 128))
-.flatMap(Verify.ensureFn(BLANK, Verify.Is::notBlank))
+.filter(BLANK, Verify.Is::notBlank)
 ```
 
 ❌ **Manual Result.lift wrapping for standard JDK parsers:**

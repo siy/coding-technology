@@ -125,8 +125,8 @@ public record Email(String value) {
 
     public static Result<Email> email(String raw) {
         return Verify.ensure(EMAIL_REQUIRED, raw, Verify.Is::notNull)
-            .flatMap(Verify.ensureFn(EMAIL_BLANK, Verify.Is::notBlank))
-            .flatMap(Verify.ensureFn(INVALID_FORMAT, Verify.Is::matches, PATTERN))
+            .filter(EMAIL_BLANK, Verify.Is::notBlank)
+            .filter(INVALID_FORMAT, PATTERN.asMatchPredicate())
             .map(Email::new);
     }
 }

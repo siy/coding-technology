@@ -666,8 +666,8 @@ return Result.all(Email.email(raw), Password.password(raw)).flatMap(ValidRequest
 - `Promise.promise(supplier)` - Async execution
 - `Promise.all(p1, p2, ...)` - Parallel execution, fail-fast
 - `Promise.allOf(list)` - Parallel with resilient collection
-- `Verify.ensure(cause, value, predicate)` - Validate with error
-- `Verify.ensureFn(cause, predicate, params...)` - Validate with params
+- `Verify.ensure(value, predicate, cause)` - Validate with error (cause-at-end)
+- `.filter(cause, predicate)` - Validation in chains (replaces ensureFn)
 - `Causes.cause("message")` - Create fixed cause
 - `Causes.forOneValue("message: %s")` - Create cause factory for one context value
 - `Causes.forTwoValues("message: %s %s")` - Create cause factory for two context values
@@ -716,7 +716,7 @@ public record Email(String value) {
     public static Result<Email> email(String raw) {
         return Verify.ensure(raw, Verify.Is::notNull)
                      .map(String::trim)
-                     .flatMap(Verify.ensureFn(INVALID_EMAIL, Verify.Is::matches, EMAIL_PATTERN))
+                     .filter(INVALID_EMAIL, EMAIL_PATTERN.asMatchPredicate())
                      .map(Email::new);
     }
 }
@@ -880,7 +880,7 @@ public record Email(String value) {
     public static Result<Email> email(String raw) {
         return Verify.ensure(raw, Verify.Is::notNull)
                      .map(String::trim)
-                     .flatMap(Verify.ensureFn(INVALID_EMAIL, Verify.Is::matches, EMAIL_PATTERN))
+                     .filter(INVALID_EMAIL, EMAIL_PATTERN.asMatchPredicate())
                      .map(Email::new);
     }
 }
@@ -1192,20 +1192,18 @@ Verify.ensure(shouldBeEmpty, Verify.Is::none)
 
 **Combining multiple checks:**
 ```java
-// Using Verify.combine for composite validation
+// Using chained filters for composite validation
 private static final Cause TOO_SHORT = Causes.cause("Password must be at least 8 characters");
 private static final Cause NO_UPPERCASE = Causes.cause("Password must contain uppercase letter");
 private static final Cause NO_DIGIT = Causes.cause("Password must contain digit");
-
-private static final Fn1<Result<String>, String> PASSWORD_CHECK = Verify.combine(
-    Verify.ensureFn(TOO_SHORT, Verify.Is::lenBetween, 8, 128),
-    Verify.ensureFn(NO_UPPERCASE, Verify.Is::matches, ".*[A-Z].*"),
-    Verify.ensureFn(NO_DIGIT, Verify.Is::matches, ".*[0-9].*")
-);
+private static final Pattern HAS_UPPERCASE = Pattern.compile(".*[A-Z].*");
+private static final Pattern HAS_DIGIT = Pattern.compile(".*[0-9].*");
 
 public static Result<Password> password(String raw) {
     return Verify.ensure(raw, Verify.Is::notNull)
-        .flatMap(PASSWORD_CHECK)
+        .filter(TOO_SHORT, s -> Verify.Is.lenBetween(s, 8, 128))
+        .filter(NO_UPPERCASE, HAS_UPPERCASE.asMatchPredicate())
+        .filter(NO_DIGIT, HAS_DIGIT.asMatchPredicate())
         .map(Password::new);
 }
 ```

@@ -10,10 +10,9 @@ import java.util.function.IntPredicate;
 import java.util.stream.Stream;
 
 import static org.pragmatica.lang.Verify.ensure;
-import static org.pragmatica.lang.Verify.ensureFn;
 
 public record Password(String value) {
-    private static final Fn1<Cause, String> MISSING_PASSWORD = Causes.forOneValue("Missing email address");
+    private static final Fn1<Cause, String> MISSING_PASSWORD = Causes.forOneValue("Missing password");
     private static final Fn1<Cause, String> TOO_SHORT_PASSWORD = Causes.forOneValue("Too short");
     private static final Fn1<Cause, String> NOT_DIVERSE_PASSWORD = Causes.forOneValue(
             "Password must contain at least one of each character type: lower case, upper case, digit, special character");
@@ -25,8 +24,8 @@ public record Password(String value) {
     public static Result<Password> password(String raw) {
         return ensure(MISSING_PASSWORD, raw, Verify.Is::notNull)
                 .map(String::trim)
-                .flatMap(ensureFn(TOO_SHORT_PASSWORD, Verify.Is::lenBetween, MIN_PASSWORD_LENGTH, MAX_PASSWORD_LENGTH))
-                .flatMap(ensureFn(NOT_DIVERSE_PASSWORD, Password::hasDiversity))
+                .filter(TOO_SHORT_PASSWORD, s -> Verify.Is.lenBetween(s, MIN_PASSWORD_LENGTH, MAX_PASSWORD_LENGTH))
+                .filter(NOT_DIVERSE_PASSWORD, Password::hasDiversity)
                 .map(Password::new);
     }
 

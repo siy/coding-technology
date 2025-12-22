@@ -231,7 +231,7 @@ void email_acceptsValidFormat() {
 ### Changelog & Versioning
 
 - **[CHANGELOG.md](CHANGELOG.md)** - Version history following [Keep a Changelog](https://keepachangelog.com/)
-  - Current version: 2.0.6 (2025-12-21)
+  - Current version: 2.0.6 (2025-12-22)
   - Major release: Thread safety, concurrency, and 9-part series restructuring
   - Semantic versioning for documentation releases
 
@@ -380,6 +380,6 @@ You are free to:
 
 ---
 
-**Version:** 2.0.6 | **Last Updated:** 2025-12-21 | **[Full Changelog](CHANGELOG.md)**
+**Version:** 2.0.6 | **Last Updated:** 2025-12-22 | **[Full Changelog](CHANGELOG.md)**
 
 **Copyright © 2025 Sergiy Yevtushenko. Released under the [MIT License](LICENSE).**

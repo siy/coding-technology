@@ -87,7 +87,7 @@ Phone and address are optional. But if a `PhoneNumber` exists, it's valid--you c
 public static Result<Email> email(String raw) {
     // Parsing might fail, but we always try
     return Verify.ensure(raw, Verify.Is::notNull)
-        .flatMap(Verify.ensureFn(INVALID_FORMAT, Verify.Is::matches, PATTERN))
+        .filter(INVALID_FORMAT, PATTERN.asMatchPredicate())
         .map(Email::new);
 }
 ```

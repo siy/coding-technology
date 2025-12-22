@@ -45,7 +45,7 @@ public record Email(String value) {
 
     public static Result<Email> email(String raw) {
         return Verify.ensure(EMAIL_REQUIRED, raw, Verify.Is::notNull)
-            .flatMap(Verify.ensureFn(INVALID_FORMAT, Verify.Is::matches, PATTERN))
+            .filter(INVALID_FORMAT, PATTERN.asMatchPredicate())
             .map(Email::new);
     }
 }
@@ -83,7 +83,7 @@ public record Email(String value) {
         return Verify.ensure(EMAIL_REQUIRED, raw, Verify.Is::notNull)
             .map(String::trim)           // Remove whitespace
             .map(String::toLowerCase)    // Normalize case
-            .flatMap(Verify.ensureFn(INVALID_FORMAT, Verify.Is::matches, PATTERN))
+            .filter(INVALID_FORMAT, PATTERN.asMatchPredicate())
             .map(Email::new);
     }
 }
@@ -112,7 +112,7 @@ public record Age(int value) {
     public static Result<Age> age(String raw) {
         return Verify.ensure(AGE_REQUIRED, raw, Verify.Is::notNull)
             .flatMap(Number::parseInt)  // Uses parse utility
-            .flatMap(Verify.ensureFn(AGE_OUT_OF_RANGE, Verify.Is::between, 0, 150))
+            .filter(AGE_OUT_OF_RANGE, v -> Verify.Is.between(v, 0, 150))
             .map(Age::new);
     }
 
@@ -149,12 +149,9 @@ public record Username(String value) {
     public static Result<Username> username(String raw) {
         return Verify.ensure(USERNAME_REQUIRED, raw, Verify.Is::notNull)
             .map(String::trim)
-            .flatMap(Verify.ensureFn(USERNAME_TOO_SHORT,
-                s -> s.length() >= MIN_LENGTH))
-            .flatMap(Verify.ensureFn(USERNAME_TOO_LONG,
-                s -> s.length() <= MAX_LENGTH))
-            .flatMap(Verify.ensureFn(INVALID_CHARACTERS,
-                Verify.Is::matches, VALID_CHARS))
+            .filter(USERNAME_TOO_SHORT, s -> s.length() >= MIN_LENGTH)
+            .filter(USERNAME_TOO_LONG, s -> s.length() <= MAX_LENGTH)
+            .filter(INVALID_CHARACTERS, VALID_CHARS.asMatchPredicate())
             .map(Username::new);
     }
 }
@@ -186,11 +183,11 @@ public record Password(String value) {
 
     public static Result<Password> password(String raw) {
         return Verify.ensure(PASSWORD_REQUIRED, raw, Verify.Is::notNull)
-            .flatMap(Verify.ensureFn(TOO_SHORT, s -> s.length() >= MIN_LENGTH))
-            .flatMap(Verify.ensureFn(TOO_LONG, s -> s.length() <= MAX_LENGTH))
-            .flatMap(Verify.ensureFn(MISSING_UPPERCASE, s -> s.chars().anyMatch(Character::isUpperCase)))
-            .flatMap(Verify.ensureFn(MISSING_LOWERCASE, s -> s.chars().anyMatch(Character::isLowerCase)))
-            .flatMap(Verify.ensureFn(MISSING_DIGIT, s -> s.chars().anyMatch(Character::isDigit)))
+            .filter(TOO_SHORT, s -> s.length() >= MIN_LENGTH)
+            .filter(TOO_LONG, s -> s.length() <= MAX_LENGTH)
+            .filter(MISSING_UPPERCASE, s -> s.chars().anyMatch(Character::isUpperCase))
+            .filter(MISSING_LOWERCASE, s -> s.chars().anyMatch(Character::isLowerCase))
+            .filter(MISSING_DIGIT, s -> s.chars().anyMatch(Character::isDigit))
             .map(Password::new);
     }
 
@@ -219,9 +216,8 @@ public record PhoneNumber(CountryCode countryCode, String localNumber) {
     private static Result<String> validateLocalNumber(String raw) {
         return Verify.ensure(Causes.cause("Local number required"), raw, Verify.Is::notNull)
             .map(s -> s.replaceAll("[^0-9]", ""))  // Strip non-digits
-            .flatMap(Verify.ensureFn(
-                Causes.cause("Local number must be 7-15 digits"),
-                Verify.Is::lenBetween, 7, 15));
+            .filter(Causes.cause("Local number must be 7-15 digits"),
+                    s -> Verify.Is.lenBetween(s, 7, 15));
     }
 
     public String formatted() {
@@ -237,7 +233,7 @@ public record CountryCode(String value) {
     public static Result<CountryCode> countryCode(String raw) {
         return Verify.ensure(raw, Verify.Is::notNull)
             .map(String::trim)
-            .flatMap(Verify.ensureFn(INVALID, Verify.Is::matches, PATTERN))
+            .filter(INVALID, PATTERN.asMatchPredicate())
             .map(CountryCode::new);
     }
 }
@@ -300,7 +296,7 @@ public record ReferralCode(String value) {
         return Verify.ensure(raw, Verify.Is::notNull)
             .map(String::trim)
             .map(String::toUpperCase)
-            .flatMap(Verify.ensureFn(INVALID, Verify.Is::matches, PATTERN))
+            .filter(INVALID, PATTERN.asMatchPredicate())
             .map(ReferralCode::new)
             .map(Option::some);
     }
@@ -346,7 +342,7 @@ public record Currency(String code) {
         return Verify.ensure(CURRENCY_REQUIRED, raw, Verify.Is::notNull)
             .map(String::trim)
             .map(String::toUpperCase)
-            .flatMap(Verify.ensureFn(UNSUPPORTED, VALID_CODES::contains))
+            .filter(UNSUPPORTED, VALID_CODES::contains)
             .map(Currency::new);
     }
 

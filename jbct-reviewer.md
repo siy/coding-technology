@@ -274,7 +274,7 @@ public record Email(String value) {
     public static Result<Email> email(String raw) {
         return Verify.ensure(raw, Verify.Is::notNull)
             .map(String::trim)
-            .flatMap(Verify.ensureFn(INVALID_EMAIL, Verify.Is::matches, PATTERN))
+            .filter(INVALID_EMAIL, PATTERN.asMatchPredicate())
             .map(Email::new);
     }
 }
@@ -332,8 +332,8 @@ Result.all(Email.email(emailRaw), Password.password(passwordRaw))
 .flatMap(p -> p.length() >= 8 ? Result.success(p) : Result.failure(...))
 .flatMap(s -> !s.isBlank() ? Result.success(s) : Result.failure(...))
 
-// GOOD: Standard predicate
-.flatMap(Verify.ensureFn(TOO_SHORT, Verify.Is::lenBetween, 8, 128))
+// GOOD: Standard predicate with filter
+.filter(TOO_SHORT, s -> Verify.Is.lenBetween(s, 8, 128))
 .filter(BLANK, Verify.Is::notBlank)
 ```
 

@@ -121,9 +121,7 @@ public record Email(String value) {
         return Verify.ensure(raw, Verify.Is::notNull)
                      .map(String::trim)
                      .map(String::toLowerCase)
-                     .flatMap(Verify.ensureFn(INVALID_EMAIL,
-                                              Verify.Is::matches,
-                                              EMAIL_PATTERN))
+                     .filter(INVALID_EMAIL, EMAIL_PATTERN.asMatchPredicate())
                      .map(Email::new);
     }
 }
@@ -141,8 +139,7 @@ public record Password(String value) {
 
     public static Result<Password> password(String raw) {
         return Verify.ensure(raw, Verify.Is::notNull)
-                     .flatMap(Verify.ensureFn(TOO_SHORT,
-                                              Verify.Is::lenBetween, 8, 128))
+                     .filter(TOO_SHORT, s -> Verify.Is.lenBetween(s, 8, 128))
                      .flatMap(Password::ensureUppercase)
                      .flatMap(Password::ensureDigit)
                      .map(Password::new);

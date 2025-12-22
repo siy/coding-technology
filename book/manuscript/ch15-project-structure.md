@@ -197,9 +197,7 @@ public sealed interface ValidationUtils {
     static Result<String> normalizePhone(String raw) {
         return Verify.ensure(raw, Verify.Is::notNull)
                      .map(s -> s.replaceAll("[\\s\\-()]", ""))
-                     .flatMap(Verify.ensureFn(INVALID_PHONE,
-                                              Verify.Is::matches,
-                                              PHONE_PATTERN));
+                     .filter(INVALID_PHONE, PHONE_PATTERN.asMatchPredicate());
     }
 
     record unused() implements ValidationUtils {}

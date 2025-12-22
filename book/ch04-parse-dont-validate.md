@@ -70,9 +70,7 @@ public record Email(String value) {
     public static Result<Email> email(String raw) {
         return Verify.ensure(raw, Verify.Is::notNull)
                      .map(String::trim)
-                     .flatMap(Verify.ensureFn(INVALID_EMAIL,
-                                              Verify.Is::matches,
-                                              EMAIL_PATTERN))
+                     .filter(INVALID_EMAIL, EMAIL_PATTERN.asMatchPredicate())
                      .map(Email::new);
     }
 }
@@ -155,9 +153,7 @@ public static Result<Email> email(String raw) {
     return Verify.ensure(raw, Verify.Is::notNull)
                  .map(String::trim)           // Remove whitespace
                  .map(String::toLowerCase)    // Lowercase for comparison
-                 .flatMap(Verify.ensureFn(INVALID_EMAIL,
-                                          Verify.Is::matches,
-                                          EMAIL_PATTERN))
+                 .filter(INVALID_EMAIL, EMAIL_PATTERN.asMatchPredicate())
                  .map(Email::new);
 }
 ```
@@ -309,8 +305,8 @@ public record ValidRegistration(Email email, Password password, Age age) {
 // Instead of custom lambdas:
 .flatMap(s -> s.length() >= 8 ? Result.success(s) : Result.failure(...))
 
-// Use standard predicates:
-.flatMap(Verify.ensureFn(TOO_SHORT, Verify.Is::lenBetween, 8, 128))
+// Use filter with standard predicates:
+.filter(TOO_SHORT, s -> Verify.Is.lenBetween(s, 8, 128))
 ```
 
 Common predicates: `notNull`, `notBlank`, `lenBetween`, `matches`, `positive`, `nonNegative`, `between`, `greaterThan`, `lessThan`, `contains`.
@@ -331,8 +327,8 @@ Network.parseUUID(raw)            // Result<UUID>
 public record Age(int value) {
     public static Result<Age> age(String raw) {
         return Number.parseInt(raw)
-                     .flatMap(Verify.ensureFn(Causes.cause("Age 0-150"),
-                                              Verify.Is::between, 0, 150))
+                     .filter(Causes.cause("Age 0-150"),
+                             v -> Verify.Is.between(v, 0, 150))
                      .map(Age::new);
     }
 }

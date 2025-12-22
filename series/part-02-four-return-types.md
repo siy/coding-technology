@@ -135,7 +135,7 @@ public record Email(String value) {
     public static Result<Email> email(String raw) {
         return Verify.ensure(raw, Verify.Is::notNull)
                      .map(String::trim)
-                     .flatMap(Verify.ensureFn(INVALID_EMAIL, Verify.Is::matches, EMAIL_PATTERN))
+                     .filter(INVALID_EMAIL, EMAIL_PATTERN.asMatchPredicate())
                      .map(Email::new);
     }
 }
@@ -437,7 +437,7 @@ import org.pragmatica.lang.Functions.Fn2;
 - `Result.all(r1, r2, ...)` - Parallel validation, collect all errors
 - `Result.allOf(list)` - Aggregate list of Results
 - `Verify.ensure(value, predicate)` - Validate value
-- `Verify.ensureFn(cause, predicate, params...)` - Validate with custom error
+- `result.filter(cause, predicate)` - Filter with custom error
 - `Causes.forOneValue("message: %s")` - Create cause factory
 - `Number.parseInt(raw)`, `DateTime.parseLocalDate(raw)` - Safe parsing
 

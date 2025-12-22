@@ -110,7 +110,7 @@ public record Email(String value) {
         return Verify.ensure(raw, Verify.Is::notBlank)
             .map(String::trim)
             .map(String::toLowerCase)
-            .flatMap(Verify.ensureFn(INVALID, Verify.Is::matches, PATTERN))
+            .filter(INVALID, PATTERN.asMatchPredicate())
             .map(Email::new);
     }
 }

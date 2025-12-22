@@ -90,7 +90,7 @@ public record Email(String value) {
         return Verify.ensure(EMAIL_REQUIRED, raw, Verify.Is::notNull)
             .map(String::trim)
             .map(String::toLowerCase)
-            .flatMap(Verify.ensureFn(INVALID_FORMAT, Verify.Is::matches, PATTERN))
+            .filter(INVALID_FORMAT, PATTERN.asMatchPredicate())
             .map(Email::new);
     }
 }
@@ -134,11 +134,11 @@ public record Password(String value) {
 
     public static Result<Password> password(String raw) {
         return Verify.ensure(raw, Verify.Is::notNull)
-            .flatMap(Verify.ensureFn(TOO_SHORT, s -> s.length() >= MIN_LENGTH))
-            .flatMap(Verify.ensureFn(TOO_LONG, s -> s.length() <= MAX_LENGTH))
-            .flatMap(Verify.ensureFn(MISSING_UPPERCASE, s -> HAS_UPPERCASE.matcher(s).find()))
-            .flatMap(Verify.ensureFn(MISSING_LOWERCASE, s -> HAS_LOWERCASE.matcher(s).find()))
-            .flatMap(Verify.ensureFn(MISSING_DIGIT, s -> HAS_DIGIT.matcher(s).find()))
+            .filter(TOO_SHORT, s -> s.length() >= MIN_LENGTH)
+            .filter(TOO_LONG, s -> s.length() <= MAX_LENGTH)
+            .filter(MISSING_UPPERCASE, s -> HAS_UPPERCASE.matcher(s).find())
+            .filter(MISSING_LOWERCASE, s -> HAS_LOWERCASE.matcher(s).find())
+            .filter(MISSING_DIGIT, s -> HAS_DIGIT.matcher(s).find())
             .map(Password::new);
     }
 }
@@ -219,7 +219,7 @@ public static Result<Email> email(String raw) {
     return Verify.ensure(EMAIL_REQUIRED, raw, Verify.Is::notNull)
         .map(String::trim)           // Remove whitespace
         .map(String::toLowerCase)    // Normalize case
-        .flatMap(Verify.ensureFn(INVALID_FORMAT, Verify.Is::matches, PATTERN))
+        .filter(INVALID_FORMAT, PATTERN.asMatchPredicate())
         .map(Email::new);
 }
 ```

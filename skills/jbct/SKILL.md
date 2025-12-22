@@ -87,7 +87,7 @@ public record Email(String value) {
     public static Result<Email> email(String raw) {
         return Verify.ensure(raw, Verify.Is::notNull)
             .map(String::trim)
-            .flatMap(Verify.ensureFn(INVALID_EMAIL, Verify.Is::matches, PATTERN))
+            .filter(INVALID_EMAIL, PATTERN.asMatchPredicate())
             .map(Email::new);
     }
 }
@@ -130,10 +130,11 @@ Network.parseUUID(raw)            // Result<UUID>
 **Example:**
 ```java
 public record Age(int value) {
+    private static final Cause AGE_OUT_OF_RANGE = Causes.cause("Age must be 0-150");
+
     public static Result<Age> age(String raw) {
         return Number.parseInt(raw)
-            .flatMap(Verify.ensureFn(Causes.cause("Age 0-150"),
-                                     Verify.Is::between, 0, 150))
+            .filter(AGE_OUT_OF_RANGE, v -> Verify.Is.between(v, 0, 150))
             .map(Age::new);
     }
 }

@@ -115,7 +115,7 @@ Example Patterns (quick map)
   - Sync: `examples/usecase-userlogin-sync/.../usecase/userlogin/UserLogin.java`
   - Async: `examples/usecase-userlogin-async/.../usecase/userlogin/UserLogin.java`
 - Parse, don’t validate (VO factories)
-  - Email: `examples/*/domain/shared/Email.java`  -  normalization + Verify.ensure/ensureFn
+  - Email: `examples/*/domain/shared/Email.java`  -  normalization + Verify.ensure/filter
   - Password: `examples/*/domain/shared/Password.java`  -  chained invariants + helpers
   - ReferralCode: `examples/*/domain/shared/ReferralCode.java`  -  optional-with-validation via `Result<Option<T>>`
 - Cross-field validation
@@ -173,7 +173,7 @@ Examples: What They Demonstrate (understanding)
   - ValidRequest has two factories named after the type: one from raw Request (parses fields) and one from validated components (applies cross‑field checks, then constructs).
   - Construction happens only after all per‑field and cross‑field validations pass; there is no “construct then validate” path.
 - VO factories as leaves
-  - Email/Password/ReferralCode are records with static factories that normalize input and enforce invariants via Verify.ensure/ensureFn.
+  - Email/Password/ReferralCode are records with static factories that normalize input and enforce invariants via Verify.ensure/filter.
   - ReferralCode shows the “optional‑with‑validation” pattern by returning Result<Option<ReferralCode>>.
 - Error handling
   - Per‑field failures accumulate through Result.all(...) into a CompositeCause automatically; cross‑field checks return Result<Unit> and are combined the same way.

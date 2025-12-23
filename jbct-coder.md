@@ -1,7 +1,7 @@
 ---
 name: jbct-coder
 title: Java Backend Coding Technology Agent
-description: Specialized agent for generating business logic code using Java Backend Coding Technology v2.0.5 with Pragmatica Lite Core 0.8.4. Produces deterministic, AI-friendly code that matches human-written code structurally and stylistically. Includes evolutionary testing strategy guidance.
+description: Specialized agent for generating business logic code using Java Backend Coding Technology v2.0.6 with Pragmatica Lite Core 0.8.5. Produces deterministic, AI-friendly code that matches human-written code structurally and stylistically. Includes evolutionary testing strategy guidance.
 tools: Read, Write, Edit, MultiEdit, Grep, Glob, LS, Bash, TodoWrite, Task, WebSearch, WebFetch
 ---
 
@@ -59,9 +59,9 @@ You are a Java Backend Coding Technology developer with deep knowledge of Java, 
 
 ## Purpose
 
-This guide provides **deterministic instructions** for generating business logic code using Pragmatica Lite Core 0.8.4. Follow these rules precisely to ensure AI-generated code matches human-written code structurally and stylistically.
+This guide provides **deterministic instructions** for generating business logic code using Pragmatica Lite Core 0.8.5. Follow these rules precisely to ensure AI-generated code matches human-written code structurally and stylistically.
 
-**Pragmatica Lite Core 0.8.4:**
+**Pragmatica Lite Core 0.8.5:**
 
 **IMPORTANT: Always use Maven unless the user explicitly requests Gradle.**
 
@@ -70,13 +70,13 @@ This guide provides **deterministic instructions** for generating business logic
 <dependency>
    <groupId>org.pragmatica-lite</groupId>
    <artifactId>core</artifactId>
-   <version>0.8.4</version>
+   <version>0.8.5</version>
 </dependency>
 ```
 
 **Gradle (only if explicitly requested):**
 ```gradle
-implementation 'org.pragmatica-lite:core:0.8.4'
+implementation 'org.pragmatica-lite:core:0.8.5'
 ```
 
 Library documentation: https://central.sonatype.com/artifact/org.pragmatica-lite/core
@@ -231,7 +231,7 @@ public record Email(String value) {
         return Verify.ensure(raw, Verify.Is::notNull)
             .map(String::trim)
             .map(String::toLowerCase)
-            .flatMap(Verify.ensureFn(INVALID_EMAIL, Verify.Is::matches, EMAIL_PATTERN))
+            .filter(INVALID_EMAIL, EMAIL_PATTERN.asMatchPredicate())
             .map(Email::new);
     }
 }
@@ -1321,7 +1321,7 @@ public record Email(String value) {
         return Verify.ensure(raw, Verify.Is::notNull)
             .map(String::trim)
             .map(String::toLowerCase)
-            .flatMap(Verify.ensureFn(INVALID_EMAIL, Verify.Is::matches, EMAIL_PATTERN))
+            .filter(INVALID_EMAIL, EMAIL_PATTERN.asMatchPredicate())
             .map(Email::new);
     }
 }
@@ -1526,6 +1526,74 @@ adapter.persistence/
 
 ---
 
+## File Structure Guidelines
+
+> **For complete details**, see **[CODING_GUIDE.md: File Structure Guidelines](CODING_GUIDE.md#file-structure-guidelines)**.
+
+### Import Ordering
+
+```
+1. java.*
+2. javax.*
+3. org.pragmatica.*
+4. third-party (org.*, com.* - alphabetically)
+5. project imports
+6. (blank line)
+7. static imports (same grouping order)
+```
+
+### Member Ordering by File Type
+
+**Use Case Interface:**
+1. Public API (Request, Response records)
+2. Execute method
+3. Internal types (ValidRequest + helpers)
+4. Step interfaces
+5. Domain fragments
+6. Factory method
+
+**Value Object:**
+1. Static constants (patterns, cause factories)
+2. Factory method
+3. Helper methods
+
+**Error Interface:**
+1. Enum variants (fixed-message, grouped)
+2. Record variants (errors with data)
+
+**Step Implementation:**
+1. Dependencies (final fields)
+2. Constructor
+3. Interface method(s)
+4. Private helpers
+
+**Utility Interface:**
+1. Constants
+2. Static methods
+3. `unused` record (always last)
+
+### Utility Interface Pattern
+
+Use sealed interfaces with `unused` record instead of utility classes:
+
+```java
+public sealed interface ValidationUtils {
+
+    Pattern PHONE_PATTERN = Pattern.compile("^\\+?[0-9]{10,14}$");
+
+    static Result<String> normalizePhone(String raw) { ... }
+
+    record unused() implements ValidationUtils {}
+}
+```
+
+**Key points:**
+- `sealed` prevents external implementation
+- `unused` record satisfies permit requirement
+- No visibility modifiers needed (implicit `public`)
+
+---
+
 ## Quick Reference: Violation → Fix Patterns
 
 | Violation | Detection | Fix |
@@ -1633,7 +1701,7 @@ public class JooqUserRepository implements SaveUser {
 
 ## References
 
-- **Full Guide**: `CODING_GUIDE.md` - Comprehensive explanation of all patterns and principles (v2.0.5)
+- **Full Guide**: `CODING_GUIDE.md` - Comprehensive explanation of all patterns and principles (v2.0.6)
 - **Testing Strategy**: `series/part-05-testing-strategy.md` - Evolutionary testing approach, integration-first philosophy, test organization
 - **Systematic Application**: `series/part-10-systematic-application.md` - Checkpoints for coding and review
 - **API Reference**: `CLAUDE.md` - Complete Pragmatica Lite API documentation

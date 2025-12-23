@@ -4,6 +4,7 @@
 
 - Vertical slicing philosophy and package organization
 - Module organization for larger systems
+- File structure guidelines: import ordering, member ordering, utility interfaces
 - Framework integration with Spring Boot and JOOQ
 - Where types go (placement rules)
 
@@ -133,6 +134,84 @@ adapters       -> application, domain
   |
 bootstrap      -> adapters, application, domain
 ```
+
+---
+
+## File Structure Guidelines
+
+Beyond package organization, JBCT standardizes the internal structure of source files. This ensures consistency and enables automated linting.
+
+**Scope:** Use case interfaces, step implementations, value objects, error interfaces, and utility interfaces. Adapters are excluded—they are too framework-specific.
+
+### Import Ordering
+
+```
+1. java.*
+2. javax.*
+3. org.pragmatica.*
+4. third-party (org.*, com.* - alphabetically)
+5. project imports
+6. (blank line)
+7. static imports (same grouping order)
+```
+
+### Member Ordering by File Type
+
+**Use Case Interface:**
+1. Public API (Request, Response records)
+2. Execute method
+3. Internal types (ValidRequest + validation helpers)
+4. Step interfaces
+5. Domain fragments (records used only by this use case)
+6. Factory method
+
+**Value Object:**
+1. Static constants (patterns, cause factories)
+2. Factory method
+3. Helper methods
+
+**Error Interface:**
+1. Enum variants (fixed-message errors, grouped)
+2. Record variants (errors carrying data)
+
+**Step Implementation:**
+1. Dependencies (final fields)
+2. Constructor
+3. Interface method(s)
+4. Private helpers
+
+**Utility Interface:**
+1. Constants
+2. Static methods
+3. `unused` record (always last—prevents implementation)
+
+### Utility Interface Pattern
+
+Utility interfaces replace utility classes. The `sealed` modifier with an `unused` record prevents implementation:
+
+```java
+public sealed interface ValidationUtils {
+
+    Pattern PHONE_PATTERN = Pattern.compile("^\\+?[0-9]{10,14}$");
+
+    static Result<String> normalizePhone(String raw) {
+        return Verify.ensure(raw, Verify.Is::notNull)
+                     .map(s -> s.replaceAll("[\\s\\-()]", ""))
+                     .filter(INVALID_PHONE, PHONE_PATTERN.asMatchPredicate());
+    }
+
+    record unused() implements ValidationUtils {}
+}
+```
+
+**Key points:**
+- `sealed` prevents external implementation
+- `unused` record satisfies permit requirement
+- No visibility modifiers needed (implicit `public`)
+
+### Section Separation
+
+Use blank lines to separate logical sections. Comments are optional—use only when they add clarity.
 
 ---
 

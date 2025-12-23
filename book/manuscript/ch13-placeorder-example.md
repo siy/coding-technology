@@ -116,7 +116,7 @@ public record Quantity(int value) {
     public static Result<Quantity> quantity(int raw) {
         return Verify.ensure(raw, Verify.Is::positive)
             .mapError(_ -> NOT_POSITIVE)
-            .flatMap(Verify.ensureFn(EXCEEDS_LIMIT, Verify.Is::lessThanOrEqualTo, 100))
+            .filter(EXCEEDS_LIMIT, v -> Verify.Is.lessThanOrEqualTo(v, 100))
             .map(Quantity::new);
     }
 

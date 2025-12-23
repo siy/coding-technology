@@ -46,7 +46,8 @@ const SERIES_FILES = [
   'part-06-advanced-patterns.md',
   'part-07-testing-philosophy.md',
   'part-08-testing-practice.md',
-  'part-09-production-systems.md'
+  'part-09-production-systems.md',
+  'part-10-systematic-application.md'
 ];
 
 // Helper functions

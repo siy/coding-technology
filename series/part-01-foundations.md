@@ -507,13 +507,13 @@ Add to your `pom.xml`:
 <dependency>
    <groupId>org.pragmatica-lite</groupId>
    <artifactId>core</artifactId>
-   <version>0.8.4</version>
+   <version>0.8.5</version>
 </dependency>
 ```
 
 Or Gradle:
 ```gradle
-implementation 'org.pragmatica-lite:core:0.8.4'
+implementation 'org.pragmatica-lite:core:0.8.5'
 ```
 
 Library documentation: https://central.sonatype.com/artifact/org.pragmatica-lite/core

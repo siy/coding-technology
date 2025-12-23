@@ -9,7 +9,7 @@ Overview
 
 Notes
 - The code references Pragmatica Lite types (`Option`, `Result`, `Promise`, `Causes`, `Verify`).
-- Pragmatica Lite Core 0.8.4 is available on Maven Central.
+- Pragmatica Lite Core 0.8.5 is available on Maven Central.
 - Java 25 is configured via Maven compiler properties. Adjust to your local JDK if needed.
 
 Layout
@@ -17,6 +17,6 @@ Layout
 - `com.example.app.domain.shared.*`  -  shared value objects (Email, Password, ReferralCode) with static factories.
 
 Build
-- Pragmatica Lite Core `org.pragmatica-lite:core:0.8.4` is declared in parent POM and available from Maven Central.
+- Pragmatica Lite Core `org.pragmatica-lite:core:0.8.5` is declared in parent POM and available from Maven Central.
 - Package: `mvn -q -f examples/pom.xml -DskipTests package`
 - Test: `mvn -q -f examples/pom.xml test`

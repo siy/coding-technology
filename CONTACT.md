@@ -1,35 +1,91 @@
-# Contact
+# Work With Us
 
-We'd love to hear from you! Whether you have questions, feedback, or want to share your experience with Java Backend Coding Technology, there are several ways to get in touch.
-
----
-
-## Community Discussion
-
-**For questions, ideas, and general discussion:**
-
-The best place to ask questions, share ideas, or discuss Java Backend Coding Technology is our GitHub Discussions forum. This allows the community to benefit from the conversation and helps build a knowledge base.
-
-<div style="text-align: center; margin: 2rem 0;">
-  <a href="https://github.com/siy/coding-technology/discussions/new?category=general"
-     style="display: inline-block; background-color: #2563eb; color: white; padding: 1rem 2rem; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 1.1rem;">
-    Start a Discussion →
-  </a>
-</div>
-
-**Discussion categories:**
-- **General** - Questions and conversations about the methodology
-- **Q&A** - Get help with implementation and patterns
-- **Show and Tell** - Share your projects and experiences
-- **Ideas** - Suggest improvements or new patterns
+Transform how your team writes Java. Get expert guidance from the creator of JBCT - 40 years of software engineering experience, from firmware to distributed systems.
 
 ---
 
-## Private Inquiry
+## Consulting Services
 
-**For private matters or business inquiries:**
+### JBCT Assessment
 
-If you need to contact us privately (consulting opportunities, partnership inquiries, or sensitive topics), please use the form below.
+**What:** Deep analysis of your codebase against JBCT principles. Identify exception sprawl, null proliferation, inconsistent patterns, and AI-unfriendly code.
+
+**Deliverable:** Written report with prioritized recommendations and migration path.
+
+**Investment:** Starting at €800 | 4-5 hours
+
+**Best for:** Teams evaluating JBCT adoption, or wanting an objective code quality audit.
+
+---
+
+### Team Workshop
+
+**What:** Hands-on training customized to your codebase. Cover Four Return Kinds, Parse-Don't-Validate, structural patterns, and AI integration.
+
+**Deliverable:** Your team writes JBCT-compliant code by end of session. Includes exercises using your actual code.
+
+**Investment:** Starting at €2,000 | 1-2 days
+
+**Best for:** Teams ready to adopt JBCT, or struggling with Result/Option patterns.
+
+---
+
+### Cohort Training (Group)
+
+**What:** 4-week structured program with 10-20 developers across companies. Weekly live sessions + exercises + async Q&A.
+
+**Deliverable:** Comprehensive JBCT proficiency. Certificate of completion.
+
+**Investment:** €400 per developer
+
+**Best for:** Individual developers, or teams wanting structured learning with peer interaction.
+
+*Next cohort: Q1 2025 - [Express interest below](#inquiry)*
+
+---
+
+### Architecture Review
+
+**What:** Review your system architecture for JBCT compatibility. Identify integration points, migration risks, and quick wins.
+
+**Deliverable:** Architecture document with recommended approach and effort estimates.
+
+**Investment:** Starting at €1,500 | 1-2 days
+
+**Best for:** Teams planning major refactoring or greenfield projects.
+
+---
+
+### Adoption Sprint
+
+**What:** Embedded work with your team. Migrate a vertical slice end-to-end, establish patterns, train developers hands-on.
+
+**Deliverable:** Working production code + established patterns + trained team.
+
+**Investment:** Starting at €5,000 | 1-2 weeks
+
+**Best for:** Teams wanting rapid, guided adoption with immediate production results.
+
+---
+
+## Specialized Expertise
+
+| Domain | Experience |
+|--------|------------|
+| **Trading / FIX Protocol** | Production systems, low-latency, compliance |
+| **Fintech** | Payment processing, risk systems |
+| **Distributed Systems** | Consensus algorithms, fault tolerance |
+| **AI Integration** | Claude Code, Copilot, AI-assisted development |
+
+*Trading and fintech engagements command premium rates due to specialized domain knowledge.*
+
+---
+
+## Book a Consultation
+
+<a name="inquiry"></a>
+
+Tell us about your situation. Free 30-minute discovery call for qualified inquiries.
 
 <form name="contact" method="POST" netlify data-netlify="true" netlify-honeypot="bot-field" style="max-width: 600px; margin: 2rem auto;">
   <!-- Honeypot for spam protection -->
@@ -46,44 +102,81 @@ If you need to contact us privately (consulting opportunities, partnership inqui
   </div>
 
   <div style="margin-bottom: 1.5rem;">
-    <label for="email" style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Email</label>
+    <label for="email" style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Work Email</label>
     <input type="email" id="email" name="email" required
            style="width: 100%; padding: 0.75rem; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 1rem;">
   </div>
 
   <div style="margin-bottom: 1.5rem;">
-    <label for="subject" style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Subject</label>
-    <input type="text" id="subject" name="subject" required
+    <label for="company" style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Company</label>
+    <input type="text" id="company" name="company"
            style="width: 100%; padding: 0.75rem; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 1rem;">
   </div>
 
   <div style="margin-bottom: 1.5rem;">
-    <label for="message" style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Message</label>
-    <textarea id="message" name="message" rows="6" required
+    <label for="team-size" style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Team Size</label>
+    <select id="team-size" name="team-size"
+            style="width: 100%; padding: 0.75rem; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 1rem;">
+      <option value="">Select...</option>
+      <option value="1-5">1-5 developers</option>
+      <option value="6-15">6-15 developers</option>
+      <option value="16-50">16-50 developers</option>
+      <option value="50+">50+ developers</option>
+    </select>
+  </div>
+
+  <div style="margin-bottom: 1.5rem;">
+    <label for="interest" style="display: block; margin-bottom: 0.5rem; font-weight: 600;">I'm interested in...</label>
+    <select id="interest" name="interest"
+            style="width: 100%; padding: 0.75rem; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 1rem;">
+      <option value="">Select...</option>
+      <option value="assessment">JBCT Assessment</option>
+      <option value="workshop">Team Workshop</option>
+      <option value="cohort">Cohort Training</option>
+      <option value="architecture">Architecture Review</option>
+      <option value="sprint">Adoption Sprint</option>
+      <option value="other">Something else</option>
+    </select>
+  </div>
+
+  <div style="margin-bottom: 1.5rem;">
+    <label for="message" style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Tell us about your situation</label>
+    <textarea id="message" name="message" rows="4" required
+              placeholder="What challenges are you facing? What are you hoping to achieve?"
               style="width: 100%; padding: 0.75rem; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 1rem; font-family: inherit; resize: vertical;"></textarea>
   </div>
 
   <div style="text-align: center;">
     <button type="submit"
             style="background-color: #2563eb; color: white; padding: 0.75rem 2rem; border: none; border-radius: 6px; font-size: 1rem; font-weight: 600; cursor: pointer;">
-      Send Message
+      Request Consultation
     </button>
   </div>
 </form>
 
 ---
 
-## Other Ways to Connect
+## Learn for Free
 
-**Report Issues or Bugs:**
-[GitHub Issues](https://github.com/siy/coding-technology/issues) - For documentation bugs, typos, or technical issues
+Not ready for consulting? Start here:
 
-**Pragmatica Lite Library:**
-[GitHub Repository](https://github.com/siy/pragmatica-lite) - For library-specific questions and contributions
-
-**Follow Updates:**
-[GitHub Repository](https://github.com/siy/coding-technology) - Watch the repository for updates and new releases
+- **[9-Part Learning Series](series/INDEX.md)** - Complete self-paced curriculum
+- **[CODING_GUIDE.md](CODING_GUIDE.md)** - Comprehensive technical reference
+- **[Get the Book](https://leanpub.com/jbct-book)** - $25 on Leanpub
 
 ---
 
-**Response Time:** We typically respond to discussions and inquiries within 2-3 business days.
+## Community
+
+**Questions about the methodology:**
+[GitHub Discussions](https://github.com/siy/coding-technology/discussions) - Community Q&A
+
+**Report issues:**
+[GitHub Issues](https://github.com/siy/coding-technology/issues) - Documentation bugs, typos
+
+**Support the project:**
+[GitHub Sponsors](https://github.com/sponsors/siy) - Help sustain development
+
+---
+
+**Response Time:** We respond to consultation requests within 1-2 business days.

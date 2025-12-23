@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Monetization links** - Book and GitHub Sponsors links in site navigation and footer
+- **Services page** - Consulting offerings with pricing (CONTACT.md → "Work With Us")
+
+### Changed
+- CLI lint rules count updated from 23 to 33
+- Repository cleanup and build artifact management
+
 ## [2.0.6] - 2025-12-22
 
 ### Added

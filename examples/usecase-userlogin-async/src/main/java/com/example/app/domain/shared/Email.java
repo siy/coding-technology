@@ -9,19 +9,18 @@ import org.pragmatica.lang.utils.Causes;
 import java.util.regex.Pattern;
 
 import static org.pragmatica.lang.Verify.ensure;
-import static org.pragmatica.lang.Verify.ensureFn;
 
 public record Email(String value) {
     private static final Pattern EMAIL = Pattern.compile("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$");
     private static final Fn1<Cause, String> MISSING_EMAIL = Causes.forOneValue("Missing email address");
-    private static final Fn1<Cause, String> INVALID_EMAIL = Causes.forOneValue("Invalid email address {}");
+    private static final Fn1<Cause, String> INVALID_EMAIL = Causes.forOneValue("Invalid email address %s");
 
     // Pattern: VO factory named after type; normalize + ensure invariants
     public static Result<Email> email(String raw) {
         return ensure(MISSING_EMAIL, raw, Verify.Is::notNull)
                 .map(String::trim)
-                .flatMap(ensureFn(INVALID_EMAIL, Verify.Is::notEmpty))
-                .flatMap(ensureFn(INVALID_EMAIL, Verify.Is::matches, EMAIL))
+                .filter(INVALID_EMAIL, Verify.Is::notEmpty)
+                .filter(INVALID_EMAIL, EMAIL.asMatchPredicate())
                 .map(Email::new);
     }
 

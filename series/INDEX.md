@@ -1,6 +1,6 @@
 # Java Backend Coding Technology: Complete Learning Series
 
-**Based on:** [CODING_GUIDE.md](../CODING_GUIDE.md) v2.0.4
+**Based on:** [CODING_GUIDE.md](../CODING_GUIDE.md) v2.0.6
 
 ## About This Series
 
@@ -173,6 +173,7 @@ Build a complete use case from requirements to deployment and learn how to integ
 - Complete Use Case Walkthrough: RegisterUser from requirements to tests
 - Project Structure & Package Organization: vertical slicing, placement rules
 - Module Organization: multi-module projects, when to use them
+- File Structure Guidelines: import ordering, member ordering by file type, utility interfaces
 - Framework Integration: connecting to Spring Boot and JOOQ
 - Conclusion: where to go next
 
@@ -222,7 +223,7 @@ Looking for specific patterns? Jump directly to the relevant part using the topi
 
 ## Series Version
 
-**Version 2.0.4** (2025-12-11)
+**Version 2.0.6** (2025-12-22)
 - **Book feedback fixes** - Improvements based on reviewer feedback
   - Prerequisites clarified (Java 21+, mid/senior developers)
   - Return Type Matrix with allowed/discouraged/forbidden rules

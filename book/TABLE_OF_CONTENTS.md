@@ -110,6 +110,7 @@
 - Vertical slicing philosophy
 - Package organization
 - Module boundaries (when needed)
+- File structure guidelines: import ordering, member ordering, utility interfaces
 - Spring Boot + JOOQ integration
 
 ---

@@ -75,7 +75,7 @@ public record Email(String value) {
     public static Result<Email> email(String raw) {
         return Verify.ensure(raw, Verify.Is::notNull)
                      .map(String::trim)
-                     .flatMap(Verify.ensureFn(INVALID_EMAIL, Verify.Is::matches, EMAIL_PATTERN))
+                     .filter(INVALID_EMAIL, EMAIL_PATTERN.asMatchPredicate())
                      .map(Email::new);
     }
 }
@@ -165,7 +165,7 @@ public static Result<Email> email(String raw) {
     return Verify.ensure(raw, Verify.Is::notNull)
                  .map(String::trim)           // Normalize: remove whitespace
                  .map(String::toLowerCase)    // Normalize: lowercase for comparison
-                 .flatMap(Verify.ensureFn(INVALID_EMAIL, Verify.Is::matches, EMAIL_PATTERN))
+                 .filter(INVALID_EMAIL, EMAIL_PATTERN.asMatchPredicate())
                  .map(Email::new);
 }
 ```
@@ -257,8 +257,8 @@ Pragmatica Lite Core provides built-in utilities that eliminate boilerplate in v
 // Instead of custom lambdas:
 .flatMap(s -> s.length() >= 8 ? Result.success(s) : Result.failure(...))
 
-// Use standard predicates:
-.flatMap(Verify.ensureFn(TOO_SHORT, Verify.Is::lenBetween, 8, 128))
+// Use filter with standard predicates:
+.filter(TOO_SHORT, s -> Verify.Is.lenBetween(s, 8, 128))
 ```
 
 **Common predicates:** `notNull`, `notBlank`, `lenBetween`, `matches`, `positive`, `nonNegative`, `between`, `greaterThan`, `lessThan`, `contains`.
@@ -284,7 +284,7 @@ Network.parseUUID(raw)            // Result<UUID>
 public record Age(int value) {
     public static Result<Age> age(String raw) {
         return Number.parseInt(raw)
-                     .flatMap(Verify.ensureFn(Causes.cause("Age 0-150"), Verify.Is::between, 0, 150))
+                     .filter(Causes.cause("Age 0-150"), v -> Verify.Is.between(v, 0, 150))
                      .map(Age::new);
     }
 }
@@ -328,7 +328,7 @@ import org.pragmatica.lang.Functions.Fn2;
 - `Result.all(r1, r2, ...)` - Parallel validation, collect all errors
 - `Result.allOf(list)` - Aggregate list of Results
 - `Verify.ensure(value, predicate)` - Validate value
-- `Verify.ensureFn(cause, predicate, params...)` - Validate with custom error
+- `result.filter(cause, predicate)` - Filter with custom error
 - `Causes.forOneValue("message: %s")` - Create cause factory
 - `Number.parseInt(raw)`, `DateTime.parseLocalDate(raw)` - Safe parsing
 
@@ -442,7 +442,7 @@ public record CardNumber(String value) {
 
     public static Result<CardNumber> cardNumber(String raw) {
         return Verify.ensure(raw, Verify.Is::notBlank)
-                     .flatMap(Verify.ensureFn(INVALID, Verify.Is::matches, CARD_PATTERN))
+                     .filter(INVALID, CARD_PATTERN.asMatchPredicate())
                      .map(CardNumber::new);
     }
 }

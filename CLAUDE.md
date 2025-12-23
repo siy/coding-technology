@@ -201,22 +201,22 @@ When writing Java code examples, follow these formatting conventions strictly:
 
 ---
 
-# Pragmatica Lite Core 0.8.4 API Reference
+# Pragmatica Lite Core 0.8.5 API Reference
 
-This section documents the actual API methods available in Pragmatica Lite Core 0.8.4.
+This section documents the actual API methods available in Pragmatica Lite Core 0.8.5.
 
 **Maven:**
 ```xml
 <dependency>
    <groupId>org.pragmatica-lite</groupId>
    <artifactId>core</artifactId>
-   <version>0.8.4</version>
+   <version>0.8.5</version>
 </dependency>
 ```
 
 **Gradle:**
 ```gradle
-implementation 'org.pragmatica-lite:core:0.8.4'
+implementation 'org.pragmatica-lite:core:0.8.5'
 ```
 
 Library documentation: https://central.sonatype.com/artifact/org.pragmatica-lite/core
@@ -286,6 +286,12 @@ All liftN methods accept optional `exceptionMapper: Fn1<Cause, Throwable>` as fi
 - **`Result.liftFn1(Fn1<Cause, Throwable> mapper, ThrowingFn1<R, T1> fn)`**  -  with custom exception mapper
 - **`Result.liftFn2(ThrowingFn2<R, T1, T2> fn)`**  -  returns `Fn2<Result<R>, T1, T2>`
 - **`Result.liftFn3(ThrowingFn3<R, T1, T2, T3> fn)`**  -  returns `Fn3<Result<R>, T1, T2, T3>`
+
+### Result.tryOf aliases (0.8.5+):
+Supplier-first signatures for exception handling:
+- **`Result.tryOf(ThrowingFn0<U> supplier)`**  -  alias for `lift()` with supplier first
+- **`Result.tryOf(ThrowingFn0<U> supplier, Cause cause)`**  -  fixed cause at end
+- **`Result.tryOf(ThrowingFn0<U> supplier, Fn1<Cause, Throwable> mapper)`**  -  mapper at end
 
 ### Promise.lift* methods:
 All accept optional `exceptionMapper: Fn1<Cause, Throwable>` (defaults to `Causes::fromThrowable`)
@@ -361,18 +367,27 @@ Standard validation predicates for use with `Verify.ensure()`:
 - `Verify.Is::some` - Option.isPresent()
 - `Verify.Is::none` - Option.isEmpty()
 
-**Usage:**
+**Usage (cause-at-end aliases):**
 ```java
-Verify.ensure(password, Verify.Is::lenBetween, 8, 128)
-Verify.ensure(age, Verify.Is::between, 0, 150)
-Verify.ensure(username, Verify.Is::notBlank)
+Verify.ensure(password, Verify.Is::lenBetween, 8, 128, TOO_SHORT)
+Verify.ensure(age, Verify.Is::between, 0, 150, AGE_OUT_OF_RANGE)
+Verify.ensure(username, Verify.Is::notBlank, BLANK_USERNAME)
+```
+
+**In validation chains (use filter):**
+```java
+return ensure(raw, Verify.Is::notNull)
+    .map(String::trim)
+    .filter(BLANK, Verify.Is::notBlank)
+    .filter(INVALID_FORMAT, EMAIL_PATTERN.asMatchPredicate())
+    .map(Email::new);
 ```
 
 **Combining checks:**
 ```java
 Verify.combine(
-    Verify.ensureFn(cause1, Verify.Is::notBlank),
-    Verify.ensureFn(cause2, Verify.Is::lenBetween, 8, 128)
+    s -> Verify.ensure(s, Verify.Is::notBlank, BLANK),
+    s -> Verify.ensure(s, Verify.Is::lenBetween, 8, 128, TOO_SHORT)
 )
 ```
 
@@ -425,10 +440,11 @@ Network.parseUUID(raw)
 
 // Value object example
 public record Age(int value) {
+    private static final Cause AGE_OUT_OF_RANGE = Causes.cause("Age must be 0-150");
+
     public static Result<Age> age(String raw) {
         return Number.parseInt(raw)
-            .flatMap(Verify.ensureFn(Causes.cause("Age 0-150"),
-                                     Verify.Is::between, 0, 150))
+            .filter(AGE_OUT_OF_RANGE, v -> Verify.Is.between(v, 0, 150))
             .map(Age::new);
     }
 }
@@ -447,6 +463,16 @@ public record Age(int value) {
 - ... up to `Mapper15` (15 parameters)
 - `Result.allOf(Result<T>...)` → `Result<List<T>>` (varargs)
 - `Result.allOf(List<Result<T>>)` → `Result<List<T>>`
+
+### Instance all() (for-comprehension style - 0.8.5+):
+- `result.all(Fn1<Result<T1>, T>...)` → `Mapper1-9` for dependent operations
+- Chains operations with access to source Result value:
+```java
+userId.all(
+    id -> fetchUser(id),
+    id -> fetchProfile(id)
+).map((user, profile) -> combine(user, profile))
+```
 
 ### Promise.all (fail-fast on first failure):
 - `Promise.all(Promise<T1>)` → `Mapper1<T1>` with `.map()` / `.flatMap()`
@@ -484,12 +510,12 @@ public record Age(int value) {
 - `.onPresentRun(Runnable)`  -  Option only: run action when present
 - `.onEmpty(Runnable)`  -  Option only (alias: `.onEmptyRun(Runnable)`)
 - `.apply(Consumer<T>, Runnable)`  -  Option only: bifurcation (onPresent, onEmpty)
-- `.onSuccess(Consumer<T>)`  -  Result and Promise
+- `.onSuccess(Consumer<T>)`  -  Result and Promise (alias: `.onOk()`)
 - `.onSuccessRun(Runnable)`  -  Result and Promise: run action on success
 - `.onSuccessAsync(Consumer<T>)`  -  Promise only: async version of onSuccess
 - `.onSuccessRunAsync(Runnable)`  -  Promise only: async run action on success
 - `.withSuccess(Consumer<T>)`  -  Promise only: returns self for chaining
-- `.onFailure(Consumer<Cause>)`  -  Result and Promise
+- `.onFailure(Consumer<Cause>)`  -  Result and Promise (alias: `.onErr()`)
 - `.onFailureRun(Runnable)`  -  Result and Promise: run action on failure
 - `.onFailureAsync(Consumer<Cause>)`  -  Promise only: async version of onFailure
 - `.onFailureRunAsync(Runnable)`  -  Promise only: async run action on failure
@@ -499,7 +525,7 @@ public record Age(int value) {
 - `.onResultAsync(Consumer<Result<T>>)`  -  Promise only: async version of onResult
 - `.onResultRunAsync(Runnable)`  -  Promise only: async run action regardless of outcome
 - `.withResult(Consumer<Result<T>>)`  -  Promise only: returns self for chaining
-- `.apply(Consumer<T>, Consumer<Cause>)`  -  Result only: bifurcation (onSuccess, onFailure)
+- `.apply(Consumer<T>, Consumer<Cause>)`  -  Result only: bifurcation (onSuccess, onFailure) (alias: `.run()`)
 - `.fold(Fn1<R, Cause> failure, Fn1<R, T> success)`  -  Result/Promise: transform both cases (failure first, then success)
 - `.fold(Supplier<R> empty, Fn1<R, T> present)`  -  Option: transform both cases (empty first, then present)
 

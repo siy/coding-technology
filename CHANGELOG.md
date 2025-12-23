@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.6] - 2025-12-22
+
+### Added
+- **Monetization links** - Book and GitHub Sponsors links in site navigation and footer
+- **Services page** - Consulting offerings with pricing (CONTACT.md → "Work With Us")
+- **File structure guidelines** - Standardized internal structure for JBCT source files
+  - Import ordering convention (java → javax → pragmatica → third-party → project → static)
+  - Member ordering by file type (use case, value object, error interface, step implementation, utility interface)
+  - Utility interface pattern with sealed + `unused` record
+  - Added to CODING_GUIDE.md, series/part-09, book/ch15, jbct-coder.md, jbct-reviewer.md
+- **Article series for JBCT promotion** - 5-part series for Medium/Dev.to publication
+
+### Changed
+- CLI lint rules count updated from 23 to 33
+- Repository cleanup and build artifact management
+- **Medium compatibility** - Replaced tables with lists in article series for better rendering
+- **Pragmatica Lite Core** updated from 0.8.4 to 0.8.5 in all documentation and examples
+  - Breaking: `Verify.ensureFn()` removed - use `.filter(cause, predicate)` instead
+  - New: RateLimiter with Token Bucket algorithm
+  - New: `Result.tryOf()` aliases, `Result.onOk()/onErr()/run()` aliases
+  - New: Instance `all()` methods for for-comprehension style
+  - Migrated 108 `ensureFn` occurrences across 35 files to `filter` pattern
+
 ## [2.0.5] - 2025-12-18
 
 ### Added

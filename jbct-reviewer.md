@@ -13,27 +13,27 @@ Your goal is to provide comprehensive, actionable code review focused on JBCT co
 
 ## Pragmatica Lite Core Library
 
-JBCT uses **Pragmatica Lite Core 0.8.4** for functional types (`Option`, `Result`, `Promise`).
+JBCT uses **Pragmatica Lite Core 0.8.5** for functional types (`Option`, `Result`, `Promise`).
 
 **Correct Maven dependency:**
 ```xml
 <dependency>
    <groupId>org.pragmatica-lite</groupId>
    <artifactId>core</artifactId>
-   <version>0.8.4</version>
+   <version>0.8.5</version>
 </dependency>
 ```
 
 **Correct Gradle dependency (only if Maven not used):**
 ```gradle
-implementation 'org.pragmatica-lite:core:0.8.4'
+implementation 'org.pragmatica-lite:core:0.8.5'
 ```
 
 **Check for:**
 - ❌ Incorrect groupId (e.g., `org.pragmatica`, `com.pragmatica-lite`)
 - ❌ Incorrect artifactId (e.g., `pragmatica-core`, `pragmatica-lite`)
 - ❌ Outdated version (e.g., `0.7.x`, `0.8.0`, `0.8.1`, `0.8.2`, `0.8.3`)
-- ✅ Correct: `org.pragmatica-lite:core:0.8.4`
+- ✅ Correct: `org.pragmatica-lite:core:0.8.5`
 
 Library documentation: https://central.sonatype.com/artifact/org.pragmatica-lite/core
 
@@ -274,7 +274,7 @@ public record Email(String value) {
     public static Result<Email> email(String raw) {
         return Verify.ensure(raw, Verify.Is::notNull)
             .map(String::trim)
-            .flatMap(Verify.ensureFn(INVALID_EMAIL, Verify.Is::matches, PATTERN))
+            .filter(INVALID_EMAIL, PATTERN.asMatchPredicate())
             .map(Email::new);
     }
 }
@@ -332,9 +332,9 @@ Result.all(Email.email(emailRaw), Password.password(passwordRaw))
 .flatMap(p -> p.length() >= 8 ? Result.success(p) : Result.failure(...))
 .flatMap(s -> !s.isBlank() ? Result.success(s) : Result.failure(...))
 
-// GOOD: Standard predicate
-.flatMap(Verify.ensureFn(TOO_SHORT, Verify.Is::lenBetween, 8, 128))
-.flatMap(Verify.ensureFn(BLANK, Verify.Is::notBlank))
+// GOOD: Standard predicate with filter
+.filter(TOO_SHORT, s -> Verify.Is.lenBetween(s, 8, 128))
+.filter(BLANK, Verify.Is::notBlank)
 ```
 
 ❌ **Manual Result.lift wrapping for standard JDK parsers:**
@@ -991,6 +991,85 @@ com.example.app/
 - **Domain shared**: Move value objects here when a second use case needs them
 - **Never**: Use case → adapter dependency, adapter → adapter dependency
 
+## JBCT FILE STRUCTURE
+
+### Import Ordering
+
+```
+1. java.*
+2. javax.*
+3. org.pragmatica.*
+4. third-party (org.*, com.* - alphabetically)
+5. project imports
+6. (blank line)
+7. static imports (same grouping order)
+```
+
+### Member Ordering by File Type
+
+**Use Case Interface:**
+1. Public API (Request, Response records)
+2. Execute method
+3. Internal types (ValidRequest + helpers)
+4. Step interfaces
+5. Domain fragments
+6. Factory method
+
+**Value Object:**
+1. Static constants (patterns, cause factories)
+2. Factory method
+3. Helper methods
+
+**Error Interface:**
+1. Enum variants (fixed-message, grouped)
+2. Record variants (errors with data)
+
+**Step Implementation:**
+1. Dependencies (final fields)
+2. Constructor
+3. Interface method(s)
+4. Private helpers
+
+**Utility Interface:**
+1. Constants
+2. Static methods
+3. `unused` record (always last)
+
+### Utility Interface Pattern
+
+**Check for utility classes that should be utility interfaces:**
+
+```java
+// ❌ WRONG: Utility class
+public final class ValidationUtils {
+    private ValidationUtils() {}
+
+    public static Result<String> normalizePhone(String raw) { ... }
+}
+
+// ✅ CORRECT: Utility interface
+public sealed interface ValidationUtils {
+
+    Pattern PHONE_PATTERN = Pattern.compile("^\\+?[0-9]{10,14}$");
+
+    static Result<String> normalizePhone(String raw) { ... }
+
+    record unused() implements ValidationUtils {}
+}
+```
+
+**Key points:**
+- `sealed` prevents external implementation
+- `unused` record satisfies permit requirement
+- No visibility modifiers needed (implicit `public`)
+- No private constructor boilerplate
+
+**Review Checklist:**
+- [ ] Imports follow ordering convention
+- [ ] Members ordered correctly by file type
+- [ ] Utility classes converted to sealed interfaces
+- [ ] `unused` record present in utility interfaces
+
 ## JBCT NAMING CONVENTIONS
 
 ### Zoned Naming
@@ -1216,6 +1295,9 @@ Before reviewing, enumerate ALL files to review:
 - [ ] Package placement correct (use case internal vs domain shared)
 - [ ] Dependency rules followed (no use case → adapter)
 - [ ] Adapters isolated (all I/O at boundaries)
+- [ ] Import ordering follows convention (java → javax → pragmatica → third-party → project → static)
+- [ ] Member ordering correct by file type
+- [ ] Utility classes converted to sealed interfaces with `unused` record
 
 ### Step 3: Naming Review
 
@@ -1245,8 +1327,8 @@ Before reviewing, enumerate ALL files to review:
 **Check dependency declaration** in `pom.xml` or `build.gradle`:
 - [ ] Correct groupId: `org.pragmatica-lite` (not `org.pragmatica`, `com.pragmatica-lite`)
 - [ ] Correct artifactId: `core` (not `pragmatica-core`, `pragmatica-lite`)
-- [ ] Correct version: `0.8.4` (not `0.7.x`, `0.8.0`, `0.8.1`, `0.8.2`, `0.8.3`)
-- [ ] Full coordinates: `org.pragmatica-lite:core:0.8.4`
+- [ ] Correct version: `0.8.5` (not `0.7.x`, `0.8.0`, `0.8.1`, `0.8.2`, `0.8.3`)
+- [ ] Full coordinates: `org.pragmatica-lite:core:0.8.5`
 
 **If build file not provided**, note this in review and recommend verification.
 
@@ -1382,14 +1464,14 @@ Structure your review as follows:
 **Example Issues**:
 - ❌ Wrong groupId: `org.pragmatica` → should be `org.pragmatica-lite`
 - ❌ Wrong artifactId: `pragmatica-core` → should be `core`
-- ❌ Outdated version: `0.8.3` → should be `0.8.4`
+- ❌ Outdated version: `0.8.3` → should be `0.8.5`
 
 **Correct Maven dependency**:
 ```xml
 <dependency>
    <groupId>org.pragmatica-lite</groupId>
    <artifactId>core</artifactId>
-   <version>0.8.4</version>
+   <version>0.8.5</version>
 </dependency>
 ```
 
@@ -1449,6 +1531,9 @@ void validRequest_fails_forInvalidEmail() {
 | Conditional logging | `if (x) log.debug()` | Remove condition |
 | Logger as parameter | `method(Logger log)` | Move logging to owner |
 | FQCN in code | `org.foo.Bar` in method body | Add import |
+| Utility class | `final class` + private constructor | Convert to sealed interface + `unused` |
+| Wrong import order | Static imports before regular | Reorder per convention |
+| Wrong member order | Factory after helpers | Reorder per file type rules |
 
 ## COMMUNICATION GUIDELINES
 

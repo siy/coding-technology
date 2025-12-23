@@ -6,7 +6,7 @@ description: "Revolutionary technology for writing deterministic, AI-friendly, h
 
 # Java Backend Coding Technology: Writing Code in the Era of AI
 
-**Version:** 2.0.4 | **Repository:** [github.com/siy/coding-technology](https://github.com/siy/coding-technology) | **Changelog:** [CHANGELOG.md](https://github.com/siy/coding-technology/blob/main/CHANGELOG.md)
+**Version:** 2.0.6 | **Repository:** [github.com/siy/coding-technology](https://github.com/siy/coding-technology) | **Changelog:** [CHANGELOG.md](https://github.com/siy/coding-technology/blob/main/CHANGELOG.md)
 
 ## Introduction: Code in a New Era
 
@@ -582,13 +582,13 @@ public class UserController {
 > <dependency>
 >    <groupId>org.pragmatica-lite</groupId>
 >    <artifactId>core</artifactId>
->    <version>0.8.4</version>
+>    <version>0.8.5</version>
 > </dependency>
 > ```
 >
 > **Gradle:**
 > ```gradle
-> implementation 'org.pragmatica-lite:core:0.8.4'
+> implementation 'org.pragmatica-lite:core:0.8.5'
 > ```
 
 ### The Four Return Kinds
@@ -666,8 +666,8 @@ return Result.all(Email.email(raw), Password.password(raw)).flatMap(ValidRequest
 - `Promise.promise(supplier)` - Async execution
 - `Promise.all(p1, p2, ...)` - Parallel execution, fail-fast
 - `Promise.allOf(list)` - Parallel with resilient collection
-- `Verify.ensure(cause, value, predicate)` - Validate with error
-- `Verify.ensureFn(cause, predicate, params...)` - Validate with params
+- `Verify.ensure(value, predicate, cause)` - Validate with error (cause-at-end)
+- `.filter(cause, predicate)` - Validation in chains (replaces ensureFn)
 - `Causes.cause("message")` - Create fixed cause
 - `Causes.forOneValue("message: %s")` - Create cause factory for one context value
 - `Causes.forTwoValues("message: %s %s")` - Create cause factory for two context values
@@ -716,7 +716,7 @@ public record Email(String value) {
     public static Result<Email> email(String raw) {
         return Verify.ensure(raw, Verify.Is::notNull)
                      .map(String::trim)
-                     .flatMap(Verify.ensureFn(INVALID_EMAIL, Verify.Is::matches, EMAIL_PATTERN))
+                     .filter(INVALID_EMAIL, EMAIL_PATTERN.asMatchPredicate())
                      .map(Email::new);
     }
 }
@@ -880,7 +880,7 @@ public record Email(String value) {
     public static Result<Email> email(String raw) {
         return Verify.ensure(raw, Verify.Is::notNull)
                      .map(String::trim)
-                     .flatMap(Verify.ensureFn(INVALID_EMAIL, Verify.Is::matches, EMAIL_PATTERN))
+                     .filter(INVALID_EMAIL, EMAIL_PATTERN.asMatchPredicate())
                      .map(Email::new);
     }
 }
@@ -1192,20 +1192,18 @@ Verify.ensure(shouldBeEmpty, Verify.Is::none)
 
 **Combining multiple checks:**
 ```java
-// Using Verify.combine for composite validation
+// Using chained filters for composite validation
 private static final Cause TOO_SHORT = Causes.cause("Password must be at least 8 characters");
 private static final Cause NO_UPPERCASE = Causes.cause("Password must contain uppercase letter");
 private static final Cause NO_DIGIT = Causes.cause("Password must contain digit");
-
-private static final Fn1<Result<String>, String> PASSWORD_CHECK = Verify.combine(
-    Verify.ensureFn(TOO_SHORT, Verify.Is::lenBetween, 8, 128),
-    Verify.ensureFn(NO_UPPERCASE, Verify.Is::matches, ".*[A-Z].*"),
-    Verify.ensureFn(NO_DIGIT, Verify.Is::matches, ".*[0-9].*")
-);
+private static final Pattern HAS_UPPERCASE = Pattern.compile(".*[A-Z].*");
+private static final Pattern HAS_DIGIT = Pattern.compile(".*[0-9].*");
 
 public static Result<Password> password(String raw) {
     return Verify.ensure(raw, Verify.Is::notNull)
-        .flatMap(PASSWORD_CHECK)
+        .filter(TOO_SHORT, s -> Verify.Is.lenBetween(s, 8, 128))
+        .filter(NO_UPPERCASE, HAS_UPPERCASE.asMatchPredicate())
+        .filter(NO_DIGIT, HAS_DIGIT.asMatchPredicate())
         .map(Password::new);
 }
 ```
@@ -1289,7 +1287,7 @@ public record Age(int value) {
 
     public static Result<Age> age(String raw) {
         return Number.parseInt(raw)
-                     .flatMap(Verify.ensureFn(INVALID_RANGE, Verify.Is::between, 0, 150))
+                     .filter(INVALID_RANGE, v -> Verify.Is.between(v, 0, 150))
                      .map(Age::new);
     }
 }
@@ -1299,7 +1297,7 @@ public record BirthDate(LocalDate value) {
 
     public static Result<BirthDate> birthDate(String raw) {
         return DateTime.parseLocalDate(raw)
-                       .flatMap(Verify.ensureFn(FUTURE_DATE, Verify.Is::lessThanOrEqualTo, LocalDate.now()))
+                       .filter(FUTURE_DATE, d -> Verify.Is.lessThanOrEqualTo(d, LocalDate.now()))
                        .map(BirthDate::new);
     }
 }
@@ -2137,7 +2135,7 @@ public record Email(String value) {
         return Verify.ensure(raw, Verify.Is::notNull)
                      .map(String::trim)
                      .map(String::toLowerCase)
-                     .flatMap(Verify.ensureFn(INVALID_EMAIL, Verify.Is::matches, EMAIL_PATTERN))
+                     .filter(INVALID_EMAIL, EMAIL_PATTERN.asMatchPredicate())
                      .map(Email::new);
     }
 }
@@ -4667,6 +4665,239 @@ com.example.app.config/
 
 ---
 
+## File Structure Guidelines
+
+This section defines the internal structure of JBCT source files. These guidelines ensure consistency across codebases and enable automated linting.
+
+**Scope:** Use case interfaces, step implementations, value objects, error interfaces, and utility interfaces. Adapters are excluded—they are too framework-specific.
+
+### Import Ordering
+
+All JBCT files follow this import order:
+
+```
+1. java.*
+2. javax.*
+3. org.pragmatica.*
+4. third-party (org.*, com.* - alphabetically)
+5. project imports
+6. (blank line)
+7. static imports (same grouping order)
+```
+
+### Use Case Interface
+
+```java
+package com.example.app.usecase.registeruser;
+
+import org.pragmatica.lang.*;
+import com.example.app.domain.shared.*;
+
+public interface RegisterUser {
+
+    // Public API
+    record Request(String email, String password, String referralCode) {}
+    record Response(UserId userId, ConfirmationToken token) {}
+
+    Promise<Response> execute(Request request);
+
+    // Internal types
+    record ValidRequest(Email email, Password password, Option<ReferralCode> referralCode) {
+        public static Result<ValidRequest> validRequest(Request raw) { ... }
+    }
+
+    // Step interfaces
+    interface CheckEmail {
+        Promise<ValidRequest> apply(ValidRequest request);
+    }
+
+    interface SaveUser {
+        Promise<UserId> apply(ValidUser user);
+    }
+
+    // Domain fragments (use case specific)
+    record ValidUser(Email email, HashedPassword hashed, Option<ReferralCode> referralCode) {}
+
+    // Factory
+    static RegisterUser registerUser(CheckEmail checkEmail, SaveUser saveUser) {
+        return request -> ValidRequest.validRequest(request)
+                                      .async()
+                                      .flatMap(checkEmail::apply)
+                                      .flatMap(saveUser::apply);
+    }
+}
+```
+
+**Member order:**
+1. Public API (Request, Response records)
+2. Execute method
+3. Internal types (ValidRequest + validation helpers)
+4. Step interfaces
+5. Domain fragments (records used only by this use case)
+6. Factory method
+
+### Value Object
+
+```java
+package com.example.app.domain.shared;
+
+import java.util.regex.Pattern;
+import org.pragmatica.lang.*;
+
+import static org.pragmatica.lang.Verify.*;
+
+public record Email(String value) {
+
+    // Constants
+    private static final Pattern EMAIL_PATTERN = Pattern.compile("^[a-z0-9+_.-]+@[a-z0-9.-]+$");
+    private static final Fn1<Cause, String> INVALID_EMAIL = Causes.forOneValue("Invalid email: %s");
+
+    // Factory
+    public static Result<Email> email(String raw) {
+        return ensure(raw, Verify.Is::notNull)
+                .map(String::trim)
+                .map(String::toLowerCase)
+                .filter(INVALID_EMAIL, EMAIL_PATTERN.asMatchPredicate())
+                .map(Email::new);
+    }
+
+    // Helpers
+    public String localPart() {
+        int at = value.indexOf('@');
+        return at > 0 ? value.substring(0, at) : value;
+    }
+}
+```
+
+**Member order:**
+1. Static constants (patterns, cause factories)
+2. Factory method
+3. Helper methods
+
+### Error Interface
+
+```java
+package com.example.app.usecase.registeruser;
+
+import org.pragmatica.lang.Cause;
+
+public sealed interface RegistrationError extends Cause {
+
+    // Fixed-message errors (grouped enum)
+    enum General implements RegistrationError {
+        EMAIL_ALREADY_EXISTS("Email already registered"),
+        WEAK_PASSWORD("Password too weak");
+
+        private final String message;
+
+        General(String message) {
+            this.message = message;
+        }
+
+        @Override
+        public String message() {
+            return message;
+        }
+    }
+
+    // Errors with data
+    record DatabaseFailure(Throwable cause) implements RegistrationError {
+        @Override
+        public String message() {
+            return "Database error: " + cause.getMessage();
+        }
+    }
+}
+```
+
+**Member order:**
+1. Enum variants (fixed-message errors, grouped)
+2. Record variants (errors carrying data)
+
+### Step Implementation
+
+```java
+package com.example.app.adapter.persistence;
+
+import org.jooq.DSLContext;
+import com.example.app.usecase.registeruser.RegisterUser.SaveUser;
+
+public class JooqUserRepository implements SaveUser {
+
+    // Dependencies
+    private final DSLContext dsl;
+
+    // Constructor
+    public JooqUserRepository(DSLContext dsl) {
+        this.dsl = dsl;
+    }
+
+    // Interface method
+    @Override
+    public Promise<UserId> apply(ValidUser user) {
+        return Promise.lift(
+            RepositoryError.DatabaseFailure::new,
+            () -> insertUser(user)
+        );
+    }
+
+    // Private helpers
+    private UserId insertUser(ValidUser user) { ... }
+}
+```
+
+**Member order:**
+1. Dependencies (final fields)
+2. Constructor
+3. Interface method(s)
+4. Private helpers
+
+### Utility Interface
+
+```java
+package com.example.app.util;
+
+import java.util.regex.Pattern;
+import org.pragmatica.lang.*;
+
+public sealed interface ValidationUtils {
+
+    // Constants
+    Pattern PHONE_PATTERN = Pattern.compile("^\\+?[0-9]{10,14}$");
+    Fn1<Cause, String> INVALID_PHONE = Causes.forOneValue("Invalid phone: %s");
+
+    // Static methods
+    static Result<String> normalizePhone(String raw) {
+        return Verify.ensure(raw, Verify.Is::notNull)
+                     .map(s -> s.replaceAll("[\\s\\-()]", ""))
+                     .filter(INVALID_PHONE, PHONE_PATTERN.asMatchPredicate());
+    }
+
+    static boolean isValidCountryCode(String code) {
+        return code != null && code.length() == 2;
+    }
+
+    // Sealed permit (prevents implementation)
+    record unused() implements ValidationUtils {}
+}
+```
+
+**Member order:**
+1. Constants
+2. Static methods (grouped by purpose if many)
+3. `unused` record (always last—prevents implementation)
+
+**Key points:**
+- `sealed` prevents external implementation
+- `unused` record satisfies permit requirement
+- No visibility modifiers needed (implicit `public`)
+
+### Section Separation
+
+Use blank lines to separate logical sections. Comments are optional—use only when they add clarity (e.g., in examples or teaching contexts). Avoid mandatory section markers like `// --- Section ---`.
+
+---
+
 ## Use Case Walkthrough
 
 Let's build a complete use case from scratch: `RegisterUser`. We'll follow the technology step-by-step, showing validation, steps, error handling, and testing.
@@ -4797,7 +5028,7 @@ public record Email(String value) {
         return Verify.ensure(raw, Verify.Is::notNull)
                      .map(String::trim)
                      .map(String::toLowerCase)
-                     .flatMap(Verify.ensureFn(INVALID_EMAIL, Verify.Is::matches, EMAIL_PATTERN))
+                     .filter(INVALID_EMAIL, EMAIL_PATTERN.asMatchPredicate())
                      .map(Email::new);
     }
 }
@@ -4819,7 +5050,7 @@ public record Password(String value) {
 
     public static Result<Password> password(String raw) {
         return Verify.ensure(raw, Verify.Is::notNull)
-                     .flatMap(Verify.ensureFn(TOO_SHORT, Verify.Is::lenBetween, 8, 128))
+                     .filter(TOO_SHORT, s -> Verify.Is.lenBetween(s, 8, 128))
                      .flatMap(Password::ensureUppercase)
                      .flatMap(Password::ensureDigit)
                      .map(Password::new);

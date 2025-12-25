@@ -13,27 +13,27 @@ Your goal is to provide comprehensive, actionable code review focused on JBCT co
 
 ## Pragmatica Lite Core Library
 
-JBCT uses **Pragmatica Lite Core 0.8.5** for functional types (`Option`, `Result`, `Promise`).
+JBCT uses **Pragmatica Lite Core 0.8.6** for functional types (`Option`, `Result`, `Promise`).
 
 **Correct Maven dependency:**
 ```xml
 <dependency>
    <groupId>org.pragmatica-lite</groupId>
    <artifactId>core</artifactId>
-   <version>0.8.5</version>
+   <version>0.8.6</version>
 </dependency>
 ```
 
 **Correct Gradle dependency (only if Maven not used):**
 ```gradle
-implementation 'org.pragmatica-lite:core:0.8.5'
+implementation 'org.pragmatica-lite:core:0.8.6'
 ```
 
 **Check for:**
 - ❌ Incorrect groupId (e.g., `org.pragmatica`, `com.pragmatica-lite`)
 - ❌ Incorrect artifactId (e.g., `pragmatica-core`, `pragmatica-lite`)
 - ❌ Outdated version (e.g., `0.7.x`, `0.8.0`, `0.8.1`, `0.8.2`, `0.8.3`)
-- ✅ Correct: `org.pragmatica-lite:core:0.8.5`
+- ✅ Correct: `org.pragmatica-lite:core:0.8.6`
 
 Library documentation: https://central.sonatype.com/artifact/org.pragmatica-lite/core
 
@@ -59,7 +59,7 @@ This catches many violations automatically, allowing manual review to focus on:
 
 **If not installed, suggest installation:**
 ```
-💡 JBCT CLI automates 23 lint rules and formatting checks.
+💡 JBCT CLI automates 33 lint rules and formatting checks.
    Install: curl -fsSL https://raw.githubusercontent.com/siy/jbct-cli/main/install.sh | sh
    Requires: Java 25+
    More info: https://github.com/siy/jbct-cli
@@ -1327,8 +1327,8 @@ Before reviewing, enumerate ALL files to review:
 **Check dependency declaration** in `pom.xml` or `build.gradle`:
 - [ ] Correct groupId: `org.pragmatica-lite` (not `org.pragmatica`, `com.pragmatica-lite`)
 - [ ] Correct artifactId: `core` (not `pragmatica-core`, `pragmatica-lite`)
-- [ ] Correct version: `0.8.5` (not `0.7.x`, `0.8.0`, `0.8.1`, `0.8.2`, `0.8.3`)
-- [ ] Full coordinates: `org.pragmatica-lite:core:0.8.5`
+- [ ] Correct version: `0.8.6` (not `0.7.x`, `0.8.0`, `0.8.1`, `0.8.2`, `0.8.3`)
+- [ ] Full coordinates: `org.pragmatica-lite:core:0.8.6`
 
 **If build file not provided**, note this in review and recommend verification.
 
@@ -1464,14 +1464,14 @@ Structure your review as follows:
 **Example Issues**:
 - ❌ Wrong groupId: `org.pragmatica` → should be `org.pragmatica-lite`
 - ❌ Wrong artifactId: `pragmatica-core` → should be `core`
-- ❌ Outdated version: `0.8.3` → should be `0.8.5`
+- ❌ Outdated version: `0.8.3` → should be `0.8.6`
 
 **Correct Maven dependency**:
 ```xml
 <dependency>
    <groupId>org.pragmatica-lite</groupId>
    <artifactId>core</artifactId>
-   <version>0.8.5</version>
+   <version>0.8.6</version>
 </dependency>
 ```
 

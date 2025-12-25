@@ -201,22 +201,22 @@ When writing Java code examples, follow these formatting conventions strictly:
 
 ---
 
-# Pragmatica Lite Core 0.8.5 API Reference
+# Pragmatica Lite Core 0.8.6 API Reference
 
-This section documents the actual API methods available in Pragmatica Lite Core 0.8.5.
+This section documents the actual API methods available in Pragmatica Lite Core 0.8.6.
 
 **Maven:**
 ```xml
 <dependency>
    <groupId>org.pragmatica-lite</groupId>
    <artifactId>core</artifactId>
-   <version>0.8.5</version>
+   <version>0.8.6</version>
 </dependency>
 ```
 
 **Gradle:**
 ```gradle
-implementation 'org.pragmatica-lite:core:0.8.5'
+implementation 'org.pragmatica-lite:core:0.8.6'
 ```
 
 Library documentation: https://central.sonatype.com/artifact/org.pragmatica-lite/core
@@ -287,7 +287,7 @@ All liftN methods accept optional `exceptionMapper: Fn1<Cause, Throwable>` as fi
 - **`Result.liftFn2(ThrowingFn2<R, T1, T2> fn)`**  -  returns `Fn2<Result<R>, T1, T2>`
 - **`Result.liftFn3(ThrowingFn3<R, T1, T2, T3> fn)`**  -  returns `Fn3<Result<R>, T1, T2, T3>`
 
-### Result.tryOf aliases (0.8.5+):
+### Result.tryOf aliases (0.8.6+):
 Supplier-first signatures for exception handling:
 - **`Result.tryOf(ThrowingFn0<U> supplier)`**  -  alias for `lift()` with supplier first
 - **`Result.tryOf(ThrowingFn0<U> supplier, Cause cause)`**  -  fixed cause at end
@@ -464,15 +464,21 @@ public record Age(int value) {
 - `Result.allOf(Result<T>...)` → `Result<List<T>>` (varargs)
 - `Result.allOf(List<Result<T>>)` → `Result<List<T>>`
 
-### Instance all() (for-comprehension style - 0.8.5+):
-- `result.all(Fn1<Result<T1>, T>...)` → `Mapper1-9` for dependent operations
-- Chains operations with access to source Result value:
+### Instance all() (for-comprehension style - 0.8.6+):
+For Result, Option, and Promise - chains dependent operations with access to source value:
+- `result.all(Fn1<Result<T1>, T>...)` → `Mapper1-9`
+- `option.all(Fn1<Option<T1>, T>...)` → `Mapper1-9`
+- `promise.all(Fn1<Promise<T1>, T>...)` → `Mapper1-9`
+
 ```java
 userId.all(
     id -> fetchUser(id),
     id -> fetchProfile(id)
 ).map((user, profile) -> combine(user, profile))
 ```
+
+### Result.sequence (0.8.6+):
+- `Result.sequence(Iterable<Result<T>>)` → `Result<List<T>>` - collect all successes or first failure
 
 ### Promise.all (fail-fast on first failure):
 - `Promise.all(Promise<T1>)` → `Mapper1<T1>` with `.map()` / `.flatMap()`
@@ -557,6 +563,7 @@ userId.all(
 ### Unsafe operations (avoid in production):
 - `.unwrap()`  -  deprecated, throws if empty/failure
 - `.expect(String message)`  -  throws with custom message if empty/failure
+- `.getOrThrow()`  -  Result/Option only (0.8.6+): throws if failure/empty, returns value otherwise
 - `.stream()`  -  converts to Java Stream (0 or 1 element)
 - `.toOptional()`  -  Option only: converts to Java Optional
 

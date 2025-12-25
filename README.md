@@ -1,6 +1,6 @@
 # Java Backend Coding Technology
 
-> **Version 2.0.6** | [Full Changelog](CHANGELOG.md)
+> **Version 2.0.7** | [Full Changelog](CHANGELOG.md)
 
 A framework-agnostic methodology for writing predictable, testable Java backend code optimized for human-AI collaboration.
 
@@ -231,7 +231,7 @@ void email_acceptsValidFormat() {
 ### Changelog & Versioning
 
 - **[CHANGELOG.md](CHANGELOG.md)** - Version history following [Keep a Changelog](https://keepachangelog.com/)
-  - Current version: 2.0.6 (2025-12-22)
+  - Current version: 2.0.7 (2025-12-24)
   - Major release: Thread safety, concurrency, and 9-part series restructuring
   - Semantic versioning for documentation releases
 
@@ -359,13 +359,13 @@ This repository documents a methodology, not a software project. Contributions w
 <dependency>
    <groupId>org.pragmatica-lite</groupId>
    <artifactId>core</artifactId>
-   <version>0.8.5</version>
+   <version>0.8.6</version>
 </dependency>
 ```
 
 **Gradle:**
 ```gradle
-implementation 'org.pragmatica-lite:core:0.8.5'
+implementation 'org.pragmatica-lite:core:0.8.6'
 ```
 
 ## 📄 License
@@ -384,6 +384,6 @@ If you find this useful, consider [sponsoring](https://github.com/sponsors/siy).
 
 ---
 
-**Version:** 2.0.6 | **Last Updated:** 2025-12-22 | **[Full Changelog](CHANGELOG.md)**
+**Version:** 2.0.7 | **Last Updated:** 2025-12-24 | **[Full Changelog](CHANGELOG.md)**
 
 **Copyright © 2025 Sergiy Yevtushenko. Released under the [MIT License](LICENSE).**

@@ -582,13 +582,13 @@ public class UserController {
 > <dependency>
 >    <groupId>org.pragmatica-lite</groupId>
 >    <artifactId>core</artifactId>
->    <version>0.8.5</version>
+>    <version>0.8.6</version>
 > </dependency>
 > ```
 >
 > **Gradle:**
 > ```gradle
-> implementation 'org.pragmatica-lite:core:0.8.5'
+> implementation 'org.pragmatica-lite:core:0.8.6'
 > ```
 
 ### The Four Return Kinds
@@ -5557,7 +5557,7 @@ JBCT provides tools for both human developers and AI assistants. For complete do
 
 - **JBCT CLI** - Command-line tool for formatting and linting
   - `jbct format` - Format Java code to JBCT style
-  - `jbct lint` - Check compliance with 23 lint rules
+  - `jbct lint` - Check compliance with 33 lint rules
   - `jbct check` - Combined format + lint (recommended for CI)
 - **Maven Plugin** - Build integration for automated checks
 

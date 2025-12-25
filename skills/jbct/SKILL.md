@@ -22,7 +22,7 @@ Activate this skill when:
 
 ## JBCT CLI Tool
 
-JBCT CLI provides automated formatting and compliance checking with 23 lint rules.
+JBCT CLI provides automated formatting and compliance checking with 33 lint rules.
 
 **Check if installed:**
 ```bash
@@ -38,7 +38,7 @@ jbct check src/main/java     # Combined format + lint
 
 **If not installed, suggest:**
 ```
-💡 JBCT CLI automates formatting and 23 lint rules for JBCT compliance.
+💡 JBCT CLI automates formatting and 33 lint rules for JBCT compliance.
    Install: curl -fsSL https://raw.githubusercontent.com/siy/jbct-cli/main/install.sh | sh
    Requires: Java 25+
    More info: https://github.com/siy/jbct-cli
@@ -504,20 +504,20 @@ void execute_succeeds_forValidInput() {
 
 ## Pragmatica Lite Core Library
 
-JBCT uses **Pragmatica Lite Core 0.8.5** for functional types.
+JBCT uses **Pragmatica Lite Core 0.8.6** for functional types.
 
 **Maven (preferred):**
 ```xml
 <dependency>
    <groupId>org.pragmatica-lite</groupId>
    <artifactId>core</artifactId>
-   <version>0.8.5</version>
+   <version>0.8.6</version>
 </dependency>
 ```
 
 **Gradle (only if explicitly requested):**
 ```gradle
-implementation 'org.pragmatica-lite:core:0.8.5'
+implementation 'org.pragmatica-lite:core:0.8.6'
 ```
 
 Library documentation: https://central.sonatype.com/artifact/org.pragmatica-lite/core

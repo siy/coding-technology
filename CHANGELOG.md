@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.7] - 2025-12-24
+
+### Changed
+- **Pragmatica Lite Core** updated from 0.8.5 to 0.8.6
+  - New: `Result.sequence()` for collecting results from iterables
+  - New: `.getOrThrow()` for Result and Option
+  - New: Instance `all()` for Option and Promise (was Result-only)
+- CLI lint rules count updated from 23 to 33
+
 ## [2.0.6] - 2025-12-22
 
 ### Added

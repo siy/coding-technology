@@ -359,13 +359,13 @@ This repository documents a methodology, not a software project. Contributions w
 <dependency>
    <groupId>org.pragmatica-lite</groupId>
    <artifactId>core</artifactId>
-   <version>0.8.6</version>
+   <version>0.9.0</version>
 </dependency>
 ```
 
 **Gradle:**
 ```gradle
-implementation 'org.pragmatica-lite:core:0.8.6'
+implementation 'org.pragmatica-lite:core:0.9.0'
 ```
 
 ## 📄 License

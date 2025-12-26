@@ -1,6 +1,6 @@
 # Part 1: Introduction & Foundations
 
-**Series:** [Java Backend Coding Technology](INDEX.md) | **Part:** 1 of 9 | **Next:** [Part 2: The Four Return Types](part-02-four-return-types.md)
+**Series:** [Java Backend Coding Technology](INDEX.md) | **Part:** 1 of 10 | **Next:** [Part 2: The Four Return Types](part-02-four-return-types.md)
 
 ---
 
@@ -507,13 +507,13 @@ Add to your `pom.xml`:
 <dependency>
    <groupId>org.pragmatica-lite</groupId>
    <artifactId>core</artifactId>
-   <version>0.8.5</version>
+   <version>0.9.0</version>
 </dependency>
 ```
 
 Or Gradle:
 ```gradle
-implementation 'org.pragmatica-lite:core:0.8.5'
+implementation 'org.pragmatica-lite:core:0.9.0'
 ```
 
 Library documentation: https://central.sonatype.com/artifact/org.pragmatica-lite/core

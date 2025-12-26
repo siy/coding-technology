@@ -1,6 +1,6 @@
 # Part 6: Advanced Patterns & Testing
 
-**Series:** [Java Backend Coding Technology](INDEX.md) | **Part:** 6 of 9
+**Series:** [Java Backend Coding Technology](INDEX.md) | **Part:** 6 of 10
 
 **Previous:** [Part 5: Basic Patterns & Structure](part-05-basic-patterns.md) | **Next:** [Part 7: Testing Philosophy & Evolution](part-07-testing-philosophy.md)
 

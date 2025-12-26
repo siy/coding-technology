@@ -1,6 +1,6 @@
 # Part 4: Error Handling & Composition
 
-**Series:** [Java Backend Coding Technology](INDEX.md) | **Part:** 4 of 9
+**Series:** [Java Backend Coding Technology](INDEX.md) | **Part:** 4 of 10
 
 **Previous:** [Part 3: Parse, Don't Validate](part-03-parse-dont-validate.md) | **Next:** [Part 5: Basic Patterns & Structure](part-05-basic-patterns.md)
 
@@ -811,6 +811,20 @@ Result<Option<ReferralCode>> refCode = ReferralCode.referralCode(input);
 // Failure(cause) = provided but invalid
 ```
 
+Use `Verify.ensureOption()` (Pragmatica Lite 0.9.0+) for implementing this pattern:
+
+```java
+public static Result<Option<ReferralCode>> referralCode(String raw) {
+    return Verify.ensureOption(
+        Option.option(raw).map(String::trim).filter(s -> !s.isEmpty()),
+        PATTERN.asMatchPredicate(),
+        INVALID_FORMAT
+    ).map(opt -> opt.map(ReferralCode::new));
+}
+```
+
+This handles all three cases elegantly: empty input succeeds with `Option.none()`, valid input succeeds with `Option.some(value)`, invalid input fails with the provided cause.
+
 Avoid `Option<Result<T>>` - it means "maybe there's a result, and that result might have failed," which is backwards. Just use `Result<Option<T>>`.
 
 ### Aggregation: Combining Independent Operations
@@ -1003,7 +1017,7 @@ They prevent complexity explosion. With exactly four return types and clear comp
 
 ## Pragmatica Lite API Reference
 
-This section consolidates the essential Pragmatica Lite Core 0.8.5 APIs you'll use daily. For complete API documentation, see [CODING_GUIDE.md: Pragmatica Lite Core 0.8.5 API Reference](../CODING_GUIDE.md).
+This section consolidates the essential Pragmatica Lite Core 0.9.0 APIs you'll use daily. For complete API documentation, see [CODING_GUIDE.md: Pragmatica Lite Core 0.9.0 API Reference](../CODING_GUIDE.md).
 
 ### Type Conversions
 

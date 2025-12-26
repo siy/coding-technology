@@ -7,13 +7,13 @@
 <dependency>
    <groupId>org.pragmatica-lite</groupId>
    <artifactId>core</artifactId>
-   <version>0.8.5</version>
+   <version>0.9.0</version>
 </dependency>
 ```
 
 **Gradle:**
 ```gradle
-implementation 'org.pragmatica-lite:core:0.8.5'
+implementation 'org.pragmatica-lite:core:0.9.0'
 ```
 
 **Documentation:** https://central.sonatype.com/artifact/org.pragmatica-lite/core

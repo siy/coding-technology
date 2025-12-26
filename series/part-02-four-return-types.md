@@ -1,6 +1,6 @@
 # Part 2: The Four Return Types
 
-**Series:** [Java Backend Coding Technology](INDEX.md) | **Part:** 2 of 9
+**Series:** [Java Backend Coding Technology](INDEX.md) | **Part:** 2 of 10
 
 **Previous:** [Part 1: Introduction & Foundations](part-01-foundations.md) | **Next:** [Part 3: Parse, Don't Validate](part-03-parse-dont-validate.md)
 
@@ -397,6 +397,18 @@ Result<Option<ReferralCode>> refCode = ReferralCode.referralCode(input);
 // Success(None) = not provided, valid
 // Success(Some(code)) = provided and valid
 // Failure(cause) = provided but invalid
+```
+
+Use `Verify.ensureOption()` (Pragmatica Lite 0.9.0+) for implementing this pattern:
+
+```java
+public static Result<Option<ReferralCode>> referralCode(String raw) {
+    return Verify.ensureOption(
+        Option.option(raw).map(String::trim).filter(s -> !s.isEmpty()),
+        PATTERN.asMatchPredicate(),
+        INVALID_FORMAT
+    ).map(opt -> opt.map(ReferralCode::new));
+}
 ```
 
 Avoid `Option<Result<T>>` - it means "maybe there's a result, and that result might have failed," which is backwards. Just use `Result<Option<T>>`.

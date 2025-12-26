@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.8] - 2025-12-26
+
+### Changed
+- **Pragmatica Lite Core** updated from 0.8.6 to 0.9.0
+  - New: `Verify.ensureOption()` for elegant `Result<Option<T>>` validation pattern
+  - New: TOML Parser (not documented in JBCT guides)
+- **Documentation updates** for `Verify.ensureOption()` pattern
+  - CLAUDE.md API reference section
+  - CODING_GUIDE.md ReferralCode example
+  - jbct-coder.md and jbct-reviewer.md agent configurations
+  - Series files: parts 2, 3, 4, 9 with ensureOption examples
+  - Book chapters: ch02, ch04, ch05, ch12 with ensureOption pattern
+- **Series part count** updated from 9 to 10 across all series files
+
 ## [2.0.7] - 2025-12-24
 
 ### Changed

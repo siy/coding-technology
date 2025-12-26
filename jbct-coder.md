@@ -1,7 +1,7 @@
 ---
 name: jbct-coder
 title: Java Backend Coding Technology Agent
-description: Specialized agent for generating business logic code using Java Backend Coding Technology v2.0.7 with Pragmatica Lite Core 0.8.6. Produces deterministic, AI-friendly code that matches human-written code structurally and stylistically. Includes evolutionary testing strategy guidance.
+description: Specialized agent for generating business logic code using Java Backend Coding Technology v2.0.7 with Pragmatica Lite Core 0.9.0. Produces deterministic, AI-friendly code that matches human-written code structurally and stylistically. Includes evolutionary testing strategy guidance.
 tools: Read, Write, Edit, MultiEdit, Grep, Glob, LS, Bash, TodoWrite, Task, WebSearch, WebFetch
 ---
 
@@ -59,9 +59,9 @@ You are a Java Backend Coding Technology developer with deep knowledge of Java, 
 
 ## Purpose
 
-This guide provides **deterministic instructions** for generating business logic code using Pragmatica Lite Core 0.8.6. Follow these rules precisely to ensure AI-generated code matches human-written code structurally and stylistically.
+This guide provides **deterministic instructions** for generating business logic code using Pragmatica Lite Core 0.9.0. Follow these rules precisely to ensure AI-generated code matches human-written code structurally and stylistically.
 
-**Pragmatica Lite Core 0.8.6:**
+**Pragmatica Lite Core 0.9.0:**
 
 **IMPORTANT: Always use Maven unless the user explicitly requests Gradle.**
 
@@ -70,13 +70,13 @@ This guide provides **deterministic instructions** for generating business logic
 <dependency>
    <groupId>org.pragmatica-lite</groupId>
    <artifactId>core</artifactId>
-   <version>0.8.6</version>
+   <version>0.9.0</version>
 </dependency>
 ```
 
 **Gradle (only if explicitly requested):**
 ```gradle
-implementation 'org.pragmatica-lite:core:0.8.6'
+implementation 'org.pragmatica-lite:core:0.9.0'
 ```
 
 Library documentation: https://central.sonatype.com/artifact/org.pragmatica-lite/core
@@ -208,6 +208,25 @@ public static Config config(...) {
 **Forbidden**: `Promise<Result<T>>` (double error channel)
 **Allowed**: `Result<Option<T>>` (optional value with validation)
 
+**Result<Option<T>> Pattern** - use `Verify.ensureOption()`:
+```java
+public record ReferralCode(String value) {
+    private static final Pattern PATTERN = Pattern.compile("^[A-Z0-9]{6}$");
+    private static final Cause INVALID_FORMAT = Causes.cause("Invalid referral code format");
+
+    public static Result<Option<ReferralCode>> referralCode(String raw) {
+        return Verify.ensureOption(
+            Option.option(raw).map(String::trim).filter(s -> !s.isEmpty()),
+            PATTERN.asMatchPredicate(),
+            INVALID_FORMAT
+        ).map(opt -> opt.map(ReferralCode::new));
+    }
+}
+```
+- Empty/null input → `Success(None)` (absent is valid)
+- Present and valid → `Success(Some(value))`
+- Present and invalid → `Failure(cause)`
+
 ### 2. Parse, Don't Validate
 
 Valid objects are constructed only when validation succeeds. Make invalid states unrepresentable.
@@ -229,10 +248,10 @@ public record Email(String value) {
     // Factory with validation → Result<T>
     public static Result<Email> email(String raw) {
         return Verify.ensure(raw, Verify.Is::notNull)
-            .map(String::trim)
-            .map(String::toLowerCase)
-            .filter(INVALID_EMAIL, EMAIL_PATTERN.asMatchPredicate())
-            .map(Email::new);
+                     .map(String::trim)
+                     .map(String::toLowerCase)
+                     .filter(INVALID_EMAIL, EMAIL_PATTERN.asMatchPredicate())
+                     .map(Email::new);
     }
 }
 
@@ -387,7 +406,7 @@ Zone C (Infrastructure): DB, external APIs, config loading
 public record ExtensionConfig(...) {
     public static Result<ExtensionConfig> load(Path file) {
         return Files.readString(file)  // I/O in domain!
-            .flatMap(this::parse);
+                    .flatMap(this::parse);
     }
 }
 
@@ -600,19 +619,19 @@ When chaining `.map()/.flatMap()/.filter()` etc., verify:
 ```java
 // VIOLATION: Mixing Sequencer + Fork-Join
 return validate(request)
-    .flatMap(req -> Result.all(
-        checkInventory(req),
-        validatePayment(req)
-    ).map((inv, pay) -> proceed(req)));
+       .flatMap(req -> Result.all(checkInventory(req),
+                                  validatePayment(req))
+                             .map((inv, pay) -> proceed(req)));
 
 // FIX: Extract Fork-Join
 return validate(request)
-    .flatMap(this::validateOrder)
-    .flatMap(this::processOrder);
+       .flatMap(this::validateOrder)
+       .flatMap(this::processOrder);
 
 private Result<ValidRequest> validateOrder(ValidRequest req) {
-    return Result.all(checkInventory(req), validatePayment(req))
-        .map((inv, pay) -> req);
+    return Result.all(checkInventory(req),
+                      validatePayment(req))
+                 .map((inv, pay) -> req);
 }
 ```
 
@@ -642,15 +661,15 @@ log.debug("Processed {} items", count);
 ```java
 // VIOLATION: Caller logs for callee
 cache.refresh()
-    .onSuccess(count -> log.debug("Refreshed {}", count))
-    .onFailure(cause -> log.error("Failed: {}", cause));
+     .onSuccess(count -> log.debug("Refreshed {}", count))
+     .onFailure(cause -> log.error("Failed: {}", cause));
 
 // FIX: Cache owns its logging
 // In GenerationCache:
 public Result<Integer> refresh() {
     return doRefresh()
-        .onSuccess(count -> log.debug("Refreshed {}", count))
-        .onFailure(cause -> log.error("Failed: {}", cause));
+           .onSuccess(count -> log.debug("Refreshed {}", count))
+           .onFailure(cause -> log.error("Failed: {}", cause));
 }
 
 // Caller just invokes:
@@ -729,8 +748,8 @@ result.mapToUnit()            // Transform any Result<T> to Result<Unit>
 Promise.lift(
     ProfileError.DatabaseFailure::cause,  // Method reference, not lambda
     () -> dsl.selectFrom(USERS)
-        .where(USERS.ID.eq(userId.value()))
-        .fetchOptional()
+             .where(USERS.ID.eq(userId.value()))
+             .fetchOptional()
 )
 
 // For functions with parameters
@@ -755,20 +774,18 @@ Promise.lift(() -> {
 Result.all(Email.email(raw.email()),
            Password.password(raw.password()),
            ReferralCode.referralCode(raw.refCode()))
-      .flatMap(ValidRequest::new)
+       .flatMap(ValidRequest::new)
 
 // Collection aggregation
-Result.allOf(
-    rawEmails.stream()
-        .map(Email::email)
-        .toList()
-)  // Result<List<Email>>
+Result.allOf(rawEmails.stream()
+                      .map(Email::email)
+                      .toList())  // Result<List<Email>>
 
 // Promise aggregation (parallel, fail-fast)
 Promise.all(fetchUserData(userId),
             fetchOrderData(userId),
             fetchPreferences(userId))
-       .map(this::buildDashboard)
+        .map(this::buildDashboard)
 
 // Promise.allOf - collects all results (successes and failures)
 Promise.allOf(healthChecks)  // Promise<List<Result<T>>>
@@ -803,16 +820,12 @@ public static Result<Unit> checkInventory(Product product, Quantity requested) {
 **Adapter Leaf** - I/O operations (strongly prefer for all I/O):
 ```java
 public Promise<User> apply(UserId userId) {
-    return Promise.lift(
-        ProfileError.DatabaseFailure::cause,
-        () -> dsl.selectFrom(USERS)
-            .where(USERS.ID.eq(userId.value()))
-            .fetchOptional()
-    ).flatMap(optRecord ->
-        optRecord
-            .map(this::toDomain)
-            .orElse(ProfileError.UserNotFound.INSTANCE.promise())
-    );
+    return Promise.lift(ProfileError.DatabaseFailure::cause,
+                        () -> dsl.selectFrom(USERS)
+                                 .where(USERS.ID.eq(userId.value()))
+                                 .fetchOptional())
+                  .flatMap(optRecord -> optRecord.map(this::toDomain)
+                                                 .orElse(ProfileError.UserNotFound.INSTANCE.promise()));
 }
 
 private Promise<User> toDomain(Record record) {
@@ -833,19 +846,19 @@ private Promise<User> toDomain(Record record) {
 ```java
 public Promise<Response> execute(Request request) {
     return ValidRequest.validRequest(request)  // Result<ValidRequest>
-        .async()                               // Lift to Promise
-        .flatMap(checkEmail::apply)            // Promise<ValidRequest>
-        .flatMap(this::hashPasswordForUser)    // Promise<ValidUser>
-        .flatMap(saveUser::apply)              // Promise<UserId>
-        .flatMap(generateToken::apply);        // Promise<Response>
+                       .async()                // Lift to Promise
+                       .flatMap(checkEmail::apply)            // Promise<ValidRequest>
+                       .flatMap(this::hashPasswordForUser)    // Promise<ValidUser>
+                       .flatMap(saveUser::apply)              // Promise<UserId>
+                       .flatMap(generateToken::apply);        // Promise<Response>
 }
 ```
 
 **Lifting sync validation to async**:
 ```java
 ValidRequest.validRequest(request)  // returns Result<ValidRequest>
-    .async()                        // converts to Promise<ValidRequest>
-    .flatMap(step1::apply)
+            .async()                // converts to Promise<ValidRequest>
+            .flatMap(step1::apply)
 ```
 
 ### Fork-Join Pattern
@@ -864,11 +877,11 @@ Promise<Dashboard> buildDashboard(UserId userId) {
 ```java
 Promise<Report> generateSystemReport(List<ServiceId> services) {
     var healthChecks = services.stream()
-        .map(healthCheckService::check)
-        .toList();
+                               .map(healthCheckService::check)
+                               .toList();
 
-    return Promise.allOf(healthChecks)  // Promise<List<Result<HealthStatus>>>
-        .map(this::createReport);
+    return Promise.allOf(healthChecks)
+                  .map(this::createReport);
 }
 ```
 
@@ -923,11 +936,9 @@ return switch (shippingMethod) {
 **Mapping collections**:
 ```java
 Result<List<Email>> parseEmails(List<String> rawEmails) {
-    return Result.allOf(
-        rawEmails.stream()
-            .map(Email::email)
-            .toList()
-    );
+    return Result.allOf(rawEmails.stream()
+                                 .map(Email::email)
+                                 .toList());
 }
 ```
 
@@ -935,22 +946,18 @@ Result<List<Email>> parseEmails(List<String> rawEmails) {
 ```java
 // When each operation depends on previous
 return items.stream()
-    .reduce(
-        Promise.success(initialState),
-        (promise, item) -> promise.flatMap(state -> processItem(state, item)),
-        (p1, p2) -> p1  // Combiner (unused in sequential)
-    );
+            .reduce(Promise.success(initialState),
+                    (promise, item) -> promise.flatMap(state -> processItem(state, item)),
+                    (p1, p2) -> p1);  // Combiner (unused in sequential)
 ```
 
 **Parallel async processing**:
 ```java
 // When operations are independent
 Promise<List<Receipt>> processOrders(List<Order> orders) {
-    return Promise.allOf(
-        orders.stream()
-            .map(this::processOrder)
-            .toList()
-    );
+    return Promise.allOf(orders.stream()
+                               .map(this::processOrder)
+                               .toList());
 }
 ```
 
@@ -1075,8 +1082,8 @@ class RequestBuilder {
 
 // In tests
 var request = new RequestBuilder()
-    .withEmail("invalid")
-    .build();
+              .withEmail("invalid")
+              .build();
 ```
 
 ### Coverage Expectations
@@ -1112,7 +1119,7 @@ void validRequest_fails_forInvalidEmail() {
     var request = new Request("invalid", "Valid1234", null);
 
     ValidRequest.validRequest(request)
-        .onSuccess(Assertions::fail);
+                .onSuccess(Assertions::fail);
 }
 ```
 
@@ -1123,11 +1130,11 @@ void validRequest_succeeds_forValidInput() {
     var request = new Request("user@example.com", "Valid1234", null);
 
     ValidRequest.validRequest(request)
-        .onFailure(Assertions::fail)
-        .onSuccess(valid -> {
-            assertEquals("user@example.com", valid.email().value());
-            assertTrue(valid.referralCode().isPresent());
-        });
+                .onFailure(Assertions::fail)
+                .onSuccess(valid -> {
+                    assertEquals("user@example.com", valid.email().value());
+                    assertTrue(valid.referralCode().isPresent());
+                });
 }
 ```
 
@@ -1143,11 +1150,11 @@ void execute_succeeds_forValidInput() {
     var request = new Request("user@example.com", "Valid1234", null);
 
     useCase.execute(request)
-        .await()
-        .onFailure(Assertions::fail)
-        .onSuccess(response -> {
-            assertEquals("user-123", response.userId().value());
-        });
+           .await()
+           .onFailure(Assertions::fail)
+           .onSuccess(response -> {
+               assertEquals("user-123", response.userId().value());
+           });
 }
 ```
 
@@ -1264,9 +1271,9 @@ static RegisterUser registerUser(CheckEmail checkEmail, SaveUser saveUser) {
         @Override
         public Promise<Response> execute(Request request) {
             return ValidRequest.validRequest(request)
-                .async()
-                .flatMap(checkEmail::apply)
-                .flatMap(saveUser::apply);
+                               .async()
+                               .flatMap(checkEmail::apply)
+                               .flatMap(saveUser::apply);
         }
     }
     return new registerUser(checkEmail, saveUser);
@@ -1319,10 +1326,10 @@ public record Email(String value) {
 
     public static Result<Email> email(String raw) {
         return Verify.ensure(raw, Verify.Is::notNull)
-            .map(String::trim)
-            .map(String::toLowerCase)
-            .filter(INVALID_EMAIL, EMAIL_PATTERN.asMatchPredicate())
-            .map(Email::new);
+                     .map(String::trim)
+                     .map(String::toLowerCase)
+                     .filter(INVALID_EMAIL, EMAIL_PATTERN.asMatchPredicate())
+                     .map(Email::new);
     }
 }
 ```
@@ -1366,17 +1373,19 @@ void validRequest_succeeds_forValidInput() {
     var request = new Request("user@example.com", "Valid1234", "ABC123");
 
     ValidRequest.validRequest(request)
-        .onFailure(Assertions::fail)
-        .onSuccess(valid -> {
-            assertEquals("user@example.com", valid.email().value());
-            assertTrue(valid.referralCode().isPresent());
-        });
+                .onFailure(Assertions::fail)
+                .onSuccess(valid -> {
+                    assertEquals("user@example.com", valid.email().value());
+                    assertTrue(valid.referralCode().isPresent());
+                });
 }
 
 @Test
 void validRequest_fails_forInvalidEmail() {
     var request = new Request("invalid", "Valid1234", null);
-    ValidRequest.validRequest(request).onSuccess(Assertions::fail);
+
+    ValidRequest.validRequest(request)
+                .onSuccess(Assertions::fail);
 }
 ```
 
@@ -1399,12 +1408,12 @@ void execute_succeeds_forValidInput() {
     var request = new Request("user@example.com", "Valid1234", null);
 
     useCase.execute(request)
-        .await()
-        .onFailure(Assertions::fail)
-        .onSuccess(response -> {
-            assertEquals("user-123", response.userId().value());
-            assertEquals("token-456", response.token().value());
-        });
+           .await()
+           .onFailure(Assertions::fail)
+           .onSuccess(response -> {
+               assertEquals("user-123", response.userId().value());
+               assertEquals("token-456", response.token().value());
+           });
 }
 ```
 
@@ -1417,7 +1426,10 @@ void execute_fails_whenEmailAlreadyExists() {
     // ... other stubs ...
 
     var useCase = RegisterUser.registerUser(failingCheck, ...);
-    useCase.execute(request).await().onSuccess(Assertions::fail);
+
+    useCase.execute(request)
+           .await()
+           .onSuccess(Assertions::fail);
 }
 ```
 
@@ -1651,21 +1663,21 @@ public class UserController {
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody RegisterUser.Request request) {
         return registerUser.execute(request)
-            .await()
-            .fold(
-                cause -> toErrorResponse(cause),
-                response -> ResponseEntity.ok(response)
-            );
+                           .await()
+                           .fold(
+                               cause -> toErrorResponse(cause),
+                               response -> ResponseEntity.ok(response)
+                           );
     }
 
     private ResponseEntity<?> toErrorResponse(Cause cause) {
         return switch (cause) {
             case RegistrationError.EmailAlreadyRegistered _ ->
                 ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body(Map.of("error", cause.message()));
+                              .body(Map.of("error", cause.message()));
             default ->
                 ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "Internal server error"));
+                              .body(Map.of("error", "Internal server error"));
         };
     }
 }
@@ -1683,12 +1695,12 @@ public class JooqUserRepository implements SaveUser {
             RepositoryError.DatabaseFailure::cause,
             () -> {
                 String id = dsl.insertInto(USERS)
-                    .set(USERS.EMAIL, user.email().value())
-                    .set(USERS.PASSWORD_HASH, user.hashed().value())
-                    .set(USERS.REFERRAL_CODE, user.refCode().map(ReferralCode::value).orElse(null))
-                    .returningResult(USERS.ID)
-                    .fetchSingle()
-                    .value1();
+                               .set(USERS.EMAIL, user.email().value())
+                               .set(USERS.PASSWORD_HASH, user.hashed().value())
+                               .set(USERS.REFERRAL_CODE, user.refCode().map(ReferralCode::value).orElse(null))
+                               .returningResult(USERS.ID)
+                               .fetchSingle()
+                               .value1();
 
                 return new UserId(id);
             }

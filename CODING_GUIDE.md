@@ -389,8 +389,8 @@ if (email != null) {
 With Smart Wrappers, **you describe transformations**, the wrapper handles control flow:
 ```java
 Result.success(email)
-      .flatMap(this::validate)
-      .flatMap(this::save);
+       .flatMap(this::validate)
+       .flatMap(this::save);
 // "Validate, then save - but only if each step succeeds"
 ```
 
@@ -582,13 +582,13 @@ public class UserController {
 > <dependency>
 >    <groupId>org.pragmatica-lite</groupId>
 >    <artifactId>core</artifactId>
->    <version>0.8.6</version>
+>    <version>0.9.0</version>
 > </dependency>
 > ```
 >
 > **Gradle:**
 > ```gradle
-> implementation 'org.pragmatica-lite:core:0.8.6'
+> implementation 'org.pragmatica-lite:core:0.9.0'
 > ```
 
 ### The Four Return Kinds
@@ -904,27 +904,20 @@ Use `Result<Option<T>>` - validation can fail (Result), and if it succeeds, the 
 
 ```java
 public record ReferralCode(String value) {
-    private static final String PATTERN = "^[A-Z0-9]{6}$";
+    private static final Pattern PATTERN = Pattern.compile("^[A-Z0-9]{6}$");
+    private static final Cause INVALID_FORMAT = Causes.cause("Invalid referral code format");
 
     public static Result<Option<ReferralCode>> referralCode(String raw) {
-        return isAbsent(raw)
-            ? Result.success(Option.none())
-            : validatePresent(raw);
-    }
-
-    private static boolean isAbsent(String raw) {
-        return raw == null || raw.isEmpty();
-    }
-
-    private static Result<Option<ReferralCode>> validatePresent(String raw) {
-        return Verify.ensure(raw.trim(), Verify.Is::matches, PATTERN)
-                     .map(ReferralCode::new)
-                     .map(Option::some);
+        return Verify.ensureOption(
+            Option.option(raw).map(String::trim).filter(s -> !s.isEmpty()),
+            PATTERN.asMatchPredicate(),
+            INVALID_FORMAT
+        ).map(opt -> opt.map(ReferralCode::new));
     }
 }
 ```
 
-If `raw` is null or empty, we succeed with `Option.none()`. If it's present, we validate and wrap in `Option.some()`. If validation fails, the `Result` itself is a failure. Callers get clear semantics: failure means invalid input, success with `none()` means no value provided, success with `some()` means valid value.
+`Verify.ensureOption()` handles the Result<Option<T>> pattern directly: if the Option is empty, succeeds with `Option.none()`. If present and valid, succeeds with `Option.some(value)`. If present and invalid, fails. Callers get clear semantics: failure means invalid input, success with `none()` means no value provided, success with `some()` means valid value.
 
 **Normalization:** Factories can normalize input (trim whitespace, lowercase email domains, etc.) as part of parsing. This keeps invariants in one place and ensures all instances are normalized consistently.
 
@@ -1041,14 +1034,12 @@ public record ValidRegistration(Email email, Password password, Age age) {
 ```java
 // New feature: referral code tracking
 public record ReferralCode(String value) {
-    // private ReferralCode {}  // Not yet supported in Java
-
     public static Result<Option<ReferralCode>> referralCode(String raw) {
-        return isAbsent(raw)
-            ? Result.success(Option.none())
-            : validatePresent(raw);
+        return Verify.ensureOption(
+            Option.option(raw).map(String::trim).filter(s -> !s.isEmpty()),
+            PATTERN.asMatchPredicate(), INVALID_FORMAT
+        ).map(opt -> opt.map(ReferralCode::new));
     }
-    // ... validation logic
 }
 
 // Use in new use cases immediately
@@ -1124,10 +1115,10 @@ public class RegistrationService {
 @PostMapping("/register")
 public ResponseEntity<?> register(@RequestBody RegistrationRequest request) {
     return ValidRequest.validRequest(request)
-        .async() // Transition into asynchronous code
-        .flatMap(useCase::execute) // Use case does I/O -> uses Promise
-        .await() // Return to synchronous code
-        .fold(this::errorResponse, this::successResponse);
+                       .async() // Transition into asynchronous code
+                       .flatMap(useCase::execute) // Use case does I/O -> uses Promise
+                       .await() // Return to synchronous code
+                       .fold(this::errorResponse, this::successResponse);
 }
 ```
 
@@ -1201,10 +1192,10 @@ private static final Pattern HAS_DIGIT = Pattern.compile(".*[0-9].*");
 
 public static Result<Password> password(String raw) {
     return Verify.ensure(raw, Verify.Is::notNull)
-        .filter(TOO_SHORT, s -> Verify.Is.lenBetween(s, 8, 128))
-        .filter(NO_UPPERCASE, HAS_UPPERCASE.asMatchPredicate())
-        .filter(NO_DIGIT, HAS_DIGIT.asMatchPredicate())
-        .map(Password::new);
+                 .filter(TOO_SHORT, s -> Verify.Is.lenBetween(s, 8, 128))
+                 .filter(NO_UPPERCASE, HAS_UPPERCASE.asMatchPredicate())
+                 .filter(NO_DIGIT, HAS_DIGIT.asMatchPredicate())
+                 .map(Password::new);
 }
 ```
 
@@ -1657,22 +1648,22 @@ This rule has a mechanical benefit: it makes refactoring deterministic. When a f
 ```java
 // DON'T: Complex logic inside lambda
 return fetchUser(userId)
-    .flatMap(user -> {
-        if (user.isActive() && user.hasPermission("admin")) {
-            return loadAdminDashboard(user)
-                .map(dashboard -> {
-                    var summary = new Summary(
-                        dashboard.metrics(),
-                        dashboard.alerts().stream()
-                            .filter(Alert::isUrgent)
-                            .toList()
-                    );
-                    return new Response(user, summary);
-                });
-        } else {
-            return AccessError.InsufficientPermissions.INSTANCE.promise();
-        }
-    });
+       .flatMap(user -> {
+           if (user.isActive() && user.hasPermission("admin")) {
+               return loadAdminDashboard(user)
+                      .map(dashboard -> {
+                          var summary = new Summary(
+                              dashboard.metrics(),
+                              dashboard.alerts().stream()
+                                       .filter(Alert::isUrgent)
+                                       .toList()
+                          );
+                          return new Response(user, summary);
+                      });
+           } else {
+               return AccessError.InsufficientPermissions.INSTANCE.promise();
+           }
+       });
 ```
 
 This lambda contains: conditional logic, nested map, stream processing, object construction. Mixed abstraction levels. Hard to test. Hard to read.
@@ -1681,9 +1672,9 @@ This lambda contains: conditional logic, nested map, stream processing, object c
 ```java
 // DO: Extract to named functions
 return fetchUser(userId)
-    .flatMap(this::checkAdminAccess)
-    .flatMap(this::loadAdminDashboard)
-    .map(this::buildResponse);
+       .flatMap(this::checkAdminAccess)
+       .flatMap(this::loadAdminDashboard)
+       .map(this::buildResponse);
 
 private Promise<User> checkAdminAccess(User user) {
     return isActiveAdministrator(user)
@@ -1808,16 +1799,16 @@ No conditionals whatsoever:
 // DON'T: Mixing Sequencer and Fork-Join
 public Result<Report> generateReport(ReportRequest request) {
     return ValidRequest.validRequest(request)
-        .flatMap(valid -> {
-            // Sequencer starts here
-            var userData = fetchUserData(valid.userId());
-            var salesData = fetchSalesData(valid.dateRange());
+                       .flatMap(valid -> {
+                           // Sequencer starts here
+                           var userData = fetchUserData(valid.userId());
+                           var salesData = fetchSalesData(valid.dateRange());
 
-            // Wait, now we're doing Fork-Join?
-            return Result.all(userData, salesData)
-                .flatMap((user, sales) -> computeMetrics(user, sales))
-                .flatMap(this::formatReport);  // Back to Sequencer
-        });
+                           // Wait, now we're doing Fork-Join?
+                           return Result.all(userData, salesData)
+                                        .flatMap((user, sales) -> computeMetrics(user, sales))
+                                        .flatMap(this::formatReport);  // Back to Sequencer
+                       });
 }
 ```
 
@@ -1879,9 +1870,9 @@ Promise<Result<User>> loadUser(UserId id) { /* ... */ }
 // Caller must unwrap twice:
 loadUser(id)
     .flatMap(resultUser -> resultUser.fold(
-        Cause::promise,
-        user -> Promise.success(user)
-    ));  // Absurd ceremony
+                               Cause::promise,
+                               user -> Promise.success(user)
+                           ));  // Absurd ceremony
 ```
 
 Right:
@@ -2252,15 +2243,15 @@ DON'T nest logic inside flatMap (violates Single Level of Abstraction):
 ```java
 // DON'T: Business logic buried in lambda
 return validate.apply(request)
-    .flatMap(valid -> {
-        if (valid.isPremiumUser()) {
-            return applyDiscount(valid)
-                .flatMap(reserve::apply);
-        } else {
-            return reserve.apply(valid);
-        }
-    })
-    .flatMap(processPayment::apply);
+               .flatMap(valid -> {
+                   if (valid.isPremiumUser()) {
+                       return applyDiscount(valid)
+                              .flatMap(reserve::apply);
+                   } else {
+                       return reserve.apply(valid);
+                   }
+               })
+               .flatMap(processPayment::apply);
 ```
 
 The conditional logic is hidden inside the lambda. Extract it:
@@ -2268,9 +2259,9 @@ The conditional logic is hidden inside the lambda. Extract it:
 ```java
 // DO: Extract to the named function (Single Level of Abstraction)
 return validate.apply(request)
-    .flatMap(this::applyDiscountIfEligible)
-    .flatMap(reserve::apply)
-    .flatMap(processPayment::apply);
+               .flatMap(this::applyDiscountIfEligible)
+               .flatMap(reserve::apply)
+               .flatMap(processPayment::apply);
 
 private Result<ValidRequest> applyDiscountIfEligible(ValidRequest request) {
     return request.isPremiumUser()
@@ -2283,13 +2274,13 @@ DON'T mix Fork-Join inside a Sequencer without extraction:
 ```java
 // DON'T: Suddenly doing Fork-Join mid-sequence (violates Single Pattern + SLA)
 return validate.apply(request)
-    .flatMap(valid -> {
-        var userPromise = fetchUser(valid.userId());
-        var productPromise = fetchProduct(valid.productId());
-        return Promise.all(userPromise, productPromise)
-            .flatMap((user, product) -> reserve.apply(user, product));
-    })
-    .flatMap(processPayment::apply);
+               .flatMap(valid -> {
+                   var userPromise = fetchUser(valid.userId());
+                   var productPromise = fetchProduct(valid.productId());
+                   return Promise.all(userPromise, productPromise)
+                                 .flatMap((user, product) -> reserve.apply(user, product));
+               })
+               .flatMap(processPayment::apply);
 ```
 
 Extract the Fork-Join:
@@ -2297,9 +2288,9 @@ Extract the Fork-Join:
 ```java
 // DO: Extract Fork-Join to its own step
 return validate.apply(request)
-    .flatMap(this::fetchUserAndProduct)  // Fork-Join inside this step
-    .flatMap(reserve::apply)
-    .flatMap(processPayment::apply);
+               .flatMap(this::fetchUserAndProduct)  // Fork-Join inside this step
+               .flatMap(reserve::apply)
+               .flatMap(processPayment::apply);
 
 private Promise<ReservationInput> fetchUserAndProduct(ValidRequest request) {
     return Promise.all(fetchUser(request.userId()),
@@ -2534,12 +2525,11 @@ Promise.all(reserveInventory(productId, quantity),  // Locks inventory
 // Problem: If inventory fails, payment already charged
 // Fix: Use Sequencer - reserve first, then charge
 reserveInventory(productId, quantity)
-      .flatMap(reservation -> chargeAndCreateResult(reservation, paymentInfo))
+    .flatMap(reservation -> chargeAndCreateResult(reservation, paymentInfo))
 
-private Promise<PurchaseResult> chargeAndCreateResult(Reservation reservation, PaymentInfo
-        paymentInfo) {
+private Promise<PurchaseResult> chargeAndCreateResult(Reservation reservation, PaymentInfo paymentInfo) {
     return chargePayment(paymentInfo)
-            .map(payment -> new PurchaseResult(reservation, payment));
+           .map(payment -> new PurchaseResult(reservation, payment));
 }
 ```
 
@@ -2758,13 +2748,13 @@ Now each function has one level of branching. Much clearer.
 ```java
 // DON'T: Ternary in lambda (violates Single Pattern per Function)
 return fetchUser(userId)
-            .flatMap(user -> user.isActive()
-                ? processActiveUser(user)
-                : UserError.InactiveAccount.INSTANCE.result());
+       .flatMap(user -> user.isActive()
+           ? processActiveUser(user)
+           : UserError.InactiveAccount.INSTANCE.result());
 
 // DO: Extract condition to named function
 return fetchUser(userId)
-    .flatMap(this::processIfActive);
+       .flatMap(this::processIfActive);
 
 private Result<ProcessedUser> processIfActive(User user) {
     return user.isActive()
@@ -2777,8 +2767,8 @@ Or use `filter` for even cleaner composition:
 ```java
 // DO: Using filter (preferred when applicable)
 return fetchUser(userId)
-    .filter(User::isActive, UserError.InactiveAccount.INSTANCE)
-    .flatMap(this::processActiveUser);
+       .filter(User::isActive, UserError.InactiveAccount.INSTANCE)
+       .flatMap(this::processActiveUser);
 ```
 
 **Anti-patterns:**
@@ -2789,8 +2779,8 @@ DON'T mix abstraction levels in branches:
 return user.isPremium()
     ? Result.success(PREMIUM_DISCOUNT)  // Leaf: just a value
     : fetchStandardDiscountRules()      // Sequencer: fetch → compute → validate
-        .flatMap(this::computeDiscount)
-        .flatMap(this::validateDiscount);
+          .flatMap(this::computeDiscount)
+          .flatMap(this::validateDiscount);
 ```
 
 Extract the complex branch:
@@ -2906,11 +2896,11 @@ DON'T mix side effects into stream operations:
 ```java
 // DON'T: Side effect in the map
 users.stream()
-    .map(user -> {
-        logger.info("Processing user: {}", user.id());  // Side effect!
-        return processUser(user);
-    })
-    .toList();
+     .map(user -> {
+         logger.info("Processing user: {}", user.id());  // Side effect!
+         return processUser(user);
+     })
+     .toList();
 ```
 
 Extract side effects to an Aspect (logging) or keep them out of transformation logic.
@@ -5089,15 +5079,15 @@ package com.example.app.domain.shared;
 import org.pragmatica.lang.*;
 
 public record ReferralCode(String value) {
-    private static final String REFERRAL_PATTERN = "^[A-Z0-9]{6}$";
+    private static final Pattern PATTERN = Pattern.compile("^[A-Z0-9]{6}$");
+    private static final Cause INVALID_FORMAT = Causes.cause("Invalid referral code format");
 
     public static Result<Option<ReferralCode>> referralCode(String raw) {
-        return switch (raw) {
-            case null, "" -> Result.success(Option.none());
-            default -> Verify.ensure(raw.trim(), Verify.Is::matches, REFERRAL_PATTERN)
-                             .map(ReferralCode::new)
-                             .map(Option::some);
-        };
+        return Verify.ensureOption(
+            Option.option(raw).map(String::trim).filter(s -> !s.isEmpty()),
+            PATTERN.asMatchPredicate(),
+            INVALID_FORMAT
+        ).map(opt -> opt.map(ReferralCode::new));
     }
 
     public boolean isPremium() {

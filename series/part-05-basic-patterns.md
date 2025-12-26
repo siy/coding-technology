@@ -1,6 +1,6 @@
 # Part 5: Basic Patterns & Structure
 
-**Series:** [Java Backend Coding Technology](INDEX.md) | **Part:** 5 of 9
+**Series:** [Java Backend Coding Technology](INDEX.md) | **Part:** 5 of 10
 
 **Previous:** [Part 4: Error Handling & Composition](part-04-error-handling.md) | **Next:** [Part 6: Advanced Patterns](part-06-advanced-patterns.md)
 

@@ -1,5 +1,7 @@
 # Chapter 1: Introduction - Code Unification
 
+**Based on:** JBCT v2.0.8 | **Pragmatica Lite Core:** 0.9.0
+
 ## What You'll Learn
 
 - Why code unification matters in the AI era

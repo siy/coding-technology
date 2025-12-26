@@ -1,6 +1,6 @@
 # Part 7: Testing Philosophy & Evolution
 
-**Series:** [Java Backend Coding Technology](INDEX.md) | **Part:** 7 of 9
+**Series:** [Java Backend Coding Technology](INDEX.md) | **Part:** 7 of 10
 
 **Previous:** [Part 6: Advanced Patterns](part-06-advanced-patterns.md) | **Next:** [Part 8: Testing in Practice](part-08-testing-practice.md)
 

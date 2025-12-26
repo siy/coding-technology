@@ -201,22 +201,22 @@ When writing Java code examples, follow these formatting conventions strictly:
 
 ---
 
-# Pragmatica Lite Core 0.8.6 API Reference
+# Pragmatica Lite Core 0.9.0 API Reference
 
-This section documents the actual API methods available in Pragmatica Lite Core 0.8.6.
+This section documents the actual API methods available in Pragmatica Lite Core 0.9.0.
 
 **Maven:**
 ```xml
 <dependency>
    <groupId>org.pragmatica-lite</groupId>
    <artifactId>core</artifactId>
-   <version>0.8.6</version>
+   <version>0.9.0</version>
 </dependency>
 ```
 
 **Gradle:**
 ```gradle
-implementation 'org.pragmatica-lite:core:0.8.6'
+implementation 'org.pragmatica-lite:core:0.9.0'
 ```
 
 Library documentation: https://central.sonatype.com/artifact/org.pragmatica-lite/core
@@ -287,7 +287,7 @@ All liftN methods accept optional `exceptionMapper: Fn1<Cause, Throwable>` as fi
 - **`Result.liftFn2(ThrowingFn2<R, T1, T2> fn)`**  -  returns `Fn2<Result<R>, T1, T2>`
 - **`Result.liftFn3(ThrowingFn3<R, T1, T2, T3> fn)`**  -  returns `Fn3<Result<R>, T1, T2, T3>`
 
-### Result.tryOf aliases (0.8.6+):
+### Result.tryOf aliases (0.9.0+):
 Supplier-first signatures for exception handling:
 - **`Result.tryOf(ThrowingFn0<U> supplier)`**  -  alias for `lift()` with supplier first
 - **`Result.tryOf(ThrowingFn0<U> supplier, Cause cause)`**  -  fixed cause at end
@@ -391,6 +391,49 @@ Verify.combine(
 )
 ```
 
+### Verify.ensureOption (0.9.0+)
+
+Validates optional values, returning `Result<Option<T>>`. If empty, succeeds with `Option.none()`. If present and valid, succeeds with `Option.some(value)`. If present and invalid, fails.
+
+**Signatures:**
+- `Verify.ensureOption(Option<T>, Predicate<T>)` → `Result<Option<T>>`
+- `Verify.ensureOption(Option<T>, Predicate<T>, Cause)` → with fixed cause
+- `Verify.ensureOption(Option<T>, Predicate<T>, Fn1<Cause, T>)` → with cause provider
+- Binary/ternary predicate variants also available
+
+**Usage - Result<Option<T>> pattern:**
+```java
+public static Result<Option<ReferralCode>> referralCode(String raw) {
+    return Verify.ensureOption(
+        Option.option(raw).map(String::trim).filter(s -> !s.isEmpty()),
+        PATTERN.asMatchPredicate(),
+        INVALID_FORMAT
+    ).map(opt -> opt.map(ReferralCode::new));
+}
+```
+
+**Key benefit:** Eliminates complex fold/map chains for optional validation.
+
+### Result.sequence (0.9.0+)
+
+Lazy sequential evaluation with short-circuit behavior. Suppliers are only invoked when terminal operation is called.
+
+**Signatures:**
+- `Result.sequence(Supplier<Result<T1>>)` → `Mapper1<T1>`
+- `Result.sequence(Supplier<Result<T1>>, Supplier<Result<T2>>)` → `Mapper2<T1, T2>`
+- ... up to `Mapper15` (15 suppliers)
+
+**Usage:**
+```java
+Result.sequence(
+    () -> validateUser(userId),
+    () -> loadPermissions(userId),  // Only called if validateUser succeeds
+    () -> fetchProfile(userId)      // Only called if both above succeed
+).map((user, perms, profile) -> new Context(user, perms, profile))
+```
+
+**vs Result.all():** `all()` evaluates eagerly and accumulates errors. `sequence()` is lazy and short-circuits on first failure.
+
 ### Parse Subpackage - JDK Wrappers
 
 Exception-safe wrappers for JDK parsing APIs. All return `Result<T>`.
@@ -464,7 +507,7 @@ public record Age(int value) {
 - `Result.allOf(Result<T>...)` → `Result<List<T>>` (varargs)
 - `Result.allOf(List<Result<T>>)` → `Result<List<T>>`
 
-### Instance all() (for-comprehension style - 0.8.6+):
+### Instance all() (for-comprehension style - 0.9.0+):
 For Result, Option, and Promise - chains dependent operations with access to source value:
 - `result.all(Fn1<Result<T1>, T>...)` → `Mapper1-9`
 - `option.all(Fn1<Option<T1>, T>...)` → `Mapper1-9`
@@ -477,7 +520,7 @@ userId.all(
 ).map((user, profile) -> combine(user, profile))
 ```
 
-### Result.sequence (0.8.6+):
+### Result.sequence (0.9.0+):
 - `Result.sequence(Iterable<Result<T>>)` → `Result<List<T>>` - collect all successes or first failure
 
 ### Promise.all (fail-fast on first failure):
@@ -561,9 +604,10 @@ userId.all(
 - `.isResolved()`  -  Promise only
 
 ### Unsafe operations (avoid in production):
-- `.unwrap()`  -  deprecated, throws if empty/failure
-- `.expect(String message)`  -  throws with custom message if empty/failure
-- `.getOrThrow()`  -  Result/Option only (0.8.6+): throws if failure/empty, returns value otherwise
+- `.unwrap()`  -  deprecated, throws if empty/failure (delegates to getOrThrow)
+- `.expect(String message)`  -  throws with custom message if empty/failure (delegates to getOrThrow)
+- `.getOrThrow(String message)`  -  throws `IllegalStateException` with context message
+- `.getOrThrow(Fn1<RuntimeException, String>, String)`  -  throws custom exception type
 - `.stream()`  -  converts to Java Stream (0 or 1 element)
 - `.toOptional()`  -  Option only: converts to Java Optional
 

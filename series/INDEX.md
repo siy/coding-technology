@@ -1,6 +1,6 @@
 # Java Backend Coding Technology: Complete Learning Series
 
-**Based on:** [CODING_GUIDE.md](../CODING_GUIDE.md) v2.0.7
+**Based on:** [CODING_GUIDE.md](../CODING_GUIDE.md) v2.0.8
 
 ## About This Series
 
@@ -71,7 +71,7 @@ Master the principle of validation through construction using factory methods.
 - Cross-field validation with Result.all()
 - Real-World Validation: dependent rules, business constraints
 - Normalization in factories
-- Optional fields with validation: Result<Option<T>>
+- Optional fields with validation: Result<Option<T>> using Verify.ensureOption()
 - Migrating Existing Codebases: incremental adoption strategy
 - Pragmatica Lite Validation Utilities: Verify.Is predicates, Parse subpackage
 

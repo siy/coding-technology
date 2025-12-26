@@ -1,6 +1,8 @@
 # Java Backend Coding Technology
 ## Unified Code Through Functional Composition
 
+**Based on:** JBCT v2.0.8 | **Pragmatica Lite Core:** 0.9.0
+
 ---
 
 ## Table of Contents

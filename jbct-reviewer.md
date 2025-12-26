@@ -13,27 +13,27 @@ Your goal is to provide comprehensive, actionable code review focused on JBCT co
 
 ## Pragmatica Lite Core Library
 
-JBCT uses **Pragmatica Lite Core 0.8.6** for functional types (`Option`, `Result`, `Promise`).
+JBCT uses **Pragmatica Lite Core 0.9.0** for functional types (`Option`, `Result`, `Promise`).
 
 **Correct Maven dependency:**
 ```xml
 <dependency>
    <groupId>org.pragmatica-lite</groupId>
    <artifactId>core</artifactId>
-   <version>0.8.6</version>
+   <version>0.9.0</version>
 </dependency>
 ```
 
 **Correct Gradle dependency (only if Maven not used):**
 ```gradle
-implementation 'org.pragmatica-lite:core:0.8.6'
+implementation 'org.pragmatica-lite:core:0.9.0'
 ```
 
 **Check for:**
 - ❌ Incorrect groupId (e.g., `org.pragmatica`, `com.pragmatica-lite`)
 - ❌ Incorrect artifactId (e.g., `pragmatica-core`, `pragmatica-lite`)
 - ❌ Outdated version (e.g., `0.7.x`, `0.8.0`, `0.8.1`, `0.8.2`, `0.8.3`)
-- ✅ Correct: `org.pragmatica-lite:core:0.8.6`
+- ✅ Correct: `org.pragmatica-lite:core:0.9.0`
 
 Library documentation: https://central.sonatype.com/artifact/org.pragmatica-lite/core
 
@@ -153,8 +153,8 @@ if (user == null) return error;
 // Use Option<T> parameter if value might be absent
 public Result<Order> processOrder(Option<User> maybeUser) {
     return maybeUser
-        .toResult(UserError.NotFound.INSTANCE)
-        .flatMap(this::process);
+           .toResult(UserError.NotFound.INSTANCE)
+           .flatMap(this::process);
 }
 ```
 
@@ -273,9 +273,9 @@ public record Email(String value) {
     // Factory with validation → Result<T>
     public static Result<Email> email(String raw) {
         return Verify.ensure(raw, Verify.Is::notNull)
-            .map(String::trim)
-            .filter(INVALID_EMAIL, PATTERN.asMatchPredicate())
-            .map(Email::new);
+                     .map(String::trim)
+                     .filter(INVALID_EMAIL, PATTERN.asMatchPredicate())
+                     .map(Email::new);
     }
 }
 
@@ -297,6 +297,26 @@ public record Email(String value) {
 - Constructor private or package-private
 - If you have an instance, it's valid
 
+**Result<Option<T>> Pattern** - for optional values that must validate when present:
+```java
+// ✅ CORRECT: Use Verify.ensureOption()
+public record ReferralCode(String value) {
+    private static final Pattern PATTERN = Pattern.compile("^[A-Z0-9]{6}$");
+    private static final Cause INVALID_FORMAT = Causes.cause("Invalid referral code format");
+
+    public static Result<Option<ReferralCode>> referralCode(String raw) {
+        return Verify.ensureOption(
+            Option.option(raw).map(String::trim).filter(s -> !s.isEmpty()),
+            PATTERN.asMatchPredicate(),
+            INVALID_FORMAT
+        ).map(opt -> opt.map(ReferralCode::new));
+    }
+}
+```
+- Empty/null → `Success(None)` (absent is valid)
+- Present and valid → `Success(Some(value))`
+- Present and invalid → `Failure(cause)`
+
 ❌ **CRITICAL: Direct constructor invocation bypassing factory method:**
 ```java
 // BAD: Bypassing validation
@@ -317,7 +337,7 @@ public static Result<Email> email(String raw) {
 
 // ✅ ALLOWED: Constructor reference after validation
 Result.all(Email.email(emailRaw), Password.password(passwordRaw))
-    .map(ValidRequest::new);  // OK - both fields already validated
+       .map(ValidRequest::new);  // OK - both fields already validated
 ```
 
 **Review Rule:** Flag any `new ValueObject(...)` calls outside of:
@@ -365,13 +385,13 @@ Network.parseUUID(raw)
 // ✅ CORRECT: Error as typed Cause
 public Result<User> findUser(UserId id) {
     return users.get(id)
-        .toResult(UserError.NotFound.INSTANCE);
+           .toResult(UserError.NotFound.INSTANCE);
 }
 
 // ❌ WRONG: Throwing exception
 public User findUser(UserId id) throws UserNotFoundException {
     return users.get(id)
-        .orElseThrow(() -> new UserNotFoundException(id));
+           .orElseThrow(() -> new UserNotFoundException(id));
 }
 ```
 
@@ -421,24 +441,24 @@ interface LoadUserData { Promise<User> apply(UserId id); }
 ```java
 // BAD: Mixing Zone 2 (validate, process) with Zone 3 (hashPassword)
 return ValidRequest.validRequest(request)  // Zone 2
-    .async()
-    .flatMap(this::hashPassword)           // Zone 3 - should be wrapped in Zone 2 step
-    .flatMap(this::saveUser);              // Zone 2
+                   .async()
+                   .flatMap(this::hashPassword)           // Zone 3 - should be wrapped in Zone 2 step
+                   .flatMap(this::saveUser);              // Zone 2
 
 // GOOD: All steps at Zone 2
 return ValidRequest.validRequest(request)
-    .async()
-    .flatMap(this::processCredentials)     // Zone 2 step (internally calls hashPassword)
-    .flatMap(this::saveUser);
+                   .async()
+                   .flatMap(this::processCredentials)     // Zone 2 step (internally calls hashPassword)
+                   .flatMap(this::saveUser);
 ```
 
 **Stepdown Rule Test:** Verify code reads naturally with "to" before each function:
 ```java
 // Should read: "To execute, we validate the request, then process payment, then send confirmation"
 return ValidRequest.validRequest(request)
-    .async()
-    .flatMap(this::processPayment)
-    .flatMap(this::sendConfirmation);
+                   .async()
+                   .flatMap(this::processPayment)
+                   .flatMap(this::sendConfirmation);
 ```
 
 If it doesn't flow naturally, abstraction levels likely mixed.
@@ -542,15 +562,15 @@ private int preloadGenerations(Map<String, Generation> generations) {
 **Before** (violation):
 ```java
 return cmdJson.command()
-    .flatMap(cmd -> cmdJson.subject().map(subj -> new String[]{cmd, subj}))
-    .toResult(MISSING_FIELD);
+              .flatMap(cmd -> cmdJson.subject().map(subj -> new String[]{cmd, subj}))
+              .toResult(MISSING_FIELD);
 ```
 
 **After** (compliant):
 ```java
 return cmdJson.command()
-    .flatMap(cmd -> buildFieldArray(cmd, cmdJson.subject()))
-    .toResult(MISSING_FIELD);
+              .flatMap(cmd -> buildFieldArray(cmd, cmdJson.subject()))
+              .toResult(MISSING_FIELD);
 
 private Option<String[]> buildFieldArray(String command, Option<String> subject) {
     return subject.map(subj -> new String[]{command, subj});
@@ -581,9 +601,9 @@ static RegisterUser registerUser(CheckEmail checkEmail, SaveUser saveUser) {
         @Override
         public Promise<Response> execute(Request request) {
             return ValidRequest.validRequest(request)
-                .async()
-                .flatMap(checkEmail::apply)
-                .flatMap(saveUser::apply);
+                               .async()
+                               .flatMap(checkEmail::apply)
+                               .flatMap(saveUser::apply);
         }
     }
     return new registerUser(checkEmail, saveUser);  // DON'T DO THIS
@@ -783,10 +803,10 @@ public Result<Response> execute(Request request) {
 // Asynchronous sequencer
 public Promise<Response> execute(Request request) {
     return ValidRequest.validRequest(request)
-        .async()                                    // Lift to Promise
-        .flatMap(checkEmail::apply)                 // Async step
-        .flatMap(this::hashPassword)                // Async step
-        .flatMap(saveUser::apply);                  // Async step
+                       .async()                                    // Lift to Promise
+                       .flatMap(checkEmail::apply)                 // Async step
+                       .flatMap(this::hashPassword)                // Async step
+                       .flatMap(saveUser::apply);                  // Async step
 }
 ```
 
@@ -795,15 +815,15 @@ public Promise<Response> execute(Request request) {
 ```java
 // ❌ WRONG: Mixing Sequencer + Fork-Join
 return ValidRequest.validRequest(request)
-    .flatMap(req -> Result.all(
-        checkInventory(req),
-        validatePayment(req)
-    ).map((inv, pay) -> proceed(req)));
+                   .flatMap(req -> Result.all(
+                       checkInventory(req),
+                       validatePayment(req)
+                   ).map((inv, pay) -> proceed(req)));
 
 // ✅ CORRECT: Extract Fork-Join
 return ValidRequest.validRequest(request)
-    .flatMap(this::validateOrder)
-    .flatMap(this::processOrder);
+                   .flatMap(this::validateOrder)
+                   .flatMap(this::processOrder);
 
 private Result<ValidRequest> validateOrder(ValidRequest req) {
     return Result.all(
@@ -864,10 +884,10 @@ return user.isPremium()
 ```java
 // ✅ CORRECT: Functional operations
 var validItems = items.stream()
-    .map(Item::item)
-    .filter(Result::isSuccess)
-    .map(Result::value)
-    .toList();
+                      .map(Item::item)
+                      .filter(Result::isSuccess)
+                      .map(Result::value)
+                      .toList();
 
 // ❌ WRONG: Manual loops
 List<ValidItem> validItems = new ArrayList<>();
@@ -896,19 +916,19 @@ When chaining `.map()/.flatMap()/.filter()` etc., verify:
 ```java
 // VIOLATION: Mixing Sequencer + Fork-Join
 return validate(request)
-    .flatMap(req -> Result.all(
-        checkInventory(req),
-        validatePayment(req)
-    ).map((inv, pay) -> proceed(req)));
+       .flatMap(req -> Result.all(
+           checkInventory(req),
+           validatePayment(req)
+       ).map((inv, pay) -> proceed(req)));
 
 // FIX: Extract Fork-Join
 return validate(request)
-    .flatMap(this::validateOrder)
-    .flatMap(this::processOrder);
+       .flatMap(this::validateOrder)
+       .flatMap(this::processOrder);
 
 private Result<ValidRequest> validateOrder(ValidRequest req) {
     return Result.all(checkInventory(req), validatePayment(req))
-        .map((inv, pay) -> req);
+                 .map((inv, pay) -> req);
 }
 ```
 
@@ -938,15 +958,15 @@ log.debug("Processed {} items", count);
 ```java
 // VIOLATION: Caller logs for callee
 cache.refresh()
-    .onSuccess(count -> log.debug("Refreshed {}", count))
-    .onFailure(cause -> log.error("Failed: {}", cause));
+     .onSuccess(count -> log.debug("Refreshed {}", count))
+     .onFailure(cause -> log.error("Failed: {}", cause));
 
 // FIX: Cache owns its logging
 // In GenerationCache:
 public Result<Integer> refresh() {
     return doRefresh()
-        .onSuccess(count -> log.debug("Refreshed {}", count))
-        .onFailure(cause -> log.error("Failed: {}", cause));
+           .onSuccess(count -> log.debug("Refreshed {}", count))
+           .onFailure(cause -> log.error("Failed: {}", cause));
 }
 
 // Caller just invokes:
@@ -1240,15 +1260,15 @@ class RegisterUserTest {
 
 ```java
 ValidRequest.validRequest(invalid)
-    .onSuccess(Assertions::fail);
+            .onSuccess(Assertions::fail);
 ```
 
 **Expected successes** - use `.onFailure(Assertions::fail).onSuccess(...)`:
 
 ```java
 ValidRequest.validRequest(valid)
-    .onFailure(Assertions::fail)
-    .onSuccess(req -> assertEquals("expected", req.email().value()));
+            .onFailure(Assertions::fail)
+            .onSuccess(req -> assertEquals("expected", req.email().value()));
 ```
 
 ## REVIEW METHODOLOGY
@@ -1327,8 +1347,8 @@ Before reviewing, enumerate ALL files to review:
 **Check dependency declaration** in `pom.xml` or `build.gradle`:
 - [ ] Correct groupId: `org.pragmatica-lite` (not `org.pragmatica`, `com.pragmatica-lite`)
 - [ ] Correct artifactId: `core` (not `pragmatica-core`, `pragmatica-lite`)
-- [ ] Correct version: `0.8.6` (not `0.7.x`, `0.8.0`, `0.8.1`, `0.8.2`, `0.8.3`)
-- [ ] Full coordinates: `org.pragmatica-lite:core:0.8.6`
+- [ ] Correct version: `0.9.0` (not `0.7.x`, `0.8.0`, `0.8.1`, `0.8.2`, `0.8.3`)
+- [ ] Full coordinates: `org.pragmatica-lite:core:0.9.0`
 
 **If build file not provided**, note this in review and recommend verification.
 
@@ -1464,14 +1484,14 @@ Structure your review as follows:
 **Example Issues**:
 - ❌ Wrong groupId: `org.pragmatica` → should be `org.pragmatica-lite`
 - ❌ Wrong artifactId: `pragmatica-core` → should be `core`
-- ❌ Outdated version: `0.8.3` → should be `0.8.6`
+- ❌ Outdated version: `0.8.3` → should be `0.9.0`
 
 **Correct Maven dependency**:
 ```xml
 <dependency>
    <groupId>org.pragmatica-lite</groupId>
    <artifactId>core</artifactId>
-   <version>0.8.6</version>
+   <version>0.9.0</version>
 </dependency>
 ```
 
@@ -1495,7 +1515,7 @@ void validRequest_fails_forInvalidEmail() {
     var request = new Request("invalid", "Valid1234");
 
     ValidRequest.validRequest(request)
-        .onSuccess(Assertions::fail);
+                .onSuccess(Assertions::fail);
 }
 ```
 

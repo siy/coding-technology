@@ -1,6 +1,6 @@
 # Part 3: Parse, Don't Validate
 
-**Series:** [Java Backend Coding Technology](INDEX.md) | **Part:** 3 of 9
+**Series:** [Java Backend Coding Technology](INDEX.md) | **Part:** 3 of 10
 
 **Previous:** [Part 2: The Four Return Types](part-02-four-return-types.md) | **Next:** [Part 4: Error Handling & Composition](part-04-error-handling.md)
 
@@ -129,27 +129,23 @@ Use `Result<Option<T>>` - validation can fail (Result), and if it succeeds, the 
 public record ReferralCode(String value) {
     // private ReferralCode {}  // Not yet supported in Java
 
-    private static final String PATTERN = "^[A-Z0-9]{6}$";
+    private static final Pattern PATTERN = Pattern.compile("^[A-Z0-9]{6}$");
+    private static final Cause INVALID_FORMAT = Causes.cause("Invalid referral code format");
 
     public static Result<Option<ReferralCode>> referralCode(String raw) {
-        return isAbsent(raw)
-            ? Result.success(Option.none())
-            : validatePresent(raw);
-    }
-
-    private static boolean isAbsent(String raw) {
-        return raw == null || raw.isEmpty();
-    }
-
-    private static Result<Option<ReferralCode>> validatePresent(String raw) {
-        return Verify.ensure(raw.trim(), Verify.Is::matches, PATTERN)
-                     .map(ReferralCode::new)
-                     .map(Option::some);
+        return Verify.ensureOption(
+            Option.option(raw).map(String::trim).filter(s -> !s.isEmpty()),
+            PATTERN.asMatchPredicate(),
+            INVALID_FORMAT
+        ).map(opt -> opt.map(ReferralCode::new));
     }
 }
 ```
 
-If `raw` is null or empty, we succeed with `Option.none()`. If it's present, we validate and wrap in `Option.some()`. If validation fails, the `Result` itself is a failure.
+The `Verify.ensureOption()` method (Pragmatica Lite 0.9.0+) handles the `Result<Option<T>>` pattern elegantly:
+- If the `Option` is empty, succeeds with `Option.none()` - no validation needed
+- If present and valid, succeeds with `Option.some(value)`
+- If present and invalid, fails with the provided cause
 
 **Caller semantics are crystal clear:**
 - `Failure(cause)`: Invalid input (provided but doesn't match pattern)

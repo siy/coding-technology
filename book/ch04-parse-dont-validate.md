@@ -113,29 +113,27 @@ record ValidatedRequest(...)
 
 ## Optional Fields with Validation
 
-What if a field is optional but must be valid when present? Use `Result<Option<T>>`:
+What if a field is optional but must be valid when present? Use `Result<Option<T>>` with `Verify.ensureOption()`:
 
 ```java
 public record ReferralCode(String value) {
-    private static final String PATTERN = "^[A-Z0-9]{6}$";
+    private static final Pattern PATTERN = Pattern.compile("^[A-Z0-9]{6}$");
+    private static final Cause INVALID_FORMAT = Causes.cause("Invalid referral code format");
 
     public static Result<Option<ReferralCode>> referralCode(String raw) {
-        return isAbsent(raw)
-            ? Result.success(Option.none())
-            : validatePresent(raw);
-    }
-
-    private static boolean isAbsent(String raw) {
-        return raw == null || raw.isEmpty();
-    }
-
-    private static Result<Option<ReferralCode>> validatePresent(String raw) {
-        return Verify.ensure(raw.trim(), Verify.Is::matches, PATTERN)
-                     .map(ReferralCode::new)
-                     .map(Option::some);
+        return Verify.ensureOption(
+            Option.option(raw).map(String::trim).filter(s -> !s.isEmpty()),
+            PATTERN.asMatchPredicate(),
+            INVALID_FORMAT
+        ).map(opt -> opt.map(ReferralCode::new));
     }
 }
 ```
+
+The `Verify.ensureOption()` method (Pragmatica Lite 0.9.0+) handles this pattern elegantly:
+- If the `Option` is empty, succeeds with `Option.none()` - no validation needed
+- If present and valid, succeeds with `Option.some(value)`
+- If present and invalid, fails with the provided cause
 
 **Caller semantics:**
 - `Failure(cause)`: Invalid input (provided but doesn't match pattern)

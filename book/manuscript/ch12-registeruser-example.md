@@ -166,17 +166,15 @@ public record Password(String value) {
 **ReferralCode (optional-with-validation):**
 ```java
 public record ReferralCode(String value) {
-    private static final String REFERRAL_PATTERN = "^[A-Z0-9]{6}$";
+    private static final Pattern PATTERN = Pattern.compile("^[A-Z0-9]{6}$");
+    private static final Cause INVALID_FORMAT = Causes.cause("Invalid referral code format");
 
     public static Result<Option<ReferralCode>> referralCode(String raw) {
-        return switch (raw) {
-            case null, "" -> Result.success(Option.none());
-            default -> Verify.ensure(raw.trim(),
-                                     Verify.Is::matches,
-                                     REFERRAL_PATTERN)
-                             .map(ReferralCode::new)
-                             .map(Option::some);
-        };
+        return Verify.ensureOption(
+            Option.option(raw).map(String::trim).filter(s -> !s.isEmpty()),
+            PATTERN.asMatchPredicate(),
+            INVALID_FORMAT
+        ).map(opt -> opt.map(ReferralCode::new));
     }
 
     public boolean isPremium() {
@@ -185,7 +183,7 @@ public record ReferralCode(String value) {
 }
 ```
 
-Returns `Result<Option<ReferralCode>>`: validation can fail (Result), and if successful, value may be absent (Option).
+The `Verify.ensureOption()` method (Pragmatica Lite 0.9.0+) handles `Result<Option<ReferralCode>>` elegantly: if the `Option` is empty, succeeds with `Option.none()`; if present and valid, succeeds with `Option.some(value)`; if present and invalid, fails.
 
 ---
 

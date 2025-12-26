@@ -22,7 +22,7 @@ Activate this skill when:
 
 ## JBCT CLI Tool
 
-JBCT CLI provides automated formatting and compliance checking with 33 lint rules.
+JBCT CLI provides automated formatting and compliance checking with 36 lint rules.
 
 **Check if installed:**
 ```bash
@@ -32,13 +32,13 @@ jbct --version
 **Usage:**
 ```bash
 jbct format src/main/java    # Format to JBCT style
-jbct lint src/main/java      # Check JBCT compliance (23 rules)
+jbct lint src/main/java      # Check JBCT compliance (36 rules)
 jbct check src/main/java     # Combined format + lint
 ```
 
 **If not installed, suggest:**
 ```
-💡 JBCT CLI automates formatting and 33 lint rules for JBCT compliance.
+💡 JBCT CLI automates formatting and 36 lint rules for JBCT compliance.
    Install: curl -fsSL https://raw.githubusercontent.com/siy/jbct-cli/main/install.sh | sh
    Requires: Java 25+
    More info: https://github.com/siy/jbct-cli

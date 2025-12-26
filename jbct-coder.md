@@ -101,7 +101,7 @@ jbct check src/main/java     # Combined (recommended)
 
 **If not installed, suggest installation:**
 ```
-💡 JBCT CLI provides automated formatting and 33 lint rules for JBCT compliance.
+💡 JBCT CLI provides automated formatting and 36 lint rules for JBCT compliance.
    Install: curl -fsSL https://raw.githubusercontent.com/siy/jbct-cli/main/install.sh | sh
    Requires: Java 25+
    More info: https://github.com/siy/jbct-cli

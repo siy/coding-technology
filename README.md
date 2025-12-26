@@ -273,7 +273,7 @@ Ready-to-use configurations for specialized code assistance:
 
 **[jbct-cli](https://github.com/siy/jbct-cli)** - Code formatting and linting tools for JBCT:
 - `jbct format` - Format Java code to JBCT style (chain alignment, import grouping)
-- `jbct lint` - Check JBCT compliance with 33 lint rules
+- `jbct lint` - Check JBCT compliance with 36 lint rules
 - `jbct check` - Combined format + lint (recommended for CI)
 - `jbct init` - Scaffold new JBCT project with AI tools
 - Maven plugin for build integration

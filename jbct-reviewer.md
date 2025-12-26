@@ -59,7 +59,7 @@ This catches many violations automatically, allowing manual review to focus on:
 
 **If not installed, suggest installation:**
 ```
-💡 JBCT CLI automates 33 lint rules and formatting checks.
+💡 JBCT CLI automates 36 lint rules and formatting checks.
    Install: curl -fsSL https://raw.githubusercontent.com/siy/jbct-cli/main/install.sh | sh
    Requires: Java 25+
    More info: https://github.com/siy/jbct-cli

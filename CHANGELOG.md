@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.9] - 2025-12-27
+
+### Changed
+- JBCT CLI lint rules count updated from 33 to 36
+
 ## [2.0.8] - 2025-12-26
 
 ### Changed

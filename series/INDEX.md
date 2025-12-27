@@ -223,15 +223,10 @@ Looking for specific patterns? Jump directly to the relevant part using the topi
 
 ## Series Version
 
-**Version 2.0.7** (2025-12-24)
-- **Book feedback fixes** - Improvements based on reviewer feedback
-  - Prerequisites clarified (Java 21+, mid/senior developers)
-  - Return Type Matrix with allowed/discouraged/forbidden rules
-  - Validation placement guidelines
-  - Fork-Join infrastructure warnings
-  - Aspects operational semantics
-  - Testing speed classification
-  - Interoperability section (Optional, CompletableFuture, exceptions)
+**Version 2.0.9** (2025-12-27)
+- **Pragmatica Lite 0.9.0** with `Verify.ensureOption()` pattern
+- **Golden formatting patterns** applied to all code examples
+- **JBCT CLI** lint rules count: 36
 
 **Version 2.0.2** (2025-12-06)
 - **Added Part 10: Systematic Application Guide**

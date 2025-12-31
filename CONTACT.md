@@ -1,6 +1,10 @@
 # Work With Us
 
-Transform how your team writes Java. Get expert guidance from the creator of JBCT - 40 years of software engineering experience, from firmware to distributed systems.
+**AI generates code. JBCT catches the mistakes.**
+
+Most developers use AI coding tools. Few trust the output. JBCT is methodology + tooling that makes AI-generated code predictable and consistent.
+
+Get expert guidance from the creator of JBCT — 40 years of software engineering experience, from firmware to distributed systems. Now helping teams master AI-assisted development.
 
 ---
 
@@ -10,37 +14,37 @@ Transform how your team writes Java. Get expert guidance from the creator of JBC
 
 **What:** Deep analysis of your codebase against JBCT principles. Identify exception sprawl, null proliferation, inconsistent patterns, and AI-unfriendly code.
 
-**Deliverable:** Written report with prioritized recommendations and migration path.
+**Deliverable:** Written report with prioritized recommendations, migration path, and CLI/Maven plugin configuration.
 
-**Investment:** Starting at €800 | 4-5 hours
+**Investment:** Starting at €800 | 2-3 hours
 
 **Best for:** Teams evaluating JBCT adoption, or wanting an objective code quality audit.
 
 ---
 
-### Team Workshop
+### Small Team Training
 
-**What:** Hands-on training customized to your codebase. Cover Four Return Kinds, Parse-Don't-Validate, structural patterns, and AI integration.
+**What:** Hands-on training customized to your codebase. Cover Four Return Kinds, Parse-Don't-Validate, structural patterns, and AI integration strategies.
 
-**Deliverable:** Your team writes JBCT-compliant code by end of session. Includes exercises using your actual code.
+**Deliverable:** Your team writes JBCT-compliant code. CLI + Maven plugin configured on your codebase.
 
-**Investment:** Starting at €2,000 | 1-2 days
+**Investment:** €2,000 flat | Up to 5 developers | 4 sessions × 2hr
 
-**Best for:** Teams ready to adopt JBCT, or struggling with Result/Option patterns.
+**Best for:** Small teams ready to adopt JBCT, or struggling with Result/Option patterns.
 
 ---
 
 ### Cohort Training (Group)
 
-**What:** 4-week structured program with 10-20 developers across companies. Weekly live sessions + exercises + async Q&A.
+**What:** 4 sessions × 2hr with 10-20 developers. Flexible scheduling — daily (intensive) to weekly (alongside project work). Live sessions + exercises + async Q&A.
 
-**Deliverable:** Comprehensive JBCT proficiency. Certificate of completion.
+**Deliverable:** Comprehensive JBCT proficiency. CLI + Maven plugin configured. AI prompting strategies that produce JBCT-compliant code.
 
 **Investment:** €400 per developer
 
-**Best for:** Individual developers, or teams wanting structured learning with peer interaction.
+**Best for:** Teams wanting structured learning, or multiple teams training together.
 
-*Next cohort: Q1 2025 - [Express interest below](#inquiry)*
+*[Express interest below](#inquiry)*
 
 ---
 
@@ -75,7 +79,7 @@ Transform how your team writes Java. Get expert guidance from the creator of JBC
 | **Trading / FIX Protocol** | Production systems, low-latency, compliance |
 | **Fintech** | Payment processing, risk systems |
 | **Distributed Systems** | Consensus algorithms, fault tolerance |
-| **AI Integration** | Claude Code, Copilot, AI-assisted development |
+| **AI Integration** | Claude Code, Copilot, prompting strategies for consistent output |
 
 *Trading and fintech engagements command premium rates due to specialized domain knowledge.*
 
@@ -131,7 +135,7 @@ Tell us about your situation. Free 30-minute discovery call for qualified inquir
             style="width: 100%; padding: 0.75rem; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 1rem;">
       <option value="">Select...</option>
       <option value="assessment">JBCT Assessment</option>
-      <option value="workshop">Team Workshop</option>
+      <option value="small-team">Small Team Training</option>
       <option value="cohort">Cohort Training</option>
       <option value="architecture">Architecture Review</option>
       <option value="sprint">Adoption Sprint</option>

@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.10] - 2026-01-01
+
+### Changed
+- **Pragmatica Lite Core** updated from 0.9.0 to 0.9.3
+  - 0.9.1: Dependency updates, deprecation warning fixes
+  - 0.9.2: KSUID (replaces ULID), JOOQ integration module
+  - 0.9.3: Consensus module (CFT protocol)
+  - Core API unchanged - version bump only
+- **Fixed deprecated `Verify.ensure()` syntax** across documentation
+  - Old: `Verify.ensure(CAUSE, value, predicate)` (deprecated, forRemoval)
+  - New: `Verify.ensure(value, predicate, CAUSE)` (cause-at-end)
+  - Updated: articles/value-objects-cookbook.md, articles/parse-dont-validate.md, CODING_GUIDE.md, README.md
+- **jbct-cli 0.4.3 improvements** (parser and formatter fixes)
+  - Farthest failure tracking for better error positions
+  - Multiple formatter alignment fixes
+  - JBCT-SEAL-01 and JBCT-PAT-02 false positive fixes
+
 ## [2.0.9] - 2025-12-27
 
 ### Changed

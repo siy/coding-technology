@@ -582,13 +582,13 @@ public class UserController {
 > <dependency>
 >    <groupId>org.pragmatica-lite</groupId>
 >    <artifactId>core</artifactId>
->    <version>0.9.0</version>
+>    <version>0.9.3</version>
 > </dependency>
 > ```
 >
 > **Gradle:**
 > ```gradle
-> implementation 'org.pragmatica-lite:core:0.9.0'
+> implementation 'org.pragmatica-lite:core:0.9.3'
 > ```
 
 ### The Four Return Kinds
@@ -939,9 +939,9 @@ public record DateRange(LocalDate start, LocalDate end) {
     private static final Fn1<Cause, LocalDate> END_BEFORE_START = Causes.forOneValue("End date must be after start date: %s");
 
     public static Result<DateRange> dateRange(LocalDate start, LocalDate end) {
-        return Verify.ensure(START_REQUIRED, start, Verify.Is::notNull)
-                     .flatMap(_ -> Verify.ensure(END_REQUIRED, end, Verify.Is::notNull))
-                     .flatMap(_ -> Verify.ensure(END_BEFORE_START, end, isAfter(start)))
+        return Verify.ensure(start, Verify.Is::notNull, START_REQUIRED)
+                     .flatMap(_ -> Verify.ensure(end, Verify.Is::notNull, END_REQUIRED))
+                     .flatMap(_ -> Verify.ensure(end, isAfter(start), END_BEFORE_START))
                      .map(_ -> new DateRange(start, end));
     }
 

@@ -87,7 +87,7 @@ public record Email(String value) {
 
     // Factory method: the ONLY way to create an Email
     public static Result<Email> email(String raw) {
-        return Verify.ensure(EMAIL_REQUIRED, raw, Verify.Is::notNull)
+        return Verify.ensure(raw, Verify.Is::notNull, EMAIL_REQUIRED)
             .map(String::trim)
             .map(String::toLowerCase)
             .filter(INVALID_FORMAT, PATTERN.asMatchPredicate())
@@ -173,7 +173,7 @@ public record DateRange(LocalDate start, LocalDate end) {
         Causes.cause("End date must be after start date");
 
     public static Result<DateRange> dateRange(LocalDate start, LocalDate end) {
-        return Verify.ensure(END_BEFORE_START, end, e -> !e.isBefore(start))
+        return Verify.ensure(end, e -> !e.isBefore(start), END_BEFORE_START)
             .map(_ -> new DateRange(start, end));
     }
 }
@@ -216,7 +216,7 @@ Factories can also normalize data:
 
 ```java
 public static Result<Email> email(String raw) {
-    return Verify.ensure(EMAIL_REQUIRED, raw, Verify.Is::notNull)
+    return Verify.ensure(raw, Verify.Is::notNull, EMAIL_REQUIRED)
         .map(String::trim)           // Remove whitespace
         .map(String::toLowerCase)    // Normalize case
         .filter(INVALID_FORMAT, PATTERN.asMatchPredicate())

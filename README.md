@@ -124,7 +124,7 @@ public record Email(String value) {
     private static final Fn1<Cause, String> INVALID_FORMAT = Causes.forOneValue("Invalid email format: %s");
 
     public static Result<Email> email(String raw) {
-        return Verify.ensure(EMAIL_REQUIRED, raw, Verify.Is::notNull)
+        return Verify.ensure(raw, Verify.Is::notNull, EMAIL_REQUIRED)
             .filter(EMAIL_BLANK, Verify.Is::notBlank)
             .filter(INVALID_FORMAT, PATTERN.asMatchPredicate())
             .map(Email::new);
@@ -231,8 +231,8 @@ void email_acceptsValidFormat() {
 ### Changelog & Versioning
 
 - **[CHANGELOG.md](CHANGELOG.md)** - Version history following [Keep a Changelog](https://keepachangelog.com/)
-  - Current version: 2.0.9 (2025-12-27)
-  - Golden formatting patterns, Pragmatica Lite 0.9.0, 36 lint rules
+  - Current version: 2.0.10 (2026-01-01)
+  - Golden formatting patterns, Pragmatica Lite 0.9.3, 36 lint rules
   - Semantic versioning for documentation releases
 
 ## 🔧 Tools
@@ -359,13 +359,13 @@ This repository documents a methodology, not a software project. Contributions w
 <dependency>
    <groupId>org.pragmatica-lite</groupId>
    <artifactId>core</artifactId>
-   <version>0.9.0</version>
+   <version>0.9.3</version>
 </dependency>
 ```
 
 **Gradle:**
 ```gradle
-implementation 'org.pragmatica-lite:core:0.9.0'
+implementation 'org.pragmatica-lite:core:0.9.3'
 ```
 
 ## 📄 License

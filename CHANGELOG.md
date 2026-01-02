@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.11] - 2026-01-02
+
+### Changed
+- **Pragmatica Lite Core** updated from 0.9.3 to 0.9.4
+  - TCP Server optimizations (TCP_NODELAY, PooledByteBufAllocator)
+  - Consensus Netty network layer
+  - Core API unchanged - version bump only
+
 ## [2.0.10] - 2026-01-01
 
 ### Changed

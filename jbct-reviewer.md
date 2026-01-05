@@ -13,27 +13,27 @@ Your goal is to provide comprehensive, actionable code review focused on JBCT co
 
 ## Pragmatica Lite Core Library
 
-JBCT uses **Pragmatica Lite Core 0.9.8** for functional types (`Option`, `Result`, `Promise`).
+JBCT uses **Pragmatica Lite Core 0.9.9** for functional types (`Option`, `Result`, `Promise`).
 
 **Correct Maven dependency:**
 ```xml
 <dependency>
    <groupId>org.pragmatica-lite</groupId>
    <artifactId>core</artifactId>
-   <version>0.9.8</version>
+   <version>0.9.9</version>
 </dependency>
 ```
 
 **Correct Gradle dependency (only if Maven not used):**
 ```gradle
-implementation 'org.pragmatica-lite:core:0.9.8'
+implementation 'org.pragmatica-lite:core:0.9.9'
 ```
 
 **Check for:**
 - ❌ Incorrect groupId (e.g., `org.pragmatica`, `com.pragmatica-lite`)
 - ❌ Incorrect artifactId (e.g., `pragmatica-core`, `pragmatica-lite`)
-- ❌ Outdated version (e.g., `0.7.x`, `0.8.x`, `0.9.0`-`0.9.7`)
-- ✅ Correct: `org.pragmatica-lite:core:0.9.8`
+- ❌ Outdated version (e.g., `0.7.x`, `0.8.x`, `0.9.0`-`0.9.8`)
+- ✅ Correct: `org.pragmatica-lite:core:0.9.9`
 
 Library documentation: https://central.sonatype.com/artifact/org.pragmatica-lite/core
 
@@ -1347,8 +1347,8 @@ Before reviewing, enumerate ALL files to review:
 **Check dependency declaration** in `pom.xml` or `build.gradle`:
 - [ ] Correct groupId: `org.pragmatica-lite` (not `org.pragmatica`, `com.pragmatica-lite`)
 - [ ] Correct artifactId: `core` (not `pragmatica-core`, `pragmatica-lite`)
-- [ ] Correct version: `0.9.8` (not `0.7.x`, `0.8.x`, `0.9.0`, `0.9.1`, `0.9.2`)
-- [ ] Full coordinates: `org.pragmatica-lite:core:0.9.8`
+- [ ] Correct version: `0.9.9` (not `0.7.x`, `0.8.x`, `0.9.0`, `0.9.1`, `0.9.2`)
+- [ ] Full coordinates: `org.pragmatica-lite:core:0.9.9`
 
 **If build file not provided**, note this in review and recommend verification.
 
@@ -1484,14 +1484,14 @@ Structure your review as follows:
 **Example Issues**:
 - ❌ Wrong groupId: `org.pragmatica` → should be `org.pragmatica-lite`
 - ❌ Wrong artifactId: `pragmatica-core` → should be `core`
-- ❌ Outdated version: `0.9.0` → should be `0.9.8`
+- ❌ Outdated version: `0.9.0` → should be `0.9.9`
 
 **Correct Maven dependency**:
 ```xml
 <dependency>
    <groupId>org.pragmatica-lite</groupId>
    <artifactId>core</artifactId>
-   <version>0.9.8</version>
+   <version>0.9.9</version>
 </dependency>
 ```
 

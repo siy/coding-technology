@@ -232,7 +232,7 @@ void email_acceptsValidFormat() {
 
 - **[CHANGELOG.md](CHANGELOG.md)** - Version history following [Keep a Changelog](https://keepachangelog.com/)
   - Current version: 2.0.10 (2026-01-01)
-  - Golden formatting patterns, Pragmatica Lite 0.9.8, 36 lint rules
+  - Golden formatting patterns, Pragmatica Lite 0.9.9, 36 lint rules
   - Semantic versioning for documentation releases
 
 ## 🔧 Tools
@@ -359,13 +359,13 @@ This repository documents a methodology, not a software project. Contributions w
 <dependency>
    <groupId>org.pragmatica-lite</groupId>
    <artifactId>core</artifactId>
-   <version>0.9.8</version>
+   <version>0.9.9</version>
 </dependency>
 ```
 
 **Gradle:**
 ```gradle
-implementation 'org.pragmatica-lite:core:0.9.8'
+implementation 'org.pragmatica-lite:core:0.9.9'
 ```
 
 ## 📄 License

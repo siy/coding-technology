@@ -6,7 +6,7 @@ description: "Revolutionary technology for writing deterministic, AI-friendly, h
 
 # Java Backend Coding Technology: Writing Code in the Era of AI
 
-**Version:** 2.0.11 | **Repository:** [github.com/siy/coding-technology](https://github.com/siy/coding-technology) | **Changelog:** [CHANGELOG.md](https://github.com/siy/coding-technology/blob/main/CHANGELOG.md)
+**Version:** 2.1.0 | **Repository:** [github.com/siy/coding-technology](https://github.com/siy/coding-technology) | **Changelog:** [CHANGELOG.md](https://github.com/siy/coding-technology/blob/main/CHANGELOG.md)
 
 ## Introduction: Code in a New Era
 
@@ -3263,6 +3263,152 @@ static <I, O> Fn1<I, Promise<O>> withRetry(RetryPolicy policy, Fn1<I, Promise<O>
 // Compose by wrapping:
 var decorated = withTimeout(timeSpan(5).seconds(),
                             withRetry(retryPolicy, rawStep));
+```
+
+### Logging Philosophy
+
+**Principle:** Logging belongs only at **leaves** and **external boundaries**. Composition code has zero logging.
+
+**Rationale:**
+- Leaves perform real work - they're the only places where operations can fail or produce observable effects
+- Boundaries are where we interact with external systems - the points of uncertainty
+- Everything else is composition - deterministic routing of values through the system
+
+**Rationale (by criteria):**
+- **Mental Overhead**: No scattered logging decisions - architectural, not ad-hoc (+2).
+- **Business/Technical Ratio**: Business logic stays pure; logging isolated in aspects (+2).
+- **Complexity**: Precisely defined logging points - easy to audit and configure (+2).
+- **Design Impact**: Composition code remains transparent - pure value routing (+2).
+
+**Implementation via Aspects:**
+
+Wrap leaf implementations in a logging aspect that logs input and outcome:
+
+```java
+public interface UserRepository {
+    Promise<User> findById(UserId id);
+
+    static UserRepository create(DataSource ds, Logger log) {
+        var impl = new UserRepositoryImpl(ds);
+        return withLogging(log, "UserRepository", impl);
+    }
+}
+
+// The aspect logs every operation transparently
+public static UserRepository withLogging(Logger log, String name, UserRepository impl) {
+    return id -> {
+        var correlationId = CorrelationContext.current();
+        log.debug("[{}] {}.findById input: {}", correlationId, name, id);
+
+        return impl.findById(id)
+                   .onSuccess(user -> log.debug("[{}] {}.findById success: {}", correlationId, name, user.id()))
+                   .onFailure(cause -> log.warn("[{}] {}.findById failure: {}", correlationId, name, cause.message()));
+    };
+}
+```
+
+**What gets logged:**
+- Input parameters (sanitized)
+- Outcome (success value or failure cause)
+- Correlation ID for request tracing
+- Timing (optional, can combine with metrics aspect)
+
+**Log levels are implementation decisions:**
+- DEBUG for routine operations
+- INFO for significant business events
+- WARN for failures
+- ERROR for system-level issues
+
+**Practical Considerations:**
+
+**Sensitive Data:**
+Aspects must sanitize inputs. Options:
+- Marker annotations (`@Sensitive` on fields)
+- Explicit redaction in aspect
+- Domain-aware sanitizers (e.g., mask email: `j***@example.com`)
+
+```java
+// Sanitization in aspect
+log.debug("Input: {}", sanitize(input));
+
+private String sanitize(Object input) {
+    return switch (input) {
+        case Password ignored -> "[REDACTED]";
+        case Email email -> maskEmail(email);
+        default -> String.valueOf(input);
+    };
+}
+```
+
+**Correlation Propagation:**
+Request ID must flow through async boundaries. Options:
+- MDC (works for sync, breaks on async)
+- Explicit context parameter (pollutes signatures)
+- Context propagation libraries (Reactor Context, OpenTelemetry)
+- Framework-specific solutions
+
+**High-Volume Operations:**
+For performance-sensitive paths:
+- Async logging (write to buffer, flush separately)
+- Sampling (log 1% of requests)
+- Conditional logging (only on failure)
+- Skip logging entirely (metrics may suffice)
+
+**Testing Composition Logic:**
+
+Since composition has no logging, test it via "value highway" verification:
+- Invoke with predefined inputs
+- Mock leaves with known responses
+- Verify correct routing through the system
+
+```java
+@Test
+void composition_routesValuesToCorrectLeaves() {
+    var userRepo = mockReturning(testUser);
+    var orderRepo = mockReturning(testOrder);
+    var useCase = CreateOrder.createOrder(userRepo, orderRepo);
+
+    useCase.execute(request).await()
+           .onFailure(Assertions::fail)
+           .onSuccess(response -> {
+               assertEquals(testUser.id(), response.userId());
+               assertEquals(testOrder.id(), response.orderId());
+           });
+}
+```
+
+This tests that composition correctly threads values through leaves without needing logging in the composition itself.
+
+**Anti-patterns:**
+
+DON'T scatter logging throughout composition:
+```java
+// DON'T: Logging in composition code
+return validateInput(request)
+    .onSuccess(v -> log.info("Validated"))  // Noise
+    .flatMap(this::fetchUser)
+    .onSuccess(u -> log.info("Fetched user"))  // Noise
+    .flatMap(this::processOrder);
+```
+
+DON'T log the same event at multiple levels:
+```java
+// DON'T: Redundant logging
+// In leaf:
+log.info("Saving user");
+// In caller:
+log.info("About to save user");  // Redundant
+```
+
+DO wrap leaves in logging aspects at construction:
+```java
+// DO: Single point of logging configuration
+static ProcessOrder processOrder(UserRepository users, OrderRepository orders, Logger log) {
+    return new ProcessOrderImpl(
+        withLogging(log, "users", users),
+        withLogging(log, "orders", orders)
+    );
+}
 ```
 
 ---

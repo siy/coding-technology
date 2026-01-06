@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.1.0] - 2026-01-06
+
+### Added
+- **Logging Philosophy** section across documentation
+  - CODING_GUIDE.md: Full section in Patterns Reference (Aspects)
+  - book/ch08-advanced-patterns.md: Subsection with rationale and examples
+  - skills/jbct/patterns/aspects.md: Condensed reference with anti-patterns
+  - Principle: logging only at leaves and external boundaries
+  - Implementation via aspects wrapping leaf implementations
+  - Practical considerations: sensitive data sanitization, correlation propagation, high-volume operations
+  - "Value highway" testing approach for composition verification
+
 ## [2.0.11] - 2026-01-02
 
 ### Changed

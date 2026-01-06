@@ -508,6 +508,59 @@ static <I, O> Fn1<I, Promise<O>> withRetry(RetryPolicy policy, Fn1<I, Promise<O>
 }
 ```
 
+### Logging Philosophy
+
+**Principle:** Logging belongs only at **leaves** and **external boundaries**. Composition code has zero logging.
+
+**Rationale:**
+- Leaves perform real work - they're the only places where operations can fail or produce observable effects
+- Boundaries are where we interact with external systems - the points of uncertainty
+- Everything else is composition - deterministic routing of values through the system
+
+**Implementation:** Wrap leaf implementations in a logging aspect at construction:
+
+```java
+public interface UserRepository {
+    Promise<User> findById(UserId id);
+
+    static UserRepository create(DataSource ds, Logger log) {
+        var impl = new UserRepositoryImpl(ds);
+        return withLogging(log, "UserRepository", impl);
+    }
+}
+
+public static UserRepository withLogging(Logger log, String name, UserRepository impl) {
+    return id -> {
+        var correlationId = CorrelationContext.current();
+        log.debug("[{}] {}.findById input: {}", correlationId, name, id);
+
+        return impl.findById(id)
+                   .onSuccess(user -> log.debug("[{}] {}.findById success", correlationId, name))
+                   .onFailure(cause -> log.warn("[{}] {}.findById failure: {}", correlationId, name, cause.message()));
+    };
+}
+```
+
+**What gets logged:**
+- Input parameters (sanitized for sensitive data)
+- Outcome (success or failure cause)
+- Correlation ID for request tracing
+
+**Anti-pattern - scattered logging in composition:**
+```java
+// DON'T: Logging in composition code
+return validateInput(request)
+    .onSuccess(v -> log.info("Validated"))  // Noise
+    .flatMap(this::fetchUser)
+    .onSuccess(u -> log.info("Fetched user"))  // Noise
+    .flatMap(this::processOrder);
+
+// DO: Wrap leaves at construction
+static ProcessOrder processOrder(UserRepository users, Logger log) {
+    return new ProcessOrderImpl(withLogging(log, "users", users));
+}
+```
+
 ---
 
 ## Key Takeaways
@@ -515,8 +568,9 @@ static <I, O> Fn1<I, Promise<O>> withRetry(RetryPolicy policy, Fn1<I, Promise<O>
 1. **Sequencer** - Chain dependent steps (2-5 rule), fail-fast semantics
 2. **Fork-Join** - Parallel independent operations, strict immutability requirement
 3. **Aspects** - Cross-cutting concerns as decorators, tested separately
-4. **Independence validation** - Prevents Fork-Join mistakes; use Sequencer if unsure
-5. **Pattern composition** - Sequencers call Fork-Joins, Aspects wrap both
+4. **Logging Philosophy** - Logging only at leaves and boundaries, composition is transparent
+5. **Independence validation** - Prevents Fork-Join mistakes; use Sequencer if unsure
+6. **Pattern composition** - Sequencers call Fork-Joins, Aspects wrap both
 
 ---
 

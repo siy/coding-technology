@@ -1,48 +1,40 @@
 ---
 name: jbct-review
-description: Thorough parallel JBCT code review. Launches multiple focused reviewers to check all 18 JBCT compliance areas simultaneously.
+description: Thorough parallel JBCT code review. Launches 10 focused reviewers plus aggregator for comprehensive compliance checking.
 ---
 
 # JBCT Parallel Code Review
 
-Comprehensive JBCT compliance review using parallel focused workers.
+Comprehensive JBCT compliance review using parallel focused workers with aggregation.
 
 ## Usage
 
 ```
 /jbct-review                           # Full codebase, all focus areas
 /jbct-review src/main/java             # Specific path, all focus areas
-/jbct-review --focus="fold(),Lambdas"  # Specific focus areas only
-/jbct-review src --focus="Void,Null"   # Combined path and focus
+/jbct-review --focus="Composition,Null"  # Specific focus areas only
+/jbct-review src --focus="ValueObjects,UseCases"   # Combined path and focus
 ```
 
 ## Arguments
 
 - `path` (optional): Directory or file to review. Default: entire codebase
-- `--focus` (optional): Comma-separated list of focus areas. Default: all 18 areas
+- `--focus` (optional): Comma-separated list of focus areas. Default: all 10 areas
 
 ## Focus Areas
 
 | Short Name | Full Focus Area |
 |------------|-----------------|
-| `VOFactories` | Value Object Factories |
-| `VOImmutability` | Value Object Immutability |
-| `UCStructure` | Use Case Structure |
-| `UCComposition` | Use Case Composition |
-| `Result/Promise` | Return Types - Result/Promise |
-| `Void` | Return Types - Void → Unit |
-| `Exceptions` | Return Types - Exceptions |
-| `Leaf` | Structural: Leaf |
-| `Sequencer` | Structural: Sequencer |
-| `Fork-Join` | Structural: Fork-Join |
-| `fold()` | Composition: fold() Abuse |
-| `Lambdas` | Composition: Lambda Complexity |
-| `Null` | Null Policy |
-| `Logging` | Logging Patterns |
-| `ThreadSafety` | Thread Safety |
-| `Naming` | Naming Conventions |
-| `Testing` | Testing Patterns |
-| `Security` | Security + Performance |
+| `ValueObjects` | Value Objects (factories + immutability) |
+| `UseCases` | Use Cases (structure + composition) |
+| `ReturnTypes` | Return Types (Result/Promise, Void→Unit, no exceptions) |
+| `Structural` | Structural Patterns (Leaf, Sequencer, Fork-Join) |
+| `Composition` | Composition Rules (fold() abuse, lambda complexity) |
+| `Null` | Null Policy (Option usage) |
+| `ThreadSafety` | Thread Safety (immutability, shared state) |
+| `Naming` | Naming Conventions (factories, zones, acronyms) |
+| `Testing` | Testing Patterns (assertions, organization) |
+| `CrossCutting` | Cross-Cutting Concerns (security, performance, logging) |
 
 ## Execution Steps
 
@@ -50,7 +42,7 @@ Comprehensive JBCT compliance review using parallel focused workers.
 
 ```
 1. Extract path argument (if provided, default to current directory)
-2. Extract --focus argument (if provided, default to all 18 areas)
+2. Extract --focus argument (if provided, default to all 10 areas)
 3. Parse focus areas into list
 ```
 
@@ -88,9 +80,38 @@ Task tool call:
 
 Wait for all workers to complete. Each returns structured findings.
 
-### Step 5: Consolidate Report
+### Step 5: Aggregate Results
 
-Merge all findings into a unified report, organized by severity:
+Launch a jbct-reviewer agent with `focus: Aggregate` to consolidate all reports:
+
+```
+Task tool call:
+  subagent_type: "jbct-reviewer"
+  prompt: |
+    Aggregate the following JBCT review reports into a unified assessment.
+
+    **Focus:** Aggregate
+
+    **Individual Reports:**
+
+    --- ValueObjects Report ---
+    [REPORT_1]
+
+    --- UseCases Report ---
+    [REPORT_2]
+
+    ... (all 10 reports)
+
+    Tasks:
+    1. Deduplicate findings (same file:line)
+    2. Count issues by severity
+    3. Determine overall compliance and recommendation
+    4. Generate unified report
+```
+
+### Step 6: Output Final Report
+
+Present the aggregated report to the user:
 
 ```markdown
 # JBCT Parallel Review Report
@@ -153,21 +174,27 @@ Merge all findings into a unified report, organized by severity:
 ```
 User: /jbct-review src/main/java
 
-1. Parse: path = "src/main/java", focus = all 18 areas
+1. Parse: path = "src/main/java", focus = all 10 areas
 2. Discover: 47 Java files found
-3. Launch 18 parallel workers:
-   - Worker 1: focus="Value Object Factories"
-   - Worker 2: focus="Value Object Immutability"
-   - ...
-   - Worker 18: focus="Security + Performance"
-4. Wait for all to complete
-5. Consolidate: 3 Critical, 12 Warning, 8 Suggestion, 5 Nitpick
-6. Output unified report
+3. Launch 10 parallel workers:
+   - Worker 1: focus="Value Objects"
+   - Worker 2: focus="Use Cases"
+   - Worker 3: focus="Return Types"
+   - Worker 4: focus="Structural Patterns"
+   - Worker 5: focus="Composition Rules"
+   - Worker 6: focus="Null Policy"
+   - Worker 7: focus="Thread Safety"
+   - Worker 8: focus="Naming Conventions"
+   - Worker 9: focus="Testing Patterns"
+   - Worker 10: focus="Cross-Cutting Concerns"
+4. Wait for all workers to complete
+5. Launch aggregator: focus="Aggregate" with all 10 reports
+6. Output unified report: 3 Critical, 12 Warning, 8 Suggestion, 5 Nitpick
 ```
 
 ## Notes
 
 - Each worker reviews ALL files but only checks for violations in its focus area
 - This ensures thoroughness: narrow focus = deeper analysis
-- Parallel execution: all 18 workers run simultaneously
-- Deduplication: if multiple workers flag the same issue, keep one instance
+- Parallel execution: all 10 workers run simultaneously
+- Aggregator deduplicates and consolidates findings into unified report

@@ -19,6 +19,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - jbct-coder.md: Decision guide and patterns
   - jbct-reviewer.md: Detection of fold() abuse in Quick Reference
   - skills/jbct/patterns/fold-alternatives.md: Full reference with examples
+- **Comprehensive Tooling Documentation**
+  - AI-TOOLING.md: Claude Code skills, agents, and commands
+  - CLI-TOOLING.md: jbct CLI with all 37 lint rules
+  - MAVEN-PLUGIN.md: Build integration and CI setup
+  - Website navigation updated with Tools section
 
 ### Changed
 - **jbct-reviewer.md** enhanced with parallel review support

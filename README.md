@@ -231,7 +231,7 @@ void email_acceptsValidFormat() {
 ### Changelog & Versioning
 
 - **[CHANGELOG.md](CHANGELOG.md)** - Version history following [Keep a Changelog](https://keepachangelog.com/)
-  - Current version: 2.1.1 (2026-01-07)
+  - Current version: 2.1.1 (2026-01-08)
   - Golden formatting patterns, Pragmatica Lite 0.9.10, 36 lint rules
   - Semantic versioning for documentation releases
 
@@ -392,6 +392,6 @@ If you find this useful, consider [sponsoring](https://github.com/sponsors/siy).
 
 ---
 
-**Version:** 2.1.1 | **Last Updated:** 2026-01-07 | **[Full Changelog](CHANGELOG.md)**
+**Version:** 2.1.1 | **Last Updated:** 2026-01-08 | **[Full Changelog](CHANGELOG.md)**
 
 **Copyright © 2025 Sergiy Yevtushenko. Released under the [MIT License](LICENSE).**

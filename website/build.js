@@ -30,6 +30,9 @@ const MARKDOWN_FILES = [
   'CHANGELOG.md',
   'TECHNOLOGY.md',
   'PL_IMPROVEMENTS.md',
+  'AI-TOOLING.md',
+  'CLI-TOOLING.md',
+  'MAVEN-PLUGIN.md',
   'jbct-coder.md',
   'jbct-reviewer.md',
   'CONTACT.md'

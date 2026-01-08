@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.1.1] - 2026-01-08
+
+### Added
+- **Parallel JBCT Review System**
+  - `/jbct-review` skill for thorough parallel code review
+  - 10 focused review areas for comprehensive coverage
+  - Severity-based consolidation of findings
+  - Support for path and focus arguments
+- **fold() Alternatives** guidance across documentation
+  - jbct-coder.md: Decision guide and patterns
+  - jbct-reviewer.md: Detection of fold() abuse in Quick Reference
+  - skills/jbct/patterns/fold-alternatives.md: Full reference with examples
+- **Comprehensive Tooling Documentation**
+  - AI-TOOLING.md: Claude Code skills, agents, and commands
+  - CLI-TOOLING.md: jbct CLI with all 37 lint rules
+  - MAVEN-PLUGIN.md: Build integration and CI setup
+  - Website navigation updated with Tools section
+
+### Changed
+- **jbct-reviewer.md** enhanced with parallel review support
+  - Focus parameter for narrow, thorough reviews
+  - 10 focus areas with specific violation patterns
+  - Improved Quick Reference with fold(), Void detection
+- **Pragmatica Lite Core** updated from 0.9.9 to 0.9.10
+- **jbct-cli** referenced version updated to 0.4.6
+
 ## [2.1.0] - 2026-01-06
 
 ### Added

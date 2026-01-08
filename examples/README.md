@@ -9,7 +9,7 @@ Overview
 
 Notes
 - The code references Pragmatica Lite types (`Option`, `Result`, `Promise`, `Causes`, `Verify`).
-- Pragmatica Lite Core 0.9.0 is available on Maven Central.
+- Pragmatica Lite Core 0.9.10 is available on Maven Central.
 - Java 25 is configured via Maven compiler properties. Adjust to your local JDK if needed.
 
 Layout

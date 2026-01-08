@@ -1,6 +1,6 @@
 # Java Backend Coding Technology
 
-> **Version 2.1.0** | [Full Changelog](CHANGELOG.md)
+> **Version 2.1.1** | [Full Changelog](CHANGELOG.md)
 
 A framework-agnostic methodology for writing predictable, testable Java backend code optimized for human-AI collaboration.
 
@@ -231,59 +231,62 @@ void email_acceptsValidFormat() {
 ### Changelog & Versioning
 
 - **[CHANGELOG.md](CHANGELOG.md)** - Version history following [Keep a Changelog](https://keepachangelog.com/)
-  - Current version: 2.0.10 (2026-01-01)
-  - Golden formatting patterns, Pragmatica Lite 0.9.9, 36 lint rules
+  - Current version: 2.1.1 (2026-01-08)
+  - Golden formatting patterns, Pragmatica Lite 0.9.10, 36 lint rules
   - Semantic versioning for documentation releases
 
 ## 🔧 Tools
 
+JBCT provides comprehensive tooling for AI-assisted development and automated compliance checking.
+
 ### AI Tools
 
-#### Claude Code Skill
+**[AI Tooling Documentation](AI-TOOLING.md)** - Complete guide to Claude Code integration:
 
-**[skills/jbct/](skills/jbct/)** - Comprehensive JBCT skill for Claude Code:
-- Design, implement, and review JBCT code
-- Progressive detalization: quick reference → detailed patterns → advanced topics
-- Covers Four Return Kinds, Parse Don't Validate, all six structural patterns
-- Project structure, naming conventions, testing patterns
-- **Installation**: `cp -r skills/jbct ~/.claude/skills/`
+| Tool | Purpose |
+|------|---------|
+| **jbct skill** | Learning, quick reference, pattern understanding |
+| **jbct-coder** | Autonomous code generation following JBCT patterns |
+| **jbct-reviewer** | Code review for JBCT compliance |
+| **jbct-review** | Parallel review with 10 focused workers (`/jbct-review` command) |
 
-**Usage**: Claude Code will automatically activate the skill when working with Result/Option/Promise types, value objects, use cases, or JBCT patterns.
-
-#### Claude Code Subagents
-
-Ready-to-use configurations for specialized code assistance:
-
-- **[jbct-coder.md](jbct-coder.md)** - Code generation subagent
-  - Generates JBCT-compliant code from requirements
-  - Enforces Four Return Kinds, Parse Don't Validate, structural patterns
-  - **Installation**: Download and place in `~/.claude/agents/jbct-coder.md`
-
-- **[jbct-reviewer.md](jbct-reviewer.md)** - Code review subagent
-  - Reviews code for JBCT compliance and best practices
-  - Checks patterns, naming conventions, project structure
-  - Provides actionable feedback with examples
-  - **Installation**: Download and place in `~/.claude/agents/jbct-reviewer.md`
-
-**Usage**: After installation, Claude Code will automatically use these subagents when appropriate, or invoke explicitly: `"Use jbct-coder to implement..."` or `"Use jbct-reviewer to check..."`
+**Quick Install:**
+```bash
+# Install all AI tools
+mkdir -p ~/.claude/skills ~/.claude/agents
+cp -r skills/jbct skills/jbct-review ~/.claude/skills/
+cp jbct-coder.md jbct-reviewer.md ~/.claude/agents/
+```
 
 ### CLI Tools
 
-#### JBCT CLI & Maven Plugin
+**[CLI Documentation](CLI-TOOLING.md)** - Command-line formatting and linting:
 
-**[jbct-cli](https://github.com/siy/jbct-cli)** - Code formatting and linting tools for JBCT:
-- `jbct format` - Format Java code to JBCT style (chain alignment, import grouping)
-- `jbct lint` - Check JBCT compliance with 36 lint rules
-- `jbct check` - Combined format + lint (recommended for CI)
-- `jbct init` - Scaffold new JBCT project with AI tools
-- Maven plugin for build integration
+| Command | Description |
+|---------|-------------|
+| `jbct format` | Format Java code to JBCT style |
+| `jbct lint` | Check JBCT compliance (37 rules) |
+| `jbct check` | Combined format + lint (recommended for CI) |
+| `jbct init` | Scaffold new JBCT project |
 
 **Quick Install (Linux/macOS):**
 ```bash
 curl -fsSL https://raw.githubusercontent.com/siy/jbct-cli/main/install.sh | sh
 ```
 
-**Requirements:** Java 25+
+### Maven Plugin
+
+**[Maven Plugin Documentation](MAVEN-PLUGIN.md)** - Build integration:
+
+```xml
+<plugin>
+    <groupId>org.pragmatica-lite</groupId>
+    <artifactId>jbct-maven-plugin</artifactId>
+    <version>0.4.6</version>
+</plugin>
+```
+
+**Requirements:** Java 25+, Maven 3.9+
 
 ## 📂 Repository Structure
 
@@ -303,10 +306,15 @@ coding-technology/
 │   └── part-09-production-systems.md
 ├── MANAGEMENT_PERSPECTIVE.md    # Business case and ROI
 ├── CHANGELOG.md                 # Version history
+├── AI-TOOLING.md                # AI tools documentation
+├── CLI-TOOLING.md               # CLI tools documentation
+├── MAVEN-PLUGIN.md              # Maven plugin documentation
 ├── skills/                      # Claude Code skills
-│   └── jbct/                    # JBCT skill
-│       ├── SKILL.md             # Skill definition
-│       └── README.md            # Installation instructions
+│   ├── jbct/                    # JBCT main skill
+│   │   ├── SKILL.md             # Skill definition
+│   │   └── README.md            # Installation instructions
+│   └── jbct-review/             # Parallel review skill
+│       └── SKILL.md             # /jbct-review command
 ├── jbct-coder.md                # Claude Code subagent: code generation
 ├── jbct-reviewer.md             # Claude Code subagent: code review
 ├── examples/                    # Java code examples
@@ -359,13 +367,13 @@ This repository documents a methodology, not a software project. Contributions w
 <dependency>
    <groupId>org.pragmatica-lite</groupId>
    <artifactId>core</artifactId>
-   <version>0.9.9</version>
+   <version>0.9.10</version>
 </dependency>
 ```
 
 **Gradle:**
 ```gradle
-implementation 'org.pragmatica-lite:core:0.9.9'
+implementation 'org.pragmatica-lite:core:0.9.10'
 ```
 
 ## 📄 License
@@ -384,6 +392,6 @@ If you find this useful, consider [sponsoring](https://github.com/sponsors/siy).
 
 ---
 
-**Version:** 2.1.0 | **Last Updated:** 2026-01-02 | **[Full Changelog](CHANGELOG.md)**
+**Version:** 2.1.1 | **Last Updated:** 2026-01-08 | **[Full Changelog](CHANGELOG.md)**
 
 **Copyright © 2025 Sergiy Yevtushenko. Released under the [MIT License](LICENSE).**

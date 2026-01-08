@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - **Parallel JBCT Review System**
   - `/jbct-review` skill for thorough parallel code review
-  - 18 focused review areas for comprehensive coverage
+  - 10 focused review areas for comprehensive coverage
   - Severity-based consolidation of findings
   - Support for path and focus arguments
 - **fold() Alternatives** guidance across documentation
@@ -23,7 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - **jbct-reviewer.md** enhanced with parallel review support
   - Focus parameter for narrow, thorough reviews
-  - 18 focus areas with specific violation patterns
+  - 10 focus areas with specific violation patterns
   - Improved Quick Reference with fold(), Void detection
 - **Pragmatica Lite Core** updated from 0.9.9 to 0.9.10
 - **jbct-cli** referenced version updated to 0.4.6

@@ -85,24 +85,16 @@ When invoked with a **focus** parameter, narrow your review to ONLY that specifi
 
 | Focus | What to Check |
 |-------|---------------|
-| `Value Object Factories` | Result-returning factories, Verify.ensure patterns, validation at construction |
-| `Value Object Immutability` | Final fields, no setters, sealed types, record usage |
-| `Use Case Structure` | Single execute() method, constructor deps, no business logic in ctor |
-| `Use Case Composition` | Dependency wiring, factory methods, interface design |
-| `Return Types - Result/Promise` | Fallible ops return Result/Promise, correct type usage |
-| `Return Types - Void` | No Void/void returns, use Unit instead |
-| `Return Types - Exceptions` | No throwing for business logic, exceptions only at boundaries |
-| `Structural: Leaf` | Adapter isolation, single responsibility, I/O containment |
-| `Structural: Sequencer` | flatMap chains, step extraction, proper sequencing |
-| `Structural: Fork-Join` | Result.all/Promise.all usage, parallel composition |
-| `Composition: fold() Abuse` | fold() → toResult/async/map+or alternatives |
-| `Composition: Lambda Complexity` | Long lambdas → extract method, method references |
-| `Null Policy` | Option usage, no null checks, no @Nullable |
-| `Logging Patterns` | Only leaves/boundaries, aspect-based, no conditional logging |
-| `Thread Safety` | Immutability, no shared mutable state |
-| `Naming Conventions` | Factory names, Cause types, package structure |
-| `Testing Patterns` | Functional assertions, onSuccess/onFailure, stub patterns |
-| `Security + Performance` | SQL injection, XSS, N+1 queries, memory leaks |
+| `Value Objects` | Factory patterns (Result-returning, Verify.ensure), immutability (final fields, no setters, sealed types, records) |
+| `Use Cases` | Single execute() method, constructor deps, factory methods returning lambdas, interface design |
+| `Return Types` | Fallible ops use Result/Promise, no Void (use Unit), no business exceptions |
+| `Structural Patterns` | Leaf (adapter isolation, I/O containment), Sequencer (flatMap chains), Fork-Join (Result.all/Promise.all) |
+| `Composition Rules` | fold() abuse → toResult/async/map+or, lambda complexity → extract method, method references |
+| `Null Policy` | Option usage, no null checks in business logic, no @Nullable |
+| `Thread Safety` | Immutability, no shared mutable state in Fork-Join, input parameters read-only |
+| `Naming Conventions` | Factory names (TypeName.typeName), zone-appropriate verbs, acronyms as words |
+| `Testing Patterns` | Functional assertions (onSuccess/onFailure), @Nested organization, stub patterns |
+| `Cross-Cutting Concerns` | Security (SQL injection, XSS), performance (N+1, memory leaks), logging (boundaries only, no conditionals) |
 
 ### Focus Mode Behavior
 
@@ -113,6 +105,26 @@ When invoked with a **focus** parameter, narrow your review to ONLY that specifi
 2. Check ONLY for violations in the specified focus area
 3. Report findings with severity levels
 4. Ignore issues outside focus area (they will be caught by other parallel workers)
+
+### Aggregate Mode
+
+**With `focus: Aggregate` parameter:** Consolidate multiple focused review reports into a unified assessment.
+
+**Input:** Multiple focused review reports (one per focus area)
+
+**Aggregation tasks:**
+1. Parse all individual reports
+2. Deduplicate findings (same file:line across reports)
+3. Count issues by severity (Critical/Warning/Suggestion/Nitpick)
+4. Determine overall compliance level and recommendation
+5. Organize findings by severity, then by file
+6. Generate unified report following REVIEW OUTPUT FORMAT
+
+**Output:** Single consolidated report with:
+- Summary statistics
+- Overall recommendation (APPROVE / APPROVE WITH CHANGES / REQUEST CHANGES)
+- All findings organized by severity
+- Quick fixes summary
 
 ## Static Imports (Encouraged)
 

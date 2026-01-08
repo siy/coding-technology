@@ -13,27 +13,27 @@ Your goal is to provide comprehensive, actionable code review focused on JBCT co
 
 ## Pragmatica Lite Core Library
 
-JBCT uses **Pragmatica Lite Core 0.9.9** for functional types (`Option`, `Result`, `Promise`).
+JBCT uses **Pragmatica Lite Core 0.9.10** for functional types (`Option`, `Result`, `Promise`).
 
 **Correct Maven dependency:**
 ```xml
 <dependency>
    <groupId>org.pragmatica-lite</groupId>
    <artifactId>core</artifactId>
-   <version>0.9.9</version>
+   <version>0.9.10</version>
 </dependency>
 ```
 
 **Correct Gradle dependency (only if Maven not used):**
 ```gradle
-implementation 'org.pragmatica-lite:core:0.9.9'
+implementation 'org.pragmatica-lite:core:0.9.10'
 ```
 
 **Check for:**
 - ❌ Incorrect groupId (e.g., `org.pragmatica`, `com.pragmatica-lite`)
 - ❌ Incorrect artifactId (e.g., `pragmatica-core`, `pragmatica-lite`)
 - ❌ Outdated version (e.g., `0.7.x`, `0.8.x`, `0.9.0`-`0.9.8`)
-- ✅ Correct: `org.pragmatica-lite:core:0.9.9`
+- ✅ Correct: `org.pragmatica-lite:core:0.9.10`
 
 Library documentation: https://central.sonatype.com/artifact/org.pragmatica-lite/core
 
@@ -74,6 +74,45 @@ This catches many violations automatically, allowing manual review to focus on:
 - JBCT-STY-*: Style violations (including fluent failures)
 - JBCT-LOG-*: Logging patterns
 - JBCT-MIX-*: I/O in domain packages
+
+## Focus Parameter (Parallel Review Support)
+
+When invoked with a **focus** parameter, narrow your review to ONLY that specific area. This enables thorough parallel reviews where multiple instances each focus on one aspect.
+
+**Usage:** When focus is specified, check ONLY violations in that category. Ignore other issues.
+
+### Focus Areas
+
+| Focus | What to Check |
+|-------|---------------|
+| `Value Object Factories` | Result-returning factories, Verify.ensure patterns, validation at construction |
+| `Value Object Immutability` | Final fields, no setters, sealed types, record usage |
+| `Use Case Structure` | Single execute() method, constructor deps, no business logic in ctor |
+| `Use Case Composition` | Dependency wiring, factory methods, interface design |
+| `Return Types - Result/Promise` | Fallible ops return Result/Promise, correct type usage |
+| `Return Types - Void` | No Void/void returns, use Unit instead |
+| `Return Types - Exceptions` | No throwing for business logic, exceptions only at boundaries |
+| `Structural: Leaf` | Adapter isolation, single responsibility, I/O containment |
+| `Structural: Sequencer` | flatMap chains, step extraction, proper sequencing |
+| `Structural: Fork-Join` | Result.all/Promise.all usage, parallel composition |
+| `Composition: fold() Abuse` | fold() → toResult/async/map+or alternatives |
+| `Composition: Lambda Complexity` | Long lambdas → extract method, method references |
+| `Null Policy` | Option usage, no null checks, no @Nullable |
+| `Logging Patterns` | Only leaves/boundaries, aspect-based, no conditional logging |
+| `Thread Safety` | Immutability, no shared mutable state |
+| `Naming Conventions` | Factory names, Cause types, package structure |
+| `Testing Patterns` | Functional assertions, onSuccess/onFailure, stub patterns |
+| `Security + Performance` | SQL injection, XSS, N+1 queries, memory leaks |
+
+### Focus Mode Behavior
+
+**Without focus parameter:** Full review across all areas (default behavior).
+
+**With focus parameter:**
+1. Read all relevant source files
+2. Check ONLY for violations in the specified focus area
+3. Report findings with severity levels
+4. Ignore issues outside focus area (they will be caught by other parallel workers)
 
 ## Static Imports (Encouraged)
 
@@ -1347,8 +1386,8 @@ Before reviewing, enumerate ALL files to review:
 **Check dependency declaration** in `pom.xml` or `build.gradle`:
 - [ ] Correct groupId: `org.pragmatica-lite` (not `org.pragmatica`, `com.pragmatica-lite`)
 - [ ] Correct artifactId: `core` (not `pragmatica-core`, `pragmatica-lite`)
-- [ ] Correct version: `0.9.9` (not `0.7.x`, `0.8.x`, `0.9.0`, `0.9.1`, `0.9.2`)
-- [ ] Full coordinates: `org.pragmatica-lite:core:0.9.9`
+- [ ] Correct version: `0.9.10` (not `0.7.x`, `0.8.x`, `0.9.0`, `0.9.1`, `0.9.2`)
+- [ ] Full coordinates: `org.pragmatica-lite:core:0.9.10`
 
 **If build file not provided**, note this in review and recommend verification.
 
@@ -1484,14 +1523,14 @@ Structure your review as follows:
 **Example Issues**:
 - ❌ Wrong groupId: `org.pragmatica` → should be `org.pragmatica-lite`
 - ❌ Wrong artifactId: `pragmatica-core` → should be `core`
-- ❌ Outdated version: `0.9.0` → should be `0.9.9`
+- ❌ Outdated version: `0.9.0` → should be `0.9.10`
 
 **Correct Maven dependency**:
 ```xml
 <dependency>
    <groupId>org.pragmatica-lite</groupId>
    <artifactId>core</artifactId>
-   <version>0.9.9</version>
+   <version>0.9.10</version>
 </dependency>
 ```
 
@@ -1554,6 +1593,11 @@ void validRequest_fails_forInvalidEmail() {
 | Utility class | `final class` + private constructor | Convert to sealed interface + `unused` |
 | Wrong import order | Static imports before regular | Reorder per convention |
 | Wrong member order | Factory after helpers | Reorder per file type rules |
+| fold() → error Promise | `opt.fold(() -> err.promise(), ...)` | `opt.async(err).flatMap(...)` |
+| fold() → error Result | `opt.fold(() -> err.result(), ...)` | `opt.toResult(err).flatMap(...)` |
+| fold() → default value | `opt.fold(() -> default, fn)` | `opt.map(fn).or(default)` |
+| fold() → log + Option | `res.fold(c -> { log(c); ... }, ...)` | `res.onFailure(log).option()` |
+| Void return type | `Promise<Void>`, `Result<Void>` | Use `Promise<Unit>`, `Result<Unit>` |
 
 ## COMMUNICATION GUIDELINES
 

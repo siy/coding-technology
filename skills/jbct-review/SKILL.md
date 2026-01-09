@@ -82,15 +82,13 @@ Wait for all workers to complete. Each returns structured findings.
 
 ### Step 5: Aggregate Results
 
-Launch a jbct-reviewer agent with `focus: Aggregate` to consolidate all reports:
+Launch a **general-purpose** agent to consolidate all reports (using jbct-reviewer for aggregation would exceed the 10-agent limit):
 
 ```
 Task tool call:
-  subagent_type: "jbct-reviewer"
+  subagent_type: "general-purpose"
   prompt: |
     Aggregate the following JBCT review reports into a unified assessment.
-
-    **Focus:** Aggregate
 
     **Individual Reports:**
 
@@ -103,10 +101,10 @@ Task tool call:
     ... (all 10 reports)
 
     Tasks:
-    1. Deduplicate findings (same file:line)
-    2. Count issues by severity
-    3. Determine overall compliance and recommendation
-    4. Generate unified report
+    1. Deduplicate findings (same file:line across reports)
+    2. Count issues by severity (Critical/Warning/Suggestion/Nitpick)
+    3. Determine overall compliance level and recommendation
+    4. Generate unified report following the format in Step 6
 ```
 
 ### Step 6: Output Final Report

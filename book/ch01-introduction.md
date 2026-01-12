@@ -169,6 +169,49 @@ The second version **chains** operations. Each step takes the output of the prev
 
 Why this matters: composition lets you **build complex logic from simple pieces** without intermediate variables or explicit error checking at each step. The structure itself handles error propagation.
 
+### Request Processing as Data Transformation
+
+Every request your system handles follows the same fundamental process. It doesn't depend on language or framework. It mirrors how humans naturally solve problems: take input, gradually collect necessary pieces of knowledge, and produce a correct answer.
+
+**The Universal Pattern:**
+```
+Input → Parse → Gather → Process → Respond → Output
+```
+
+Each stage transforms data. Each stage may need additional data. Each stage may fail. The entire flow is a data transformation pipeline.
+
+**Why Async Looks Like Sync:**
+
+When you think in terms of data transformation, the sync/async distinction disappears:
+
+```java
+// These are structurally identical
+Result<User> user = database.findUser(userId);     // "sync"
+Promise<User> user = httpClient.fetchUser(userId); // "async"
+```
+
+Both take a user ID, both produce a User (or failure). The only difference is *when* the result becomes available—an execution detail, not a structural concern.
+
+**Parallel Execution Becomes Transparent:**
+
+You don't decide "this should be parallel." You express data dependencies. The execution strategy follows from the structure:
+
+```java
+// Sequential: each step needs previous result
+return validateInput(request)
+    .flatMap(this::createUser)
+    .flatMap(this::sendWelcomeEmail);
+
+// Parallel: steps are independent
+return Promise.all(
+    fetchUserProfile(userId),
+    loadAccountSettings(userId),
+    getRecentActivity(userId)
+).map(this::buildDashboard);
+```
+
+The JBCT patterns—Leaf, Sequencer, Fork-Join, Condition, Iteration, Aspects—are the fundamental ways data can flow through any system. Once you start thinking in data transformation, implementing any processing task in close to optimal form becomes routine.
+
 ### What Are Monads (Smart Wrappers)?
 
 In JBCT, we use types that wrap values and control how operations are applied to them.

@@ -9,7 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2.1.2] - 2026-01-12
 
-(No changes yet - release preparation)
+### Added
+- **Request Processing as Data Transformation** - new foundational concept
+  - Articles: `articles/underlying-process.md` (full article)
+  - Articles: `articles/linkedin-data-transformation.md` (LinkedIn post)
+  - CODING_GUIDE.md: New section in Foundational Concepts
+  - Book: ch01-introduction.md expanded with new section
+  - Key insight: sync/async and parallel/sequential are execution details, not structural concerns
+  - JBCT patterns as universal primitives for data flow
 
 ## [2.1.1] - 2026-01-08
 

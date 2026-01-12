@@ -20,17 +20,10 @@ JBCT provides four AI tools for Claude Code:
 ```bash
 # Clone repository
 git clone https://github.com/siy/coding-technology.git
-cd coding-technology
+cd coding-technology/ai-tools
 
-# Install skill
-mkdir -p ~/.claude/skills
-cp -r skills/jbct ~/.claude/skills/
-cp -r skills/jbct-review ~/.claude/skills/
-
-# Install subagents
-mkdir -p ~/.claude/agents
-cp jbct-coder.md ~/.claude/agents/
-cp jbct-reviewer.md ~/.claude/agents/
+# Install skills and agents
+cp -r skills agents ~/.claude/
 ```
 
 ### Verify Installation
@@ -304,7 +297,7 @@ User: /jbct-review src/main/java
 
 ## Integration with JBCT CLI
 
-For automated checks in CI/CD, use [JBCT CLI](CLI-TOOLING.md):
+For automated checks in CI/CD, use [JBCT CLI](../CLI-TOOLING.md):
 
 ```bash
 # Check if installed
@@ -338,7 +331,7 @@ Library documentation: https://central.sonatype.com/artifact/org.pragmatica-lite
 
 ## Resources
 
-- [JBCT Coding Guide](CODING_GUIDE.md) - Complete technical reference
-- [CLI Tools](CLI-TOOLING.md) - Command-line formatting and linting
-- [Maven Plugin](MAVEN-PLUGIN.md) - Build integration
+- [JBCT Coding Guide](../CODING_GUIDE.md) - Complete technical reference
+- [CLI Tools](../CLI-TOOLING.md) - Command-line formatting and linting
+- [Maven Plugin](../MAVEN-PLUGIN.md) - Build integration
 - [GitHub Repository](https://github.com/siy/coding-technology)

@@ -1,3 +1,11 @@
+---
+title: "The Underlying Process of Request Processing"
+tags: [java, functionalprogramming, architecture, backend]
+canonical_url: https://pragmatica.dev/articles/underlying-process
+published: true
+description: "Request processing is data transformation. When you think in data flow, sync/async and parallel/sequential become transparent execution details."
+---
+
 # The Underlying Process of Request Processing
 
 ## Beyond Languages and Frameworks
@@ -85,14 +93,12 @@ This is why thinking in data transformation is so powerful. You describe *what* 
 
 Java Backend Coding Technology captures this insight in six patterns:
 
-| Pattern | Data Flow | Execution |
-|---------|-----------|-----------|
-| **Leaf** | Single transformation | Atomic |
-| **Sequencer** | A → B → C (dependent chain) | Sequential |
-| **Fork-Join** | A + B + C → D (independent merge) | Parallel-capable |
-| **Condition** | Route based on value | Branching |
-| **Iteration** | Transform collection | Map/fold |
-| **Aspects** | Wrap transformation | Decoration |
+- **Leaf** - Single transformation (atomic)
+- **Sequencer** - A → B → C, dependent chain (sequential)
+- **Fork-Join** - A + B + C → D, independent merge (parallel-capable)
+- **Condition** - Route based on value (branching)
+- **Iteration** - Transform collection (map/fold)
+- **Aspects** - Wrap transformation (decoration)
 
 These aren't arbitrary design patterns. They're the fundamental ways data can flow through a system:
 - Transform a single value (Leaf)

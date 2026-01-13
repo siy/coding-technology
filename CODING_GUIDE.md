@@ -348,6 +348,35 @@ return Promise.all(
 
 If operations share no data dependencies, they're naturally parallelizable. If one needs another's output, they're naturally sequential. The patterns in this technology—Leaf, Sequencer, Fork-Join, Condition, Iteration, Aspects—are the fundamental ways data can flow through any system. They're not arbitrary design choices; they're the vocabulary for describing data transformation.
 
+### Common Language: Developer-Business Vocabulary
+
+The six patterns don't just describe code structure—they describe business processes. This creates a shared vocabulary between developers and business stakeholders.
+
+**Watch the precision gain:**
+
+> **Before:** "Get the user's stuff and show it"
+>
+> **After:** "Fork-Join: fetch profile, preferences, and history in parallel, then combine into dashboard view"
+
+Same requirement. One is vague. One is implementable.
+
+**The translation is mechanical:**
+
+- "Check if..." → **Leaf** → Single validation
+- "First... then... then..." → **Sequencer** → `.flatMap()` chain
+- "Get X and Y and Z, then..." → **Fork-Join** → `Promise.all()`
+- "If... otherwise..." → **Condition** → Ternary/switch
+- "For each..." → **Iteration** → `.map()` / loop
+- "Always log/retry/timeout..." → **Aspects** → Wrapper function
+
+When a developer asks "Can these operations run in parallel?" they're really asking "Do these steps depend on each other's results?"
+
+When business says "First we verify, then we process, then we notify"—that's a Sequencer. Directly translatable to code.
+
+When business says "We need the user's profile, their preferences, and their history to show the dashboard"—that's a Fork-Join. Three independent fetches, one combined result.
+
+**Why this matters:** Requirements discussions become technical design sessions. Gaps surface during conversation, not during implementation. Code structure mirrors business process because they're the same thing.
+
 ### Smart Wrappers (Monads)
 
 This technology uses **Smart Wrappers**—types that wrap values and control how operations are applied to them.
@@ -2050,6 +2079,58 @@ private Promise<User> recoverNetworkError(Cause cause) {
 ---
 
 ## Patterns Reference
+
+### Gap Detection Through Patterns
+
+When you model business processes using these patterns, **gaps become visible**. The patterns don't just implement requirements—they validate them.
+
+**Missing validation:**
+You're building a Sequencer: verify → process → notify. But what validates the input before "verify"? The pattern demands something produces the input for step one. If nothing does, you've found a gap.
+
+**Unclear dependencies:**
+Business describes five things that need to happen. Are they a Sequencer (dependent chain) or Fork-Join (independent operations)? If they can't tell you which outputs feed which inputs, the process isn't fully defined.
+
+**Missing error handling:**
+Every Leaf can fail. Every step in a Sequencer can fail. When you map business process to patterns, you naturally ask: "What happens when this fails?" If they don't know, you've found a gap.
+
+**Inefficient flows:**
+Business describes a sequential process: get A, then get B, then get C, then combine. But if A, B, and C don't depend on each other, this should be Fork-Join, not Sequencer. The pattern reveals the inefficiency.
+
+### Discovery Questions by Pattern
+
+Each pattern generates specific questions. You're not inventing questions—the patterns generate them.
+
+**Leaf questions:**
+- "What exactly does this operation do?"
+- "Can it fail? What failures are possible?"
+- "Is it sync (`Result`) or async (`Promise`)?"
+
+**Sequencer questions:**
+- "What do we need from step 1 to perform step 2?"
+- "Can step 3 ever happen if step 2 fails?"
+- "Is this order fixed, or could steps be reordered?"
+
+**Fork-Join questions:**
+- "Do these operations depend on each other?"
+- "Can we fetch X while also fetching Y?"
+- "What do we do if one succeeds and another fails?"
+
+**Condition questions:**
+- "What determines which path we take?"
+- "Are these paths mutually exclusive?"
+- "Is there a default path?"
+
+**Iteration questions:**
+- "Do we process all items or stop at first failure?"
+- "Does order matter?"
+- "Can items be processed independently (in parallel)?"
+
+**Aspects questions:**
+- "Should we retry on failure? How many times?"
+- "Is there a timeout?"
+- "What needs to be logged/measured?"
+
+---
 
 ### Leaf
 

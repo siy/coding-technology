@@ -1,6 +1,6 @@
 # Chapter 1: Introduction - Code Unification
 
-**Based on:** JBCT v2.1.1 | **Pragmatica Lite Core:** 0.9.10
+**Based on:** JBCT v2.1.2 | **Pragmatica Lite Core:** 0.9.10
 
 ## What You'll Learn
 
@@ -40,6 +40,8 @@ The benefits compound:
 **Close business modeling** happens when you're not fighting technical noise. Value objects enforce domain invariants at construction time. Use cases read like business processes because each step does one thing. Errors are domain concepts, not stack traces. Product owners can read the code structure and recognize their requirements.
 
 **Requirement discovery** becomes systematic. When you structure code as validation → steps → composition, gaps become obvious. Missing validation rules surface when you define value objects. Unclear business logic reveals itself when you can't name a step clearly. Edge cases emerge when you model errors as explicit types.
+
+**Common language** emerges when patterns become vocabulary. The six patterns (Leaf, Sequencer, Fork-Join, Condition, Iteration, Aspects) describe both code structure and business processes. When business says "First we verify, then we process, then we notify"—that's a Sequencer. When they say "We need profile, preferences, and history"—that's a Fork-Join. The translation is mechanical, and requirements discussions become technical design sessions.
 
 **Business logic as a readable language** happens when patterns become vocabulary. The four return types, parse-don't-validate, and the fixed pattern catalog form a consistent way to express domain concepts in code. Anyone who understands the domain can pick up a new codebase virtually instantly.
 
@@ -168,6 +170,49 @@ public Result<String> processUser(String email) {
 The second version **chains** operations. Each step takes the output of the previous step as input. The data flows through a pipeline.
 
 Why this matters: composition lets you **build complex logic from simple pieces** without intermediate variables or explicit error checking at each step. The structure itself handles error propagation.
+
+### Request Processing as Data Transformation
+
+Every request your system handles follows the same fundamental process. It doesn't depend on language or framework. It mirrors how humans naturally solve problems: take input, gradually collect necessary pieces of knowledge, and produce a correct answer.
+
+**The Universal Pattern:**
+```
+Input → Parse → Gather → Process → Respond → Output
+```
+
+Each stage transforms data. Each stage may need additional data. Each stage may fail. The entire flow is a data transformation pipeline.
+
+**Why Async Looks Like Sync:**
+
+When you think in terms of data transformation, the sync/async distinction disappears:
+
+```java
+// These are structurally identical
+Result<User> user = database.findUser(userId);     // "sync"
+Promise<User> user = httpClient.fetchUser(userId); // "async"
+```
+
+Both take a user ID, both produce a User (or failure). The only difference is *when* the result becomes available—an execution detail, not a structural concern.
+
+**Parallel Execution Becomes Transparent:**
+
+You don't decide "this should be parallel." You express data dependencies. The execution strategy follows from the structure:
+
+```java
+// Sequential: each step needs previous result
+return validateInput(request)
+    .flatMap(this::createUser)
+    .flatMap(this::sendWelcomeEmail);
+
+// Parallel: steps are independent
+return Promise.all(
+    fetchUserProfile(userId),
+    loadAccountSettings(userId),
+    getRecentActivity(userId)
+).map(this::buildDashboard);
+```
+
+The JBCT patterns—Leaf, Sequencer, Fork-Join, Condition, Iteration, Aspects—are the fundamental ways data can flow through any system. Once you start thinking in data transformation, implementing any processing task in close to optimal form becomes routine.
 
 ### What Are Monads (Smart Wrappers)?
 

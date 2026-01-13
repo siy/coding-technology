@@ -7,6 +7,47 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.1.2] - 2026-01-13
+
+### Added
+- **jbct-designer Agent** - new AI agent for JBCT-based architecture design
+  - Use *before* implementation to validate architecture and select patterns
+  - 8-step design methodology with gap detection
+  - Discovery questions by pattern
+  - Output format for implementation-ready designs
+  - Workflow: jbct-designer → jbct-coder → jbct-reviewer
+- **Common Language: Developer-Business Vocabulary** - patterns as shared language
+  - CODING_GUIDE.md: New section in Foundational Concepts
+  - series/part-01-foundations.md: Added paragraph with translation examples
+  - book/ch01-introduction.md: Added paragraph
+  - Key insight: "First we verify, then we process, then we notify" = Sequencer
+- **Gap Detection Through Patterns** - systematic requirement discovery
+  - CODING_GUIDE.md: New section in Patterns Reference
+  - series/part-05-basic-patterns.md: New section with discovery questions
+  - series/part-06-advanced-patterns.md: Discovery questions for advanced patterns
+  - book/ch07-basic-patterns.md: New section
+  - book/ch08-advanced-patterns.md: New section
+  - jbct-reviewer.md: Step 7 added to Review Methodology
+- **Discovery Questions by Pattern** - questions each pattern generates
+  - Per-pattern tables: Leaf, Sequencer, Fork-Join, Condition, Iteration, Aspects
+  - Gap signal → Question to raise mapping
+  - Added to CODING_GUIDE.md, series, book, and jbct-reviewer
+- **The Six Patterns That Cover Everything** - follow-up article
+  - Articles: `articles/six-patterns-that-cover-everything.md`
+  - Common language concept, gap detection, right questions
+  - Before/after example showing precision gain
+- **Request Processing as Data Transformation** - foundational concept
+  - Articles: `articles/underlying-process.md` (full article)
+  - Articles: `articles/linkedin-data-transformation.md` (LinkedIn post)
+  - CODING_GUIDE.md: New section in Foundational Concepts
+  - Book: ch01-introduction.md expanded with new section
+  - Key insight: sync/async and parallel/sequential are execution details, not structural concerns
+  - JBCT patterns as universal primitives for data flow
+
+### Changed
+- **jbct-coder.md** - Added Related Agents section with workflow context
+- **jbct-reviewer.md** - Added Related Agents section, gap detection step, output format section
+
 ## [2.1.1] - 2026-01-08
 
 ### Added

@@ -30,6 +30,15 @@ The benefits compound:
 
 **Asking correct questions** becomes easy because the technology provides a framework for inquiry. When discussing requirements with domain experts, you can ask: "What validation rules apply to this field?" (maps to value object factories). "What happens if this step fails?" (maps to error types). "Can these operations run in parallel?" (maps to Fork-Join vs. Sequencer). "Is this value optional or required?" (maps to `Option<T>` vs `T`). The questions are grounded in structure, not abstraction, so answers are concrete and immediately implementable.
 
+**Common language** emerges when patterns become vocabulary. The six patterns (Leaf, Sequencer, Fork-Join, Condition, Iteration, Aspects) describe both code structure and business processes. When business says "First we verify, then we process, then we notify"—that's a Sequencer. When they say "We need profile, preferences, and history to show the dashboard"—that's a Fork-Join. The translation is mechanical:
+
+- "Check if..." → **Leaf** → Single validation
+- "First... then... then..." → **Sequencer** → `.flatMap()` chain
+- "Get X and Y and Z, then..." → **Fork-Join** → `Promise.all()`
+- "If... otherwise..." → **Condition** → Ternary/switch
+
+This shared vocabulary means requirements discussions become technical design sessions. Gaps surface during conversation, not during implementation.
+
 **Business logic as a readable language** happens when patterns become vocabulary. The four return types, parse-don't-validate, and the fixed pattern catalog form a Business Logic Expression Language - a consistent way to express domain concepts in code. When you use the same patterns everywhere, business logic becomes immediately apparent in all necessary details. The structure itself tells the story: a Sequencer shows process steps, Fork-Join reveals parallel operations, `Result<Option<T>>` declares "optional but must be valid when present." Anyone who somewhat understands the domain can pick up a new codebase virtually instantly. No more narrow specializations where only one developer understands "their" module. A large part of the code becomes universally readable. Fresh onboarding happens in days, not months - developers spend time learning the domain, not deciphering structural choices.
 
 **Tooling and automation** become dramatically simpler when the structure is predictable. Code generators don't need to infer patterns - there's one pattern for validation, one for composition, one for error handling. Static analysis can verify properties mechanically: does this function return exactly one of the four allowed types? Does validation happen before construction? Are errors properly typed? AI assistants can generate more accurate code because the target structure is well-defined and consistent.

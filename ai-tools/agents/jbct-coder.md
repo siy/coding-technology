@@ -1763,6 +1763,8 @@ public class JooqUserRepository implements SaveUser {
 ## References
 
 - **Full Guide**: `CODING_GUIDE.md` - Comprehensive explanation of all patterns and principles (v2.1.2)
+- **Design Agent**: `ai-tools/agents/jbct-designer.md` - Use for architecture design and planning before coding
+- **Review Agent**: `ai-tools/agents/jbct-reviewer.md` - Use for code review after implementation
 - **Testing Strategy**: `series/part-05-testing-strategy.md` - Evolutionary testing approach, integration-first philosophy, test organization
 - **Systematic Application**: `series/part-10-systematic-application.md` - Checkpoints for coding and review
 - **API Reference**: `CLAUDE.md` - Complete Pragmatica Lite API documentation

@@ -386,6 +386,28 @@ If adding "to" makes it sound awkward or overly detailed ("to hash password, the
 
 ---
 
+## Gap Detection and Discovery Questions
+
+When you model business processes using patterns, **gaps become visible**. The patterns don't just implement requirements—they validate them.
+
+**How patterns reveal gaps:**
+- **Missing validation:** Building a Sequencer but nothing validates the input before step 1? Gap found.
+- **Unclear dependencies:** Are these operations a Sequencer (dependent) or Fork-Join (independent)? If they can't tell you which outputs feed which inputs, the process isn't fully defined.
+- **Missing error handling:** Every Leaf can fail. When you map process to pattern, you naturally ask "What happens when this fails?"
+- **Inefficient flows:** Sequential process described but steps are independent? Should be Fork-Join, not Sequencer.
+
+**Discovery questions by pattern:**
+
+| Pattern | Key Questions |
+|---------|--------------|
+| **Leaf** | What does it do? Can it fail? Sync or async? |
+| **Condition** | What determines the path? Mutually exclusive? Default? |
+| **Iteration** | Stop on first failure? Order matters? Can parallelize? |
+
+Advanced patterns (Sequencer, Fork-Join, Aspects) are covered in Part 6 with their specific discovery questions.
+
+---
+
 ## Pattern: Leaf
 
 **Definition:** A **Leaf** (an atomic operation with no substeps) is the smallest unit of processing - a function that does one thing and has no internal steps. It's either a business leaf (pure computation) or an adapter leaf (I/O or side effects).

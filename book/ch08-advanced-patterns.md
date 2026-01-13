@@ -10,6 +10,20 @@
 
 ---
 
+## Discovery Questions for Advanced Patterns
+
+Chapter 7 introduced gap detection. Here are the discovery questions for advanced patterns:
+
+| Pattern | Key Questions |
+|---------|--------------|
+| **Sequencer** | What does step 1 produce that step 2 needs? Can step 3 happen if step 2 fails? Is order fixed? |
+| **Fork-Join** | Do these depend on each other? Can we fetch X while fetching Y? What if one succeeds and another fails? |
+| **Aspects** | Retry on failure? How many times? Timeout duration? What needs logging? |
+
+These questions emerge from the patterns themselves—the structure demands specific information.
+
+---
+
 ## Pattern: Sequencer
 
 **Definition:** A Sequencer chains dependent steps linearly using `map` and `flatMap`. Each step's output feeds the next step's input. This is the primary pattern for use case implementation.

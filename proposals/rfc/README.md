@@ -1,0 +1,54 @@
+# RFC Proposals
+
+Request for Comments (RFC) documents for cross-project design decisions.
+
+## Index
+
+| RFC | Title | Status | Affects |
+|-----|-------|--------|---------|
+| [RFC-0000](RFC-0000-ecosystem-foundation.md) | Ecosystem Foundation | Approved | all projects |
+
+## Workflow
+
+```
+Draft → Review → Approved → Implemented
+                    ↓
+              Superseded (if replaced)
+```
+
+### States
+
+- **Draft**: Initial proposal, open for feedback
+- **Review**: Multi-agent consensus in progress
+- **Approved**: Both implementation PRs merged
+- **Implemented**: Fully integrated into codebase
+- **Superseded**: Replaced by newer RFC (link provided)
+
+### Process
+
+1. Author creates RFC as Draft
+2. Affected project agents review and propose changes
+3. Multi-agent consensus reached (all affected agents approve)
+4. PRs created in affected projects implementing/acknowledging RFC
+5. User reviews and approves PRs
+6. Only when **both PRs merged** → RFC status becomes "Approved"
+
+## Naming Convention
+
+```
+RFC-NNNN-short-title.md
+```
+
+- 4-digit zero-padded number
+- Lowercase hyphenated title
+- Example: `RFC-0042-async-slice-invocation.md`
+
+## Supersession
+
+When an RFC is superseded:
+1. Add `Superseded-By: RFC-XXXX` to front matter
+2. Update status to `Superseded`
+3. Old RFC remains for historical reference
+4. New RFC links back to what it supersedes
+
+No versioning within RFCs (e.g., no `RFC-0001-v2`). Create new RFC instead.

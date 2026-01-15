@@ -10,6 +10,10 @@ Request for Comments (RFC) documents for cross-project design decisions.
 | [RFC-0001](RFC-0001-core-slice-contract.md) | Core Slice Contract | Draft | jbct-cli, aether |
 | [RFC-0002](RFC-0002-dependency-protocol.md) | Dependency Protocol | Draft | jbct-cli, aether |
 | [RFC-0003](RFC-0003-http-layer.md) | HTTP Layer | Draft | jbct-cli, aether |
+| [RFC-0004](RFC-0004-slice-packaging.md) | Slice Packaging | Draft | jbct-cli, aether |
+| [RFC-0005](RFC-0005-blueprint-format.md) | Blueprint Format | Draft | jbct-cli, aether |
+| [RFC-0006](RFC-0006-slice-runtime-config.md) | Slice Runtime Config | Draft | jbct-cli, aether |
+| [RFC-0007](RFC-0007-dependency-sections.md) | Dependency Sections | Draft | jbct-cli, aether |
 
 ## Workflow
 

@@ -7,6 +7,9 @@ Request for Comments (RFC) documents for cross-project design decisions.
 | RFC | Title | Status | Affects |
 |-----|-------|--------|---------|
 | [RFC-0000](RFC-0000-ecosystem-foundation.md) | Ecosystem Foundation | Approved | all projects |
+| [RFC-0001](RFC-0001-core-slice-contract.md) | Core Slice Contract | Draft | jbct-cli, aether |
+| [RFC-0002](RFC-0002-dependency-protocol.md) | Dependency Protocol | Draft | jbct-cli, aether |
+| [RFC-0003](RFC-0003-http-layer.md) | HTTP Layer | Draft | jbct-cli, aether |
 
 ## Workflow
 

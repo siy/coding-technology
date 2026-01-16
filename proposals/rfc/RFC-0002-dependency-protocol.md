@@ -117,7 +117,7 @@ record PaymentServiceProxy(SliceInvokerFacade invoker) implements PaymentService
             ARTIFACT,
             "processPayment",
             request,
-            PaymentResponse.class
+            new TypeToken<PaymentResponse>() {}
         );
     }
 
@@ -127,7 +127,7 @@ record PaymentServiceProxy(SliceInvokerFacade invoker) implements PaymentService
             ARTIFACT,
             "refundPayment",
             request,
-            RefundResponse.class
+            new TypeToken<RefundResponse>() {}
         );
     }
 }
@@ -140,7 +140,7 @@ record PaymentServiceProxy(SliceInvokerFacade invoker) implements PaymentService
 - Holds reference to `SliceInvokerFacade`
 - Static `ARTIFACT` constant for routing
 - Each method delegates to `invoker.invoke(...)`
-- Class literal provides response type for deserialization
+- TypeToken provides response type for deserialization (supports generics)
 
 ### 5. SliceInvokerFacade Contract
 
@@ -149,10 +149,10 @@ Interface provided by aether runtime:
 ```java
 public interface SliceInvokerFacade {
     <R> Promise<R> invoke(
-        String artifact,        // Target slice artifact coordinates
-        String methodName,      // Method to invoke
-        Object request,         // Request payload
-        Class<R> responseType   // For response deserialization
+        String artifact,           // Target slice artifact coordinates
+        String methodName,         // Method to invoke
+        Object request,            // Request payload
+        TypeToken<R> responseType  // For response deserialization (supports generics)
     );
 }
 ```
@@ -163,7 +163,7 @@ public interface SliceInvokerFacade {
 2. **Method Lookup**: Find `SliceMethod` by name in target slice
 3. **Serialization**: Serialize request for network transport (if remote)
 4. **Invocation**: Call handler function or send network request
-5. **Deserialization**: Deserialize response using Class type
+5. **Deserialization**: Deserialize response using TypeToken (supports generic types)
 6. **Error Handling**: Propagate failures through Promise
 
 #### Local vs Remote
@@ -210,7 +210,7 @@ public static Promise<OrderService> orderService(
 | Dependency classification | Package-based internal/external | N/A (generator concern) |
 | Artifact coordinates | From `slice-deps.properties` | Colon-separated `g:a:v` format |
 | External proxy | Record implementing interface | Valid interface implementation |
-| Proxy invocation | `invoker.invoke(artifact, method, req, ResponseType.class)` | SliceInvokerFacade contract |
+| Proxy invocation | `invoker.invoke(artifact, method, req, new TypeToken<R>() {})` | SliceInvokerFacade contract |
 | Internal deps | Factory parameters | Direct instance passing |
 
 ## Examples
@@ -234,7 +234,7 @@ public final class OrderServiceFactory {
             @Override
             public Promise<PaymentResponse> processPayment(PaymentRequest request) {
                 return invoker.invoke(ARTIFACT, "processPayment", request,
-                    PaymentResponse.class);
+                    new TypeToken<PaymentResponse>() {});
             }
         }
 
@@ -244,7 +244,7 @@ public final class OrderServiceFactory {
             @Override
             public Promise<ShippingResponse> createShipment(ShippingRequest request) {
                 return invoker.invoke(ARTIFACT, "createShipment", request,
-                    ShippingResponse.class);
+                    new TypeToken<ShippingResponse>() {});
             }
         }
 
@@ -274,7 +274,7 @@ org.example.users.UserService=org.example:user-service:2.1.0
 
 ```java
 // Inside LocalSliceInvoker (aether)
-public <R> Promise<R> invoke(String artifact, String methodName, Object request, Class<R> responseType) {
+public <R> Promise<R> invoke(String artifact, String methodName, Object request, TypeToken<R> responseType) {
     return sliceStore.findSlice(Artifact.artifact(artifact).unwrap())
         .async(SliceError.NotFound.INSTANCE)
         .flatMap(slice -> {

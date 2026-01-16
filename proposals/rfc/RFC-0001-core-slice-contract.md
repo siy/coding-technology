@@ -143,8 +143,8 @@ public List<SliceMethod<?, ?>> methods() {
         new SliceMethod<>(
             MethodName.methodName("processData").unwrap(),
             this::processData,
-            TypeToken.of(ProcessResponse.class),
-            TypeToken.of(ProcessRequest.class)
+            new TypeToken<ProcessResponse>() {},
+            new TypeToken<ProcessRequest>() {}
         )
     );
 }
@@ -160,7 +160,7 @@ new SliceMethod<>(
     MethodName.methodName("getUsers").unwrap(),
     this::getUsers,
     new TypeToken<List<User>>() {},  // Preserves List<User>, not raw List
-    TypeToken.of(GetUsersRequest.class)
+    new TypeToken<GetUsersRequest>() {}
 )
 ```
 
@@ -267,14 +267,14 @@ final class UserServiceSliceBridge implements Slice {
             new SliceMethod<>(
                 MethodName.methodName("getUser").unwrap(),
                 delegate::getUser,
-                TypeToken.of(UserResponse.class),
-                TypeToken.of(GetUserRequest.class)
+                new TypeToken<UserResponse>() {},
+                new TypeToken<GetUserRequest>() {}
             ),
             new SliceMethod<>(
                 MethodName.methodName("createUser").unwrap(),
                 delegate::createUser,
-                TypeToken.of(CreateUserResponse.class),
-                TypeToken.of(CreateUserRequest.class)
+                new TypeToken<CreateUserResponse>() {},
+                new TypeToken<CreateUserRequest>() {}
             )
         );
     }

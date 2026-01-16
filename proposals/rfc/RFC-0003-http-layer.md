@@ -102,7 +102,7 @@ Generated route handler extracts and binds parameters:
 route.handler((ctx) -> {
     Long orgId = ctx.pathParam("orgId", Long.class);
     Option<Boolean> notify = ctx.queryParam("notify", Boolean.class);
-    CreateUserRequest body = ctx.body(TypeToken.of(CreateUserRequest.class));
+    CreateUserRequest body = ctx.body(new TypeToken<CreateUserRequest>() {});
 
     // Construct actual request (if needed) or pass body directly
     return slice.createUser(body);
@@ -213,7 +213,7 @@ public final class UserServiceRoutes implements RouteSource, SliceRouterFactory<
                     return delegate.getUser(request);
                 }),
             Route.post("/api/v1/users")
-                .body(TypeToken.of(CreateUserRequest.class))
+                .body(new TypeToken<CreateUserRequest>() {})
                 .handler(ctx -> delegate.createUser(ctx.body()))
             // ... more routes
         );

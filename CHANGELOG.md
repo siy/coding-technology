@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.1.3] - 2026-01-18
+
+### Added
+- **RFC-0008: Aspect Framework** - Compile-time aspect framework for cross-cutting concerns
+  - Core interfaces: AspectConfig, AspectFactory, Cache<K,V>
+  - Annotations: @Aspect(CACHE, LOG, METRICS, RETRY, TIMEOUT), @Key
+  - Hierarchical TOML config: [slice.method.section] → [slice.section] → [default.section]
+  - Aspects.with*() composition utilities
+  - Key extraction from request records
+
+### Changed
+- **RFC-0002: Dependency Protocol** - Improved proxy design
+  - Replaced direct invoker.invoke() with pre-built MethodHandle pattern
+  - Added MethodHandle<R, T> interface with invoke(), fireAndForget()
+  - methodHandle() returns Result - parsing failures caught at factory time
+  - Updated all proxy examples to use handle-based design
+
 ## [2.1.2] - 2026-01-13
 
 ### Added

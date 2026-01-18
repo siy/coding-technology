@@ -104,43 +104,45 @@ This causes a clear runtime error rather than silent failure.
 
 ### 4. Proxy Generation
 
-For each external dependency, generator creates a proxy record:
+For each external dependency, generator creates a proxy record with pre-built method handles:
 
 ```java
 // Generated inside factory method
-record PaymentServiceProxy(SliceInvokerFacade invoker) implements PaymentService {
-    private static final String ARTIFACT = "org.example:payment-service:1.2.0";
+record PaymentServiceProxy(
+    MethodHandle<PaymentResponse, PaymentRequest> processPaymentHandle,
+    MethodHandle<RefundResponse, RefundRequest> refundPaymentHandle
+) implements PaymentService {
 
     @Override
     public Promise<PaymentResponse> processPayment(PaymentRequest request) {
-        return invoker.invoke(
-            ARTIFACT,
-            "processPayment",
-            request,
-            new TypeToken<PaymentResponse>() {}
-        );
+        return processPaymentHandle.invoke(request);
     }
 
     @Override
     public Promise<RefundResponse> refundPayment(RefundRequest request) {
-        return invoker.invoke(
-            ARTIFACT,
-            "refundPayment",
-            request,
-            new TypeToken<RefundResponse>() {}
-        );
+        return refundPaymentHandle.invoke(request);
     }
 }
+
+// Proxy creation in factory (handles parsing/validation once)
+private static final String PAYMENT_ARTIFACT = "org.example:payment-service:1.2.0";
+
+var paymentProxy = Result.all(
+    invoker.methodHandle(PAYMENT_ARTIFACT, "processPayment",
+        new TypeToken<PaymentRequest>() {}, new TypeToken<PaymentResponse>() {}),
+    invoker.methodHandle(PAYMENT_ARTIFACT, "refundPayment",
+        new TypeToken<RefundRequest>() {}, new TypeToken<RefundResponse>() {})
+).map(PaymentServiceProxy::new);
 ```
 
 #### Proxy Characteristics
 
 - Record type (immutable, compact)
 - Implements dependency interface
-- Holds reference to `SliceInvokerFacade`
-- Static `ARTIFACT` constant for routing
-- Each method delegates to `invoker.invoke(...)`
-- TypeToken provides response type for deserialization (supports generics)
+- Holds `MethodHandle` references (not raw invoker)
+- Method handles created at factory time (parse artifact/method once)
+- Each method delegates to pre-built handle
+- TypeToken provides type info for serialization (supports generics)
 
 ### 5. SliceInvokerFacade Contract
 
@@ -148,21 +150,35 @@ Interface provided by aether runtime:
 
 ```java
 public interface SliceInvokerFacade {
-    <R> Promise<R> invoke(
+    <R, T> Result<MethodHandle<R, T>> methodHandle(
         String artifact,           // Target slice artifact coordinates
         String methodName,         // Method to invoke
-        Object request,            // Request payload
-        TypeToken<R> responseType  // For response deserialization (supports generics)
+        TypeToken<T> requestType,  // For request serialization
+        TypeToken<R> responseType  // For response deserialization
     );
+}
+
+// MethodHandle for repeated invocations
+public interface MethodHandle<R, T> {
+    Promise<R> invoke(T request);
+    Promise<Unit> fireAndForget(T request);
+    String artifactCoordinate();
+    MethodName methodName();
 }
 ```
 
+#### Design Rationale
+
+- **Method handles over direct invoke**: Artifact/method parsing happens once at handle creation
+- **Result return**: Parsing failures caught at factory time, not invocation time
+- **TypeToken for both types**: Full generic support for request and response
+
 #### Implementation Responsibilities
 
-1. **Artifact Resolution**: Map artifact string to slice instance
-2. **Method Lookup**: Find `SliceMethod` by name in target slice
-3. **Serialization**: Serialize request for network transport (if remote)
-4. **Invocation**: Call handler function or send network request
+1. **Artifact Parsing**: Validate artifact string format at handle creation
+2. **Method Resolution**: Validate method name format at handle creation
+3. **Handle Creation**: Return reusable handle for repeated invocations
+4. **Serialization**: Serialize request using TypeToken for network transport
 5. **Deserialization**: Deserialize response using TypeToken (supports generic types)
 6. **Error Handling**: Propagate failures through Promise
 
@@ -191,17 +207,22 @@ public static Promise<OrderService> orderService(
         SliceInvokerFacade invoker,
         InventoryService inventory) {  // Internal dep passed directly
 
-    // External dep gets proxy
-    var paymentProxy = new PaymentServiceProxy(invoker);
-
-    var impl = new OrderServiceImpl(inventory, paymentProxy);
-    return Promise.success(aspect.apply(impl));
+    // External dep gets proxy with pre-built handles
+    return invoker.methodHandle(PAYMENT_ARTIFACT, "processPayment",
+                                new TypeToken<PaymentRequest>() {},
+                                new TypeToken<PaymentResponse>() {})
+        .map(handle -> new PaymentServiceProxy(handle))
+        .map(paymentProxy -> new OrderServiceImpl(inventory, paymentProxy))
+        .map(aspect::apply)
+        .map(Promise::success)
+        .or(Promise::failed);
 }
 ```
 
 **Wiring Rules:**
 - Internal deps: Passed as factory parameters (caller instantiates)
-- External deps: Proxy created inside factory using `invoker`
+- External deps: Proxy created inside factory with method handles from `invoker`
+- Factory returns `Promise` - handle creation failures propagate
 
 ### Contracts Summary
 
@@ -209,8 +230,8 @@ public static Promise<OrderService> orderService(
 |-----------|-------------------|----------------|
 | Dependency classification | Package-based internal/external | N/A (generator concern) |
 | Artifact coordinates | From `slice-deps.properties` | Colon-separated `g:a:v` format |
-| External proxy | Record implementing interface | Valid interface implementation |
-| Proxy invocation | `invoker.invoke(artifact, method, req, new TypeToken<R>() {})` | SliceInvokerFacade contract |
+| External proxy | Record with MethodHandle fields | Valid interface implementation |
+| Proxy creation | `invoker.methodHandle(artifact, method, reqType, respType)` | SliceInvokerFacade.methodHandle |
 | Internal deps | Factory parameters | Direct instance passing |
 
 ## Examples
@@ -221,41 +242,49 @@ public static Promise<OrderService> orderService(
 public final class OrderServiceFactory {
     private OrderServiceFactory() {}
 
+    private static final String PAYMENT_ARTIFACT = "org.example:payment-service:1.2.0";
+    private static final String SHIPPING_ARTIFACT = "org.example:shipping-service:3.0.0";
+
+    // External dependency proxies with pre-built handles
+    record PaymentServiceProxy(
+        MethodHandle<PaymentResponse, PaymentRequest> processPaymentHandle
+    ) implements PaymentService {
+        @Override
+        public Promise<PaymentResponse> processPayment(PaymentRequest request) {
+            return processPaymentHandle.invoke(request);
+        }
+    }
+
+    record ShippingServiceProxy(
+        MethodHandle<ShippingResponse, ShippingRequest> createShipmentHandle
+    ) implements ShippingService {
+        @Override
+        public Promise<ShippingResponse> createShipment(ShippingRequest request) {
+            return createShipmentHandle.invoke(request);
+        }
+    }
+
     public static Promise<OrderService> orderService(
             Aspect<OrderService> aspect,
             SliceInvokerFacade invoker,
             InventoryService inventory,    // Internal
             NotificationService notifier)  // Internal
     {
-        // External dependencies - proxied
-        record PaymentServiceProxy(SliceInvokerFacade invoker) implements PaymentService {
-            private static final String ARTIFACT = "org.example:payment-service:1.2.0";
-
-            @Override
-            public Promise<PaymentResponse> processPayment(PaymentRequest request) {
-                return invoker.invoke(ARTIFACT, "processPayment", request,
-                    new TypeToken<PaymentResponse>() {});
-            }
-        }
-
-        record ShippingServiceProxy(SliceInvokerFacade invoker) implements ShippingService {
-            private static final String ARTIFACT = "org.example:shipping-service:3.0.0";
-
-            @Override
-            public Promise<ShippingResponse> createShipment(ShippingRequest request) {
-                return invoker.invoke(ARTIFACT, "createShipment", request,
-                    new TypeToken<ShippingResponse>() {});
-            }
-        }
-
-        var impl = new OrderServiceImpl(
-            inventory,                        // Internal - direct
-            notifier,                         // Internal - direct
-            new PaymentServiceProxy(invoker), // External - proxied
-            new ShippingServiceProxy(invoker) // External - proxied
-        );
-
-        return Promise.success(aspect.apply(impl));
+        // Create method handles for external dependencies
+        return Result.all(
+            invoker.methodHandle(PAYMENT_ARTIFACT, "processPayment",
+                new TypeToken<PaymentRequest>() {}, new TypeToken<PaymentResponse>() {}),
+            invoker.methodHandle(SHIPPING_ARTIFACT, "createShipment",
+                new TypeToken<ShippingRequest>() {}, new TypeToken<ShippingResponse>() {})
+        ).map((paymentHandle, shippingHandle) -> {
+            var impl = new OrderServiceImpl(
+                inventory,                              // Internal - direct
+                notifier,                               // Internal - direct
+                new PaymentServiceProxy(paymentHandle), // External - proxied
+                new ShippingServiceProxy(shippingHandle) // External - proxied
+            );
+            return aspect.apply(impl);
+        }).async();
     }
 }
 ```
@@ -273,20 +302,21 @@ org.example.users.UserService=org.example:user-service:2.1.0
 ### Aether Invocation Flow
 
 ```java
-// Inside LocalSliceInvoker (aether)
-public <R> Promise<R> invoke(String artifact, String methodName, Object request, TypeToken<R> responseType) {
-    return sliceStore.findSlice(Artifact.artifact(artifact).unwrap())
-        .async(SliceError.NotFound.INSTANCE)
-        .flatMap(slice -> {
-            var method = slice.methods().stream()
-                .filter(m -> m.name().value().equals(methodName))
-                .findFirst()
-                .orElseThrow();
+// Inside SliceInvoker (aether) - methodHandle creates reusable handle
+public <R, T> Result<MethodHandle<R, T>> methodHandle(
+        String artifact, String methodName,
+        TypeToken<T> requestType, TypeToken<R> responseType) {
+    return Artifact.artifact(artifact)
+        .flatMap(art -> MethodName.methodName(methodName)
+            .map(method -> createMethodHandle(art, method, requestType, responseType)));
+}
 
-            @SuppressWarnings("unchecked")
-            var typedMethod = (SliceMethod<I, O>) method;
-            return typedMethod.handler().apply(request);
-        });
+// MethodHandle.invoke() routes to correct slice
+private <R> Promise<R> invokeInternal(Artifact artifact, MethodName method, Object request) {
+    return selectEndpoint(artifact, method)
+        .flatMap(endpoint -> endpoint.nodeId().equals(self)
+            ? invokeLocal(artifact, method, request)    // Same node - direct call
+            : invokeRemote(endpoint, artifact, method, request)); // Different node - network
 }
 ```
 

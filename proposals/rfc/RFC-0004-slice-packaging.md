@@ -14,7 +14,7 @@ Defines the packaging format for slice artifacts, including JAR structure, MANIF
 
 ## Motivation
 
-Slices are packaged into two JAR artifacts: an API JAR for consumers and an implementation JAR (fat JAR) for deployment. The runtime must understand the JAR structure to correctly load slices with proper classloader isolation. This RFC establishes the contract between the packaging process (jbct-cli) and the runtime loader (aether).
+Each slice is packaged into a single JAR artifact (fat JAR) containing the `@Slice` interface, implementation, and all bundled dependencies. Consumers depend on the `@Slice` interface directly - no separate API artifact is needed. The runtime must understand the JAR structure to correctly load slices with proper classloader isolation. This RFC establishes the contract between the packaging process (jbct-cli) and the runtime loader (aether).
 
 ## Design
 
@@ -29,49 +29,28 @@ From a source module containing `@Slice` interface `OrderService`:
 
 | Artifact | Naming Pattern | Example |
 |----------|----------------|---------|
-| API JAR | `{module}-{slice-suffix}-api-{version}.jar` | `commerce-order-service-api-1.0.0.jar` |
-| Impl JAR | `{module}-{slice-suffix}-{version}.jar` | `commerce-order-service-1.0.0.jar` |
-| API POM | `{module}-{slice-suffix}-api-{version}.pom` | `commerce-order-service-api-1.0.0.pom` |
-| Impl POM | `{module}-{slice-suffix}-{version}.pom` | `commerce-order-service-1.0.0.pom` |
+| Slice JAR | `{module}-{slice-suffix}-{version}.jar` | `commerce-order-service-1.0.0.jar` |
+| Slice POM | `{module}-{slice-suffix}-{version}.pom` | `commerce-order-service-1.0.0.pom` |
 
 The `slice-suffix` is derived from the interface name using kebab-case conversion:
 - `OrderService` → `order-service`
 - `UserManagement` → `user-management`
 
-### 2. API JAR Contents
+### 2. Slice JAR Contents (Fat JAR)
 
-The API JAR contains only the public contract:
-
-```
-commerce-order-service-api-1.0.0.jar
-├── org/example/order/api/
-│   └── OrderService.class          # Generated API interface
-├── org/example/order/
-│   ├── PlaceOrderRequest.class     # Request types (nested or standalone)
-│   ├── PlaceOrderRequest$Item.class
-│   └── OrderResult.class           # Response types
-└── META-INF/
-    └── MANIFEST.MF
-```
-
-**Inclusion rules:**
-- Generated API interface (`{package}.api.{SliceName}`)
-- All request types referenced by slice methods
-- All response types referenced by slice methods
-- Nested classes of request/response types
-
-### 3. Impl JAR Contents (Fat JAR)
-
-The implementation JAR is a fat JAR containing everything needed to run the slice:
+The slice JAR is a fat JAR containing everything needed to run the slice, including the public `@Slice` interface:
 
 ```
 commerce-order-service-1.0.0.jar
 ├── org/example/order/
-│   ├── OrderService.class              # Original @Slice interface
+│   ├── OrderService.class              # @Slice interface (public API)
 │   ├── OrderServiceImpl.class          # Implementation
 │   ├── OrderServiceFactory.class       # Generated factory
-│   ├── OrderServiceFactory$orderServiceSlice.class
+│   ├── OrderServiceFactory$InventoryServiceProxy.class
 │   ├── OrderServiceFactory$PaymentServiceProxy.class
+│   ├── PlaceOrderRequest.class         # Request types
+│   ├── PlaceOrderRequest$Item.class    # Nested request types
+│   ├── OrderResult.class               # Response types
 │   └── internal/                       # Subpackage classes
 │       └── OrderValidator.class
 ├── org/example/shared/                 # Sibling shared package
@@ -86,11 +65,19 @@ commerce-order-service-1.0.0.jar
 │   └── services/                       # Merged service files
 │       └── ...
 └── ...
+
+**Inclusion rules:**
+- `@Slice` interface (consumers depend on this directly)
+- Implementation class
+- Generated factory and proxy classes
+- All request/response types referenced by slice methods
+- Nested classes of request/response types
+- Bundled external dependencies
 ```
 
-### 4. MANIFEST.MF Entries
+### 3. MANIFEST.MF Entries
 
-The impl JAR's MANIFEST.MF includes slice-specific entries:
+The slice JAR's MANIFEST.MF includes slice-specific entries:
 
 ```
 Manifest-Version: 1.0
@@ -110,15 +97,11 @@ var artifact = manifest.getMainAttributes().getValue("Slice-Artifact");
 var factoryClass = manifest.getMainAttributes().getValue("Slice-Class");
 ```
 
-### 5. Dependency File Format
+### 4. Dependency File Format
 
 Location: `META-INF/dependencies/{FactoryClassName}`
 
 ```
-[api]
-org.example:inventory-service-api:^1.0.0
-org.example:payment-service-api:^2.0.0
-
 [shared]
 org.pragmatica-lite:core:^0.9.0
 
@@ -134,7 +117,6 @@ org.example:payment-service:^2.0.0
 
 | Section | Purpose | ClassLoader Treatment |
 |---------|---------|----------------------|
-| `[api]` | Slice API interfaces for generated proxies | Loaded in slice's parent classloader |
 | `[shared]` | Libraries with shared instances | Loaded in shared classloader |
 | `[infra]` | Infrastructure with shared instances via InfraStore | Loaded in infra classloader |
 | `[slices]` | Slice dependencies (for resolution ordering) | Resolved recursively |
@@ -146,7 +128,7 @@ Uses semver ranges:
 - `~1.0.0` - Patch-level compatible (>=1.0.0 <1.1.0)
 - `1.0.0` - Exact version
 
-### 6. Fat JAR Bundling Rules
+### 5. Fat JAR Bundling Rules
 
 External dependencies (compile/runtime scope) are bundled into the impl JAR:
 
@@ -196,7 +178,7 @@ All `org.pragmatica-lite` and `org.pragmatica-lite.aether` dependencies **must**
 // 4. Merge META-INF/services/ files
 ```
 
-### 7. Slice Manifest Format
+### 6. Slice Manifest Format
 
 Location: `META-INF/slice/{SliceName}.manifest`
 
@@ -208,34 +190,30 @@ slice.name=OrderService
 slice.artifactSuffix=order-service
 slice.package=org.example.order
 
-# Classes for API JAR
-api.classes=org.example.order.api.OrderService
-
-# Classes for Impl JAR
+# Classes in Slice JAR
+slice.interface=org.example.order.OrderService
 impl.classes=org.example.order.OrderService,\
+             org.example.order.OrderServiceImpl,\
              org.example.order.OrderServiceFactory,\
-             org.example.order.OrderServiceFactory$orderServiceSlice,\
+             org.example.order.OrderServiceFactory$InventoryServiceProxy,\
              org.example.order.OrderServiceFactory$PaymentServiceProxy
 
-# Request/Response types (included in API JAR)
+# Request/Response types
 request.classes=org.example.order.PlaceOrderRequest
 response.classes=org.example.order.OrderResult
 
 # Artifact coordinates
 base.artifact=org.example:commerce
-api.artifactId=commerce-order-service-api
-impl.artifactId=commerce-order-service
+slice.artifactId=commerce-order-service
 
-# Dependencies
+# Dependencies (all via invoker proxy)
 dependencies.count=2
 dependency.0.interface=org.example.inventory.InventoryService
 dependency.0.artifact=org.example:inventory-service
 dependency.0.version=1.0.0
-dependency.0.external=true
-dependency.1.interface=org.example.order.validation.Validator
-dependency.1.artifact=
-dependency.1.version=
-dependency.1.external=false
+dependency.1.interface=org.example.payment.PaymentService
+dependency.1.artifact=org.example:payment-service
+dependency.1.version=1.2.0
 
 # Runtime config
 config.file=slices/OrderService.toml
@@ -245,7 +223,7 @@ generated.timestamp=2026-01-15T10:30:00Z
 processor.version=0.5.0
 ```
 
-### 8. Shared Code Inclusion
+### 7. Shared Code Inclusion
 
 Application shared code is automatically included in the impl JAR:
 
@@ -266,8 +244,7 @@ org.example/
 
 | Component | jbct-cli Generates | aether Expects |
 |-----------|-------------------|----------------|
-| API JAR | API interface + request/response types | Consumer dependency |
-| Impl JAR | Fat JAR with all runtime code | Slice deployment unit |
+| Slice JAR | Fat JAR with @Slice interface + impl + deps | Slice deployment unit |
 | MANIFEST.MF | `Slice-Artifact`, `Slice-Class` | Slice discovery |
 | Dependency file | `META-INF/dependencies/{Factory}` | ClassLoader configuration |
 | Slice manifest | `META-INF/slice/{Name}.manifest` | Packaging metadata |
@@ -290,21 +267,16 @@ commerce/
         └── PaymentServiceImpl.java
 ```
 
-Produces four JARs:
+Produces two JARs (one per slice):
 ```
 target/
-├── commerce-order-service-api-1.0.0.jar
 ├── commerce-order-service-1.0.0.jar
-├── commerce-payment-service-api-1.0.0.jar
 └── commerce-payment-service-1.0.0.jar
 ```
 
 ### Dependency File Example
 
 ```
-[api]
-org.example:inventory-service-api:^1.0.0
-
 [shared]
 org.pragmatica-lite:core:^0.9.10
 org.pragmatica-lite:json:^0.9.10

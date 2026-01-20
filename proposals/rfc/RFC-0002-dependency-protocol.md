@@ -10,52 +10,20 @@ Affects: [jbct-cli, aether]
 
 ## Summary
 
-Defines how slice dependencies are classified, resolved, and invoked at runtime. Covers internal vs external dependency distinction, artifact coordinate format, proxy generation, and the `SliceInvokerFacade` contract.
+Defines how slice dependencies are resolved and invoked at runtime. Covers artifact coordinate format, proxy generation, and the `SliceInvokerFacade` contract. All slice dependencies use the same proxy mechanism regardless of deployment location.
 
 ## Motivation
 
-Slices depend on other slices. Some dependencies are internal (same deployment unit), others are external (separate artifacts requiring network calls). The generator must produce correct wiring code, and the runtime must route calls appropriately. This RFC establishes the protocol for dependency resolution and invocation.
+Slices depend on other slices. All dependencies are resolved through `SliceInvokerFacade` proxies, allowing the runtime to route calls appropriately whether the target slice is local or remote. This RFC establishes the protocol for dependency resolution and invocation.
 
 ## Design
 
 ### Boundaries
 
-- **jbct-cli**: Classifies dependencies, generates proxies for external deps, resolves artifact coordinates
+- **jbct-cli**: Generates proxies for all dependencies, resolves artifact coordinates
 - **aether**: Provides `SliceInvokerFacade` implementation, routes calls to correct slice instances
 
-### 1. Dependency Classification
-
-Dependencies are classified based on package structure:
-
-```
-Base package: org.example.myslice
-
-Internal: org.example.myslice.other.OtherSlice     (same base)
-External: org.example.payments.PaymentService      (different base)
-```
-
-#### Classification Rules
-
-```java
-// DependencyModel.isExternal()
-boolean isExternal(String basePackage) {
-    return !dependencyPackage.startsWith(basePackage);
-}
-```
-
-**Internal dependencies:**
-- Same base package
-- Wired via direct factory method calls
-- No artifact coordinates needed
-- Instantiated in same classloader
-
-**External dependencies:**
-- Different base package
-- Wired via generated proxy records
-- Require artifact coordinates for routing
-- May be in different classloader/JVM
-
-### 2. Artifact Coordinate Format
+### 1. Artifact Coordinate Format
 
 Format: `groupId:artifactId:version`
 
@@ -70,7 +38,7 @@ org.example:payment-service:1.2.0
 
 **Validation:** Performed by `Artifact.artifact(String)` in aether's slice module.
 
-### 3. Dependency Resolution
+### 2. Dependency Resolution
 
 #### slice-deps.properties
 
@@ -89,7 +57,7 @@ Value: Maven artifact coordinates
 
 1. `jbct:collect-slice-deps` Maven goal scans `provided` dependencies
 2. For each dependency JAR, reads `META-INF/slice-api.properties`
-3. Extracts `api.interface` and `slice.artifact`
+3. Extracts `slice.interface` and `slice.artifact`
 4. Writes mapping to `slice-deps.properties`
 
 #### Unresolved Dependencies
@@ -102,9 +70,9 @@ private static final String ARTIFACT = "groupId:artifactId:UNRESOLVED";
 
 This causes a clear runtime error rather than silent failure.
 
-### 4. Proxy Generation
+### 3. Proxy Generation
 
-For each external dependency, generator creates a proxy record with pre-built method handles:
+For each slice dependency declared in the factory method, the generator creates a proxy record with pre-built method handles:
 
 ```java
 // Generated inside factory method
@@ -143,8 +111,9 @@ var paymentProxy = Result.all(
 - Method handles created at factory time (parse artifact/method once)
 - Each method delegates to pre-built handle
 - TypeToken provides type info for serialization (supports generics)
+- All slice dependencies use proxies (no direct wiring)
 
-### 5. SliceInvokerFacade Contract
+### 4. SliceInvokerFacade Contract
 
 Interface provided by aether runtime:
 
@@ -197,55 +166,78 @@ public interface MethodHandle<R, T> {
                         └─────────────────────────────┘
 ```
 
-### 6. Factory Wiring
+### 5. Factory Wiring
 
-Generated factory wires dependencies appropriately:
+Generated factory wires all dependencies via proxies:
 
 ```java
 public static Promise<OrderService> orderService(
         Aspect<OrderService> aspect,
-        SliceInvokerFacade invoker,
-        InventoryService inventory) {  // Internal dep passed directly
+        SliceInvokerFacade invoker) {
 
-    // External dep gets proxy with pre-built handles
-    return invoker.methodHandle(PAYMENT_ARTIFACT, "processPayment",
-                                new TypeToken<PaymentRequest>() {},
-                                new TypeToken<PaymentResponse>() {})
-        .map(handle -> new PaymentServiceProxy(handle))
-        .map(paymentProxy -> new OrderServiceImpl(inventory, paymentProxy))
-        .map(aspect::apply)
-        .map(Promise::success)
-        .or(Promise::failed);
+    // All dependencies get proxies with pre-built handles
+    return Result.all(
+        invoker.methodHandle(INVENTORY_ARTIFACT, "checkStock",
+            new TypeToken<CheckStockRequest>() {}, new TypeToken<CheckStockResponse>() {}),
+        invoker.methodHandle(PAYMENT_ARTIFACT, "processPayment",
+            new TypeToken<PaymentRequest>() {}, new TypeToken<PaymentResponse>() {})
+    ).map((inventoryHandle, paymentHandle) -> {
+        var impl = new OrderServiceImpl(
+            new InventoryServiceProxy(inventoryHandle),
+            new PaymentServiceProxy(paymentHandle)
+        );
+        return aspect.apply(impl);
+    }).async();
 }
 ```
 
 **Wiring Rules:**
-- Internal deps: Passed as factory parameters (caller instantiates)
-- External deps: Proxy created inside factory with method handles from `invoker`
+- All slice dependencies: Proxy created inside factory with method handles from `invoker`
+- No dependencies passed as factory parameters (only `Aspect` and `SliceInvokerFacade`)
 - Factory returns `Promise` - handle creation failures propagate
+- Runtime routes calls based on deployment topology (local or remote)
 
 ### Contracts Summary
 
 | Component | jbct-cli Generates | aether Expects |
 |-----------|-------------------|----------------|
-| Dependency classification | Package-based internal/external | N/A (generator concern) |
 | Artifact coordinates | From `slice-deps.properties` | Colon-separated `g:a:v` format |
-| External proxy | Record with MethodHandle fields | Valid interface implementation |
+| Dependency proxy | Record with MethodHandle fields | Valid interface implementation |
 | Proxy creation | `invoker.methodHandle(artifact, method, reqType, respType)` | SliceInvokerFacade.methodHandle |
-| Internal deps | Factory parameters | Direct instance passing |
+| Factory signature | `(Aspect, SliceInvokerFacade)` | No direct dependency parameters |
 
 ## Examples
 
-### Complete Factory with Mixed Dependencies
+### Complete Factory with Dependencies
 
 ```java
 public final class OrderServiceFactory {
     private OrderServiceFactory() {}
 
+    private static final String INVENTORY_ARTIFACT = "org.example:inventory-service:1.0.0";
+    private static final String NOTIFICATION_ARTIFACT = "org.example:notification-service:1.5.0";
     private static final String PAYMENT_ARTIFACT = "org.example:payment-service:1.2.0";
     private static final String SHIPPING_ARTIFACT = "org.example:shipping-service:3.0.0";
 
-    // External dependency proxies with pre-built handles
+    // All dependency proxies with pre-built handles
+    record InventoryServiceProxy(
+        MethodHandle<CheckStockResponse, CheckStockRequest> checkStockHandle
+    ) implements InventoryService {
+        @Override
+        public Promise<CheckStockResponse> checkStock(CheckStockRequest request) {
+            return checkStockHandle.invoke(request);
+        }
+    }
+
+    record NotificationServiceProxy(
+        MethodHandle<SendNotificationResponse, SendNotificationRequest> sendHandle
+    ) implements NotificationService {
+        @Override
+        public Promise<SendNotificationResponse> send(SendNotificationRequest request) {
+            return sendHandle.invoke(request);
+        }
+    }
+
     record PaymentServiceProxy(
         MethodHandle<PaymentResponse, PaymentRequest> processPaymentHandle
     ) implements PaymentService {
@@ -266,22 +258,24 @@ public final class OrderServiceFactory {
 
     public static Promise<OrderService> orderService(
             Aspect<OrderService> aspect,
-            SliceInvokerFacade invoker,
-            InventoryService inventory,    // Internal
-            NotificationService notifier)  // Internal
-    {
-        // Create method handles for external dependencies
+            SliceInvokerFacade invoker) {
+
+        // Create method handles for all dependencies
         return Result.all(
+            invoker.methodHandle(INVENTORY_ARTIFACT, "checkStock",
+                new TypeToken<CheckStockRequest>() {}, new TypeToken<CheckStockResponse>() {}),
+            invoker.methodHandle(NOTIFICATION_ARTIFACT, "send",
+                new TypeToken<SendNotificationRequest>() {}, new TypeToken<SendNotificationResponse>() {}),
             invoker.methodHandle(PAYMENT_ARTIFACT, "processPayment",
                 new TypeToken<PaymentRequest>() {}, new TypeToken<PaymentResponse>() {}),
             invoker.methodHandle(SHIPPING_ARTIFACT, "createShipment",
                 new TypeToken<ShippingRequest>() {}, new TypeToken<ShippingResponse>() {})
-        ).map((paymentHandle, shippingHandle) -> {
+        ).map((inventoryHandle, notificationHandle, paymentHandle, shippingHandle) -> {
             var impl = new OrderServiceImpl(
-                inventory,                              // Internal - direct
-                notifier,                               // Internal - direct
-                new PaymentServiceProxy(paymentHandle), // External - proxied
-                new ShippingServiceProxy(shippingHandle) // External - proxied
+                new InventoryServiceProxy(inventoryHandle),
+                new NotificationServiceProxy(notificationHandle),
+                new PaymentServiceProxy(paymentHandle),
+                new ShippingServiceProxy(shippingHandle)
             );
             return aspect.apply(impl);
         }).async();
@@ -324,7 +318,7 @@ private <R> Promise<R> invokeInternal(Artifact artifact, MethodName method, Obje
 
 ### Circular Dependencies
 
-Circular dependencies between external slices are allowed - proxies are lazy (invoke on call, not on construction). Circular internal dependencies cause compile-time factory parameter cycle.
+Circular dependencies between slices are allowed - proxies are lazy (invoke on call, not on construction). The proxy pattern naturally supports circular references since method handles are only invoked at call time.
 
 ### Version Mismatches
 

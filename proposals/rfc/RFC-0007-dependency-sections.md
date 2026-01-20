@@ -10,12 +10,11 @@ Affects: [jbct-cli, aether]
 
 ## Summary
 
-Defines the dependency file sections (`[api]`, `[shared]`, `[infra]`, `[slices]`) and how Aether's ClassLoader hierarchy treats each category.
+Defines the dependency file sections (`[shared]`, `[infra]`, `[slices]`) and how Aether's ClassLoader hierarchy treats each category.
 
 ## Motivation
 
 Slices have different types of dependencies with different sharing semantics:
-- API interfaces need to be shared across proxies
 - Libraries can be shared to reduce memory
 - Infrastructure needs shared instances (not just classes)
 - Slice dependencies need full isolation
@@ -45,10 +44,6 @@ META-INF/dependencies/org.example.order.OrderServiceFactory
 INI-style sections with Maven coordinates:
 
 ```
-[api]
-org.example:inventory-service-api:^1.0.0
-org.example:payment-service-api:^2.0.0
-
 [shared]
 org.pragmatica-lite:core:^0.9.10
 com.fasterxml.jackson.core:jackson-databind:^2.15.0
@@ -73,33 +68,6 @@ Semver ranges following npm/Cargo conventions:
 | `1.0.0` | Exact version | `=1.0.0` |
 
 ### 4. Section Definitions
-
-#### `[api]` - Slice API Interfaces
-
-**Purpose:** API interfaces for generated proxy records
-
-**Classification criteria:**
-- Slice dependencies (JARs containing `META-INF/slice-api.properties`)
-- Converted to `-api` artifact (`payment-service` → `payment-service-api`)
-
-**ClassLoader treatment:**
-- Loaded in SharedLibraryClassLoader (parent of slice classloaders)
-- Visible to all slices
-- No instance sharing (interfaces only)
-
-**Example:**
-```
-[api]
-org.example:inventory-service-api:^1.0.0
-```
-
-**Usage:** Proxy records implement these interfaces:
-```java
-record InventoryServiceProxy(SliceInvokerFacade invoker)
-    implements InventoryService {  // From [api] section
-    ...
-}
-```
 
 #### `[shared]` - Shared Libraries
 
@@ -192,9 +160,8 @@ org.example:payment-service:^2.0.0
                               ▼
 ┌─────────────────────────────────────────────────────────────┐
 │                SharedLibraryClassLoader                      │
-│         [api] + [shared] + [infra] dependencies              │
+│              [shared] + [infra] dependencies                 │
 │                                                              │
-│  • Slice API interfaces (for proxy compilation)              │
 │  • Shared libraries (pragmatica-lite, jackson, etc.)         │
 │  • Infrastructure JARs (with InfraStore instances)           │
 └─────────────────────────────────────────────────────────────┘
@@ -203,11 +170,14 @@ org.example:payment-service:^2.0.0
 ┌─────────────────────────┐  ┌─────────────────────────┐
 │    SliceClassLoader A   │  │    SliceClassLoader B   │
 │                         │  │                         │
-│  • Slice A impl JAR     │  │  • Slice B impl JAR     │
-│  • Bundled libs         │  │  • Bundled libs         │
+│  • Slice A JAR          │  │  • Slice B JAR          │
+│    (@Slice interface    │  │    (@Slice interface    │
+│     + impl + bundled)   │  │     + impl + bundled)   │
 │  (conflict resolution)  │  │  (conflict resolution)  │
 └─────────────────────────┘  └─────────────────────────┘
 ```
+
+**Note:** Each slice JAR contains its own `@Slice` interface. Proxies in calling slices implement the dependency's interface, which is loaded from the dependency's slice JAR when the proxy is created.
 
 ### 6. Conflict Resolution
 
@@ -232,21 +202,15 @@ The following are NOT included in dependency file (always provided by platform):
 
 | Section | jbct-cli Populates From | aether Loads Into | Instance Sharing |
 |---------|------------------------|-------------------|------------------|
-| `[api]` | Slice deps → `-api` suffix | SharedLibraryClassLoader | N/A (interfaces) |
 | `[shared]` | Provided scope, non-infra | SharedLibraryClassLoader | No (per-slice) |
 | `[infra]` | `infra-*` artifacts | SharedLibraryClassLoader | Yes (InfraStore) |
-| `[slices]` | External slice deps | Per-slice ClassLoader | N/A (ordering only) |
+| `[slices]` | Slice dependencies | Per-slice ClassLoader | N/A (ordering only) |
 
 ## Examples
 
 ### Complete Dependency File
 
 ```
-[api]
-org.example:inventory-service-api:^1.0.0
-org.example:payment-service-api:^2.0.0
-org.example:shipping-service-api:^1.5.0
-
 [shared]
 org.pragmatica-lite:core:^0.9.10
 org.pragmatica-lite:json:^0.9.10
@@ -279,14 +243,14 @@ public static Promise<OrderService> create(...) {
 
 ### Version Resolution
 
-When multiple slices declare different versions:
+When multiple slices declare different versions of a shared library:
 
 ```
-Slice A: org.example:payment-service-api:^1.0.0
-Slice B: org.example:payment-service-api:^1.2.0
+Slice A: org.pragmatica-lite:core:^0.9.0
+Slice B: org.pragmatica-lite:core:^0.9.10
 ```
 
-Aether resolves to highest compatible: `1.2.x` (satisfies both `^1.0.0` and `^1.2.0`)
+Aether resolves to highest compatible: `0.9.10` (satisfies both `^0.9.0` and `^0.9.10`)
 
 ## Edge Cases
 
@@ -295,10 +259,10 @@ Aether resolves to highest compatible: `1.2.x` (satisfies both `^1.0.0` and `^1.
 Sections can be omitted if empty:
 
 ```
-[api]
-org.example:payment-service-api:^1.0.0
+[slices]
+org.example:payment-service:^1.0.0
 
-# No [shared], [infra], or [slices] sections
+# No [shared] or [infra] sections
 ```
 
 ### No External Dependencies

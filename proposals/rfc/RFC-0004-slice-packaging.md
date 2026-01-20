@@ -158,9 +158,34 @@ External dependencies (compile/runtime scope) are bundled into the impl JAR:
 
 **NOT Bundled:**
 - Aether runtime libraries (`slice-annotations`, `slice-api`, `infra-api`)
+- Pragmatica Lite core (`org.pragmatica-lite:core`)
 - Provided-scope dependencies (resolved by platform)
 - Slice dependencies (loaded separately)
 - Infrastructure dependencies (shared via InfraStore)
+
+**Required `provided` Scope:**
+
+All `org.pragmatica-lite` and `org.pragmatica-lite.aether` dependencies **must** use `provided` scope in slice projects. The `jbct:verify-slice` goal validates this requirement and fails the build if violated.
+
+```xml
+<!-- CORRECT: provided scope -->
+<dependency>
+    <groupId>org.pragmatica-lite</groupId>
+    <artifactId>core</artifactId>
+    <scope>provided</scope>
+</dependency>
+
+<!-- WRONG: compile scope (default) - causes build failure -->
+<dependency>
+    <groupId>org.pragmatica-lite</groupId>
+    <artifactId>core</artifactId>
+</dependency>
+```
+
+**Rationale:**
+- Aether runtime provides these libraries with classloader isolation
+- Bundling causes version conflicts and classloading issues
+- Reduces slice JAR size significantly
 
 **Bundling process:**
 ```java

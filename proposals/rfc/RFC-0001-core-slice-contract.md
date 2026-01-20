@@ -44,17 +44,15 @@ public final class MySliceFactory {
 ```java
 public static Promise<{SliceName}> {sliceName}(
     Aspect<{SliceName}> aspect,      // Required, first parameter
-    SliceInvokerFacade invoker,      // Required, second parameter
-    {Dependency1} dep1,              // Internal dependencies (if any)
-    {Dependency2} dep2               // In declaration order
+    SliceInvokerFacade invoker       // Required, second parameter
 )
 ```
 
 **Rules:**
 - Return type: `Promise<{SliceName}>` (never raw type, never `Result<Promise<...>>`)
 - First parameter: `Aspect<{SliceName}>` for decoration (use `Aspect.identity()` for no-op)
-- Second parameter: `SliceInvokerFacade` for inter-slice calls (see [RFC-0002](RFC-0002-dependency-protocol.md))
-- Remaining parameters: internal dependencies in declaration order
+- Second parameter: `SliceInvokerFacade` for all dependency invocations (see [RFC-0002](RFC-0002-dependency-protocol.md))
+- All dependencies (slice dependencies) are resolved via `SliceInvokerFacade` proxies - no direct parameters
 
 #### Aether Discovery
 
@@ -189,34 +187,34 @@ Promise<ResponseType> methodName(RequestType request);
 Location: `META-INF/slice-api.properties`
 
 ```properties
-api.artifact=org.example:my-slice-api:1.0.0
 slice.artifact=org.example:my-slice:1.0.0
-api.interface=org.example.myslice.api.MySlice
-impl.interface=org.example.myslice.MySliceImpl
+slice.interface=org.example.myslice.MySlice
+impl.class=org.example.myslice.MySliceImpl
 generated.timestamp=2026-01-15T12:00:00Z
 processor.version=0.5.0
 ```
 
 **Fields:**
-- `api.artifact`: Maven coordinates of API module (if separate)
-- `slice.artifact`: Maven coordinates of slice implementation
-- `api.interface`: Fully qualified name of generated API interface
-- `impl.interface`: Fully qualified name of implementation class
+- `slice.artifact`: Maven coordinates of the slice JAR
+- `slice.interface`: Fully qualified name of the `@Slice` interface (public API)
+- `impl.class`: Fully qualified name of implementation class
 - `generated.timestamp`: ISO 8601 generation timestamp
 - `processor.version`: Version of slice-processor that generated this
 
 **Usage by aether:**
 - Loaded via `ClassLoader.getResourceAsStream("META-INF/slice-api.properties")`
 - Used for slice registration and routing
+- Consumers depend on `slice.interface` directly (no separate API artifact)
 
 ### Contracts Summary
 
 | Component | jbct-cli Generates | aether Expects |
 |-----------|-------------------|----------------|
 | Factory class | `{SliceName}Factory` | Class name pattern match |
-| Factory method | `{sliceName}(Aspect, SliceInvokerFacade, ...)` | Reflection by name + signature |
+| Factory method | `{sliceName}(Aspect, SliceInvokerFacade)` | Reflection by name + signature |
 | Return type | `Promise<{SliceName}>` | Unwrapped via `.await()` or composed |
 | Aspect param | First parameter, `Aspect<T>` | Passed by runtime, `identity()` default |
+| Invoker param | Second parameter, `SliceInvokerFacade` | All dependencies resolved via proxies |
 | SliceMethod | Record with handler + TypeTokens | `methods()` list lookup by name |
 | Manifest | `META-INF/slice-api.properties` | Resource stream loading |
 

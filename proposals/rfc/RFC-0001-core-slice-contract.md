@@ -4,7 +4,7 @@ Title: Core Slice Contract
 Status: Draft
 Author: Sergiy Yevtushenko
 Created: 2026-01-15
-Updated: 2026-01-15
+Updated: 2026-01-28
 Affects: [jbct-cli, aether]
 ---
 
@@ -68,7 +68,36 @@ Method factoryMethod = Arrays.stream(factoryClass.getMethods())
     .orElseThrow();
 ```
 
-### 2. Aspect Pattern
+### 2. Infrastructure Dependencies
+
+Infrastructure dependencies (caches, databases, metrics) are accessed via `InfraStore` pattern, NOT passed as factory parameters.
+
+**Classification:** Dependencies with `artifactId` starting with `infra-` (e.g., `infra-cache`, `infra-database`)
+
+**Access pattern:**
+```java
+public static Promise<MySlice> mySlice(Aspect<MySlice> aspect, SliceInvokerFacade invoker) {
+    // Infrastructure accessed via InfraStore (shared singleton instances)
+    var cache = InfraStore.instance()
+        .get("org.pragmatica-lite.aether:infra-cache", CacheService.class)
+        .orElseGet(NoOpCache::new);
+
+    var impl = new MySliceImpl(cache);
+    return Promise.success(aspect.apply(impl));
+}
+```
+
+**Key characteristics:**
+- Shared instances across all slices (singleton per artifact)
+- Loaded in SharedLibraryClassLoader (see [RFC-0007](RFC-0007-dependency-sections.md))
+- NOT proxied via `SliceInvokerFacade`
+- Listed in `[infra]` section of dependency file, NOT in slice manifest
+
+**Contrast with slice dependencies:**
+- Slice dependencies: Proxied via `SliceInvokerFacade`, isolated per slice
+- Infra dependencies: Direct access via `InfraStore`, shared instances
+
+### 3. Aspect Pattern
 
 #### Interface
 
@@ -99,7 +128,7 @@ public static Promise<MySlice> mySlice(Aspect<MySlice> aspect, SliceInvokerFacad
 - Identity aspect has zero runtime overhead
 - Multiple aspects compose via caller: `aspect1.andThen(aspect2)`
 
-### 3. SliceMethod Metadata
+### 4. SliceMethod Metadata
 
 #### Slice Interface
 
@@ -162,7 +191,7 @@ new SliceMethod<>(
 )
 ```
 
-### 4. Slice Method Signature Rules
+### 5. Slice Method Signature Rules
 
 All methods in a `@Slice` interface must follow:
 
@@ -182,29 +211,60 @@ Promise<ResponseType> methodName(RequestType request);
 - Multiple parameters (wrap in request record)
 - Void return (use `Promise<Unit>`)
 
-### 5. Manifest Format
+### 6. Slice Manifest Format
 
-Location: `META-INF/slice-api.properties`
+Location: `META-INF/slice/{SliceName}.manifest`
 
+Each `@Slice` interface gets its own manifest file, enabling multiple slices per module.
+
+Example for `OrderService`:
 ```properties
-slice.artifact=org.example:my-slice:1.0.0
-slice.interface=org.example.myslice.MySlice
-impl.class=org.example.myslice.MySliceImpl
+# Identity
+slice.name=OrderService
+slice.artifactSuffix=order-service
+slice.package=org.example.order
+
+# Classes in Slice JAR
+slice.interface=org.example.order.OrderService
+impl.classes=org.example.order.OrderService,\
+             org.example.order.OrderServiceImpl,\
+             org.example.order.OrderServiceFactory
+
+# Request/Response types
+request.classes=org.example.order.PlaceOrderRequest
+response.classes=org.example.order.OrderResult
+
+# Artifact coordinates
+base.artifact=org.example:commerce
+slice.artifactId=commerce-order-service
+
+# Dependencies (slice dependencies via invoker proxy)
+dependencies.count=2
+dependency.0.interface=org.example.inventory.InventoryService
+dependency.0.artifact=org.example:inventory-service
+dependency.0.version=1.0.0
+dependency.1.interface=org.example.payment.PaymentService
+dependency.1.artifact=org.example:payment-service
+dependency.1.version=1.2.0
+
+# Metadata
 generated.timestamp=2026-01-15T12:00:00Z
 processor.version=0.5.0
 ```
 
-**Fields:**
-- `slice.artifact`: Maven coordinates of the slice JAR
+**Key Fields:**
 - `slice.interface`: Fully qualified name of the `@Slice` interface (public API)
-- `impl.class`: Fully qualified name of implementation class
-- `generated.timestamp`: ISO 8601 generation timestamp
-- `processor.version`: Version of slice-processor that generated this
+- `slice.artifactId`: Final artifact ID (e.g., `commerce-order-service`)
+- `dependencies.count`: Number of slice dependencies (resolved via `SliceInvokerFacade`)
+- `dependency.N.*`: Each slice dependency with interface, artifact, version
+
+**Infrastructure dependencies** (caches, databases) are NOT listed here - they are accessed via `InfraStore.instance().get()` at runtime (see [RFC-0007](RFC-0007-dependency-sections.md)).
 
 **Usage by aether:**
-- Loaded via `ClassLoader.getResourceAsStream("META-INF/slice-api.properties")`
-- Used for slice registration and routing
-- Consumers depend on `slice.interface` directly (no separate API artifact)
+- Scans `META-INF/slice/*.manifest` to discover all slices in JAR
+- Reads `slice.interface` for slice registration
+- Reads `dependency.*` properties for dependency ordering
+- Supports multiple slices per JAR (each gets unique manifest file)
 
 ### Contracts Summary
 
@@ -214,9 +274,10 @@ processor.version=0.5.0
 | Factory method | `{sliceName}(Aspect, SliceInvokerFacade)` | Reflection by name + signature |
 | Return type | `Promise<{SliceName}>` | Unwrapped via `.await()` or composed |
 | Aspect param | First parameter, `Aspect<T>` | Passed by runtime, `identity()` default |
-| Invoker param | Second parameter, `SliceInvokerFacade` | All dependencies resolved via proxies |
+| Invoker param | Second parameter, `SliceInvokerFacade` | Slice dependencies resolved via proxies |
+| Infra dependencies | Accessed via `InfraStore.instance().get()` | Shared singleton instances |
 | SliceMethod | Record with handler + TypeTokens | `methods()` list lookup by name |
-| Manifest | `META-INF/slice-api.properties` | Resource stream loading |
+| Manifest | `META-INF/slice/{Name}.manifest` | Scans directory, one file per slice |
 
 ## Examples
 

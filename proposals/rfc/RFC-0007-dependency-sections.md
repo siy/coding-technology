@@ -132,7 +132,9 @@ Multiple slices calling `cacheService()` get the same instance.
 **Purpose:** Other slice implementations this slice depends on
 
 **Classification criteria:**
-- Slice dependencies (external, from different package)
+- Slice dependencies (both external and same-module)
+- External: From different Maven modules
+- Same-module: Multiple `@Slice` interfaces in same project
 - Used for dependency ordering in blueprint
 
 **ClassLoader treatment:**
@@ -145,7 +147,31 @@ Multiple slices calling `cacheService()` get the same instance.
 [slices]
 org.example:inventory-service:^1.0.0
 org.example:payment-service:^2.0.0
+org.example:analytics-service:^1.0.0  # same-module dependency
 ```
+
+**Same-module dependencies:**
+
+When multiple `@Slice` interfaces exist in the same Maven module, their dependencies are still listed in `[slices]`:
+
+```java
+// Same module: url-shortener
+@Slice interface Analytics { ... }
+@Slice interface UrlShortener {
+    static UrlShortener create(Analytics analytics) { ... }
+}
+```
+
+UrlShortener's dependency file includes:
+```
+[slices]
+org.pragmatica.aether.example:url-shortener-analytics:^1.0.0
+```
+
+**Rationale:**
+1. Ensures correct deployment ordering (Analytics before UrlShortener)
+2. Runtime can resolve dependencies regardless of module boundaries
+3. Consistent dependency handling for both external and local slices
 
 **Usage:** Ensures correct deployment order in blueprint.
 

@@ -196,6 +196,9 @@ public interface GetUserProfile extends UseCase.WithPromise<Response, Request> {
     record Request(String userId) {}
     record Response(String userId, String email, String displayName, List<String> orders) {}
 
+    // Intermediate context for growing data
+    record UserContext(User user, List<Order> orders) {}
+
     interface FetchUser { Promise<User> apply(UserId id); }
     interface FetchOrders { Promise<List<Order>> apply(UserId id); }
 
@@ -203,15 +206,18 @@ public interface GetUserProfile extends UseCase.WithPromise<Response, Request> {
         return request -> UserId.userId(request.userId())
             .async()
             .flatMap(fetchUser::apply)
-            .flatMap(user ->
-                fetchOrders.apply(user.id())
-                    .map(orders -> new Response(
-                        user.id().value().toString(),
-                        user.email().value(),
-                        user.displayName(),
-                        orders.stream().map(Order::id).toList()
-                    ))
-            );
+            .flatMap(user -> fetchOrders.apply(user.id())
+                .map(orders -> new UserContext(user, orders)))
+            .map(GetUserProfile::toResponse);
+    }
+
+    private static Response toResponse(UserContext ctx) {
+        return new Response(
+            ctx.user().id().value().toString(),
+            ctx.user().email().value(),
+            ctx.user().displayName(),
+            ctx.orders().stream().map(Order::id).toList()
+        );
     }
 }
 ```

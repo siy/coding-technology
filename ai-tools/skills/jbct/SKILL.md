@@ -53,6 +53,65 @@ JBCT reduces the space of valid choices to one good way to do most things throug
 - **Thread Safety by Design**: Immutability at boundaries, thread confinement for sequential logic
 - **Six Structural Patterns**: All code fits one pattern (Leaf, Sequencer, Fork-Join, Condition, Iteration, Aspects)
 
+## FORBIDDEN PATTERNS (Zero Tolerance)
+
+These patterns are **never acceptable** in JBCT code. Hunt for them aggressively.
+
+### 🔴 CRITICAL VIOLATIONS
+
+| Violation | Detection | Why Forbidden |
+|-----------|-----------|---------------|
+| `*Impl` classes | `grep -r "class.*Impl"` | Use lambdas for behavior, records for data |
+| Null checks in business logic | `if (x == null)` or `!= null` | Use `Option<T>` instead |
+| Throwing exceptions | `throw new` in business code | Use `Result<T>` or `Promise<T>` |
+| Catching exceptions | `catch` in business code | Lift at adapter boundaries only |
+| `Void` type | `Result<Void>`, `Promise<Void>` | Use `Unit` type |
+| `Result.failure(cause)` | Direct call | Use `cause.result()` fluent style |
+| `Promise.failure(cause)` | Direct call | Use `cause.promise()` fluent style |
+| Multi-statement lambdas | `x -> { stmt1; stmt2; }` | Extract to named method |
+
+### ⚠️ WARNING PATTERNS
+
+| Pattern | Issue | Fix |
+|---------|-------|-----|
+| `fold()` for simple cases | Obscures intent | Use `.toResult()`, `.async()`, `.or()` |
+| Complex lambda body | Logic in map/flatMap | Extract to method reference |
+| Long sequencer chains | >5 flatMap calls | Group into sub-operations |
+| Nested records for behavior | `record X() implements Y {}` | Use lambda |
+
+### Examples
+
+```java
+// ❌ FORBIDDEN: Impl class
+public class UserServiceImpl implements UserService { ... }
+
+// ✅ CORRECT: Lambda factory
+static UserService userService(UserRepository repo) {
+    return userId -> repo.findById(userId);
+}
+
+// ❌ FORBIDDEN: Null check
+if (user != null) { process(user); }
+
+// ✅ CORRECT: Option
+findUser(id).onSuccess(this::process);
+
+// ❌ FORBIDDEN: Result.failure()
+return Result.failure(USER_NOT_FOUND);
+
+// ✅ CORRECT: Fluent style
+return USER_NOT_FOUND.result();
+
+// ❌ FORBIDDEN: Multi-statement lambda
+.map(user -> {
+    var enriched = enrich(user);
+    return format(enriched);
+})
+
+// ✅ CORRECT: Extract to method
+.map(this::enrichAndFormat)
+```
+
 ## Quick Reference
 
 ### The Four Return Kinds
@@ -257,6 +316,92 @@ private Promise<Theme> recoverWithDefault(Cause cause) {
 ```
 
 **Error constants:** Define once, reuse everywhere:
+
+## Pattern Decomposition & Data Flow
+
+### Mandatory: Maximum Decomposition
+
+**Rule:** One pattern per method. Never combine patterns in a single method body.
+
+```java
+// ❌ WRONG: Mixed patterns (Sequencer + Fork-Join + Condition)
+public Promise<Response> execute(Request request) {
+    return validate(request)
+        .async()
+        .flatMap(valid -> {
+            if (valid.isPremium()) {
+                return Promise.all(fetchA(valid), fetchB(valid))
+                    .map(this::merge);
+            }
+            return fetchBasic(valid);
+        });
+}
+
+// ✅ CORRECT: Decomposed into single-pattern methods
+public Promise<Response> execute(Request request) {
+    return validate(request)
+        .async()
+        .flatMap(this::routeByType);  // Sequencer
+}
+
+private Promise<Response> routeByType(ValidRequest valid) {
+    return valid.isPremium()           // Condition
+        ? processPremium(valid)
+        : processBasic(valid);
+}
+
+private Promise<Response> processPremium(ValidRequest valid) {
+    return Promise.all(fetchA(valid), fetchB(valid))  // Fork-Join
+        .map(this::merge);
+}
+```
+
+### Data Flow: Track Dependencies Explicitly
+
+Every method must have clear data flow:
+- **Input**: What data does it need?
+- **Output**: What data does it produce?
+- **Dependencies**: What external services/steps does it call?
+
+```java
+// Input: ValidRequest (email, password)
+// Output: User (id, email, hashedPassword)
+// Dependencies: hashPassword, userRepository
+private Promise<User> createUser(ValidRequest valid) {
+    return hashPassword.apply(valid.password())
+        .flatMap(hashed -> userRepository.save(
+            new User(UserId.generate(), valid.email(), hashed)));
+}
+```
+
+### Growing Context Pattern
+
+When multi-step operations need data from earlier steps, use **explicit intermediate records** instead of nested closures:
+
+```java
+// ❌ WRONG: Nested closures lose clarity
+return loadUser(userId)
+    .flatMap(user -> loadOrders(user.id())
+        .flatMap(orders -> loadPreferences(user.id())
+            .map(prefs -> new Dashboard(user, orders, prefs))));
+
+// ✅ CORRECT: Growing context with intermediate records
+record UserWithOrders(User user, List<Order> orders) {}
+record DashboardContext(User user, List<Order> orders, Preferences prefs) {}
+
+return loadUser(userId)
+    .flatMap(user -> loadOrders(user.id())
+        .map(orders -> new UserWithOrders(user, orders)))
+    .flatMap(ctx -> loadPreferences(ctx.user().id())
+        .map(prefs -> new DashboardContext(ctx.user(), ctx.orders(), prefs)))
+    .map(this::buildDashboard);
+```
+
+**Benefits:**
+- Each stage has clear input/output types
+- No deeply nested closures
+- Easy to add/remove stages
+- Debuggable intermediate states
 
 ```java
 private static final Cause NOT_FOUND = new UserNotFound("User not found");
@@ -504,20 +649,20 @@ void execute_succeeds_forValidInput() {
 
 ## Pragmatica Lite Core Library
 
-JBCT uses **Pragmatica Lite Core 0.9.10** for functional types.
+JBCT uses **Pragmatica Lite Core 0.11.1** for functional types.
 
 **Maven (preferred):**
 ```xml
 <dependency>
    <groupId>org.pragmatica-lite</groupId>
    <artifactId>core</artifactId>
-   <version>0.9.10</version>
+   <version>0.11.1</version>
 </dependency>
 ```
 
 **Gradle (only if explicitly requested):**
 ```gradle
-implementation 'org.pragmatica-lite:core:0.9.10'
+implementation 'org.pragmatica-lite:core:0.11.1'
 ```
 
 Library documentation: https://central.sonatype.com/artifact/org.pragmatica-lite/core
@@ -619,6 +764,39 @@ This skill provides quick reference and learning resources. For complex implemen
 ❌ `Validated` prefix (use `Valid`)
 
 **💡 Tip:** For automated code review checking these mistakes, use the **jbct-reviewer** subagent.
+
+## Self-Validation Checkpoint
+
+Before considering JBCT code complete, verify ALL of these:
+
+### Zero Tolerance (must pass)
+- [ ] No `*Impl` classes
+- [ ] No `null` checks in business logic
+- [ ] No `throw`/`catch` in business logic
+- [ ] No `Void` type (use `Unit`)
+- [ ] No `Result.failure()` or `Promise.failure()` (use `cause.result()`/`cause.promise()`)
+- [ ] No multi-statement lambdas in map/flatMap
+
+### Pattern Compliance
+- [ ] Each method implements exactly ONE pattern
+- [ ] Sequencer chains ≤5 steps
+- [ ] Fork-Join inputs are immutable
+- [ ] Growing context uses intermediate records (not nested closures)
+
+### Data Flow
+- [ ] Every method has clear input → output
+- [ ] No hidden state mutations
+- [ ] Dependencies injected via factory parameters
+
+### Naming
+- [ ] Factory methods: `TypeName.typeName(...)`
+- [ ] Validated types: `Valid` prefix (not `Validated`)
+- [ ] Errors: past tense (`NotFound`, `Failed`, `Expired`)
+
+### Structure
+- [ ] Use case = interface + factory + steps
+- [ ] Value objects = record + static factory returning `Result<T>`
+- [ ] Errors = sealed interface with enum for fixed messages
 
 ## Detailed Resources
 

@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [2.1.3] - 2026-01-18
+## [2.1.3] - 2026-01-19
 
 ### Added
 - **RFC-0008: Aspect Framework** - Compile-time aspect framework for cross-cutting concerns

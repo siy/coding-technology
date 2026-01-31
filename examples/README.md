@@ -17,6 +17,6 @@ Layout
 - `com.example.app.domain.shared.*`  -  shared value objects (Email, Password, ReferralCode) with static factories.
 
 Build
-- Pragmatica Lite Core `org.pragmatica-lite:core:0.9.0` is declared in parent POM and available from Maven Central.
+- Pragmatica Lite Core `org.pragmatica-lite:core:0.11.2` is declared in parent POM and available from Maven Central.
 - Package: `mvn -q -f examples/pom.xml -DskipTests package`
 - Test: `mvn -q -f examples/pom.xml test`

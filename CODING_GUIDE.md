@@ -2013,10 +2013,10 @@ Avoid `Option<Result<T>>` - it means "maybe there's a result, and that result mi
 
 ```java
 // Validation: collect multiple field validations
-Result<ValidRequest> validated = Result.all(Email.email(raw.email()),                                             
+Result<ValidRequest> validated = Result.all(Email.email(raw.email()),
                                             Password.password(raw.password()),
                                             ReferralCode.referralCode(raw.referralCode()))
-                                       .flatMap(ValidRequest::new);
+                                       .map(ValidRequest::new);
 
 // Async: run independent queries in parallel
 Promise<Report> report = Promise.all(userRepo.findById(userId),

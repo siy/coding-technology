@@ -1030,7 +1030,7 @@ Promise.lift(() -> {
 Result.all(Email.email(raw.email()),
            Password.password(raw.password()),
            ReferralCode.referralCode(raw.refCode()))
-       .flatMap(ValidRequest::new)
+       .map(ValidRequest::new)
 
 // Collection aggregation
 Result.allOf(rawEmails.stream()
@@ -1617,7 +1617,7 @@ record ValidRequest(Email email, Password password, Option<ReferralCode> referra
         return Result.all(Email.email(raw.email()),
                           Password.password(raw.password()),
                           ReferralCode.referralCode(raw.referralCode()))
-                     .flatMap(ValidRequest::new);
+                     .map(ValidRequest::new);
     }
 }
 ```

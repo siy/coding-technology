@@ -202,7 +202,7 @@ Not concurrent, just collects multiple Results:
 Result<ValidRequest> validated = Result.all(Email.email(raw.email()),
                                             Password.password(raw.password()),
                                             AccountId.accountId(raw.accountId()))
-                                       .flatMap(ValidRequest::new);
+                                       .map(ValidRequest::new);
 ```
 
 If all succeed, you get a tuple of values to pass to the combiner. If any fail, you get a `CompositeCause` containing all failures (not just the first).

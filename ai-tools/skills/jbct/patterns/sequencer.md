@@ -38,8 +38,8 @@ public interface RegisterUser extends UseCase.WithPromise<Response, Request> {
             .flatMap(checkEmail::apply)
             .flatMap(hashPassword::apply)
             .flatMap(saveUser::apply)
-            .flatMap(sendConfirmation::apply)
-            .map(token -> new Response(user.id(), token));
+            .flatMap(user -> sendConfirmation.apply(user)
+                .map(token -> new Response(user.id(), token)));
     }
 }
 ```

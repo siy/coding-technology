@@ -498,6 +498,80 @@ public class UserServiceAdapter implements FindUser {
 3. Eventually replace legacy service with JBCT implementation
 4. Remove adapter when migration complete
 
+### The Peeling Pattern
+
+The peeling pattern provides a systematic way to incrementally transform wrapped legacy code into JBCT patterns. Instead of rewriting everything at once, you "peel" the legacy code layer by layer.
+
+**Phase 1: Wrap everything**
+
+Start with a single `lift()` wrapping the entire legacy method:
+
+```java
+private Promise<OrderResult> processOrder(OrderRequest request) {
+    return Promise.lift(() -> legacyOrderService.process(request));
+}
+```
+
+**Phase 2: Peel the outer layer**
+
+Identify the high-level steps and refactor into a Sequencer. Keep each step wrapped:
+
+```java
+private Promise<OrderResult> processOrder(OrderRequest request) {
+    return validateRequest(request)                                         // JBCT
+        .flatMap(valid -> Promise.lift(() -> legacyCheckInventory(valid)))  // wrapped
+        .flatMap(inv -> Promise.lift(() -> legacyCalculatePricing(inv)))    // wrapped
+        .flatMap(quote -> Promise.lift(() -> legacyProcessPayment(quote)))  // wrapped
+        .flatMap(payment -> Promise.lift(() -> legacyCreateOrder(payment))); // wrapped
+}
+```
+
+**Phase 3: Peel deeper**
+
+Take one wrapped step and expand it further:
+
+```java
+private Promise<Availability> checkInventory(ValidRequest request) {
+    return Promise.all(
+        Promise.lift(() -> legacyCheckWarehouse(request)),
+        Promise.lift(() -> legacyCheckSupplier(request))
+    ).map(this::combineAvailability);  // JBCT
+}
+```
+
+**Phase 4: Continue until done**
+
+Repeat the process. Each iteration:
+1. Pick a `lift()` call
+2. Examine what it does internally
+3. Express that structure with JBCT patterns
+4. Keep inner operations wrapped
+
+Eventually all `lift()` calls disappear:
+
+```java
+private Promise<OrderResult> processOrder(OrderRequest request) {
+    return validateRequest(request)
+        .flatMap(this::checkInventory)
+        .flatMap(this::calculatePricing)
+        .flatMap(this::processPayment)
+        .flatMap(this::createOrder);
+}
+```
+
+**Benefits of peeling:**
+- **Working code at every phase** - tests pass continuously
+- **Stop anywhere** - mixed JBCT and legacy code works fine
+- **Visible progress** - `lift()` calls mark exactly where legacy code remains
+- **Manageable scope** - tackle one layer at a time
+- **Low risk** - each step is small and reversible
+
+**When to use peeling:**
+- Large legacy methods with multiple responsibilities
+- Code where the structure is unclear until you start refactoring
+- Teams new to JBCT who want to learn patterns incrementally
+- High-risk code where small steps reduce chance of bugs
+
 ---
 
 ## Team Adoption Strategies

@@ -642,6 +642,48 @@ public class UserController {
 }
 ```
 
+### The Peeling Pattern for Legacy Code
+
+When migrating legacy code to JBCT, the **peeling pattern** provides a safe, incremental approach. Instead of rewriting everything at once, wrap the legacy code and then "peel" it layer by layer.
+
+**Phase 1: Wrap everything**
+
+```java
+private Promise<OrderResult> processOrder(OrderRequest request) {
+    return Promise.lift(() -> legacyOrderService.process(request));
+}
+```
+
+**Phase 2: Peel the outer layer into Sequencer**
+
+```java
+private Promise<OrderResult> processOrder(OrderRequest request) {
+    return validateRequest(request)                                         // JBCT
+        .flatMap(valid -> Promise.lift(() -> legacyCheckInventory(valid)))  // wrapped
+        .flatMap(inv -> Promise.lift(() -> legacyCalculatePricing(inv)))    // wrapped
+        .flatMap(quote -> Promise.lift(() -> legacyProcessPayment(quote))); // wrapped
+}
+```
+
+**Phase 3: Peel deeper**
+
+```java
+private Promise<Availability> checkInventory(ValidRequest request) {
+    return Promise.all(
+        Promise.lift(() -> legacyCheckWarehouse(request)),
+        Promise.lift(() -> legacyCheckSupplier(request))
+    ).map(this::combineAvailability);  // JBCT
+}
+```
+
+**Continue until all `lift()` calls are replaced with JBCT code.**
+
+**Benefits:**
+- Working code at every phase
+- Tests pass continuously
+- Stop anywhere—mixed JBCT and legacy works fine
+- `lift()` calls mark exactly where legacy code remains
+
 ---
 
 ## Core Concepts

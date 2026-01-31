@@ -212,22 +212,22 @@ When writing Java code examples, follow these formatting conventions strictly:
 
 ---
 
-# Pragmatica Lite Core 0.11.1 API Reference
+# Pragmatica Lite Core 0.11.2 API Reference
 
-This section documents the actual API methods available in Pragmatica Lite Core 0.11.1.
+This section documents the actual API methods available in Pragmatica Lite Core 0.11.2.
 
 **Maven:**
 ```xml
 <dependency>
    <groupId>org.pragmatica-lite</groupId>
    <artifactId>core</artifactId>
-   <version>0.11.1</version>
+   <version>0.11.2</version>
 </dependency>
 ```
 
 **Gradle:**
 ```gradle
-implementation 'org.pragmatica-lite:core:0.11.1'
+implementation 'org.pragmatica-lite:core:0.11.2'
 ```
 
 Library documentation: https://central.sonatype.com/artifact/org.pragmatica-lite/core

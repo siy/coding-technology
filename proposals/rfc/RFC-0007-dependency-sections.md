@@ -45,7 +45,7 @@ INI-style sections with Maven coordinates:
 
 ```
 [shared]
-org.pragmatica-lite:core:^0.11.1
+org.pragmatica-lite:core:^0.11.2
 com.fasterxml.jackson.core:jackson-databind:^2.15.0
 
 [infra]
@@ -86,8 +86,8 @@ Semver ranges following npm/Cargo conventions:
 **Example:**
 ```
 [shared]
-org.pragmatica-lite:core:^0.11.1
-org.pragmatica-lite:json:^0.11.1
+org.pragmatica-lite:core:^0.11.2
+org.pragmatica-lite:json:^0.11.2
 ```
 
 **Usage:** Libraries like pragmatica-lite core are used by multiple slices without duplication.
@@ -238,9 +238,9 @@ The following are NOT included in dependency file (always provided by platform):
 
 ```
 [shared]
-org.pragmatica-lite:core:^0.11.1
-org.pragmatica-lite:json:^0.11.1
-org.pragmatica-lite:http-client:^0.11.1
+org.pragmatica-lite:core:^0.11.2
+org.pragmatica-lite:json:^0.11.2
+org.pragmatica-lite:http-client:^0.11.2
 
 [infra]
 org.pragmatica-lite.aether:infra-cache:^0.7.5
@@ -273,10 +273,10 @@ When multiple slices declare different versions of a shared library:
 
 ```
 Slice A: org.pragmatica-lite:core:^0.11.0
-Slice B: org.pragmatica-lite:core:^0.11.1
+Slice B: org.pragmatica-lite:core:^0.11.2
 ```
 
-Aether resolves to highest compatible: `0.11.1` (satisfies both `^0.11.0` and `^0.11.1`)
+Aether resolves to highest compatible: `0.11.2` (satisfies both `^0.11.0` and `^0.11.2`)
 
 ## Edge Cases
 
@@ -297,7 +297,7 @@ If slice has no external dependencies, dependency file may only contain `[shared
 
 ```
 [shared]
-org.pragmatica-lite:core:^0.11.1
+org.pragmatica-lite:core:^0.11.2
 ```
 
 ### Circular Dependencies

@@ -696,13 +696,13 @@ private Promise<Availability> checkInventory(ValidRequest request) {
 > <dependency>
 >    <groupId>org.pragmatica-lite</groupId>
 >    <artifactId>core</artifactId>
->    <version>0.11.1</version>
+>    <version>0.11.2</version>
 > </dependency>
 > ```
 >
 > **Gradle:**
 > ```gradle
-> implementation 'org.pragmatica-lite:core:0.11.1'
+> implementation 'org.pragmatica-lite:core:0.11.2'
 > ```
 
 ### The Four Return Kinds

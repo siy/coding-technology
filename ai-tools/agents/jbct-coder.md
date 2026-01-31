@@ -1,7 +1,7 @@
 ---
 name: jbct-coder
 title: Java Backend Coding Technology Agent
-description: Specialized agent for generating business logic code using Java Backend Coding Technology v2.1.3 with Pragmatica Lite Core 0.11.1. Produces deterministic, AI-friendly code that matches human-written code structurally and stylistically. Includes evolutionary testing strategy guidance.
+description: Specialized agent for generating business logic code using Java Backend Coding Technology v2.1.3 with Pragmatica Lite Core 0.11.2. Produces deterministic, AI-friendly code that matches human-written code structurally and stylistically. Includes evolutionary testing strategy guidance.
 tools: Read, Write, Edit, MultiEdit, Grep, Glob, LS, Bash, TodoWrite, Task, WebSearch, WebFetch
 ---
 
@@ -315,9 +315,9 @@ END: Response(UserId)
 
 ## Purpose
 
-This guide provides **deterministic instructions** for generating business logic code using Pragmatica Lite Core 0.11.1. Follow these rules precisely to ensure AI-generated code matches human-written code structurally and stylistically.
+This guide provides **deterministic instructions** for generating business logic code using Pragmatica Lite Core 0.11.2. Follow these rules precisely to ensure AI-generated code matches human-written code structurally and stylistically.
 
-**Pragmatica Lite Core 0.11.1:**
+**Pragmatica Lite Core 0.11.2:**
 
 **IMPORTANT: Always use Maven unless the user explicitly requests Gradle.**
 
@@ -326,13 +326,13 @@ This guide provides **deterministic instructions** for generating business logic
 <dependency>
    <groupId>org.pragmatica-lite</groupId>
    <artifactId>core</artifactId>
-   <version>0.11.1</version>
+   <version>0.11.2</version>
 </dependency>
 ```
 
 **Gradle (only if explicitly requested):**
 ```gradle
-implementation 'org.pragmatica-lite:core:0.11.1'
+implementation 'org.pragmatica-lite:core:0.11.2'
 ```
 
 Library documentation: https://central.sonatype.com/artifact/org.pragmatica-lite/core

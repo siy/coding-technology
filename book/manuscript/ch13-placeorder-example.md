@@ -398,12 +398,12 @@ public interface PlaceOrder {
 
     // Step 5: Send confirmation (best-effort)
     interface SendConfirmation {
-        Promise<Void> apply(OrderId orderId, ValidOrderRequest request);
+        Promise<Unit> apply(OrderId orderId, ValidOrderRequest request);
     }
 
     // Step 6: Release inventory (compensation)
     interface ReleaseInventory {
-        Promise<Void> apply(ReservedInventory reservation);
+        Promise<Unit> apply(ReservedInventory reservation);
     }
 
     // Factory

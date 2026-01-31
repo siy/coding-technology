@@ -6,7 +6,7 @@ description: "Revolutionary technology for writing deterministic, AI-friendly, h
 
 # Java Backend Coding Technology: Writing Code in the Era of AI
 
-**Version:** 2.1.0 | **Repository:** [github.com/siy/coding-technology](https://github.com/siy/coding-technology) | **Changelog:** [CHANGELOG.md](https://github.com/siy/coding-technology/blob/main/CHANGELOG.md)
+**Version:** 2.1.3 | **Repository:** [github.com/siy/coding-technology](https://github.com/siy/coding-technology) | **Changelog:** [CHANGELOG.md](https://github.com/siy/coding-technology/blob/main/CHANGELOG.md)
 
 ## Introduction: Code in a New Era
 
@@ -696,13 +696,13 @@ private Promise<Availability> checkInventory(ValidRequest request) {
 > <dependency>
 >    <groupId>org.pragmatica-lite</groupId>
 >    <artifactId>core</artifactId>
->    <version>0.9.10</version>
+>    <version>0.11.1</version>
 > </dependency>
 > ```
 >
 > **Gradle:**
 > ```gradle
-> implementation 'org.pragmatica-lite:core:0.9.10'
+> implementation 'org.pragmatica-lite:core:0.11.1'
 > ```
 
 ### The Four Return Kinds

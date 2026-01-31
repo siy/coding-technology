@@ -278,8 +278,8 @@ target/
 
 ```
 [shared]
-org.pragmatica-lite:core:^0.9.10
-org.pragmatica-lite:json:^0.9.10
+org.pragmatica-lite:core:^0.11.1
+org.pragmatica-lite:json:^0.11.1
 
 [infra]
 org.pragmatica-lite.aether:infra-cache:^0.7.5

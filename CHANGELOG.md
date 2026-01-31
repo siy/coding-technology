@@ -18,6 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Key extraction from request records
 
 ### Changed
+- **Pragmatica Lite Core** updated from 0.9.10 to 0.11.1
+  - Updated all documentation, examples, and dependency references
 - **RFC-0002: Dependency Protocol** - Improved proxy design
   - Replaced direct invoker.invoke() with pre-built MethodHandle pattern
   - Added MethodHandle<R, T> interface with invoke(), fireAndForget()

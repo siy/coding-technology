@@ -35,10 +35,6 @@ website/node_modules/
 website/dist/
 website/package-lock.json
 
-# Book binaries (built artifacts)
-book/jbct-book.pdf
-book/jbct-book.epub
-
 # Generated books
 book/*.pdf
 book/*.epub

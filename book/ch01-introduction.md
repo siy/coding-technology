@@ -1,6 +1,6 @@
 # Chapter 1: Introduction - Code Unification
 
-**Based on:** JBCT v2.1.3 | **Pragmatica Lite Core:** 0.11.2
+**Based on:** JBCT v2.1.4 | **Pragmatica Lite Core:** 0.11.2
 
 ## What You'll Learn
 

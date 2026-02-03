@@ -1,8 +1,6 @@
 ## Governing Documents
 
-RFCs: https://github.com/siy/coding-technology/tree/master/proposals/rfc
-
-This project hosts the RFC governance framework for the ecosystem.
+RFCs: https://github.com/pragmaticalabs/pragmatica/tree/master/docs/rfc
 
 Relevant RFCs:
 - RFC-0000: Ecosystem Foundation

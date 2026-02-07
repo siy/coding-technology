@@ -78,6 +78,12 @@ public interface ProcessOrder {
 
 Four steps, each a single-method interface. The `execute()` body reads top-to-bottom: validate -> reserve -> process payment -> confirm. Each step returns `Result<T>`, so we chain with `flatMap`. If any step fails, the chain short-circuits and returns the failure.
 
+**Why interface + factory?** Every component — use case, step, adapter — is defined as an interface with a static factory method. This is not arbitrary convention:
+
+- **Substitutability**: Anyone can implement the interface. Testing, stubbing incomplete implementations, swapping adapters — all work without framework magic or inheritance hierarchies.
+- **Implementation isolation**: Each implementation is self-contained. No shared base classes, no abstract methods to override, no coupling between implementations. Each intersection between implementations is unnecessary coupling with corresponding maintenance overhead — up to needing deep understanding of two projects instead of one, with zero benefit.
+- **Disposable implementation**: A local record or lambda returned by the factory can't be referenced externally. The implementation is replaceable by definition. The interface is the design artifact; the implementation is incidental.
+
 ### Async Example
 
 Same structure, different types:

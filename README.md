@@ -1,6 +1,6 @@
 # Java Backend Coding Technology
 
-> **Version 2.1.4** | [Full Changelog](CHANGELOG.md)
+> **Version 2.1.5** | [Full Changelog](CHANGELOG.md)
 
 A framework-agnostic methodology for writing predictable, testable Java backend code optimized for human-AI collaboration.
 
@@ -231,7 +231,7 @@ void email_acceptsValidFormat() {
 ### Changelog & Versioning
 
 - **[CHANGELOG.md](CHANGELOG.md)** - Version history following [Keep a Changelog](https://keepachangelog.com/)
-  - Current version: 2.1.4 (2026-01-19)
+  - Current version: 2.1.5 (2026-02-07)
   - Golden formatting patterns, Pragmatica Lite 0.11.2, 36 lint rules
   - Semantic versioning for documentation releases
 
@@ -392,6 +392,6 @@ If you find this useful, consider [sponsoring](https://github.com/sponsors/siy).
 
 ---
 
-**Version:** 2.1.4 | **Last Updated:** 2026-01-19 | **[Full Changelog](CHANGELOG.md)**
+**Version:** 2.1.5 | **Last Updated:** 2026-02-07 | **[Full Changelog](CHANGELOG.md)**
 
 **Copyright © 2025 Sergiy Yevtushenko. Released under the [MIT License](LICENSE).**

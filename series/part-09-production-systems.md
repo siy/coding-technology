@@ -101,6 +101,12 @@ public interface RegisterUser {
 
 This is a **Sequencer pattern**: validate → check uniqueness → hash password → save → generate token. Five steps, clearly defined.
 
+**Why interface + factory?** Every component — use case, step, adapter — is defined as an interface with a static factory method. This is not arbitrary convention:
+
+- **Substitutability**: Anyone can implement the interface. Testing, stubbing incomplete implementations, swapping adapters — all work without framework magic or inheritance hierarchies.
+- **Implementation isolation**: Each implementation is self-contained. No shared base classes, no abstract methods to override, no coupling between implementations. Each intersection between implementations is unnecessary coupling with corresponding maintenance overhead — up to needing deep understanding of two projects instead of one, with zero benefit.
+- **Disposable implementation**: A local record or lambda returned by the factory can't be referenced externally. The implementation is replaceable by definition. The interface is the design artifact; the implementation is incidental.
+
 ### Step 2: Validated Request
 
 Nested record with the factory method:

@@ -15,8 +15,9 @@ Series exploring Java Backend Coding Technology methodology and Aether runtime p
 | 2 | Published | Jan 14 | The Six Patterns That Cover Everything | 02-six-patterns.md | ~1260 |
 | 3 | Published | Jan 18 | Slices: The Right Size for Microservices | 03-slices.md | ~1185 |
 | 4 | Published | Jan 19 | Fail-Safe Your Legacy Java in One Sprint | 04-monolith-deploys.md | ~1090 |
-| 5 | Planned | | Cross-Cutting Concerns Without Magic | 05-aspects.md | |
-| 6 | Planned | | Why We Killed Runtime Reflection | 06-no-reflection.md | |
+| 5 | Draft | | No Framework, No Pain: Writing Aether Slices | 05-no-framework-no-pain.md | ~1500 |
+| 6 | Planned | | Cross-Cutting Concerns Without Magic | 06-aspects.md | |
+| 7 | Planned | | Why We Killed Runtime Reflection | 07-no-reflection.md | |
 
 ## Supporting Content
 

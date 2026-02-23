@@ -8,7 +8,7 @@ description: "What if your microservice was just an interface? No dependency inj
 
 # No Framework, No Pain: Writing Aether Slices
 
-The [previous article](https://dev.to/siy/pragmatica-aether-let-java-be-java-4k2g) introduced Aether's philosophy: return Java to managed runtimes, let the runtime handle infrastructure, let developers handle business logic. This article shows what that looks like in practice -- what you actually write, how dependencies work, how testing works, and how existing code migrates in.
+The [previous article](https://dev.to/siy/pragmatica-aether-let-java-be-java-4k2g) introduced Aether's philosophy: return Java to managed runtimes, let the runtime handle infrastructure, and let developers handle business logic. This article shows what that looks like in practice -- what you actually write, how dependencies work, how testing works, and how existing code migrates in.
 
 ## Your Microservice Is Just an Interface
 
@@ -28,19 +28,19 @@ public interface OrderService {
 }
 ```
 
-That's not a simplified example. That's the actual thing. The annotation processor sees `@Slice`, reads the factory method signature, generates the wiring code, the proxy for remote calls, the deployment metadata. You write one interface. You get a service that scales, fails over, and routes transparently across a distributed cluster.
+That's not a simplified example. That's the actual thing. The annotation processor sees `@Slice`, reads the factory method signature and generates the wiring code, the proxy for remote calls, and the deployment metadata. You write one interface. You get a service that scales, fails over, and routes transparently across a distributed cluster.
 
 No `@Autowired`. No `application.yml`. No `@Configuration` class. No `@Bean` method. No component scan. No service locator. No dependency injection container at all.
 
-The factory method *is* the dependency injection. Its parameters *are* the declared dependencies. The compiler verifies them. The annotation processor wires them. Nothing to configure, nothing to forget, nothing to debug at 2 AM.
+The factory method *is* dependency injection. Its parameters *are* the declared dependencies. The compiler verifies them. The annotation processor wires them. Nothing to configure, nothing to forget, nothing to debug at 2 AM.
 
-Notice what the factory returns: a lambda. No implementation class. The interface has one method, so the factory returns a lambda that implements it directly. Business logic as a function. For slices with multiple methods, a private record captures the dependencies and implements the interface -- still no separate `Impl` class, no file to maintain, no indirection to trace.
+Notice what the factory returns: a lambda. No implementation class. The interface has one method, so the factory returns a lambda that implements it directly. Business logic as a function. For slices with multiple methods, a private record captures the dependencies and implements the interface -- still no separate `Impl` class, no file to maintain, and no indirection to trace.
 
 ## Two Rules, Zero Boilerplate
 
 Every slice follows two rules:
 
-**1. Factory method declares dependencies.** What the slice needs from the outside world appears in one place: the factory method signature.
+**1. The factory method declares dependencies.** What the slice needs from the outside world appears in one place: the factory method signature.
 
 ```java
 static OrderService orderService(InventoryService inventory,
@@ -51,7 +51,7 @@ static OrderService orderService(InventoryService inventory,
 }
 ```
 
-Read the factory, know the dependencies. No configuration file can contradict it. No runtime surprise can introduce a dependency the compiler hasn't seen.
+Read the factory; know the dependencies. No configuration file can contradict it. No runtime surprise can introduce a dependency the compiler hasn't seen.
 
 **2. Promise return types.** Every method returns `Promise<T>`. This isn't a stylistic choice -- it's what makes transparent distribution possible. Whether the call is in-process or cross-network, the caller sees the same type.
 
@@ -63,23 +63,23 @@ The annotation processor looks at each factory parameter and classifies it autom
 
 | What the processor sees           | What it does                                               |
 |-----------------------------------|------------------------------------------------------------|
-| `@PrimaryDb DatabaseConnector db` | Resource -- provisions from config                         |
+| `@PrimaryDb SqlConnector db` | Resource -- provisions from config                         |
 | `InventoryService inventory`      | External slice -- generates a network proxy                |
 | `OrderValidator validator`        | Local interface with factory -- calls the factory directly |
 
 You don't configure this. You don't annotate dependencies with `@Inject` or `@Qualifier` (except for infrastructure resources). You just list what you need, and the processor figures out how to provide it.
 
-Consider what this means. A parameter annotated with `@ResourceQualifier` is infrastructure -- a database connection, an HTTP client, a message queue. The processor provisions it from configuration:
+Consider what this means. A parameter annotated with `@ResourceQualifier` is infrastructure -- a database connection, an HTTP client, or a message queue. The processor provisions it from configuration:
 
 ```java
-@ResourceQualifier(type = DatabaseConnector.class, config = "database.primary")
+@ResourceQualifier(type = SqlConnector.class, config = "database.primary")
 public @interface PrimaryDb {}
 
 @Slice
 public interface OrderRepository {
     Promise<OrderResult> findOrder(FindOrderRequest request);
 
-    static OrderRepository orderRepository(@PrimaryDb DatabaseConnector db) {
+    static OrderRepository orderRepository(@PrimaryDb SqlConnector db) {
         return request -> db.query(request.orderId())
                             .map(OrderResult::fromRow);
     }
@@ -93,7 +93,7 @@ A parameter that's a plain interface with a static factory method is local. The 
 All three categories coexist in one factory:
 
 ```java
-static LoanService loanService(@PrimaryDb DatabaseConnector db,
+static LoanService loanService(@PrimaryDb SqlConnector db,
                                CreditBureau creditBureau,
                                RiskCalculator riskCalculator) {
     return request -> riskCalculator.assess(request)
@@ -174,7 +174,7 @@ class OrderServiceTest {
 }
 ```
 
-Dependencies are interfaces. Pass lambdas that return success, pass lambdas that return failure. The factory method wires them in. No reflection, no classpath scanning, no context initialization. No Mockito, no `when(...).thenReturn(...)`, no `verify(...)`.
+Dependencies are interfaces. Pass lambdas that return success; pass lambdas that return failure. The factory method wires them in. No reflection, no classpath scanning, no context initialization. No Mockito, no `when(...).thenReturn(...)`, no `verify(...)`.
 
 Test startup is instant because there's nothing to start. No container. No framework. No bean resolution. Just objects calling objects.
 
@@ -193,9 +193,9 @@ commerce/
       ShippingService.java    # @Slice
 ```
 
-Each `@Slice` generates its own factory, its own API artifact, its own deployment metadata. The Maven plugin packages them separately. They deploy and scale independently. But they develop together -- shared domain types, shared build, one repository.
+Each `@Slice` generates its own factory, its own API artifact, its own deployment metadata. The Maven plugin packages them separately. They deploy and scale independently. But they develop together -- shared domain types, shared build, and one repository.
 
-A slice can be as small as a single method. There's no operational overhead for small slices -- no container to configure, no load balancer to provision, no monitoring to set up per service. This enables granular scaling that would be operationally insane with traditional microservices: one slice serving 50 instances during peak load while another idles at minimum. With Aether, it's the default.
+A slice can be as small as a single method. There's no operational overhead for small slices -- no container to configure, no load balancer to provision, and no monitoring to set up per service. This enables granular scaling that would be operationally insane with traditional microservices: one slice serving 50 instances during peak load while another idles at minimum. With Aether, it's the default.
 
 ## What's Actually Happening
 
@@ -213,7 +213,7 @@ public interface OrderService {
 }
 ```
 
-The processor sees `InventoryService` is from a different package, has `@Slice` annotation -- external dependency. It generates:
+The processor sees `InventoryService` is from a different package and has `@Slice` annotation -- external dependency. It generates:
 
 1. **A proxy record** that implements `InventoryService` and delegates every method call to the runtime's `SliceInvokerFacade`. Your code calls `inventory.check(request)`. The proxy serializes the request, routes it to a node hosting InventoryService, deserializes the response, and returns it as a `Promise`.
 
@@ -262,7 +262,7 @@ public interface OrderProcessor {
 ```
 
 `Promise.lift()` wraps the synchronous call, catches any exception, and returns a proper `Promise` with a typed failure instead of a stack trace. 
-Your legacy code runs unchanged inside. The slice deploys to the Aether runtime (initially as an one-process cluster called Ember) alongside your existing application -- same JVM, no new risk. Move to a full Aether cluster when ready. That's a configuration change, not a code change.
+Your legacy code runs unchanged inside. The slice deploys to the Aether runtime (initially as a one-process cluster called Ember) alongside your existing application -- same JVM, no new risk. Move to a full Aether cluster when ready. That's a configuration change, not a code change.
 
 ### The Peeling Pattern
 
@@ -277,7 +277,7 @@ return Promise.lift(() -> legacyCheckInventory(request))
               .flatMap(payment -> Promise.lift(() -> legacyCreateOrder(payment)));
 ```
 
-Now the pipeline is visible. You can see the steps, test them individually, reason about the flow.
+Now the pipeline is visible. You can see the steps, test them individually, and reason about the flow.
 
 **Peel one step deeper.** Take the hottest `lift()` and expand it:
 
@@ -295,9 +295,9 @@ The [full migration walkthrough](https://dev.to/siy/fail-safe-your-legacy-java-i
 
 ## The Shift
 
-Traditional microservice development is a negotiation with frameworks. You learn their abstractions, their lifecycle hooks, their configuration DSLs, their annotation model, their error handling conventions, their testing utilities. The framework becomes the center of gravity. Your business logic orbits around it.
+Traditional microservice development is a negotiation with frameworks. You learn their abstractions, their lifecycle hooks, their configuration DSLs, their annotation model, their error-handling conventions, and their testing utilities. The framework becomes the center of gravity. Your business logic orbits around it.
 
-Slices invert this. Business logic is the center. The interface defines the contract. The factory method declares dependencies. The implementation is a lambda. Everything else -- serialization, routing, scaling, failover, configuration -- is the runtime's problem.
+Slices invert this. Business logic is the center. The interface defines the contract. The factory method declares dependencies. The implementation is a lambda. Everything else -- serialization, routing, scaling, failover, and configuration -- is the runtime's problem.
 
 You don't learn a framework. You write Java interfaces and implement them. Two rules. The rest is just your domain.
 

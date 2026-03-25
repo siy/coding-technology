@@ -349,6 +349,9 @@ Standard validation predicates for use with `Verify.ensure()`:
 **Null check:**
 - `Verify.Is::notNull` - value != null
 
+**Combined checks:**
+- `Verify.Is::present` - not null and not blank (CharSequence only)
+
 **String checks:**
 - `Verify.Is::empty` - isEmpty()
 - `Verify.Is::notEmpty` - !isEmpty()
@@ -385,9 +388,7 @@ Verify.ensure(username, Verify.Is::notBlank, BLANK_USERNAME)
 
 **In validation chains (use filter):**
 ```java
-return ensure(raw, Verify.Is::notNull)
-    .map(String::trim)
-    .filter(BLANK, Verify.Is::notBlank)
+return ensure(raw, Verify.Is::present)
     .filter(INVALID_FORMAT, EMAIL_PATTERN.asMatchPredicate())
     .map(Email::new);
 ```

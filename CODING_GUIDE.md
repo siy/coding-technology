@@ -828,7 +828,7 @@ public record Email(String value) {
     private static final Fn1<Cause, String> INVALID_EMAIL = Causes.forOneValue("Invalid email format: %s");
 
     public static Result<Email> email(String raw) {
-        return Verify.ensure(raw, Verify.Is::notNull)
+        return Verify.ensure(raw, Verify.Is::present)
                      .map(String::trim)
                      .filter(INVALID_EMAIL, EMAIL_PATTERN.asMatchPredicate())
                      .map(Email::new);
@@ -992,7 +992,7 @@ public record Email(String value) {
     private static final Fn1<Cause, String> INVALID_EMAIL = Causes.forOneValue("Invalid email format: %s");
 
     public static Result<Email> email(String raw) {
-        return Verify.ensure(raw, Verify.Is::notNull)
+        return Verify.ensure(raw, Verify.Is::present)
                      .map(String::trim)
                      .filter(INVALID_EMAIL, EMAIL_PATTERN.asMatchPredicate())
                      .map(Email::new);
@@ -1251,6 +1251,11 @@ The `Verify.Is` interface provides 20+ ready-to-use predicates for common valida
 Verify.ensure(value, Verify.Is::notNull)
 ```
 
+**String presence** (not null and not blank — preferred for String/CharSequence validation):
+```java
+Verify.ensure(raw, Verify.Is::present)
+```
+
 **String validations:**
 ```java
 // Check non-empty and non-whitespace
@@ -1293,7 +1298,7 @@ Verify.ensure(maybeValue, Verify.Is::some)
 Verify.ensure(shouldBeEmpty, Verify.Is::none)
 ```
 
-**Complete predicate list:** `notNull`, `positive`, `negative`, `nonNegative`, `nonPositive`, `greaterThan`, `greaterThanOrEqualTo`, `lessThan`, `lessThanOrEqualTo`, `equalTo`, `notEqualTo`, `between`, `empty`, `notEmpty`, `blank`, `notBlank`, `lenBetween`, `contains`, `notContains`, `matches`, `some`, `none`.
+**Complete predicate list:** `notNull`, `present`, `positive`, `negative`, `nonNegative`, `nonPositive`, `greaterThan`, `greaterThanOrEqualTo`, `lessThan`, `lessThanOrEqualTo`, `equalTo`, `notEqualTo`, `between`, `empty`, `notEmpty`, `blank`, `notBlank`, `lenBetween`, `contains`, `notContains`, `matches`, `some`, `none`.
 
 **Combining multiple checks:**
 ```java
@@ -1305,7 +1310,7 @@ private static final Pattern HAS_UPPERCASE = Pattern.compile(".*[A-Z].*");
 private static final Pattern HAS_DIGIT = Pattern.compile(".*[0-9].*");
 
 public static Result<Password> password(String raw) {
-    return Verify.ensure(raw, Verify.Is::notNull)
+    return Verify.ensure(raw, Verify.Is::present)
                  .filter(TOO_SHORT, s -> Verify.Is.lenBetween(s, 8, 128))
                  .filter(NO_UPPERCASE, HAS_UPPERCASE.asMatchPredicate())
                  .filter(NO_DIGIT, HAS_DIGIT.asMatchPredicate())
@@ -2289,7 +2294,7 @@ public record Email(String value) {
 
     // DO: One clear responsibility
     public static Result<Email> email(String raw) {
-        return Verify.ensure(raw, Verify.Is::notNull)
+        return Verify.ensure(raw, Verify.Is::present)
                      .map(String::trim)
                      .map(String::toLowerCase)
                      .filter(INVALID_EMAIL, EMAIL_PATTERN.asMatchPredicate())
@@ -4593,7 +4598,7 @@ This pattern is grep-friendly and unambiguous - searching for `Email.email` or `
 ```java
 record Email(String value) {
     public static Result<Email> email(String raw) {
-        return Verify.ensure(raw, Verify.Is::notNull)
+        return Verify.ensure(raw, Verify.Is::present)
                      .map(String::trim)
                      .map(Email::new);
     }
@@ -5062,7 +5067,7 @@ public record Email(String value) {
 
     // Factory
     public static Result<Email> email(String raw) {
-        return ensure(raw, Verify.Is::notNull)
+        return ensure(raw, Verify.Is::present)
                 .map(String::trim)
                 .map(String::toLowerCase)
                 .filter(INVALID_EMAIL, EMAIL_PATTERN.asMatchPredicate())
@@ -5176,7 +5181,7 @@ public sealed interface ValidationUtils {
 
     // Static methods
     static Result<String> normalizePhone(String raw) {
-        return Verify.ensure(raw, Verify.Is::notNull)
+        return Verify.ensure(raw, Verify.Is::present)
                      .map(s -> s.replaceAll("[\\s\\-()]", ""))
                      .filter(INVALID_PHONE, PHONE_PATTERN.asMatchPredicate());
     }
@@ -5333,7 +5338,7 @@ public record Email(String value) {
     private static final Fn1<Cause, String> INVALID_EMAIL = Causes.forOneValue("Invalid email format: %s");
 
     public static Result<Email> email(String raw) {
-        return Verify.ensure(raw, Verify.Is::notNull)
+        return Verify.ensure(raw, Verify.Is::present)
                      .map(String::trim)
                      .map(String::toLowerCase)
                      .filter(INVALID_EMAIL, EMAIL_PATTERN.asMatchPredicate())
@@ -5357,7 +5362,7 @@ public record Password(String value) {
     private static final Cause MISSING_DIGIT = Causes.cause("Password must contain digit");
 
     public static Result<Password> password(String raw) {
-        return Verify.ensure(raw, Verify.Is::notNull)
+        return Verify.ensure(raw, Verify.Is::present)
                      .filter(TOO_SHORT, s -> Verify.Is.lenBetween(s, 8, 128))
                      .flatMap(Password::ensureUppercase)
                      .flatMap(Password::ensureDigit)

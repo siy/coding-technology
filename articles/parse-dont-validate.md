@@ -87,7 +87,7 @@ public record Email(String value) {
 
     // Factory method: the ONLY way to create an Email
     public static Result<Email> email(String raw) {
-        return Verify.ensure(raw, Verify.Is::notNull, EMAIL_REQUIRED)
+        return Verify.ensure(raw, Verify.Is::present, EMAIL_REQUIRED)
             .map(String::trim)
             .map(String::toLowerCase)
             .filter(INVALID_FORMAT, PATTERN.asMatchPredicate())
@@ -133,7 +133,7 @@ public record Password(String value) {
         Causes.cause("Password must contain a digit");
 
     public static Result<Password> password(String raw) {
-        return Verify.ensure(raw, Verify.Is::notNull)
+        return Verify.ensure(raw, Verify.Is::present)
             .filter(TOO_SHORT, s -> s.length() >= MIN_LENGTH)
             .filter(TOO_LONG, s -> s.length() <= MAX_LENGTH)
             .filter(MISSING_UPPERCASE, s -> HAS_UPPERCASE.matcher(s).find())
@@ -216,7 +216,7 @@ Factories can also normalize data:
 
 ```java
 public static Result<Email> email(String raw) {
-    return Verify.ensure(raw, Verify.Is::notNull, EMAIL_REQUIRED)
+    return Verify.ensure(raw, Verify.Is::present, EMAIL_REQUIRED)
         .map(String::trim)           // Remove whitespace
         .map(String::toLowerCase)    // Normalize case
         .filter(INVALID_FORMAT, PATTERN.asMatchPredicate())

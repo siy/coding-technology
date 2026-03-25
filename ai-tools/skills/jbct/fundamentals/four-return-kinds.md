@@ -59,7 +59,7 @@ option.async(UserError.NotFound.INSTANCE)
 
 ```java
 public static Result<Email> email(String raw) {
-    return Verify.ensure(raw, Verify.Is::notNull)
+    return Verify.ensure(raw, Verify.Is::present)
         .map(String::trim)
         .filter(INVALID_EMAIL, EMAIL_PATTERN.asMatchPredicate())
         .map(Email::new);

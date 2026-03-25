@@ -238,6 +238,9 @@ Promise.any(Promise<T>...) // First success, cancels others
 // Null check
 Verify.Is::notNull
 
+// Presence check (CharSequence)
+Verify.Is::present          // Not null and not blank
+
 // String checks
 Verify.Is::empty
 Verify.Is::notEmpty

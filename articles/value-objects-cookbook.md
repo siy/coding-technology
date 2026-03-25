@@ -44,7 +44,7 @@ public record Email(String value) {
         Causes.forOneValue("Invalid email format: %s");
 
     public static Result<Email> email(String raw) {
-        return Verify.ensure(raw, Verify.Is::notNull, EMAIL_REQUIRED)
+        return Verify.ensure(raw, Verify.Is::present, EMAIL_REQUIRED)
             .filter(INVALID_FORMAT, PATTERN.asMatchPredicate())
             .map(Email::new);
     }
@@ -80,7 +80,7 @@ public record Email(String value) {
         Causes.forOneValue("Invalid email format: %s");
 
     public static Result<Email> email(String raw) {
-        return Verify.ensure(raw, Verify.Is::notNull, EMAIL_REQUIRED)
+        return Verify.ensure(raw, Verify.Is::present, EMAIL_REQUIRED)
             .map(String::trim)           // Remove whitespace
             .map(String::toLowerCase)    // Normalize case
             .filter(INVALID_FORMAT, PATTERN.asMatchPredicate())
@@ -110,7 +110,7 @@ public record Age(int value) {
         Causes.cause("Age must be between 0 and 150");
 
     public static Result<Age> age(String raw) {
-        return Verify.ensure(raw, Verify.Is::notNull, AGE_REQUIRED)
+        return Verify.ensure(raw, Verify.Is::present, AGE_REQUIRED)
             .flatMap(Number::parseInt)  // Uses parse utility
             .filter(AGE_OUT_OF_RANGE, v -> Verify.Is.between(v, 0, 150))
             .map(Age::new);
@@ -147,7 +147,7 @@ public record Username(String value) {
         Causes.cause("Username can only contain letters, numbers, underscores, and hyphens");
 
     public static Result<Username> username(String raw) {
-        return Verify.ensure(raw, Verify.Is::notNull, USERNAME_REQUIRED)
+        return Verify.ensure(raw, Verify.Is::present, USERNAME_REQUIRED)
             .map(String::trim)
             .filter(USERNAME_TOO_SHORT, s -> s.length() >= MIN_LENGTH)
             .filter(USERNAME_TOO_LONG, s -> s.length() <= MAX_LENGTH)
@@ -182,7 +182,7 @@ public record Password(String value) {
         Causes.cause("Password must contain a digit");
 
     public static Result<Password> password(String raw) {
-        return Verify.ensure(raw, Verify.Is::notNull, PASSWORD_REQUIRED)
+        return Verify.ensure(raw, Verify.Is::present, PASSWORD_REQUIRED)
             .filter(TOO_SHORT, s -> s.length() >= MIN_LENGTH)
             .filter(TOO_LONG, s -> s.length() <= MAX_LENGTH)
             .filter(MISSING_UPPERCASE, s -> s.chars().anyMatch(Character::isUpperCase))
@@ -214,7 +214,7 @@ public record PhoneNumber(CountryCode countryCode, String localNumber) {
     }
 
     private static Result<String> validateLocalNumber(String raw) {
-        return Verify.ensure(raw, Verify.Is::notNull, Causes.cause("Local number required"))
+        return Verify.ensure(raw, Verify.Is::present, Causes.cause("Local number required"))
             .map(s -> s.replaceAll("[^0-9]", ""))  // Strip non-digits
             .filter(Causes.cause("Local number must be 7-15 digits"),
                     s -> Verify.Is.lenBetween(s, 7, 15));
@@ -231,7 +231,7 @@ public record CountryCode(String value) {
         Causes.forOneValue("Invalid country code: %s");
 
     public static Result<CountryCode> countryCode(String raw) {
-        return Verify.ensure(raw, Verify.Is::notNull)
+        return Verify.ensure(raw, Verify.Is::present)
             .map(String::trim)
             .filter(INVALID, PATTERN.asMatchPredicate())
             .map(CountryCode::new);
@@ -293,7 +293,7 @@ public record ReferralCode(String value) {
         if (raw == null || raw.isBlank()) {
             return Result.success(Option.none());
         }
-        return Verify.ensure(raw, Verify.Is::notNull)
+        return Verify.ensure(raw, Verify.Is::present)
             .map(String::trim)
             .map(String::toUpperCase)
             .filter(INVALID, PATTERN.asMatchPredicate())
@@ -339,7 +339,7 @@ public record Currency(String code) {
         Causes.forOneValue("Unsupported currency: %s");
 
     public static Result<Currency> currency(String raw) {
-        return Verify.ensure(raw, Verify.Is::notNull, CURRENCY_REQUIRED)
+        return Verify.ensure(raw, Verify.Is::present, CURRENCY_REQUIRED)
             .map(String::trim)
             .map(String::toUpperCase)
             .filter(UNSUPPORTED, VALID_CODES::contains)
@@ -367,7 +367,7 @@ public record UserId(String value) {
         Causes.cause("User ID must be a valid UUID");
 
     public static Result<UserId> userId(String raw) {
-        return Verify.ensure(raw, Verify.Is::notNull, USER_ID_REQUIRED)
+        return Verify.ensure(raw, Verify.Is::present, USER_ID_REQUIRED)
             .map(String::trim)
             .flatMap(s -> Network.parseUUID(s)  // Validates UUID format
                 .mapError(_ -> USER_ID_INVALID))

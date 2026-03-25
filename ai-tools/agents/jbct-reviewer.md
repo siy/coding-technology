@@ -434,7 +434,7 @@ public record Email(String value) {
 
     // Factory with validation → Result<T>
     public static Result<Email> email(String raw) {
-        return Verify.ensure(raw, Verify.Is::notNull)
+        return Verify.ensure(raw, Verify.Is::present)
                      .map(String::trim)
                      .filter(INVALID_EMAIL, PATTERN.asMatchPredicate())
                      .map(Email::new);

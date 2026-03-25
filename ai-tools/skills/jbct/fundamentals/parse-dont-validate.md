@@ -33,7 +33,7 @@ public record Email(String value) {
 
     // Static factory - only way to create Email
     public static Result<Email> email(String raw) {
-        return Verify.ensure(raw, Verify.Is::notNull)
+        return Verify.ensure(raw, Verify.Is::present)
             .map(String::trim)
             .filter(INVALID_EMAIL, EMAIL_PATTERN.asMatchPredicate())
             .map(Email::new);
@@ -78,7 +78,7 @@ All validation happens during parsing:
 
 ```java
 public static Result<Email> email(String raw) {
-    return Verify.ensure(raw, Verify.Is::notNull)        // Check not null
+    return Verify.ensure(raw, Verify.Is::present)        // Check present
         .map(String::trim)                               // Normalize
         .filter(INVALID_EMAIL,                           // Validate format
                 EMAIL_PATTERN.asMatchPredicate())
@@ -98,7 +98,7 @@ public record UserId(UUID value) {
     private UserId {}
 
     public static Result<UserId> userId(String raw) {
-        return Verify.ensure(raw, Verify.Is::notNull)
+        return Verify.ensure(raw, Verify.Is::present)
             .map(String::trim)
             .filter(INVALID_USER_ID, Verify.Is::notEmpty)
             .flatMap(str -> Result.lift(() -> UUID.fromString(str))
@@ -132,7 +132,7 @@ public record Password(String value) {
     private Password {}
 
     public static Result<Password> password(String raw) {
-        return Verify.ensure(raw, Verify.Is::notNull)
+        return Verify.ensure(raw, Verify.Is::present)
             .map(String::trim)
             .filter(TOO_SHORT, s -> s.length() >= MIN_LENGTH)
             .filter(NO_DIGIT, HAS_DIGIT.asMatchPredicate())

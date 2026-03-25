@@ -195,7 +195,7 @@ public sealed interface ValidationUtils {
     Pattern PHONE_PATTERN = Pattern.compile("^\\+?[0-9]{10,14}$");
 
     static Result<String> normalizePhone(String raw) {
-        return Verify.ensure(raw, Verify.Is::notNull)
+        return Verify.ensure(raw, Verify.Is::present)
                      .map(s -> s.replaceAll("[\\s\\-()]", ""))
                      .filter(INVALID_PHONE, PHONE_PATTERN.asMatchPredicate());
     }

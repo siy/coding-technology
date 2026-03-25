@@ -545,7 +545,7 @@ public record Email(String value) {
 
     // DO: One clear responsibility
     public static Result<Email> email(String raw) {
-        return Verify.ensure(raw, Verify.Is::notNull)
+        return Verify.ensure(raw, Verify.Is::present)
                      .map(String::trim)
                      .map(String::toLowerCase)
                      .filter(INVALID_EMAIL, EMAIL_PATTERN.asMatchPredicate())

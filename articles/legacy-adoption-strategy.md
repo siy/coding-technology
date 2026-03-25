@@ -90,7 +90,7 @@ public record Email(String value) {
         Causes.forOneValue("Invalid email format: %s");
 
     public static Result<Email> email(String raw) {
-        return Verify.ensure(raw, Verify.Is::notNull)
+        return Verify.ensure(raw, Verify.Is::present)
             .map(String::trim)
             .map(String::toLowerCase)
             .filter(INVALID, PATTERN.asMatchPredicate())

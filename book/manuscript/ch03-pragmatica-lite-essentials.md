@@ -371,6 +371,7 @@ import org.pragmatica.lang.utils.Verify;
 
 // String checks
 Verify.ensure(value, Verify.Is::notNull)
+Verify.ensure(value, Verify.Is::present)    // Not null and not blank (CharSequence)
 Verify.ensure(value, Verify.Is::notBlank)
 Verify.ensure(value, Verify.Is::notEmpty)
 
@@ -390,7 +391,7 @@ Verify.ensure(quantity, Verify.Is::lessThanOrEqualTo, 100)
 
 ```java
 public static Result<Password> password(String raw) {
-    return Verify.ensure(raw, Verify.Is::notNull)
+    return Verify.ensure(raw, Verify.Is::present)
         .filter(TOO_SHORT, s -> Verify.Is.lenBetween(s, 8, 128))
         .filter(NO_DIGIT, DIGIT_PATTERN.asMatchPredicate())
         .filter(NO_UPPER, UPPER_PATTERN.asMatchPredicate())

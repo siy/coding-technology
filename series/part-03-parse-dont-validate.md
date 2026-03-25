@@ -73,7 +73,7 @@ public record Email(String value) {
     private static final Fn1<Cause, String> INVALID_EMAIL = Causes.forOneValue("Invalid email format: %s");
 
     public static Result<Email> email(String raw) {
-        return Verify.ensure(raw, Verify.Is::notNull)
+        return Verify.ensure(raw, Verify.Is::present)
                      .map(String::trim)
                      .filter(INVALID_EMAIL, EMAIL_PATTERN.asMatchPredicate())
                      .map(Email::new);
@@ -158,7 +158,7 @@ Factories can normalize input (trim whitespace, lowercase email domains, etc.) a
 
 ```java
 public static Result<Email> email(String raw) {
-    return Verify.ensure(raw, Verify.Is::notNull)
+    return Verify.ensure(raw, Verify.Is::present)
                  .map(String::trim)           // Normalize: remove whitespace
                  .map(String::toLowerCase)    // Normalize: lowercase for comparison
                  .filter(INVALID_EMAIL, EMAIL_PATTERN.asMatchPredicate())

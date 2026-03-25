@@ -68,7 +68,7 @@ public record Email(String value) {
         Causes.forOneValue("Invalid email format: %s");
 
     public static Result<Email> email(String raw) {
-        return Verify.ensure(raw, Verify.Is::notNull)
+        return Verify.ensure(raw, Verify.Is::present)
                      .map(String::trim)
                      .filter(INVALID_EMAIL, EMAIL_PATTERN.asMatchPredicate())
                      .map(Email::new);
@@ -148,7 +148,7 @@ Factories can normalize input as part of parsing:
 
 ```java
 public static Result<Email> email(String raw) {
-    return Verify.ensure(raw, Verify.Is::notNull)
+    return Verify.ensure(raw, Verify.Is::present)
                  .map(String::trim)           // Remove whitespace
                  .map(String::toLowerCase)    // Lowercase for comparison
                  .filter(INVALID_EMAIL, EMAIL_PATTERN.asMatchPredicate())

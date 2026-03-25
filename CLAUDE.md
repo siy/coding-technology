@@ -322,6 +322,8 @@ All accept optional `exceptionMapper: Fn1<Cause, Throwable>` (defaults to `Cause
 
 **Note**: There is NO `Promise.async(Runnable)` method. Use `Promise.lift(ThrowingRunnable)` for async execution of void operations.
 
+**`Void` vs `void` vs `Unit`**: Never use `Void` as a type parameter (`Result<Void>` is forbidden — use `Result<Unit>`). The `void` return type is acceptable for fire-and-forget side effects where the caller deliberately discards the outcome and the method handles errors internally.
+
 ### Causes utilities:
 - **`Causes.cause(String message)`**  -  create simple cause with message
 - **`Causes.cause(String message, Option<Cause> source)`**  -  create cause with source

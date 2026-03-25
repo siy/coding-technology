@@ -548,6 +548,20 @@ promise.await()              // Promise -> Result (blocks)
 .mapToUnit()                 // Discard value, keep success/failure
 ```
 
+### Library Value Objects
+
+Pragmatica Lite Core provides production-ready value objects for common types in `org.pragmatica.lang.vo`. These are explicitly designed to cover common use cases in real business logic:
+
+| Value Object | Description | Factory Method |
+|-------------|-------------|----------------|
+| `Email` | RFC 5321 compliant email address | `Email.email(String raw)` |
+| `Url` | Validated URL with scheme and host | `Url.url(String raw)` |
+| `Uuid` | UUID with parse and generate | `Uuid.uuid(String raw)`, `Uuid.randomUuid()` |
+| `NonBlankString` | Trimmed, guaranteed non-empty | `NonBlankString.nonBlankString(String raw)` |
+| `IsoDateTime` | ISO 8601 datetime with offset | `IsoDateTime.isoDateTime(String raw)`, `IsoDateTime.now()` |
+
+All factory methods return `Result<T>`, following the parse-don't-validate pattern. Use these directly for common types. Build custom value objects for domain-specific types like `OrderId`, `Username`, or `ReferralCode`.
+
 ---
 
 ## Exercises

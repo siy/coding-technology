@@ -125,14 +125,18 @@ return INVALID_EMAIL.result();
 return USER_NOT_FOUND.promise();
 ```
 
-### ❌ NEVER: Void Return Type
+### ❌ NEVER: Void Type Parameter
 
 ```java
-// ❌ FORBIDDEN - Void is not a proper type
+// ❌ FORBIDDEN - Void is not a proper type parameter
 public Result<Void> sendEmail(...) { }
 
-// ✅ CORRECT - Use Unit
+// ✅ CORRECT - Use Unit when failure matters
 public Result<Unit> sendEmail(...) { }
+
+// ✅ CORRECT - Use void return for fire-and-forget side effects
+void recordMetric(String name, long value) { }
+void publishEvent(DomainEvent event) { }
 ```
 
 ---

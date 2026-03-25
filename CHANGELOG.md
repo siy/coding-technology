@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.1.6] - 2026-03-25
+
 ### Added
 - Documented when `void` return type is the right choice: API conformance and fire-and-forget side effects
 - Added library value objects section to book chapters (ch03, ch04) and series (part-03)

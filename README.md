@@ -45,7 +45,7 @@ public record UserId(long value) {
 
     public static Result<UserId> userId(String raw) {
         return Number.parseLong(raw)
-            .map(UserId::new);
+                     .map(UserId::new);
     }
 }
 
@@ -97,43 +97,55 @@ Traditional software development relies on "best practices." These are subjectiv
 
 **Don't want to learn a whole new paradigm?** You don't have to. Here are three changes you can make today that provide immediate value:
 
-### 1. Convert One Value Object
+### 1. Convert One Request Object
 
-Pick your most-validated field (email, phone, user ID).
+Pick a request DTO that validates multiple fields.
 
 **Before:**
 ```java
 // DTO with validation annotations
-public class UserRequest {
-    @NotBlank @Email
-    private String email;  // Can still be constructed with invalid data
-    // getter/setter
-}
+public class CreateUserRequest {
+    @NotBlank @Size(min = 3, max = 50)
+    private String username;
 
-// Validation happens at controller, but domain code has no guarantees
+    @NotBlank @javax.validation.constraints.Email
+    private String email;
+
+    // getters, setters...
+    // Validation at controller layer — domain code has no guarantees
+}
 ```
 
 **After:**
 ```java
-// Validation = construction
-public record Email(String value) {
-    // private Email {}  // Not yet supported in Java
+// Domain-specific value object
+public record Username(String value) {
+    private static final Cause BLANK = Causes.cause("Username is required");
+    private static final Cause TOO_SHORT = Causes.cause("Username must be at least 3 characters");
 
-    private static final Cause EMAIL_REQUIRED = Causes.cause("Email is required");
-    private static final Fn1<Cause, String> EMAIL_BLANK = Causes.forOneValue("Email cannot be blank: %s");
-    private static final Fn1<Cause, String> INVALID_FORMAT = Causes.forOneValue("Invalid email format: %s");
-
-    public static Result<Email> email(String raw) {
-        return Verify.ensure(raw, Verify.Is::notNull, EMAIL_REQUIRED)
-            .filter(EMAIL_BLANK, Verify.Is::notBlank)
-            .filter(INVALID_FORMAT, PATTERN.asMatchPredicate())
-            .map(Email::new);
+    public static Result<Username> username(String raw) {
+        return Verify.ensure(raw, Verify.Is::present, BLANK)
+                     .map(String::trim)
+                     .filter(TOO_SHORT, v -> v.length() >= 3)
+                     .map(Username::new);
     }
 }
-// Impossible to create invalid Email - type system guarantees it
+
+// Email provided by Pragmatica Lite Core (org.pragmatica.lang.vo.Email)
+// Validated, RFC 5321 compliant — ready to use
+
+// Composite request — validation errors accumulate
+public record CreateUserRequest(Username username, Email email) {
+    public static Result<CreateUserRequest> request(String rawName, String rawEmail) {
+        return Result.all(Username.username(rawName),
+                          Email.email(rawEmail))
+                     .map(CreateUserRequest::new);
+    }
+}
+// If constructed, every field is guaranteed valid
 ```
 
-**Win:** Business logic only sees valid emails. No defensive `if (email == null)` checks.
+**Win:** Library VOs for common types (`Email`, `Url`, `Uuid`). Domain VOs for your specific rules. `Result.all()` accumulates all validation errors — users see every problem at once.
 
 ### 2. Convert One Service Method
 
@@ -155,7 +167,7 @@ public User findUser(String id) throws UserNotFoundException {
 ```java
 public Promise<User> findUser(UserId id) {
     return repository.findById(id)  // Returns Promise<Option<User>>
-        .flatMap(opt -> opt.async(USER_NOT_FOUND)); // Replace missing value with corresponding business error
+                     .flatMap(opt -> opt.async(USER_NOT_FOUND));
 }
 // Compiler forces caller to handle the failure case
 ```
@@ -169,12 +181,12 @@ Make one test more readable using functional assertions.
 **Before:**
 ```java
 @Test
-void testEmailValidation() {
+void testUsernameValidation() {
     try {
-        validateEmail("invalid");
+        validateUsername("ab");
         fail("Should have thrown exception");
     } catch (ValidationException e) {
-        assertTrue(e.getMessage().contains("email"));
+        assertTrue(e.getMessage().contains("username"));
     }
 }
 // Verbose, requires manual assertion, easy to forget fail()
@@ -183,16 +195,16 @@ void testEmailValidation() {
 **After:**
 ```java
 @Test
-void email_rejectsInvalidFormat() {
-    Email.email("invalid")
-         .onSuccess(Assertions::fail);  // Fail if unexpectedly succeeds
+void username_rejectsTooShort() {
+    Username.username("ab")
+            .onSuccess(Assertions::fail);  // Fail if unexpectedly succeeds
 }
 
 @Test
-void email_acceptsValidFormat() {
-    Email.email("user@example.com")
-         .onFailure(Assertions::fail)  // Fail if unexpectedly fails
-         .onSuccess(email -> assertEquals("user@example.com", email.value()));
+void username_acceptsValidInput() {
+    Username.username("alice")
+            .onFailure(Assertions::fail)  // Fail if unexpectedly fails
+            .onSuccess(name -> assertEquals("alice", name.value()));
 }
 ```
 

@@ -144,7 +144,7 @@ public record Email(String value) {
         Causes.forOneValue("Invalid email: %s");
 
     public static Result<Email> email(String raw) {
-        return Verify.ensure(raw, Verify.Is::notNull)
+        return Verify.ensure(raw, Verify.Is::present)
                      .map(String::trim)
                      .filter(INVALID_EMAIL, PATTERN.asMatchPredicate())
                      .map(Email::new);
@@ -167,6 +167,7 @@ public record Email(String value) {
 **Verify.Is Predicates** - Use instead of custom lambdas:
 ```java
 Verify.Is::notNull          // null check
+Verify.Is::present          // not null and not blank (CharSequence)
 Verify.Is::notBlank         // non-empty, non-whitespace
 Verify.Is::lenBetween       // length in range
 Verify.Is::matches          // regex (String or Pattern)

@@ -22,7 +22,7 @@ public record Password(String value) {
 
     // Pattern: VO factory with chained ensures; domain-specific Causes
     public static Result<Password> password(String raw) {
-        return ensure(MISSING_PASSWORD, raw, Verify.Is::notNull)
+        return ensure(MISSING_PASSWORD, raw, Verify.Is::present)
                 .map(String::trim)
                 .filter(TOO_SHORT_PASSWORD, s -> Verify.Is.lenBetween(s, MIN_PASSWORD_LENGTH, MAX_PASSWORD_LENGTH))
                 .filter(NOT_DIVERSE_PASSWORD, Password::hasDiversity)

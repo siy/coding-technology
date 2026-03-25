@@ -141,7 +141,7 @@ public record Email(String value) {
     private static final Fn1<Cause, String> INVALID_EMAIL = Causes.forOneValue("Invalid email format: %s");
 
     public static Result<Email> email(String raw) {
-        return Verify.ensure(raw, Verify.Is::notNull)
+        return Verify.ensure(raw, Verify.Is::present)
                      .map(String::trim)
                      .map(String::toLowerCase)
                      .filter(INVALID_EMAIL, EMAIL_PATTERN.asMatchPredicate())
@@ -164,7 +164,7 @@ public record Password(String value) {
     private static final Cause MISSING_DIGIT = Causes.cause("Password must contain digit");
 
     public static Result<Password> password(String raw) {
-        return Verify.ensure(raw, Verify.Is::notNull)
+        return Verify.ensure(raw, Verify.Is::present)
                      .filter(TOO_SHORT, s -> Verify.Is.lenBetween(s, 8, 128))
                      .flatMap(Password::ensureUppercase)
                      .flatMap(Password::ensureDigit)

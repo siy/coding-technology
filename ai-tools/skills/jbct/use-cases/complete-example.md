@@ -47,7 +47,7 @@ public record Email(String value) {
     private Email {}
 
     public static Result<Email> email(String raw) {
-        return Verify.ensure(raw, Verify.Is::notNull)
+        return Verify.ensure(raw, Verify.Is::present)
             .map(String::trim)
             .filter(INVALID_EMAIL, EMAIL_PATTERN.asMatchPredicate())
             .map(Email::new);
@@ -75,7 +75,7 @@ public record Password(String value) {
     private Password {}
 
     public static Result<Password> password(String raw) {
-        return Verify.ensure(raw, Verify.Is::notNull)
+        return Verify.ensure(raw, Verify.Is::present)
             .map(String::trim)
             .filter(TOO_SHORT, s -> s.length() >= MIN_LENGTH)
             .filter(NO_DIGIT, HAS_DIGIT.asMatchPredicate())

@@ -100,7 +100,7 @@ public interface InternalService {
 
     record Value1(String value) {
         public static Result<Value1> value1(String value) {
-            return Verify.ensure(UserInputError.MISSING_VALUE1, value, Verify.Is::notNull)
+            return Verify.ensure(UserInputError.MISSING_VALUE1, value, Verify.Is::present)
                          .map(Value1::new);
         }
 
@@ -111,7 +111,7 @@ public interface InternalService {
 
     record Value2(int value) {
         public static Result<Value2> value2(String value) {
-            return Verify.ensure(UserInputError.MISSING_VALUE2, value, Verify.Is::notNull)
+            return Verify.ensure(UserInputError.MISSING_VALUE2, value, Verify.Is::present)
                          .flatMap(Number::parseInt)
                          .mapError(_ -> UserInputError.VALUE_MUST_BE_DIGIT)
                          .map(Value2::new);

@@ -1098,6 +1098,7 @@ Standard validation predicates:
 ```java
 // Null and emptiness
 Verify.Is::notNull
+Verify.Is::present          // Not null and not blank (CharSequence)
 Verify.Is::notBlank         // Has non-whitespace characters
 Verify.Is::notEmpty         // Non-empty string/collection
 Verify.Is::empty
@@ -1386,7 +1387,7 @@ public class Email {
 // DO: Validation = construction
 public record Email(String value) {
     public static Result<Email> email(String raw) {
-        return Verify.ensure(raw, Verify.Is::notNull)
+        return Verify.ensure(raw, Verify.Is::present)
                      .filter(INVALID_EMAIL, PATTERN.asMatchPredicate())
                      .map(Email::new);
     }

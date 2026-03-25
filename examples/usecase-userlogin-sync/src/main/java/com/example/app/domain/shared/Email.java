@@ -17,7 +17,7 @@ public record Email(String value) {
 
     // Pattern: VO factory named after type; normalize + ensure invariants
     public static Result<Email> email(String raw) {
-        return ensure(MISSING_EMAIL, raw, Verify.Is::notNull)
+        return ensure(MISSING_EMAIL, raw, Verify.Is::present)
                 .map(String::trim)
                 .filter(INVALID_EMAIL, Verify.Is::notEmpty)
                 .filter(INVALID_EMAIL, EMAIL.asMatchPredicate())

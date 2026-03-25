@@ -333,6 +333,13 @@ This clarity is what makes AI-assisted development tractable. When generating co
 - External service calls
 - Operations that might block or take time
 
+**Use `void` when:**
+- The caller deliberately discards the outcome (fire-and-forget)
+- An external API requires `void` (framework callbacks, JDK interfaces like `Runnable`)
+- Examples: `recordMetric(...)`, `publishEvent(...)`, `prefetchCache(...)`
+
+`void` is a semantic signal: the operation is fire-and-forget. Errors are handled internally, never propagated to the caller. This is distinct from `Result<Unit>` or `Promise<Unit>`, where the caller cares about success or failure.
+
 ---
 
 ## Type Conversions and Lifting

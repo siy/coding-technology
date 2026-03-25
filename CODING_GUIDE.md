@@ -65,7 +65,7 @@ Every function returns exactly one of these four types:
 | `Result<T>` | Synchronous, can fail (validation/business errors) | `Result<Email> email(String)`, `Result<Order> placeOrder(Cart)` |
 | `Promise<T>` | Asynchronous, can fail | `Promise<User> loadUser(UserId)`, `Promise<Response> execute(Request)` |
 
-**Never:** `Promise<Result<T>>` (redundant nesting), `Void` type (use `Unit`), return null (use `Option<T>`)
+**Never:** `Promise<Result<T>>` (redundant nesting), `Void` type parameter (use `Unit`), return null (use `Option<T>`)
 
 ### Pattern Decision Tree
 
@@ -901,7 +901,7 @@ This thread-safety model enables safe concurrent composition without explicit sy
 
 **Special case: Unit type for no-value results**
 
-When an operation succeeds but doesn't produce a meaningful value, use `Result<Unit>` or `Promise<Unit>`. **Never use `Void` type.**
+When an operation succeeds but doesn't produce a meaningful value, use `Result<Unit>` or `Promise<Unit>`. **Never use `Void` type parameter** (see also [When `void` Is the Right Return Type](#when-void-is-the-right-return-type) for the distinct case of fire-and-forget side effects).
 
 ```java
 // DO: Use Result<Unit> for validation with no return value
@@ -924,15 +924,20 @@ public Promise<Unit> sendNotification(UserId userId, Message message) {
     //               .mapToUnit();
 }
 
-// DON'T: Never use Void - it has no instances and doesn't compose
-Result<Void> checkInventory(...) { }     // ❌ FORBIDDEN
-Promise<Void> sendNotification(...) { }  // ❌ FORBIDDEN
+// DON'T: Never use Void type parameter - it has no instances and doesn't compose
+Result<Void> checkInventory(...) { }     // ❌ FORBIDDEN — use Result<Unit>
+Promise<Void> sendNotification(...) { }  // ❌ FORBIDDEN — use Promise<Unit>
+
+// DO: Use void return type for fire-and-forget side effects
+void recordMetric(String name, long value) { }  // ✅ fire-and-forget
+void publishEvent(DomainEvent event) { }         // ✅ fire-and-forget
 ```
 
-**Why Unit, not Void:**
-- `Void` has no instances - you cannot create a value of type `Void` (it's an uninhabited type)
-- `Unit` is a singleton type with exactly one instance - it represents "successful computation with no meaningful return value"
-- Technically, `Unit` is an representation of empty set or a record with no fields, which by definition has only one possible value
+**Why Unit, not Void as type parameter:**
+- `Void` has no instances — you cannot create a value of type `Void` (it's an uninhabited type)
+- `Unit` is a singleton type with exactly one instance — it represents "successful computation with no meaningful return value"
+- Technically, `Unit` is a representation of an empty set or a record with no fields, which by definition has only one possible value
+- The `void` *return type* is different: it signals fire-and-forget operations where the caller intentionally discards the outcome
 - `Unit` composes naturally with monadic operations (map, flatMap, fold)
 - `Unit` makes "no meaningful value" explicit in the type system
 - Use `Result.unitResult()` or `Promise.unitPromise()` for operations that succeed without producing data
@@ -947,6 +952,50 @@ These four types form a complete basis for composition. You can lift "up" when n
 Traditional Java mixes these concerns. A method returning `User` might throw exceptions (hidden error channel), return null (hidden optionality), or block on I/O (hidden asynchrony). You can't tell from the signature. With these four types, the signature tells you everything about the function's behavior before you read a line of implementation.
 
 This clarity is what makes AI-assisted development tractable. When generating code, an AI doesn't need to infer whether error handling is needed - the return type declares it. When reading code, a human doesn't need to trace execution paths to find hidden failure modes - they're in the type signature.
+
+### When `void` Is the Right Return Type
+
+The four return kinds cover business logic where the caller uses the result. But there's a distinct category where **no caller ever inspects the outcome**: fire-and-forget side effects.
+
+There are two legitimate cases for `void` return type:
+
+**1. API Conformance** — An external API requires `void` signature:
+
+```java
+// JDK API: Runnable, Consumer, ScopedValue.run()
+// Framework callbacks: event handlers, message receivers
+@MessageReceiver
+void onLeaderChange(LeaderChange event);
+```
+
+No design choice here — the API dictates the signature.
+
+**2. Fire-and-Forget Side Effects** — The caller deliberately discards the outcome:
+
+```java
+// Metrics collection — failure must not affect business flow
+void recordLatency(String operation, Duration elapsed);
+
+// Event publishing — consumers handle independently
+void publishDomainEvent(OrderPlaced event);
+
+// Cache warming — miss is acceptable, not an error
+void prefetchUserProfile(UserId id);
+```
+
+The `void` return type is a **semantic signal**: this operation is fire-and-forget. The caller commits to not caring about success, failure, or timing. Even if the implementation is synchronous, `void` communicates that the outcome is irrelevant to the caller's flow.
+
+**Contrast with `Result<Unit>` / `Promise<Unit>`:**
+
+| Return Type | Meaning |
+|------------|---------|
+| `Result<Unit>` | No meaningful value, but **failure matters** (e.g., `deleteUser`) |
+| `Promise<Unit>` | No meaningful value, async, **failure matters** (e.g., `sendEmail`) |
+| `void` | No meaningful value, **failure is irrelevant to caller** (e.g., `recordMetric`) |
+
+**Key constraint:** Fire-and-forget `void` methods must handle their own errors internally (logging, dead-letter queues, circuit breakers). Errors must never propagate to the caller — that's the contract `void` establishes.
+
+**Note:** The `Void` *type parameter* (as in `Result<Void>` or `Promise<Void>`) remains forbidden. `Void` is an uninhabitable type — use `Unit` when you need a type parameter for operations without meaningful return values. The `void` *return type* is distinct: it signals fire-and-forget semantics.
 
 ### Parse, Don't Validate
 

@@ -78,7 +78,7 @@ All validation happens during parsing:
 
 ```java
 public static Result<Email> email(String raw) {
-    return Verify.ensure(raw, Verify.Is::present)        // Check present
+    return Verify.ensure(raw, Verify.Is::present)         // Check not null/blank
         .map(String::trim)                               // Normalize
         .filter(INVALID_EMAIL,                           // Validate format
                 EMAIL_PATTERN.asMatchPredicate())

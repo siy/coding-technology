@@ -17,8 +17,8 @@ Complete walkthrough of implementing a user registration use case from start to 
 ```java
 package com.example.usecase.registeruser;
 
-import org.pragmatica.lite.result.Result;
-import org.pragmatica.lite.promise.Promise;
+import org.pragmatica.result.Result;
+import org.pragmatica.promise.Promise;
 
 public interface RegisterUser extends UseCase.WithPromise<Response, Request> {
     record Request(String email, String password) {}

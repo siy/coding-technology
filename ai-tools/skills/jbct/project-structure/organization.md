@@ -113,7 +113,7 @@ com.example.adapter.persistence/
 - Domain calculations
 - Shared error types
 
-**No dependencies**: Only Pragmatica Lite Core.
+**No dependencies**: Only Pragmatica Core.
 
 ### Adapter Layer
 

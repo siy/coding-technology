@@ -40,7 +40,7 @@ Can fail? → NO  → Optional? → NO  → T
 
 ---
 
-### Chapter 3: Pragmatica Lite Essentials
+### Chapter 3: Pragmatica Core Essentials
 
 **Key Takeaways:**
 - Consistent API across types: `map()`, `flatMap()`, `filter()`, `recover()`
@@ -324,7 +324,7 @@ feature/
 |---------|------------------|
 | 1 | JBCT unifies code through functional composition |
 | 2 | Choose T/Option/Result/Promise based on failure and async |
-| 3 | Pragmatica Lite: consistent API for monadic types |
+| 3 | Pragmatica Core: consistent API for monadic types |
 | 4 | Parse into validated types, don't validate raw data |
 | 5 | Errors are Cause values, not exceptions |
 | 6 | Eliminate null by converting to Option immediately |

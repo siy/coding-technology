@@ -216,7 +216,7 @@ Java records are well-positioned to support this pattern natively.
 
 ## Description
 
-> **Note on Code Examples:** The examples in this JEP use functional types (`Result<T>`, `Option<T>`, `Promise<T>`) from the Pragmatica Lite Core library to demonstrate validation patterns. These types are not part of this proposal - they serve only to illustrate realistic use cases for private constructors in value object implementations.
+> **Note on Code Examples:** The examples in this JEP use functional types (`Result<T>`, `Option<T>`, `Promise<T>`) from the Pragmatica Core library to demonstrate validation patterns. These types are not part of this proposal - they serve only to illustrate realistic use cases for private constructors in value object implementations.
 >
 > **Maven:**
 > ```xml

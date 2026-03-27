@@ -688,7 +688,7 @@ private Promise<Availability> checkInventory(ValidRequest request) {
 
 ## Core Concepts
 
-> **Note:** This section uses **Pragmatica Lite Core** library as an underlying functional style library.
+> **Note:** This section uses **Pragmatica Core** library as an underlying functional style library.
 > The library is available on Maven Central: https://central.sonatype.com/artifact/org.pragmatica-lite/core
 >
 > **Maven:**
@@ -696,13 +696,13 @@ private Promise<Availability> checkInventory(ValidRequest request) {
 > <dependency>
 >    <groupId>org.pragmatica-lite</groupId>
 >    <artifactId>core</artifactId>
->    <version>0.11.2</version>
+>    <version>0.25.0</version>
 > </dependency>
 > ```
 >
 > **Gradle:**
 > ```gradle
-> implementation 'org.pragmatica-lite:core:0.11.2'
+> implementation 'org.pragmatica-lite:core:0.25.0'
 > ```
 
 ### The Four Return Kinds
@@ -714,7 +714,7 @@ Every function in this technology returns exactly one of four types. Not "usuall
 - **Reliability**: Compiler verifies error handling, null safety, and async boundaries when encoded in types (+3).
 - **Complexity**: Four types cover all scenarios - no guessing about combinations or special cases (+2).
 
-#### Pragmatica Lite Quick Reference
+#### Pragmatica Core Quick Reference
 
 Common imports and methods you'll use throughout this guide:
 
@@ -747,7 +747,7 @@ import org.pragmatica.lang.Functions.Fn2;
 Static imports reduce verbosity. The API is designed to avoid naming conflicts:
 
 ```java
-// Pragmatica Lite static imports
+// Pragmatica Core static imports
 import static org.pragmatica.lang.Result.all;
 import static org.pragmatica.lang.Result.success;
 import static org.pragmatica.lang.Option.option;
@@ -1287,9 +1287,9 @@ public ResponseEntity<?> register(@RequestBody RegistrationRequest request) {
 
 **Timeline:** New features immediately, existing features over 3-6 months as you touch the code. No big-bang refactoring required.
 
-### Pragmatica Lite Validation and Parsing Utilities
+### Pragmatica Core Validation and Parsing Utilities
 
-Pragmatica Lite Core provides two categories of utilities that eliminate common boilerplate: `Verify.Is` predicates for validation and the `parse` subpackage for exception-safe JDK API wrapping.
+Pragmatica Core provides two categories of utilities that eliminate common boilerplate: `Verify.Is` predicates for validation and the `parse` subpackage for exception-safe JDK API wrapping.
 
 #### Verify.Is Predicates
 
@@ -1708,7 +1708,7 @@ private Promise<Option<Config>> recoverConfigNotFound(Cause cause) {
 
 **Strategy 6: Retry with Exponential Backoff**
 
-Use Pragmatica Lite's `Retry` utility for transient failures:
+Use Pragmatica Core's `Retry` utility for transient failures:
 
 ```java
 import org.pragmatica.lang.utils.Retry;
@@ -3291,9 +3291,9 @@ withRetry(policy, () -> createOrder(request, idempotencyKey))  // DO
 
 **Implementing Aspects: How They Work**
 
-Aspects are higher-order functions - functions that take a function and return a decorated version. Here's how to implement them using Pragmatica Lite's utilities:
+Aspects are higher-order functions - functions that take a function and return a decorated version. Here's how to implement them using Pragmatica Core's utilities:
 
-**Retry Aspect (using Pragmatica Lite's Retry):**
+**Retry Aspect (using Pragmatica Core's Retry):**
 
 ```java
 import org.pragmatica.lang.utils.Retry;
@@ -3327,7 +3327,7 @@ FetchUserProfile fetchWithRetry = withRetry(3, backoff, fetchUserProfile);
 - Internally uses Retry utility to handle failures and backoff
 - Original step unaware it's being retried
 
-**Circuit Breaker Aspect (using Pragmatica Lite's CircuitBreaker):**
+**Circuit Breaker Aspect (using Pragmatica Core's CircuitBreaker):**
 
 ```java
 import org.pragmatica.lang.utils.CircuitBreaker;
@@ -3416,7 +3416,7 @@ var decorated = composeAspects(List.of(s -> withMetrics("operation", s),
 
 **Key insights:**
 - Aspects are just higher-order functions - no magic
-- Pragmatica Lite provides `Retry` and `CircuitBreaker` out of the box
+- Pragmatica Core provides `Retry` and `CircuitBreaker` out of the box
 - Custom aspects follow same pattern: `(step) -> decoratedStep`
 - Composition is mechanical function application
 - Each aspect is independently testable

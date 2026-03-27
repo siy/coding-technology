@@ -131,7 +131,7 @@ public record Username(String value) {
     }
 }
 
-// Email provided by Pragmatica Lite Core (org.pragmatica.lang.vo.Email)
+// Email provided by Pragmatica Core (org.pragmatica.lang.vo.Email)
 // Validated, RFC 5321 compliant — ready to use
 
 // Composite request — validation errors accumulate
@@ -244,7 +244,7 @@ void username_acceptsValidInput() {
 
 - **[CHANGELOG.md](CHANGELOG.md)** - Version history following [Keep a Changelog](https://keepachangelog.com/)
   - Current version: 2.2.0 (2026-03-27)
-  - Golden formatting patterns, Pragmatica Lite 0.11.2, 36 lint rules
+  - Golden formatting patterns, Pragmatica Core 0.25.0, 36 lint rules
   - Semantic versioning for documentation releases
 
 ## 🔧 Tools
@@ -336,7 +336,7 @@ coding-technology/
 │   ├── code/                    # Code snippets
 │   └── patterns/                # Pattern documentation
 ├── templates/                   # Reusable templates
-└── PL_IMPROVEMENTS.md           # Pragmatica Lite enhancement backlog
+└── PL_IMPROVEMENTS.md           # Pragmatica Core enhancement backlog
 ```
 
 ## 🤝 Contributing
@@ -372,20 +372,20 @@ This repository documents a methodology, not a software project. Contributions w
 
 ## 🔗 Related Projects
 
-- **[Pragmatica Lite Core](https://central.sonatype.com/artifact/org.pragmatica-lite/core)** - The foundational library providing `Option`, `Result`, `Promise`, and functional utilities
+- **[Pragmatica Core](https://central.sonatype.com/artifact/org.pragmatica-lite/core)** - The foundational library providing `Option`, `Result`, `Promise`, and functional utilities
 
 **Maven:**
 ```xml
 <dependency>
    <groupId>org.pragmatica-lite</groupId>
    <artifactId>core</artifactId>
-   <version>0.11.2</version>
+   <version>0.25.0</version>
 </dependency>
 ```
 
 **Gradle:**
 ```gradle
-implementation 'org.pragmatica-lite:core:0.11.2'
+implementation 'org.pragmatica-lite:core:0.25.0'
 ```
 
 ## 📄 License

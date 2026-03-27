@@ -811,7 +811,7 @@ Result<Option<ReferralCode>> refCode = ReferralCode.referralCode(input);
 // Failure(cause) = provided but invalid
 ```
 
-Use `Verify.ensureOption()` (Pragmatica Lite 0.9.0+) for implementing this pattern:
+Use `Verify.ensureOption()` (Pragmatica Core 0.9.0+) for implementing this pattern:
 
 ```java
 public static Result<Option<ReferralCode>> referralCode(String raw) {
@@ -1015,9 +1015,9 @@ They prevent complexity explosion. With exactly four return types and clear comp
 
 ---
 
-## Pragmatica Lite API Reference
+## Pragmatica Core API Reference
 
-This section consolidates the essential Pragmatica Lite Core 0.9.0 APIs you'll use daily. For complete API documentation, see [CODING_GUIDE.md: Pragmatica Lite Core 0.9.0 API Reference](../CODING_GUIDE.md).
+This section consolidates the essential Pragmatica Core 0.9.0 APIs you'll use daily. For complete API documentation, see [CODING_GUIDE.md: Pragmatica Core 0.9.0 API Reference](../CODING_GUIDE.md).
 
 ### Type Conversions
 
@@ -1226,7 +1226,7 @@ public Promise<Unit> sendEmail(EmailAddress to, String body) {
 }
 ```
 
-This covers the core Pragmatica Lite APIs you'll use in daily development. For advanced features (retry policies, timeout handling, Promise cancellation), see CODING_GUIDE.md.
+This covers the core Pragmatica Core APIs you'll use in daily development. For advanced features (retry policies, timeout handling, Promise cancellation), see CODING_GUIDE.md.
 
 ---
 
@@ -1437,7 +1437,7 @@ public static Result<UserId> userId(String raw) {
 
 ✅ **Correct:**
 ```java
-// DO: Use Pragmatica Lite parse utilities
+// DO: Use Pragmatica Core parse utilities
 import org.pragmatica.lang.parse.Network;
 
 public static Result<UserId> userId(String raw) {

@@ -86,7 +86,7 @@ public class UserService {
 **Goal:** Introduce parse-don't-validate without changing existing code structure.
 
 **What to do:**
-1. Add Pragmatica Lite dependency
+1. Add Pragmatica Core dependency
 2. Create value objects for commonly validated fields
 3. Use value objects in new code
 4. Gradually replace primitives in existing code
@@ -659,14 +659,14 @@ return findUser(id)
 
 ### "Performance overhead?"
 
-**Response:** Negligible for business logic. Pragmatica Lite types are lightweight wrappers. The overhead is comparable to Optional. If you're writing code where object allocation matters (tight loops, real-time systems), JBCT isn't the right fit - but neither is typical Java web development.
+**Response:** Negligible for business logic. Pragmatica Core types are lightweight wrappers. The overhead is comparable to Optional. If you're writing code where object allocation matters (tight loops, real-time systems), JBCT isn't the right fit - but neither is typical Java web development.
 
 ---
 
 ## Migration Checklist
 
 ### Phase 1 Complete When:
-- [ ] Pragmatica Lite added to project
+- [ ] Pragmatica Core added to project
 - [ ] At least 5 value objects created
 - [ ] One service method uses value objects
 - [ ] Team has reviewed value object patterns

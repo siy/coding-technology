@@ -509,20 +509,20 @@ You don't need:
 
 ## Setting Up
 
-This series uses **Pragmatica Lite Core** library for the four return types (Option, Result, Promise) and related utilities.
+This series uses **Pragmatica Core** library for the four return types (Option, Result, Promise) and related utilities.
 
 Add to your `pom.xml`:
 ```xml
 <dependency>
    <groupId>org.pragmatica-lite</groupId>
    <artifactId>core</artifactId>
-   <version>0.11.2</version>
+   <version>0.25.0</version>
 </dependency>
 ```
 
 Or Gradle:
 ```gradle
-implementation 'org.pragmatica-lite:core:0.11.2'
+implementation 'org.pragmatica-lite:core:0.25.0'
 ```
 
 Library documentation: https://central.sonatype.com/artifact/org.pragmatica-lite/core

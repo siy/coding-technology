@@ -13,7 +13,7 @@
         <maven.compiler.parameters>true</maven.compiler.parameters>
     </properties>
 
-    <!-- Note: These examples reference Pragmatica Lite types in code comments/imports.
+    <!-- Note: These examples reference Pragmatica Core types in code comments/imports.
          To build, add the dependency to your local PL core or adjust imports to your setup. -->
 
     <dependencies>

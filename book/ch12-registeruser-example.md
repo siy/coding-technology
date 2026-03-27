@@ -189,7 +189,7 @@ public record ReferralCode(String value) {
 }
 ```
 
-The `Verify.ensureOption()` method (Pragmatica Lite 0.9.0+) handles `Result<Option<ReferralCode>>` elegantly: if the `Option` is empty, succeeds with `Option.none()`; if present and valid, succeeds with `Option.some(value)`; if present and invalid, fails.
+The `Verify.ensureOption()` method (Pragmatica Core 0.9.0+) handles `Result<Option<ReferralCode>>` elegantly: if the `Option` is empty, succeeds with `Option.none()`; if present and valid, succeeds with `Option.some(value)`; if present and invalid, fails.
 
 ---
 

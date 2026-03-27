@@ -153,7 +153,7 @@ public Promise<User> loadUser(UserId id) {
 
 ### ❌ Never Use `Void` Type Parameter
 
-Always use `Unit` for operations without meaningful return values:
+Always use `Unit` for operations without meaningful return values. Note: `void` return is OK for fire-and-forget.
 
 ```java
 // ❌ WRONG
@@ -173,22 +173,6 @@ public Promise<Unit> sendEmail(Email to, String subject) {
     });
 }
 ```
-
-#### When `void` Return Type Is Acceptable
-
-The `void` return type is legitimate in two cases:
-
-1. **API Conformance** — External API requires `void` (JDK `Runnable`, framework callbacks)
-2. **Fire-and-Forget Side Effects** — Caller deliberately discards the outcome
-
-```java
-// ✅ Fire-and-forget — errors handled internally
-void recordLatency(String operation, Duration elapsed);
-void publishDomainEvent(OrderPlaced event);
-void prefetchUserProfile(UserId id);
-```
-
-`void` is a semantic signal: the caller commits to not caring about success or failure. The method handles its own errors internally.
 
 ## Choosing the Right Kind
 

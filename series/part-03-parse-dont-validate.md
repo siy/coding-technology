@@ -87,7 +87,7 @@ Result<Email> result = Email.email(input);
 
 The constructor is private (or package-private). The only way to get an `Email` is through the static factory `email()`, which returns `Result<Email>`. If you have an `Email` instance, it's valid - no separate check needed. The type system enforces this.
 
-> **Library Value Objects:** Pragmatica Lite Core provides production-ready value objects for common types in `org.pragmatica.lang.vo`: `Email`, `Url`, `Uuid`, `NonBlankString`, and `IsoDateTime`. These are explicitly designed to cover common use cases in real business logic — use them directly instead of writing your own for these standard types. Build custom value objects for domain-specific types (like `OrderId`, `Username`, or `ReferralCode`).
+> **Library Value Objects:** Pragmatica Core provides production-ready value objects for common types in `org.pragmatica.lang.vo`: `Email`, `Url`, `Uuid`, `NonBlankString`, and `IsoDateTime`. These are explicitly designed to cover common use cases in real business logic — use them directly instead of writing your own for these standard types. Build custom value objects for domain-specific types (like `OrderId`, `Username`, or `ReferralCode`).
 
 **Note:** As of current Java versions, records do not support declaring the canonical constructor as private. This limitation means the constructor remains accessible within the same package. Future Java versions may address this. Until then, rely on team discipline and code review to ensure value objects are only constructed through their factory methods. The good news: violations are highly visible in code - since all components are normally constructed via factory methods, any direct `new Email(...)` call stands out immediately. This makes the issue easy to catch using automated static analysis checks or by instructing AI code review tools to flag direct constructor usage for value objects.
 
@@ -144,7 +144,7 @@ public record ReferralCode(String value) {
 }
 ```
 
-The `Verify.ensureOption()` method (Pragmatica Lite 0.9.0+) handles the `Result<Option<T>>` pattern elegantly:
+The `Verify.ensureOption()` method (Pragmatica Core 0.9.0+) handles the `Result<Option<T>>` pattern elegantly:
 - If the `Option` is empty, succeeds with `Option.none()` - no validation needed
 - If present and valid, succeeds with `Option.some(value)`
 - If present and invalid, fails with the provided cause
@@ -246,9 +246,9 @@ When an AI generates a value object, the structure is mechanical:
 
 No guessing about where validation happens or how errors are reported. The AI learns the pattern once and applies it consistently.
 
-### Pragmatica Lite Validation Utilities
+### Pragmatica Core Validation Utilities
 
-Pragmatica Lite Core provides built-in utilities that eliminate boilerplate in value object validation:
+Pragmatica Core provides built-in utilities that eliminate boilerplate in value object validation:
 
 **Verify.Is Predicates** - 20+ ready-to-use validation predicates:
 ```java
@@ -292,7 +292,7 @@ For comprehensive list, see main [Coding Guide](../CODING_GUIDE.md#pragmatica-li
 
 ---
 
-**Pragmatica Lite Quick Reference**
+**Pragmatica Core Quick Reference**
 
 Common imports and methods you'll use throughout this series:
 

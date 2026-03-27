@@ -160,7 +160,7 @@ public sealed interface RegistrationError extends Cause {
 
 ---
 
-### Exercise 1.5 [Intermediate] - Pragmatica Lite Operations
+### Exercise 1.5 [Intermediate] - Pragmatica Core Operations
 
 What does each expression evaluate to?
 

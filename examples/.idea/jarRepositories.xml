@@ -9,7 +9,7 @@
     <remote-repository>
       <option name="id" value="github" />
       <option name="name" value="github" />
-      <option name="url" value="https://maven.pkg.github.com/siy/pragmatica-lite" />
+      <option name="url" value="https://maven.pkg.github.com/pragmaticalabs/pragmatica" />
     </remote-repository>
     <remote-repository>
       <option name="id" value="central" />

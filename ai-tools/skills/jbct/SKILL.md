@@ -65,7 +65,7 @@ These patterns are **never acceptable** in JBCT code. Hunt for them aggressively
 | Null checks in business logic | `if (x == null)` or `!= null` | Use `Option<T>` instead |
 | Throwing exceptions | `throw new` in business code | Use `Result<T>` or `Promise<T>` |
 | Catching exceptions | `catch` in business code | Lift at adapter boundaries only |
-| `Void` type | `Result<Void>`, `Promise<Void>` | Use `Unit` type |
+| `Void` type parameter | `Result<Void>`, `Promise<Void>` | Use `Unit` type. Note: `void` return is OK for fire-and-forget |
 | `Result.failure(cause)` | Direct call | Use `cause.result()` fluent style |
 | `Promise.failure(cause)` | Direct call | Use `cause.promise()` fluent style |
 | Multi-statement lambdas | `x -> { stmt1; stmt2; }` | Extract to named method |
@@ -132,7 +132,7 @@ public Promise<User> loadUser(UserId id) { return ...; }
 
 **Critical Rules:**
 - ❌ Never `Promise<Result<T>>` - Promise already handles failures
-- ❌ Never `Void` type - always use `Unit` (`Result<Unit>`, `Promise<Unit>`)
+- ❌ Never `Void` type parameter - always use `Unit` (`Result<Unit>`, `Promise<Unit>`). `void` return is OK for fire-and-forget
 - ✅ Use `Result.unitResult()` for successful `Result<Unit>`
 
 ### Parse, Don't Validate Pattern
@@ -162,7 +162,7 @@ public record Email(String value) {
 - Constructor private or package-private
 - If instance exists, it's valid
 
-### Pragmatica Lite Validation Utilities
+### Pragmatica Core Validation Utilities
 
 **Verify.Is Predicates** - Use instead of custom lambdas:
 ```java
@@ -418,7 +418,18 @@ private Promise<User> recoverNetworkError(Cause cause) {
 
 ## Structural Patterns
 
-### 1. Leaf Pattern
+JBCT's six patterns map directly to BPMN constructs — code written in these patterns *is* an executable business process specification.
+
+| Pattern | BPMN Construct | Role |
+|---------|---------------|------|
+| Leaf | Task / Service Task | Atomic operation, one responsibility |
+| Sequencer | Sequence Flow | Dependent steps in order |
+| Fork-Join | Parallel Gateway | Independent concurrent operations |
+| Condition | Exclusive Gateway | Routing, no transformation |
+| Iteration | Multi-Instance Activity | Collection processing |
+| Aspects | Event Sub-Process | Cross-cutting concerns wrapping logic |
+
+### 1. Leaf Pattern (BPMN: Task)
 Atomic unit - single responsibility, no composition:
 ```java
 public Promise<User> findUser(UserId id) {
@@ -648,25 +659,39 @@ void execute_succeeds_forValidInput() {
 }
 ```
 
-## Pragmatica Lite Core Library
+## Pragmatica Core Library
 
-JBCT uses **Pragmatica Lite Core 0.11.2** for functional types.
+JBCT uses **Pragmatica Core 0.25.0** for functional types.
 
 **Maven (preferred):**
 ```xml
 <dependency>
    <groupId>org.pragmatica-lite</groupId>
    <artifactId>core</artifactId>
-   <version>0.11.2</version>
+   <version>0.25.0</version>
 </dependency>
 ```
 
 **Gradle (only if explicitly requested):**
 ```gradle
-implementation 'org.pragmatica-lite:core:0.11.2'
+implementation 'org.pragmatica-lite:core:0.25.0'
 ```
 
 Library documentation: https://central.sonatype.com/artifact/org.pragmatica-lite/core
+
+### Library Value Objects
+
+Pragmatica Core provides production-ready value objects in `org.pragmatica.lang.vo`:
+
+| Value Object | Factory Method | Description |
+|-------------|----------------|-------------|
+| `Email` | `Email.email(String)` | RFC 5321 compliant, splits localPart/domain |
+| `Url` | `Url.url(String)` | Validates scheme + host |
+| `Uuid` | `Uuid.uuid(String)`, `Uuid.randomUuid()` | UUID with parse + generate |
+| `NonBlankString` | `NonBlankString.nonBlankString(String)` | Trimmed, guaranteed non-empty |
+| `IsoDateTime` | `IsoDateTime.isoDateTime(String)`, `IsoDateTime.now()` | ISO 8601 datetime |
+
+Use these for common types. Build custom VOs for domain-specific types (`OrderId`, `Username`, `ReferralCode`).
 
 ### Static Imports (Encouraged)
 
@@ -757,7 +782,7 @@ This skill provides quick reference and learning resources. For complex implemen
 
 ❌ Using business exceptions instead of `Result`/`Promise`
 ❌ Nested records in use case factories (use lambdas)
-❌ `Void` type (use `Unit`)
+❌ `Void` type parameter (use `Unit`; `void` return is OK for fire-and-forget)
 ❌ `Promise<Result<T>>` (redundant nesting)
 ❌ Separate validation methods (parse at construction)
 ❌ Public constructors on value objects
@@ -774,7 +799,7 @@ Before considering JBCT code complete, verify ALL of these:
 - [ ] No `*Impl` classes
 - [ ] No `null` checks in business logic
 - [ ] No `throw`/`catch` in business logic
-- [ ] No `Void` type (use `Unit`)
+- [ ] No `Void` type parameter (use `Unit`; `void` return OK for fire-and-forget)
 - [ ] No `Result.failure()` or `Promise.failure()` (use `cause.result()`/`cause.promise()`)
 - [ ] No multi-statement lambdas in map/flatMap
 

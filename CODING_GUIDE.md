@@ -6,7 +6,7 @@ description: "Revolutionary technology for writing deterministic, AI-friendly, h
 
 # Java Backend Coding Technology: Writing Code in the Era of AI
 
-**Version:** 2.1.6 | **Repository:** [github.com/siy/coding-technology](https://github.com/siy/coding-technology) | **Changelog:** [CHANGELOG.md](https://github.com/siy/coding-technology/blob/main/CHANGELOG.md)
+**Version:** 2.2.0 | **Repository:** [github.com/siy/coding-technology](https://github.com/siy/coding-technology) | **Changelog:** [CHANGELOG.md](https://github.com/siy/coding-technology/blob/main/CHANGELOG.md)
 
 ## Introduction: Code in a New Era
 

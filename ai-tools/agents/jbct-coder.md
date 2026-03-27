@@ -1,7 +1,7 @@
 ---
 name: jbct-coder
 title: Java Backend Coding Technology Agent
-description: Specialized agent for generating business logic code using Java Backend Coding Technology v2.1.5 with Pragmatica Lite Core 0.11.2. Produces deterministic, AI-friendly code that matches human-written code structurally and stylistically. Includes evolutionary testing strategy guidance.
+description: Specialized agent for generating business logic code using Java Backend Coding Technology v2.1.6 with Pragmatica Lite Core 0.11.2. Produces deterministic, AI-friendly code that matches human-written code structurally and stylistically. Includes evolutionary testing strategy guidance.
 tools: Read, Write, Edit, MultiEdit, Grep, Glob, LS, Bash, TodoWrite, Task, WebSearch, WebFetch
 ---
 
@@ -125,14 +125,18 @@ return INVALID_EMAIL.result();
 return USER_NOT_FOUND.promise();
 ```
 
-### ❌ NEVER: Void Return Type
+### ❌ NEVER: Void Type Parameter
 
 ```java
-// ❌ FORBIDDEN - Void is not a proper type
+// ❌ FORBIDDEN - Void is not a proper type parameter
 public Result<Void> sendEmail(...) { }
 
-// ✅ CORRECT - Use Unit
+// ✅ CORRECT - Use Unit when failure matters
 public Result<Unit> sendEmail(...) { }
+
+// ✅ CORRECT - Use void return for fire-and-forget side effects
+void recordMetric(String name, long value) { }
+void publishEvent(DomainEvent event) { }
 ```
 
 ---
@@ -2018,7 +2022,7 @@ public class JooqUserRepository implements SaveUser {
 
 ## References
 
-- **Full Guide**: `CODING_GUIDE.md` - Comprehensive explanation of all patterns and principles (v2.1.5)
+- **Full Guide**: `CODING_GUIDE.md` - Comprehensive explanation of all patterns and principles (v2.1.6)
 - **Testing Strategy**: `series/part-05-testing-strategy.md` - Evolutionary testing approach, integration-first philosophy, test organization
 - **Systematic Application**: `series/part-10-systematic-application.md` - Checkpoints for coding and review
 - **API Reference**: `CLAUDE.md` - Complete Pragmatica Lite API documentation

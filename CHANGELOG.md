@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.1.6] - 2026-03-25
+
+### Added
+- Documented when `void` return type is the right choice: API conformance and fire-and-forget side effects
+- Added library value objects section to book chapters (ch03, ch04) and series (part-03)
+- Added `Verify.Is::present` to API reference listings (combined not-null + not-blank for CharSequence)
+
+### Changed
+- Redesigned front page quick-start with ecommerce `CreateUserRequest` example showing `Result.all()` composition
+- Migrated string validation from `Verify.Is::notNull` to `Verify.Is::present` across all docs, examples, and AI tools
+- Clarified `Void` type parameter (forbidden) vs `void` return type (fire-and-forget) across guide, series, book, and AI tools
+- Fixed JBCT method chain dot alignment in all code examples
+- Mentioned Pragmatica Lite Core library value objects (`Email`, `Url`, `Uuid`, `NonBlankString`, `IsoDateTime`)
+- Updated website styles
+
 ## [2.1.5] - 2026-02-07
 
 ### Changed

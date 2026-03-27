@@ -361,6 +361,29 @@ Promise.promise()           // Unresolved
 4. **Consistent composition** - Same map/flatMap across all types
 5. **Use Cause methods** - Prefer `cause.result()` over `Result.failure(cause)`
 
+### When `void` Is the Right Return Type
+
+The four return kinds cover cases where the caller uses the result. But there's a distinct category where **no caller ever inspects the outcome**: fire-and-forget side effects.
+
+**Two legitimate cases:**
+
+1. **API Conformance** — An external API requires `void` (JDK's `Runnable`, framework event handlers)
+2. **Fire-and-Forget Side Effects** — The caller deliberately discards the outcome (metrics, event publishing, cache warming)
+
+```java
+// Fire-and-forget — caller doesn't care about outcome
+void recordLatency(String operation, Duration elapsed);
+void publishDomainEvent(OrderPlaced event);
+```
+
+The `void` return type is a **semantic signal**: errors are handled internally, never propagated to the caller. Compare:
+
+- `Result<Unit>` — failure matters (e.g., `deleteUser`)
+- `Promise<Unit>` — async, failure matters (e.g., `sendEmail`)
+- `void` — failure is irrelevant to caller (e.g., `recordMetric`)
+
+**Note:** The `Void` *type parameter* (as in `Result<Void>`) remains forbidden — use `Unit`. The `void` *return type* is the fire-and-forget signal.
+
 ---
 
 ## Exercises

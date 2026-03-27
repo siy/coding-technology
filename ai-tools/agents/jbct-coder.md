@@ -117,16 +117,16 @@ Use constructor references in `lift`: `RepositoryError.DatabaseFailure::new`
 
 ### Single Pattern Per Function
 
-Every function implements exactly ONE of six patterns:
+Every function implements exactly ONE of six patterns. Each pattern maps to a BPMN construct — code written in these patterns *is* an executable business process specification.
 
-| Pattern | Purpose | Key Rule |
-|---------|---------|----------|
-| Leaf | Single atomic operation | 1 responsibility |
-| Sequencer | 2-5 dependent steps | Each step = Leaf or sub-pattern |
-| Fork-Join | Independent parallel ops | All inputs MUST be immutable |
-| Condition | Routing only | No transformation in condition itself |
-| Iteration | Collection processing | Body = Leaf or sub-pattern |
-| Aspects | Cross-cutting wrapper | Wraps Leaf or pattern |
+| Pattern | BPMN Construct | Purpose | Key Rule |
+|---------|---------------|---------|----------|
+| Leaf | Task | Single atomic operation | 1 responsibility |
+| Sequencer | Sequence Flow | 2-5 dependent steps | Each step = Leaf or sub-pattern |
+| Fork-Join | Parallel Gateway | Independent parallel ops | All inputs MUST be immutable |
+| Condition | Exclusive Gateway | Routing only | No transformation in condition itself |
+| Iteration | Multi-Instance | Collection processing | Body = Leaf or sub-pattern |
+| Aspects | Event Sub-Process | Cross-cutting wrapper | Wraps Leaf or pattern |
 
 If mixing patterns, split into separate functions.
 

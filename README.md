@@ -2,7 +2,7 @@
 
 > **Version 2.2.0** | [Full Changelog](CHANGELOG.md)
 
-A framework-agnostic methodology for writing predictable, testable Java backend code optimized for human-AI collaboration.
+Executable business process specifications. Code that reads like a business process, because it is one. A framework-agnostic methodology for writing predictable, testable Java backend code optimized for human-AI collaboration.
 
 ## Here's What Changes
 
@@ -360,13 +360,18 @@ This repository documents a methodology, not a software project. Contributions w
 
 **No Business Exceptions**: Business failures are expected outcomes, not exceptions. They flow through `Result` or `Promise` as typed `Cause` objects.
 
-**Six Patterns**: All code fits one pattern:
-1. **Leaf** - Atomic operation (business logic or I/O adapter)
-2. **Sequencer** - Chain dependent steps (2-5 steps)
-3. **Fork-Join** - Parallel independent operations
-4. **Condition** - Branching as values
-5. **Iteration** - Functional combinators over collections
-6. **Aspects** - Cross-cutting concerns (retry, timeout, metrics)
+**Six Patterns = Six BPMN Constructs**: All code fits one pattern, each mapping directly to a BPMN flow construct:
+
+| Pattern | BPMN Construct | Role |
+|---------|---------------|------|
+| **Leaf** | Task | Atomic operation (business logic or I/O adapter) |
+| **Sequencer** | Sequence Flow | Chain dependent steps (2-5 steps) |
+| **Fork-Join** | Parallel Gateway | Parallel independent operations |
+| **Condition** | Exclusive Gateway | Branching as values |
+| **Iteration** | Multi-Instance Activity | Functional combinators over collections |
+| **Aspects** | Event Sub-Process | Cross-cutting concerns (retry, timeout, metrics) |
+
+If you can draw it as a BPMN diagram, you can write it as JBCT code. The structure is the same.
 
 **Vertical Slicing**: Each use case is self-contained. Business logic isolated per use case, not centralized.
 

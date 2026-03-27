@@ -13,11 +13,22 @@
 
 ## Single Pattern Per Function
 
-Every function implements exactly one pattern from a fixed catalog: Leaf, Sequencer, Fork-Join, Condition, or Iteration. (Aspects are the exception—they decorate other patterns.)
+Every function implements exactly one pattern from a fixed catalog: Leaf, Sequencer, Fork-Join, Condition, or Iteration. (Aspects are the exception—they decorate other patterns.) Each pattern maps directly to a BPMN flow construct:
+
+| Pattern | BPMN Construct | Structural Role |
+|---------|---------------|-----------------|
+| **Leaf** | Task / Service Task | Atomic operation, one responsibility |
+| **Sequencer** | Sequence Flow | Dependent steps in order |
+| **Fork-Join** | Parallel Gateway | Independent concurrent operations |
+| **Condition** | Exclusive Gateway | Routing, no transformation |
+| **Iteration** | Multi-Instance Activity | Collection processing |
+| **Aspects** | Event Sub-Process | Cross-cutting concerns wrapping logic |
+
+This is not a metaphor — JBCT grew from functional programming, BPMN grew from business process modeling, and they converged because they describe the same thing: how work flows through a system. If you can draw it as a BPMN diagram, you can write it as JBCT code. The structure is the same.
 
 **Why?** Cognitive load. When reading a function, you should recognize its shape immediately. If it's a Sequencer, you know it chains dependent steps linearly. If it's Fork-Join, you know it runs independent operations and combines results. Mixing patterns within a function creates mixed abstraction levels and forces readers to hold multiple mental models simultaneously.
 
-This rule has a mechanical benefit: it makes refactoring deterministic. When a function grows beyond one pattern, you extract the second pattern into its own function. There's no subjective judgment about "is this too complex?" - if you're doing two patterns, split it.
+This rule has a mechanical benefit: it makes refactoring deterministic. When a function grows beyond one pattern, you extract the second pattern into its own function. There's no subjective judgment about "is this too complex?" — if you're doing two patterns, split it. In BPMN terms: each method is one Task, one Gateway, or one Sub-Process — not a mix.
 
 **Why by criteria:**
 - **Mental Overhead**: One pattern per function means immediate recognition - no mental model switching (+2)
@@ -287,6 +298,28 @@ return ValidRequest.validRequest(request)
 ```
 
 If adding "to" makes it sound awkward or overly detailed ("to hash password, then to save to database, then to fetch from cache"), you're mixing abstraction levels.
+
+---
+
+## Gap Detection Through Patterns
+
+When you model business processes using patterns, **gaps become visible**. The patterns validate requirements, not just implement them.
+
+**How patterns reveal gaps:**
+- **Missing validation:** Building a Sequencer but nothing validates the input before step 1? Gap found.
+- **Unclear dependencies:** Are these a Sequencer (dependent) or Fork-Join (independent)? If unknown, process isn't defined.
+- **Missing error handling:** Every Leaf can fail. What happens when this fails?
+- **Inefficient flows:** Sequential process described but steps are independent? Should be Fork-Join.
+
+**Discovery questions by pattern:**
+
+| Pattern | Key Questions |
+|---------|--------------|
+| **Leaf** | What does it do? Can it fail? Sync or async? |
+| **Condition** | What determines the path? Mutually exclusive? Default? |
+| **Iteration** | Stop on first failure? Order matters? Can parallelize? |
+
+Advanced patterns (Sequencer, Fork-Join, Aspects) covered in Chapter 8.
 
 ---
 

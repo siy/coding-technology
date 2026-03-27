@@ -10,6 +10,20 @@
 
 ---
 
+## Discovery Questions for Advanced Patterns
+
+Chapter 7 introduced gap detection and the pattern-BPMN mapping. Here are the discovery questions for advanced patterns — they emerge from the BPMN constructs themselves:
+
+| Pattern | BPMN | Key Questions |
+|---------|------|--------------|
+| **Sequencer** | Sequence Flow | What does step 1 produce that step 2 needs? Can step 3 happen if step 2 fails? Is order fixed? |
+| **Fork-Join** | Parallel Gateway | Do these depend on each other? Can we fetch X while fetching Y? What if one succeeds and another fails? |
+| **Aspects** | Event Sub-Process | Retry on failure? How many times? Timeout duration? What needs logging? |
+
+These questions emerge from the patterns themselves — the structure demands specific information.
+
+---
+
 ## Pattern: Sequencer
 
 **Definition:** A Sequencer chains dependent steps linearly using `map` and `flatMap`. Each step's output feeds the next step's input. This is the primary pattern for use case implementation.
@@ -63,6 +77,12 @@ public interface ProcessOrder {
 ```
 
 Four steps, each a single-method interface. The `execute()` body reads top-to-bottom: validate -> reserve -> process payment -> confirm. Each step returns `Result<T>`, so we chain with `flatMap`. If any step fails, the chain short-circuits and returns the failure.
+
+**Why interface + factory?** Every component — use case, step, adapter — is defined as an interface with a static factory method. This is not arbitrary convention:
+
+- **Substitutability**: Anyone can implement the interface. Testing, stubbing incomplete implementations, swapping adapters — all work without framework magic or inheritance hierarchies.
+- **Implementation isolation**: Each implementation is self-contained. No shared base classes, no abstract methods to override, no coupling between implementations. Each intersection between implementations is unnecessary coupling with corresponding maintenance overhead — up to needing deep understanding of two projects instead of one, with zero benefit.
+- **Disposable implementation**: A local record or lambda returned by the factory can't be referenced externally. The implementation is replaceable by definition. The interface is the design artifact; the implementation is incidental.
 
 ### Async Example
 

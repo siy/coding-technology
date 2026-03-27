@@ -24,15 +24,15 @@ These patterns compose the basic building blocks you learned in Part 3. Together
 
 ## Discovery Questions for Advanced Patterns
 
-Part 5 introduced gap detection. Here are the discovery questions for advanced patterns:
+Part 5 introduced gap detection and the pattern-BPMN mapping. Here are the discovery questions for advanced patterns — they emerge from the BPMN constructs themselves:
 
-| Pattern | Key Questions |
-|---------|--------------|
-| **Sequencer** | What does step 1 produce that step 2 needs? Can step 3 happen if step 2 fails? Is order fixed? |
-| **Fork-Join** | Do these depend on each other? Can we fetch X while fetching Y? What if one succeeds and another fails? |
-| **Aspects** | Retry on failure? How many times? Timeout duration? What needs logging? |
+| Pattern | BPMN | Key Questions |
+|---------|------|--------------|
+| **Sequencer** | Sequence Flow | What does step 1 produce that step 2 needs? Can step 3 happen if step 2 fails? Is order fixed? |
+| **Fork-Join** | Parallel Gateway | Do these depend on each other? Can we fetch X while fetching Y? What if one succeeds and another fails? |
+| **Aspects** | Event Sub-Process | Retry on failure? How many times? Timeout duration? What needs logging? |
 
-These questions emerge from the patterns themselves. You're not inventing questions—the structure demands specific information.
+These questions emerge from the patterns themselves — the structure demands specific information.
 
 ---
 

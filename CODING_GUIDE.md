@@ -28,7 +28,7 @@ The benefits compound:
 
 **Minimal technical debt** emerges naturally because refactoring rules are built into the technology. When a function grows beyond one clear responsibility, the rules tell you exactly how to split it. When a component gets reused, there's one obvious place to move it. Debt doesn't accumulate because prevention is cheaper than cleanup.
 
-**Close business modeling** happens when you're not fighting technical noise. Value objects enforce domain invariants at construction time. Use cases read like business processes because each step does one thing. Errors are domain concepts, not stack traces. Product owners can read the code structure and recognize their requirements.
+**Close business modeling** happens when you're not fighting technical noise. Value objects enforce domain invariants at construction time. Use cases read like business processes — because they *are* business processes. The six structural patterns (Leaf, Sequencer, Fork-Join, Condition, Iteration, Aspects) map directly to BPMN constructs (Task, Sequence Flow, Parallel Gateway, Exclusive Gateway, Multi-Instance Activity, Event Sub-Process). This isn't a metaphor — it's structural equivalence. JBCT grew from functional programming, BPMN grew from business process modeling, and they converged because they describe the same thing: how work flows through a system. Errors are domain concepts, not stack traces. Product owners can read the code structure and recognize their requirements.
 
 **Requirement discovery** becomes systematic. When you structure code as validation → steps → composition, gaps become obvious. Missing validation rules surface when you define value objects. Unclear business logic reveals itself when you can't name a step clearly. Edge cases emerge when you model errors as explicit types. The structure itself asks the right questions: What can fail here? What invariants must hold? What happens when this is missing? Validating answers for compatibility is mechanical - if a new requirement doesn't fit the existing step structure, you know immediately whether it's a new concern or a modification to existing logic.
 
@@ -1792,7 +1792,7 @@ Every function implements exactly one pattern from a fixed catalog: Leaf, Sequen
 
 **Why?** Cognitive load. When reading a function, you should recognize its shape immediately. If it's a Sequencer, you know it chains dependent steps linearly. If it's Fork-Join, you know it runs independent operations and combines results. Mixing patterns within a function creates mixed abstraction levels and forces readers to hold multiple mental models simultaneously.
 
-This rule has a mechanical benefit: it makes refactoring deterministic. When a function grows beyond one pattern, you extract the second pattern into its own function. There's no subjective judgment about "is this too complex?" - if you're doing two patterns, split it.
+This rule has a mechanical benefit: it makes refactoring deterministic. When a function grows beyond one pattern, you extract the second pattern into its own function. There's no subjective judgment about "is this too complex?" — if you're doing two patterns, split it. In BPMN terms: each method is one Task, one Gateway, or one Sub-Process — not a mix.
 
 **Why by criteria:**
 - **Mental Overhead**: One pattern per function means immediate recognition - no mental model switching (+2).
@@ -2175,6 +2175,25 @@ private Promise<User> recoverNetworkError(Cause cause) {
 ---
 
 ## Patterns Reference
+
+### The Pattern-BPMN Mapping
+
+JBCT's six structural patterns are the executable equivalents of BPMN flow constructs. This is not a metaphor — the mapping is structural. Code written in these patterns *is* a business process specification that happens to be executable.
+
+| JBCT Pattern | BPMN Construct | Structural Role |
+|-------------|----------------|-----------------|
+| **Leaf** | Task / Service Task | Single atomic operation. One responsibility. The terminal unit of work. |
+| **Sequencer** | Sequence Flow | Dependent steps executed in order. Each step receives context from the previous. |
+| **Fork-Join** | Parallel Gateway | Independent operations executed concurrently. All must complete before proceeding. |
+| **Condition** | Exclusive Gateway | Routing decision. No transformation — pure dispatch based on input. |
+| **Iteration** | Multi-Instance Activity | Collection processing. Body is a Leaf or sub-pattern applied to each element. |
+| **Aspects** | Event Sub-Process | Cross-cutting concerns (metrics, timeout, retry, logging) wrapping business logic. |
+
+**Why exactly six?** Because these are the complete set of flow constructs needed to express any business process. There is no seventh pattern because BPMN doesn't need a seventh flow construct. Any business process — from loan origination to order fulfillment to user registration — decomposes into combinations of these six.
+
+**Practical consequence:** If you can draw it as a BPMN diagram, you can write it as JBCT code. The structure is the same. Each method implements exactly one BPMN construct. If a method mixes constructs, split it — just as you would split a BPMN diagram that combines a gateway and a task into a single symbol.
+
+---
 
 ### Gap Detection Through Patterns
 

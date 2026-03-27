@@ -418,7 +418,18 @@ private Promise<User> recoverNetworkError(Cause cause) {
 
 ## Structural Patterns
 
-### 1. Leaf Pattern
+JBCT's six patterns map directly to BPMN constructs — code written in these patterns *is* an executable business process specification.
+
+| Pattern | BPMN Construct | Role |
+|---------|---------------|------|
+| Leaf | Task / Service Task | Atomic operation, one responsibility |
+| Sequencer | Sequence Flow | Dependent steps in order |
+| Fork-Join | Parallel Gateway | Independent concurrent operations |
+| Condition | Exclusive Gateway | Routing, no transformation |
+| Iteration | Multi-Instance Activity | Collection processing |
+| Aspects | Event Sub-Process | Cross-cutting concerns wrapping logic |
+
+### 1. Leaf Pattern (BPMN: Task)
 Atomic unit - single responsibility, no composition:
 ```java
 public Promise<User> findUser(UserId id) {

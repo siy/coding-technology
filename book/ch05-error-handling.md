@@ -264,7 +264,7 @@ Result<Option<ReferralCode>> refCode = ReferralCode.referralCode(input);
 // Failure(cause) = invalid code
 ```
 
-Use `Verify.ensureOption()` (Pragmatica Lite 0.9.0+) to implement this pattern:
+Use `Verify.ensureOption()` (Pragmatica Core 0.9.0+) to implement this pattern:
 
 ```java
 public static Result<Option<ReferralCode>> referralCode(String raw) {

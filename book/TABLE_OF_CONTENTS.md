@@ -1,7 +1,7 @@
 # Java Backend Coding Technology
 ## Unified Code Through Functional Composition
 
-**Based on:** JBCT v2.2.0 | **Pragmatica Lite Core:** 0.11.2
+**Based on:** JBCT v2.2.0 | **Pragmatica Core:** 0.25.0
 
 ---
 
@@ -21,7 +21,7 @@
 - Type conversions and lifting
 - Core operations: map, flatMap, fold
 
-**[Chapter 3: Pragmatica Lite Essentials](ch03-pragmatica-lite-essentials.md)**
+**[Chapter 3: Pragmatica Core Essentials](ch03-pragmatica-lite-essentials.md)**
 - Library philosophy and design goals
 - Type factories and conversions
 - Validation utilities (Verify.Is, Parse)
@@ -148,7 +148,7 @@
 
 ### Appendices
 
-**[Appendix A: Pragmatica Lite Core API Reference](appendix-a-api-reference.md)**
+**[Appendix A: Pragmatica Core API Reference](appendix-a-api-reference.md)**
 - Type conversions table
 - Creating instances
 - Exception handling (lift methods)

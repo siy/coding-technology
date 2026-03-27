@@ -11,7 +11,7 @@ This document maps existing series content to book chapters.
 | **PART I: FOUNDATIONS** |
 | Ch 1: Introduction | series/part-01-foundations.md (lines 1-130) | - | Extract intro sections |
 | Ch 2: Four Return Types | series/part-02-four-return-types.md | - | Adapt directly |
-| Ch 3: Pragmatica Lite | book/ch03-pragmatica-lite-essentials.md | CLAUDE.md API ref | NEW - Done |
+| Ch 3: Pragmatica Core | book/ch03-pragmatica-lite-essentials.md | CLAUDE.md API ref | NEW - Done |
 | **PART II: CORE PRINCIPLES** |
 | Ch 4: Parse Don't Validate | series/part-03-parse-dont-validate.md | - | Adapt directly |
 | Ch 5: Error Handling | series/part-04-error-handling.md (first half) | - | Split - error types |
@@ -57,7 +57,7 @@ This document maps existing series content to book chapters.
 
 3. **Consistent terminology:**
    - "JBCT" used consistently (not "this technology")
-   - "Pragmatica Lite" for library references
+   - "Pragmatica Core" for library references
    - "Cause" (not "error") for failure types
 
 4. **Add chapter introductions:**
@@ -108,7 +108,7 @@ This document maps existing series content to book chapters.
 - `ch16-systematic-application.md` - Adapt directly
 
 ### From CLAUDE.md:
-- `appendix-a-api-reference.md` - Extract Pragmatica Lite API section
+- `appendix-a-api-reference.md` - Extract Pragmatica Core API section
 
 ---
 

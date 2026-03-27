@@ -323,7 +323,7 @@ String message = Match(result).of(
 
 ### Comparison
 
-| Feature | vavr | Pragmatica Lite |
+| Feature | vavr | Pragmatica Core |
 |---------|------|-----------------|
 | Option type | `Option<T>` | `Option<T>` |
 | Error type | `Either<L, R>` or `Try<T>` | `Result<T>` with `Cause` |
@@ -336,11 +336,11 @@ String message = Match(result).of(
 
 1. **vavr is a library, JBCT is a methodology** - vavr provides types, JBCT provides patterns, structure, and practices.
 
-2. **Error typing** - vavr's Either has generic left type. Pragmatica Lite's Result always uses Cause, providing consistent error handling.
+2. **Error typing** - vavr's Either has generic left type. Pragmatica Core's Result always uses Cause, providing consistent error handling.
 
 3. **Async story** - vavr doesn't provide async primitives. JBCT's Promise integrates error handling with async operations.
 
-4. **Simplicity** - vavr includes many FP features (persistent collections, pattern matching DSL, streams). Pragmatica Lite focuses on the minimum needed for JBCT.
+4. **Simplicity** - vavr includes many FP features (persistent collections, pattern matching DSL, streams). Pragmatica Core focuses on the minimum needed for JBCT.
 
 ### When to Use vavr
 
@@ -349,7 +349,7 @@ String message = Match(result).of(
 - You need persistent data structures
 - You want pattern matching DSL
 
-### When to Use Pragmatica Lite
+### When to Use Pragmatica Core
 
 - You're building backend services
 - You want a complete methodology (not just types)
@@ -358,7 +358,7 @@ String message = Match(result).of(
 
 ### Verdict
 
-vavr is a more comprehensive FP library. Pragmatica Lite is purpose-built for JBCT. You could use vavr to implement JBCT patterns, but you'd need to add your own Promise type and establish your own structural patterns.
+vavr is a more comprehensive FP library. Pragmatica Core is purpose-built for JBCT. You could use vavr to implement JBCT patterns, but you'd need to add your own Promise type and establish your own structural patterns.
 
 ---
 
@@ -443,7 +443,7 @@ JBCT:
 
 2. **Compare error handling:** Take one exception-based method in your codebase. Rewrite it using ROP style with Result. What errors were implicit?
 
-3. **Evaluate vavr:** If you use vavr, identify which features you actually use. Could you replace it with Pragmatica Lite?
+3. **Evaluate vavr:** If you use vavr, identify which features you actually use. Could you replace it with Pragmatica Core?
 
 4. **Cross-language patterns:** If you have Kotlin services, compare how Arrow-kt's Either compares to JBCT's Result. Are the patterns similar?
 

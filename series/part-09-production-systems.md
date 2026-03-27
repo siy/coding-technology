@@ -226,7 +226,7 @@ public record ReferralCode(String value) {
 }
 ```
 
-The `Verify.ensureOption()` method (Pragmatica Lite 0.9.0+) handles `Result<Option<ReferralCode>>` elegantly: if the `Option` is empty, succeeds with `Option.none()`; if present and valid, succeeds with `Option.some(value)`; if present and invalid, fails.
+The `Verify.ensureOption()` method (Pragmatica Core 0.9.0+) handles `Result<Option<ReferralCode>>` elegantly: if the `Option` is empty, succeeds with `Option.none()`; if present and valid, succeeds with `Option.some(value)`; if present and invalid, fails.
 
 All three live in `com.example.app.domain.shared` because they're reusable across use cases.
 
@@ -703,13 +703,13 @@ include 'my-app-bootstrap'
 
 // my-app-domain/build.gradle
 dependencies {
-    implementation 'org.pragmatica-lite:core:0.11.2'
+    implementation 'org.pragmatica-lite:core:0.25.0'
 }
 
 // my-app-application/build.gradle
 dependencies {
     implementation project(':my-app-domain')
-    implementation 'org.pragmatica-lite:core:0.11.2'
+    implementation 'org.pragmatica-lite:core:0.25.0'
 }
 
 // my-app-adapters/build.gradle
@@ -1089,7 +1089,7 @@ That's the technology.
 
 - **[Complete Technical Guide](../CODING_GUIDE.md)**: Full reference with all patterns, rules, and examples
 - **[Management Perspective](../MANAGEMENT_PERSPECTIVE.md)**: Business case for structural standardization
-- **[Pragmatica Lite Core Library](https://central.sonatype.com/artifact/org.pragmatica-lite/core)**: The foundational library for Option, Result, Promise
+- **[Pragmatica Core Library](https://central.sonatype.com/artifact/org.pragmatica-lite/core)**: The foundational library for Option, Result, Promise
 
 ### Practice Exercises
 

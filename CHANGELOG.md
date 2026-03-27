@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.2.0] - 2026-03-27
+
+### Changed
+- Renamed "Pragmatica Lite" to "Pragmatica Core" across all documentation, book, series, articles, and tools
+- Updated Pragmatica Core version from 0.11.2 to 0.25.0
+- Updated GitHub URLs from `siy/pragmatica-lite` to `pragmaticalabs/pragmatica`
+- Stripped CLAUDE.md to essentials — Java formatting and API reference delegated to jbct skill/agent
+- Synced project-local AI tools (jbct-coder, jbct-reviewer, jbct skill) from authoritative system versions
+- Added proactive SKILL.md loading to jbct-coder and jbct-reviewer agents
+- Added spec/plan backreference verification step to jbct-coder self-validation
+- Replaced abstract version numbers with last-modified timestamps in AI tool headers
+
 ## [2.1.6] - 2026-03-25
 
 ### Added
@@ -19,7 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Migrated string validation from `Verify.Is::notNull` to `Verify.Is::present` across all docs, examples, and AI tools
 - Clarified `Void` type parameter (forbidden) vs `void` return type (fire-and-forget) across guide, series, book, and AI tools
 - Fixed JBCT method chain dot alignment in all code examples
-- Mentioned Pragmatica Lite Core library value objects (`Email`, `Url`, `Uuid`, `NonBlankString`, `IsoDateTime`)
+- Mentioned Pragmatica Core library value objects (`Email`, `Url`, `Uuid`, `NonBlankString`, `IsoDateTime`)
 - Updated website styles
 
 ## [2.1.5] - 2026-02-07
@@ -43,7 +55,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Key extraction from request records
 
 ### Changed
-- **Pragmatica Lite Core** updated from 0.9.10 to 0.11.2
+- **Pragmatica Core** updated from 0.9.10 to 0.25.0
   - Updated all documentation, examples, and dependency references
 - **RFC-0002: Dependency Protocol** - Improved proxy design
   - Replaced direct invoker.invoke() with pre-built MethodHandle pattern
@@ -115,7 +127,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Focus parameter for narrow, thorough reviews
   - 10 focus areas with specific violation patterns
   - Improved Quick Reference with fold(), Void detection
-- **Pragmatica Lite Core** updated from 0.9.9 to 0.9.10
+- **Pragmatica Core** updated from 0.9.9 to 0.9.10
 - **jbct-cli** referenced version updated to 0.4.6
 
 ## [2.1.0] - 2026-01-06
@@ -133,7 +145,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [2.0.11] - 2026-01-02
 
 ### Changed
-- **Pragmatica Lite Core** updated from 0.9.3 to 0.9.4
+- **Pragmatica Core** updated from 0.9.3 to 0.9.4
   - TCP Server optimizations (TCP_NODELAY, PooledByteBufAllocator)
   - Consensus Netty network layer
   - Core API unchanged - version bump only
@@ -141,7 +153,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [2.0.10] - 2026-01-01
 
 ### Changed
-- **Pragmatica Lite Core** updated from 0.9.0 to 0.9.3
+- **Pragmatica Core** updated from 0.9.0 to 0.9.3
   - 0.9.1: Dependency updates, deprecation warning fixes
   - 0.9.2: KSUID (replaces ULID), JOOQ integration module
   - 0.9.3: Consensus module (CFT protocol)
@@ -163,7 +175,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [2.0.8] - 2025-12-26
 
 ### Changed
-- **Pragmatica Lite Core** updated from 0.8.6 to 0.9.0
+- **Pragmatica Core** updated from 0.8.6 to 0.9.0
   - New: `Verify.ensureOption()` for elegant `Result<Option<T>>` validation pattern
   - New: TOML Parser (not documented in JBCT guides)
 - **Documentation updates** for `Verify.ensureOption()` pattern
@@ -177,7 +189,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [2.0.7] - 2025-12-24
 
 ### Changed
-- **Pragmatica Lite Core** updated from 0.8.5 to 0.8.6
+- **Pragmatica Core** updated from 0.8.5 to 0.8.6
   - New: `Result.sequence()` for collecting results from iterables
   - New: `.getOrThrow()` for Result and Option
   - New: Instance `all()` for Option and Promise (was Result-only)
@@ -199,7 +211,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CLI lint rules count updated from 23 to 33
 - Repository cleanup and build artifact management
 - **Medium compatibility** - Replaced tables with lists in article series for better rendering
-- **Pragmatica Lite Core** updated from 0.8.4 to 0.8.5 in all documentation and examples
+- **Pragmatica Core** updated from 0.8.4 to 0.8.5 in all documentation and examples
   - Breaking: `Verify.ensureFn()` removed - use `.filter(cause, predicate)` instead
   - New: RateLimiter with Token Bucket algorithm
   - New: `Result.tryOf()` aliases, `Result.onOk()/onErr()/run()` aliases
@@ -238,7 +250,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [2.0.3] - 2025-12-14
 
 ### Added
-- **Static imports section** - Encouraged use of static imports for factory methods and Pragmatica Lite APIs
+- **Static imports section** - Encouraged use of static imports for factory methods and Pragmatica Core APIs
   - Added to jbct-coder.md, jbct-reviewer.md, CODING_GUIDE.md, skills/jbct/SKILL.md
   - Reduces code verbosity while maintaining readability
 - **Fluent failure creation** - Explicit preference for `cause.result()` over `Result.failure(cause)`
@@ -261,7 +273,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Interoperability section: Optional→Option, CompletableFuture→Promise, exceptions→Cause
 
 ### Changed
-- **Pragmatica Lite Core** updated from 0.8.3 to 0.8.4 in all documentation and examples
+- **Pragmatica Core** updated from 0.8.3 to 0.8.4 in all documentation and examples
   - New in 0.8.4: Extended `all()`/`Fn`/`Tuple` support from 9 to 15 parameters
   - New integration modules: HTTP Client, JDBC, R2DBC, JOOQ R2DBC
 - **jbct-coder.md** and **jbct-reviewer.md** synchronized with system agent definitions
@@ -378,7 +390,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Forbidden patterns (direct field access, nested lambdas)
     - Single pattern per function enforcement
     - Common violations with corrections
-  - **Part 2: Pragmatica Lite API Reference** (+214 lines)
+  - **Part 2: Pragmatica Core API Reference** (+214 lines)
     - Complete type conversions table
     - Factories (creating instances)
     - Exception handling (lift methods)
@@ -481,7 +493,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Test naming convention (methodName_outcome_condition)
   - Allows developers to verify code immediately after learning concepts
 
-- **Part 2: Pragmatica Lite Quick Reference**
+- **Part 2: Pragmatica Core Quick Reference**
   - Common imports and method cheat sheet
   - Frequently used patterns with descriptions
   - Positioned after validation utilities section
@@ -553,7 +565,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Keep existing validation while adding JBCT
     - Gradual shift from service layer to value objects
     - Timeline guidance (3-6 months)
-  - Added **Pragmatica Lite Quick Reference** (~45 lines)
+  - Added **Pragmatica Core Quick Reference** (~45 lines)
     - Common imports cheat sheet
     - Frequently used patterns with descriptions
     - Positioned early for immediate reference
@@ -582,7 +594,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - **All version references updated** from 1.8.0 to 1.8.1
-- **Pragmatica Lite API corrections** in CLAUDE.md and jbct-coder.md
+- **Pragmatica Core API corrections** in CLAUDE.md and jbct-coder.md
   - Added missing factory methods: `Option.from(Optional)`, `Result.unitResult()`, `Promise.unitPromise()`
   - Corrected lift methods: removed non-existent `Promise.async(Runnable)`, use `Promise.lift(ThrowingRunnable)` instead
   - Added missing aggregation: `Promise.failAll()`, `Promise.cancelAll()`
@@ -649,11 +661,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Maven marked as "(preferred)"
   - Gradle marked as "(only if explicitly requested)"
 - **jbct-reviewer.md build configuration checks**
-  - Added Pragmatica Lite Core dependency verification
+  - Added Pragmatica Core dependency verification
   - Check for correct groupId, artifactId, version
   - Build configuration added as Critical priority
   - New review section for dependency issues
-- **Pragmatica Lite Core dependency specification** - Added Gradle coordinates alongside Maven in all docs
+- **Pragmatica Core dependency specification** - Added Gradle coordinates alongside Maven in all docs
   - README.md, CODING_GUIDE.md, CLAUDE.md
   - Full artifact coordinates: `org.pragmatica-lite:core:0.8.3`
   - Both Maven and Gradle examples provided
@@ -724,8 +736,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - series/part-02-core-principles.md (expanded naming conventions)
   - series/part-04-advanced-patterns.md (added to naming conventions)
 - **All version references updated** from 1.6.0 to 1.6.1
-- **Pragmatica Lite Core version** updated from 0.8.0 to 0.8.3 in all examples
-- **CLAUDE.md API Reference** updated from Pragmatica Lite Core 0.8.0 to 0.8.3
+- **Pragmatica Core version** updated from 0.8.0 to 0.8.3 in all examples
+- **CLAUDE.md API Reference** updated from Pragmatica Core 0.8.0 to 0.8.3
   - Added new convenience methods: `flatMap2()`, `mapToUnit()`
   - Added Run variants: `onPresentRun()`, `onEmptyRun()`, `onSuccessRun()`, `onFailureRun()`, `onResultRun()`
   - Added async variants for Promise: `onSuccessAsync()`, `onSuccessRunAsync()`, etc.

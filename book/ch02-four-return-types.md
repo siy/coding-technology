@@ -296,7 +296,7 @@ Result<Option<ReferralCode>> refCode = ReferralCode.referralCode(input);
 // Failure(cause) = provided but invalid
 ```
 
-Use `Verify.ensureOption()` (Pragmatica Lite 0.9.0+) to implement this pattern:
+Use `Verify.ensureOption()` (Pragmatica Core 0.9.0+) to implement this pattern:
 
 ```java
 public static Result<Option<ReferralCode>> referralCode(String raw) {
@@ -391,10 +391,10 @@ The `void` return type is a **semantic signal**: errors are handled internally, 
 See [Appendix B](appendix-b-exercises.md) for exercises on:
 - Exercise 1.3: Type Lifting
 - Exercise 1.4: Cause Creation
-- Exercise 1.5: Pragmatica Lite Operations
+- Exercise 1.5: Pragmatica Core Operations
 
 ---
 
 ## What's Next
 
-[Chapter 3](ch03-pragmatica-lite-essentials.md) covers Pragmatica Lite Core - the library that provides these four types. You'll learn the API in depth and see common usage patterns.
+[Chapter 3](ch03-pragmatica-lite-essentials.md) covers Pragmatica Core - the library that provides these four types. You'll learn the API in depth and see common usage patterns.

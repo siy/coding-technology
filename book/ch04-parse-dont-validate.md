@@ -84,7 +84,7 @@ The constructor is private (or package-private). The only way to get an `Email` 
 
 > **Note:** As of current Java versions, records do not support declaring the canonical constructor as private. Rely on team discipline and code review to ensure value objects are only constructed through their factory methods. Direct `new Email(...)` calls stand out immediately and are easy to catch.
 
-> **Library Value Objects:** For common types like email, URL, and UUID, Pragmatica Lite Core provides production-ready implementations in `org.pragmatica.lang.vo`. The examples in this chapter demonstrate the *pattern* — for production use, prefer the library VOs over hand-rolled versions.
+> **Library Value Objects:** For common types like email, URL, and UUID, Pragmatica Core provides production-ready implementations in `org.pragmatica.lang.vo`. The examples in this chapter demonstrate the *pattern* — for production use, prefer the library VOs over hand-rolled versions.
 
 ---
 
@@ -132,7 +132,7 @@ public record ReferralCode(String value) {
 }
 ```
 
-The `Verify.ensureOption()` method (Pragmatica Lite 0.9.0+) handles this pattern elegantly:
+The `Verify.ensureOption()` method (Pragmatica Core 0.9.0+) handles this pattern elegantly:
 - If the `Option` is empty, succeeds with `Option.none()` - no validation needed
 - If present and valid, succeeds with `Option.some(value)`
 - If present and invalid, fails with the provided cause
@@ -298,7 +298,7 @@ public record ValidRegistration(Email email, Password password, Age age) {
 
 ---
 
-## Pragmatica Lite Validation Utilities
+## Pragmatica Core Validation Utilities
 
 **Verify.Is Predicates:**
 ```java

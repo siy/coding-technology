@@ -39,7 +39,7 @@ public interface ReportGenerator {
 }
 ```
 
-**Step 2: Make it idempotent.** The same request should produce the same result, even if processed multiple times. Pragmatica Lite provides built-in support for this pattern. For most code, it's a small change.
+**Step 2: Make it idempotent.** The same request should produce the same result, even if processed multiple times. Pragmatica Core provides built-in support for this pattern. For most code, it's a small change.
 
 **Step 3: Deploy Ember.** Ember runs multiple cluster nodes in the same JVM as your existing application. Your legacy code calls the interface exactly as before. No changes to call sites.
 

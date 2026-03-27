@@ -77,7 +77,7 @@ This assumption drives hidden costs:
 
 When code structure follows mechanical rules - four return types, one pattern per function, parse-don't-validate - **the codebase looks the same regardless of who wrote it**. A developer who understands the rules can read any module and recognize the shape immediately.
 
-These aren't abstract concepts. [Pragmatica Lite Core](https://github.com/pragmaticalabs/pragmatica) provides a production-ready library implementing `Result<T>`, `Option<T>`, and `Promise<T>` - the three types that, together with plain `T`, cover every function signature in your codebase.
+These aren't abstract concepts. [Pragmatica Core](https://github.com/pragmaticalabs/pragmatica) provides a production-ready library implementing `Result<T>`, `Option<T>`, and `Promise<T>` - the three types that, together with plain `T`, cover every function signature in your codebase.
 
 Real-world impact:
 

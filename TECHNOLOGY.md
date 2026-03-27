@@ -108,7 +108,7 @@ References (in repo)
 - Sources: `sources/articles` and `sources/patterns`  -  background on PFJ, patterns, and Promises.
 - Examples: `sources/code/input-validation`  -  value object factories and `Result.all(...)` usage.
 - Use case skeletons: `sources/code/use-case`  -  minimal examples of shape and flow.
-- Library backlog: `PL_IMPROVEMENTS.md`  -  Pragmatica Lite enhancements (aspects, helpers).
+- Library backlog: `PL_IMPROVEMENTS.md`  -  Pragmatica Core enhancements (aspects, helpers).
 
 Example Patterns (quick map)
 - Use case with nested API + Sequencer

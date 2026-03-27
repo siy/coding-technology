@@ -1,6 +1,6 @@
-# Chapter 3: Pragmatica Lite Essentials
+# Chapter 3: Pragmatica Core Essentials
 
-This chapter introduces Pragmatica Lite Core—the library that provides the foundational types for JBCT. You'll learn why the library exists, its design philosophy, and how to use its core features effectively.
+This chapter introduces Pragmatica Core—the library that provides the foundational types for JBCT. You'll learn why the library exists, its design philosophy, and how to use its core features effectively.
 
 ---
 
@@ -25,7 +25,7 @@ Java provides `Optional` and `CompletableFuture`. Why not use them?
 3. **Consistent API** - Same method names across all types
 4. **Type-safe transformations** - Lift between types without losing information
 
-Pragmatica Lite Core provides exactly this.
+Pragmatica Core provides exactly this.
 
 ---
 
@@ -36,13 +36,13 @@ Pragmatica Lite Core provides exactly this.
 <dependency>
    <groupId>org.pragmatica-lite</groupId>
    <artifactId>core</artifactId>
-   <version>0.11.2</version>
+   <version>0.25.0</version>
 </dependency>
 ```
 
 **Gradle:**
 ```gradle
-implementation 'org.pragmatica-lite:core:0.11.2'
+implementation 'org.pragmatica-lite:core:0.25.0'
 ```
 
 ---
@@ -550,7 +550,7 @@ promise.await()              // Promise -> Result (blocks)
 
 ### Library Value Objects
 
-Pragmatica Lite Core provides production-ready value objects for common types in `org.pragmatica.lang.vo`. These are explicitly designed to cover common use cases in real business logic:
+Pragmatica Core provides production-ready value objects for common types in `org.pragmatica.lang.vo`. These are explicitly designed to cover common use cases in real business logic:
 
 | Value Object | Description | Factory Method |
 |-------------|-------------|----------------|
@@ -578,7 +578,7 @@ All factory methods return `Result<T>`, following the parse-don't-validate patte
 
 ## Summary
 
-Pragmatica Lite Core provides:
+Pragmatica Core provides:
 
 - **Four types with clear semantics** - Option, Result, Promise, Cause
 - **Consistent API** - Same method names across types

@@ -1,4 +1,4 @@
-Pragmatica Lite  -  Improvements Backlog
+Pragmatica Core  -  Improvements Backlog
 
 Scope
 - Track library-level utilities that support this technology (aspects, helpers, docs). Business logic stays in app repos; aspects/utilities live in PL.

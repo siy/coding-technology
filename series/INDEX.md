@@ -1,6 +1,6 @@
 # Java Backend Coding Technology: Complete Learning Series
 
-**Based on:** [CODING_GUIDE.md](../CODING_GUIDE.md) v2.1.6
+**Based on:** [CODING_GUIDE.md](../CODING_GUIDE.md) v2.2.0
 
 ## About This Series
 
@@ -73,7 +73,7 @@ Master the principle of validation through construction using factory methods.
 - Normalization in factories
 - Optional fields with validation: Result<Option<T>> using Verify.ensureOption()
 - Migrating Existing Codebases: incremental adoption strategy
-- Pragmatica Lite Validation Utilities: Verify.Is predicates, Parse subpackage
+- Pragmatica Core Validation Utilities: Verify.Is predicates, Parse subpackage
 
 **Key takeaway:** If an instance exists, it's valid. No defensive checks needed.
 
@@ -90,7 +90,7 @@ Complete the core principles with error handling, null policy, and composition r
 - Error Recovery Patterns: fallback values, graceful degradation
 - Basic Testing: functional assertions with onSuccess/onFailure
 - Monadic Composition Rules: lambda guidelines, forbidden patterns
-- Pragmatica Lite API Reference: conversions, aggregation, lift methods
+- Pragmatica Core API Reference: conversions, aggregation, lift methods
 - Common Mistakes to Avoid
 
 **Key takeaway:** Business failures aren't exceptional—they're expected. Type them, don't throw them.
@@ -224,7 +224,7 @@ Looking for specific patterns? Jump directly to the relevant part using the topi
 ## Series Version
 
 **Version 2.0.9** (2025-12-27)
-- **Pragmatica Lite 0.9.0** with `Verify.ensureOption()` pattern
+- **Pragmatica Core 0.9.0** with `Verify.ensureOption()` pattern
 - **Golden formatting patterns** applied to all code examples
 - **JBCT CLI** lint rules count: 36
 
@@ -245,7 +245,7 @@ Looking for specific patterns? Jump directly to the relevant part using the topi
   - Null Policy comprehensive coverage (Part 2C)
   - Error Recovery Patterns: fallback values, graceful degradation (Part 2C)
   - Expanded Monadic Composition Rules: lambda guidelines, forbidden patterns (Part 2C)
-  - Pragmatica Lite API Reference: conversions, aggregation, utilities (Part 2A, 2C)
+  - Pragmatica Core API Reference: conversions, aggregation, utilities (Part 2A, 2C)
   - Zone-Based Abstraction Framework with Derrick Brandt attribution (Part 3)
   - Naming Conventions: factory methods, validated inputs, zone-based verbs (Part 2B, 3)
   - Thread Safety Quick Reference: pattern-by-pattern guarantees (Part 4)

@@ -71,7 +71,7 @@ Five architectural decisions make this possible.
 
 **Built-in Artifact Repository.** DHT-based storage with configurable replication — 3 replicas with quorum reads/writes in production, full replication in development. Artifacts are chunked into 64KB pieces, distributed across nodes via consistent hashing, and integrity-verified with MD5 and SHA-1 on every resolve. No external Nexus or Artifactory needed. During development, slices resolve from your local Maven repository. In production, the cluster is self-contained.
 
-**ClassLoader Isolation.** Each slice runs in its own `SliceClassLoader` with child-first delegation. Two slices can use different versions of the same library without conflict. Shared dependencies like Pragmatica Lite core are loaded once in a parent classloader. No dependency conflicts. No classpath hell between slices.
+**ClassLoader Isolation.** Each slice runs in its own `SliceClassLoader` with child-first delegation. Two slices can use different versions of the same library without conflict. Shared dependencies like Pragmatica Core core are loaded once in a parent classloader. No dependency conflicts. No classpath hell between slices.
 
 **Declarative Deployment.** Blueprints — TOML files — describe the desired state: which slices, how many instances.
 

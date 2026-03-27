@@ -30,7 +30,7 @@ Handling both success and failure cases. Methods like `fold()` and `apply()` acc
 ## C
 
 **Cause**
-A typed error value in Pragmatica Lite. Represents why an operation failed. Defined as sealed interfaces for exhaustive handling. Preferred over exceptions for business errors.
+A typed error value in Pragmatica Core. Represents why an operation failed. Defined as sealed interfaces for exhaustive handling. Preferred over exceptions for business errors.
 
 **Chain**
 A sequence of monadic operations connected by `flatMap()`. Each step receives the previous step's success value. Failures short-circuit the chain.
@@ -81,7 +81,7 @@ Stopping at the first failure. `flatMap()` chains and `Promise.all()` are fail-f
 The monadic bind operation. Chains dependent operations. If input is failure, skips the operation. Prevents nested monads (`Result<Result<T>>`).
 
 **Fn1, Fn2, Fn3**
-Functional interfaces in Pragmatica Lite for functions with 1, 2, or 3 parameters. Similar to Java's Function but with better composition.
+Functional interfaces in Pragmatica Core for functions with 1, 2, or 3 parameters. Similar to Java's Function but with better composition.
 
 **Fork-Join Pattern**
 A structural pattern for parallel independent operations. Uses `Promise.all()` to run operations concurrently and combine results.
@@ -157,7 +157,7 @@ A principle: instead of validating data and proceeding with raw types, parse dat
 **Port**
 In Hexagonal Architecture, an interface defining how the domain interacts with the outside world. Similar to JBCT's step interfaces.
 
-**Pragmatica Lite**
+**Pragmatica Core**
 A minimal Java library providing Option, Result, Promise, and Cause types. The foundation for JBCT patterns.
 
 **Promise**
@@ -212,7 +212,7 @@ A test double that returns predetermined values. In JBCT, typically lambdas impl
 JBCT's architectural model: External (outside systems), Adapter (boundary translation), Domain (pure business logic).
 
 **TimeSpan**
-Pragmatica Lite's duration type. Created with fluent API: `TimeSpan.timeSpan(5).seconds()`.
+Pragmatica Core's duration type. Created with fluent API: `TimeSpan.timeSpan(5).seconds()`.
 
 **Type Lifting**
 Converting from a lower type to a higher one: `T` → `Option` → `Result` → `Promise`. Safe direction that adds information.
@@ -238,7 +238,7 @@ Checking that data meets requirements. In JBCT, validation happens in value obje
 An immutable object representing a domain concept. Created through factory methods that enforce validation. Examples: Email, Money, UserId.
 
 **Verify**
-Pragmatica Lite utility class for validation predicates. `Verify.ensure()` creates Result from predicate. `Verify.Is` provides common predicates.
+Pragmatica Core utility class for validation predicates. `Verify.ensure()` creates Result from predicate. `Verify.Is` provides common predicates.
 
 ---
 

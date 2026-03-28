@@ -1,5 +1,6 @@
 #!/bin/bash
 # Build script for JBCT Book EPUB generation
+# Builds full book + sample excerpt
 # Usage: ./build-epub.sh [output-name]
 
 set -e
@@ -11,10 +12,8 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$SCRIPT_DIR"
 
 OUTPUT_NAME="${1:-jbct-book}"
-OUTPUT_FILE="${OUTPUT_NAME}.epub"
 
 echo "=== JBCT Book EPUB Builder ==="
-echo "Output: $OUTPUT_FILE"
 echo ""
 
 # Check dependencies
@@ -60,45 +59,81 @@ CHAPTERS=(
     "appendix-c-glossary.md"
 )
 
-# Verify all chapters exist
-echo "Checking chapter files..."
-for chapter in "${CHAPTERS[@]}"; do
-    if [[ ! -f "$chapter" ]]; then
-        echo "Error: Missing chapter: $chapter"
-        exit 1
+# Sample chapters — the "convince me" arc
+SAMPLE_CHAPTERS=(
+    "ch01-introduction.md"
+    "ch02-four-return-types.md"
+    "ch04-parse-dont-validate.md"
+    "ch07-basic-patterns.md"
+    "ch12-registeruser-example.md"
+)
+
+# --- Shared functions ---
+
+verify_chapters() {
+    local label="$1"
+    shift
+    local chapters=("$@")
+    for chapter in "${chapters[@]}"; do
+        if [[ ! -f "$chapter" ]]; then
+            echo "Error: Missing chapter: $chapter"
+            exit 1
+        fi
+    done
+    echo "  $label: ${#chapters[@]} chapters found."
+}
+
+build_epub() {
+    local output="$1"
+    local metadata="$2"
+    shift 2
+    local chapters=("$@")
+
+    local cover_opts=""
+    if [[ -f "cover.png" ]]; then
+        cover_opts="--epub-cover-image=cover.png"
     fi
-done
-echo "All ${#CHAPTERS[@]} chapters found."
+
+    pandoc \
+        --metadata-file="$metadata" \
+        --standalone \
+        --toc \
+        --toc-depth=2 \
+        --highlight-style=tango \
+        $cover_opts \
+        -o "$output" \
+        "${chapters[@]}"
+}
+
+# --- Build ---
+
+echo "Checking files..."
+verify_chapters "Full book" "${CHAPTERS[@]}"
+verify_chapters "Sample" "${SAMPLE_CHAPTERS[@]}"
 echo ""
 
-# Check for cover image
-COVER_OPTS=""
 if [[ -f "cover.png" ]]; then
-    COVER_OPTS="--epub-cover-image=cover.png"
     echo "Cover image found: cover.png"
+    echo ""
 fi
 
-# Build EPUB
-echo "Generating EPUB..."
-pandoc \
-    --metadata-file=metadata-epub.yaml \
-    --standalone \
-    --toc \
-    --toc-depth=2 \
-    --highlight-style=tango \
-    $COVER_OPTS \
-    -o "$OUTPUT_FILE" \
-    "${CHAPTERS[@]}"
+echo "Building full book..."
+OUTPUT_FILE="${OUTPUT_NAME}.epub"
+build_epub "$OUTPUT_FILE" "metadata-epub.yaml" "${CHAPTERS[@]}"
+echo "  Full book: $SCRIPT_DIR/$OUTPUT_FILE ($(du -h "$OUTPUT_FILE" | cut -f1))"
+
+echo ""
+echo "Building sample..."
+SAMPLE_FILE="${OUTPUT_NAME}-sample.epub"
+build_epub "$SAMPLE_FILE" "metadata-epub.yaml" "${SAMPLE_CHAPTERS[@]}"
+echo "  Sample: $SCRIPT_DIR/$SAMPLE_FILE ($(du -h "$SAMPLE_FILE" | cut -f1))"
 
 echo ""
 echo "=== Build Complete ==="
-echo "Output: $SCRIPT_DIR/$OUTPUT_FILE"
-echo "Size: $(du -h "$OUTPUT_FILE" | cut -f1)"
-echo ""
 
 # Open EPUB (macOS)
 if [[ "$OSTYPE" == "darwin"* ]]; then
-    read -p "Open EPUB? [y/N] " -n 1 -r
+    read -p "Open full EPUB? [y/N] " -n 1 -r
     echo
     if [[ $REPLY =~ ^[Yy]$ ]]; then
         open "$OUTPUT_FILE"

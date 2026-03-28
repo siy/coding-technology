@@ -1,5 +1,6 @@
 #!/bin/bash
 # Build script for JBCT Book PDF generation (with cover)
+# Builds full book + sample excerpt
 # Usage: ./build-pdf.sh [output-name]
 
 set -e
@@ -11,13 +12,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$SCRIPT_DIR"
 
 OUTPUT_NAME="${1:-jbct-book}"
-CONTENT_PDF="${OUTPUT_NAME}-content.pdf"
-OUTPUT_FILE="${OUTPUT_NAME}.pdf"
 COVER_IMAGE="cover.png"
-
-echo "=== JBCT Book PDF Builder ==="
-echo "Output: $OUTPUT_FILE"
-echo ""
 
 # Check dependencies
 command -v pandoc >/dev/null 2>&1 || { echo "Error: pandoc not installed"; exit 1; }
@@ -63,40 +58,60 @@ CHAPTERS=(
     "appendix-c-glossary.md"
 )
 
-# Verify all chapters exist
-echo "Checking chapter files..."
-for chapter in "${CHAPTERS[@]}"; do
-    if [[ ! -f "$chapter" ]]; then
-        echo "Error: Missing chapter: $chapter"
-        exit 1
+# Sample chapters — the "convince me" arc
+SAMPLE_CHAPTERS=(
+    "ch01-introduction.md"
+    "ch02-four-return-types.md"
+    "ch04-parse-dont-validate.md"
+    "ch07-basic-patterns.md"
+    "ch12-registeruser-example.md"
+)
+
+# --- Shared functions ---
+
+verify_chapters() {
+    local label="$1"
+    shift
+    local chapters=("$@")
+    for chapter in "${chapters[@]}"; do
+        if [[ ! -f "$chapter" ]]; then
+            echo "Error: Missing chapter: $chapter"
+            exit 1
+        fi
+    done
+    echo "  $label: ${#chapters[@]} chapters found."
+}
+
+build_content_pdf() {
+    local output="$1"
+    shift
+    local chapters=("$@")
+    pandoc \
+        --pdf-engine=xelatex \
+        --metadata-file=metadata.yaml \
+        --standalone \
+        --toc \
+        --toc-depth=2 \
+        --highlight-style=tango \
+        --variable=colorlinks:true \
+        --variable=linkcolor:black \
+        --variable=urlcolor:blue \
+        -o "$output" \
+        "${chapters[@]}"
+}
+
+add_cover() {
+    local content_pdf="$1"
+    local output_file="$2"
+
+    if [[ ! -f "$COVER_IMAGE" ]]; then
+        echo "  Warning: $COVER_IMAGE not found. Using content-only PDF."
+        mv "$content_pdf" "$output_file"
+        return
     fi
-done
-echo "All ${#CHAPTERS[@]} chapters found."
-echo ""
 
-# Build content PDF
-echo "Generating content PDF..."
-pandoc \
-    --pdf-engine=xelatex \
-    --metadata-file=metadata.yaml \
-    --standalone \
-    --toc \
-    --toc-depth=2 \
-    --highlight-style=tango \
-    --variable=colorlinks:true \
-    --variable=linkcolor:black \
-    --variable=urlcolor:blue \
-    -o "$CONTENT_PDF" \
-    "${CHAPTERS[@]}"
+    echo "  Adding cover page..."
 
-# Check if cover exists
-if [[ ! -f "$COVER_IMAGE" ]]; then
-    echo "Warning: $COVER_IMAGE not found. Using content-only PDF."
-    mv "$CONTENT_PDF" "$OUTPUT_FILE"
-else
-    echo "Adding cover page..."
-
-    # Create LaTeX file to combine cover and content
     cat > /tmp/combine-cover.tex << 'LATEX'
 \documentclass[letterpaper]{article}
 \usepackage{graphicx}
@@ -113,44 +128,68 @@ else
 \end{document}
 LATEX
 
-    # Replace placeholders with actual paths (Linux-compatible sed)
     if [[ "$OSTYPE" == "darwin"* ]]; then
         sed -i '' "s|COVER_IMAGE|$SCRIPT_DIR/$COVER_IMAGE|g" /tmp/combine-cover.tex
-        sed -i '' "s|CONTENT_PDF|$SCRIPT_DIR/$CONTENT_PDF|g" /tmp/combine-cover.tex
+        sed -i '' "s|CONTENT_PDF|$SCRIPT_DIR/$content_pdf|g" /tmp/combine-cover.tex
     else
         sed -i "s|COVER_IMAGE|$SCRIPT_DIR/$COVER_IMAGE|g" /tmp/combine-cover.tex
-        sed -i "s|CONTENT_PDF|$SCRIPT_DIR/$CONTENT_PDF|g" /tmp/combine-cover.tex
+        sed -i "s|CONTENT_PDF|$SCRIPT_DIR/$content_pdf|g" /tmp/combine-cover.tex
     fi
 
-    # Compile with xelatex
     cd /tmp
     xelatex -interaction=batchmode combine-cover.tex >/dev/null 2>&1 || {
-        echo "First pass..."
+        echo "  First pass..."
         xelatex -interaction=batchmode combine-cover.tex 2>&1 | tail -5
     }
 
-    # Move result
     if [[ -f "combine-cover.pdf" ]]; then
-        mv combine-cover.pdf "$SCRIPT_DIR/$OUTPUT_FILE"
+        mv combine-cover.pdf "$SCRIPT_DIR/$output_file"
         rm -f combine-cover.aux combine-cover.log combine-cover.tex
         cd "$SCRIPT_DIR"
-        rm -f "$CONTENT_PDF"
+        rm -f "$content_pdf"
     else
-        echo "Error: Failed to add cover, using content-only PDF"
+        echo "  Error: Failed to add cover, using content-only PDF"
         cd "$SCRIPT_DIR"
-        mv "$CONTENT_PDF" "$OUTPUT_FILE"
+        mv "$content_pdf" "$output_file"
     fi
-fi
+}
+
+# --- Build full book ---
+
+echo "=== JBCT Book PDF Builder ==="
+echo ""
+echo "Checking files..."
+verify_chapters "Full book" "${CHAPTERS[@]}"
+verify_chapters "Sample" "${SAMPLE_CHAPTERS[@]}"
+echo ""
+
+echo "Building full book..."
+CONTENT_PDF="${OUTPUT_NAME}-content.pdf"
+OUTPUT_FILE="${OUTPUT_NAME}.pdf"
+build_content_pdf "$CONTENT_PDF" "${CHAPTERS[@]}"
+add_cover "$CONTENT_PDF" "$OUTPUT_FILE"
+
+echo ""
+echo "  Full book: $SCRIPT_DIR/$OUTPUT_FILE ($(du -h "$OUTPUT_FILE" | cut -f1))"
+
+# --- Build sample ---
+
+echo ""
+echo "Building sample..."
+SAMPLE_CONTENT_PDF="${OUTPUT_NAME}-sample-content.pdf"
+SAMPLE_OUTPUT_FILE="${OUTPUT_NAME}-sample.pdf"
+build_content_pdf "$SAMPLE_CONTENT_PDF" "${SAMPLE_CHAPTERS[@]}"
+add_cover "$SAMPLE_CONTENT_PDF" "$SAMPLE_OUTPUT_FILE"
+
+echo ""
+echo "  Sample: $SCRIPT_DIR/$SAMPLE_OUTPUT_FILE ($(du -h "$SAMPLE_OUTPUT_FILE" | cut -f1))"
 
 echo ""
 echo "=== Build Complete ==="
-echo "Output: $SCRIPT_DIR/$OUTPUT_FILE"
-echo "Size: $(du -h "$OUTPUT_FILE" | cut -f1)"
-echo ""
 
 # Open PDF (macOS)
 if [[ "$OSTYPE" == "darwin"* ]]; then
-    read -p "Open PDF? [y/N] " -n 1 -r
+    read -p "Open full PDF? [y/N] " -n 1 -r
     echo
     if [[ $REPLY =~ ^[Yy]$ ]]; then
         open "$OUTPUT_FILE"

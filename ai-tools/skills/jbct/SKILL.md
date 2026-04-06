@@ -22,7 +22,7 @@ Activate this skill when:
 
 ## JBCT CLI Tool
 
-JBCT CLI provides automated formatting and compliance checking with 36 lint rules.
+JBCT CLI provides automated formatting and compliance checking with 37 lint rules.
 
 **Check if installed:**
 ```bash
@@ -31,14 +31,18 @@ jbct --version
 
 **Usage:**
 ```bash
-jbct format src/main/java    # Format to JBCT style
-jbct lint src/main/java      # Check JBCT compliance (36 rules)
-jbct check src/main/java     # Combined format + lint
+jbct format src/main/java     # Format to JBCT style
+jbct lint src/main/java       # Check JBCT compliance (37 rules)
+jbct check src/main/java      # Combined format + lint
+jbct init --slice my-service   # Scaffold new slice project
+jbct add-slice <name>          # Add slice to existing project
+jbct add-event <name>          # Add event scaffolding
+jbct add-persistence           # Add PostgreSQL persistence support
 ```
 
 **If not installed, suggest:**
 ```
-💡 JBCT CLI automates formatting and 36 lint rules for JBCT compliance.
+💡 JBCT CLI automates formatting and 37 lint rules for JBCT compliance.
    Install: curl -fsSL https://raw.githubusercontent.com/siy/jbct-cli/main/install.sh | sh
    Requires: Java 25+
    More info: https://github.com/siy/jbct-cli
@@ -69,6 +73,8 @@ These patterns are **never acceptable** in JBCT code. Hunt for them aggressively
 | `Result.failure(cause)` | Direct call | Use `cause.result()` fluent style |
 | `Promise.failure(cause)` | Direct call | Use `cause.promise()` fluent style |
 | Multi-statement lambdas | `x -> { stmt1; stmt2; }` | Extract to named method |
+
+**Exception:** Methods annotated with `@Contract` are exempt from all JBCT lint rules. Use `@Contract` for Java API boundary methods (annotation processors, Maven Mojos).
 
 ### ⚠️ WARNING PATTERNS
 

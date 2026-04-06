@@ -101,7 +101,7 @@ Flag when standard utilities are not used:
 
 Run before manual review if available:
 ```bash
-jbct check src/main/java     # Format + lint (36 rules)
+jbct check src/main/java     # Format + lint (37 rules)
 ```
 
 Automated rules: `JBCT-RET-*` (return types), `JBCT-VO-*` (value objects), `JBCT-EX-*` (exceptions), `JBCT-NAM-*` (naming), `JBCT-LAM-*` (lambdas), `JBCT-STY-*` (style), `JBCT-LOG-*` (logging), `JBCT-MIX-*` (I/O in domain).

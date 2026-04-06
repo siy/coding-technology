@@ -244,7 +244,7 @@ void username_acceptsValidInput() {
 
 - **[CHANGELOG.md](CHANGELOG.md)** - Version history following [Keep a Changelog](https://keepachangelog.com/)
   - Current version: 2.2.0 (2026-03-27)
-  - Golden formatting patterns, Pragmatica Core 0.25.0, 36 lint rules
+  - Golden formatting patterns, Pragmatica Core 1.0.0-rc1, 36 lint rules
   - Semantic versioning for documentation releases
 
 ## 🔧 Tools
@@ -384,13 +384,13 @@ If you can draw it as a BPMN diagram, you can write it as JBCT code. The structu
 <dependency>
    <groupId>org.pragmatica-lite</groupId>
    <artifactId>core</artifactId>
-   <version>0.25.0</version>
+   <version>1.0.0-rc1</version>
 </dependency>
 ```
 
 **Gradle:**
 ```gradle
-implementation 'org.pragmatica-lite:core:0.25.0'
+implementation 'org.pragmatica-lite:core:1.0.0-rc1'
 ```
 
 ## 📄 License

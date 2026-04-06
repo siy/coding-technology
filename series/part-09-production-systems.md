@@ -703,13 +703,13 @@ include 'my-app-bootstrap'
 
 // my-app-domain/build.gradle
 dependencies {
-    implementation 'org.pragmatica-lite:core:0.25.0'
+    implementation 'org.pragmatica-lite:core:1.0.0-rc1'
 }
 
 // my-app-application/build.gradle
 dependencies {
     implementation project(':my-app-domain')
-    implementation 'org.pragmatica-lite:core:0.25.0'
+    implementation 'org.pragmatica-lite:core:1.0.0-rc1'
 }
 
 // my-app-adapters/build.gradle

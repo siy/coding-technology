@@ -28,7 +28,7 @@ This skill understands Aether-specific patterns. For Java code generation and re
 - **Review:** Use `jbct-reviewer` subagent — checks JBCT compliance. Supplement with Aether-specific checks (routes.toml consistency, error mapping completeness, resource wiring).
 - **Formatting & Linting:** Use `jbct` CLI tool:
   ```bash
-  jbct check src/main/java     # Format + lint (36 rules)
+  jbct check src/main/java     # Format + lint (37 rules)
   jbct format src/main/java    # Format only
   jbct lint src/main/java      # Lint only
   ```
@@ -95,7 +95,7 @@ Before considering a slice complete:
 
 ### Testing
 - [ ] Unit tests for validation, happy path, failure cases
-- [ ] `jbct check` passes (format + 36 lint rules)
+- [ ] `jbct check` passes (format + 37 lint rules)
 - [ ] Forge smoke test with curl
 - [ ] k6 steady-state test at expected load
 

@@ -244,7 +244,7 @@ void username_acceptsValidInput() {
 
 - **[CHANGELOG.md](CHANGELOG.md)** - Version history following [Keep a Changelog](https://keepachangelog.com/)
   - Current version: 2.2.0 (2026-03-27)
-  - Golden formatting patterns, Pragmatica Core 1.0.0-rc1, 36 lint rules
+  - Golden formatting patterns, Pragmatica Core 1.0.0-rc1, 37 lint rules
   - Semantic versioning for documentation releases
 
 ## 🔧 Tools

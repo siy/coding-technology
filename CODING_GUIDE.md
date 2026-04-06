@@ -5938,7 +5938,7 @@ JBCT provides tools for both human developers and AI assistants. For complete do
 
 - **JBCT CLI** - Command-line tool for formatting and linting
   - `jbct format` - Format Java code to JBCT style
-  - `jbct lint` - Check compliance with 36 lint rules
+  - `jbct lint` - Check compliance with 37 lint rules
   - `jbct check` - Combined format + lint (recommended for CI)
 - **Maven Plugin** - Build integration for automated checks
 

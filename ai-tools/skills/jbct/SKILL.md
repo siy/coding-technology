@@ -513,17 +513,33 @@ cause.promise()
 ## Aggregation Operations
 
 ```java
-// Result.all - Accumulates all failures
+// Result.all - Accumulates all failures (1-15 params)
 Result.all(result1, result2, result3)
        .map((v1, v2, v3) -> combine(v1, v2, v3));
 
-// Promise.all - Fail-fast on first failure
+// Promise.all - Parallel, fail-fast on first failure (1-15 params)
 Promise.all(promise1, promise2, promise3)
         .map((v1, v2, v3) -> combine(v1, v2, v3));
 
-// Option.all - Fail-fast on first empty
+// Promise.allOrCancel - Like all(), but cancels remaining on first failure (1-15 params)
+Promise.allOrCancel(promise1, promise2, promise3)
+        .map((v1, v2, v3) -> combine(v1, v2, v3));
+
+// Option.all - Fail-fast on first empty (1-15 params)
 Option.all(opt1, opt2, opt3)
        .map((v1, v2, v3) -> combine(v1, v2, v3));
+
+// Collection variants
+Promise.allOf(collection)             // Promise<List<Result<T>>> - collects all
+Promise.allOfOrCancel(collection)     // Like allOf(), cancels remaining on first failure
+Promise.any(promise1, promise2)       // First success wins
+Result.allOf(collection)              // Result<List<T>> - accumulates failures
+```
+
+**Instance variants** (for-comprehension style, same semantics):
+```java
+promise.all(fn1, fn2, fn3).map(combine);            // Parallel, fail-fast
+promise.allOrCancel(fn1, fn2, fn3).map(combine);     // Parallel, fail-fast + cancel
 ```
 
 ## Exception Handling
@@ -661,20 +677,20 @@ void execute_succeeds_forValidInput() {
 
 ## Pragmatica Core Library
 
-JBCT uses **Pragmatica Core 0.25.0** for functional types.
+JBCT uses **Pragmatica Core 1.0.0-rc1** for functional types.
 
 **Maven (preferred):**
 ```xml
 <dependency>
    <groupId>org.pragmatica-lite</groupId>
    <artifactId>core</artifactId>
-   <version>0.25.0</version>
+   <version>1.0.0-rc1</version>
 </dependency>
 ```
 
 **Gradle (only if explicitly requested):**
 ```gradle
-implementation 'org.pragmatica-lite:core:0.25.0'
+implementation 'org.pragmatica-lite:core:1.0.0-rc1'
 ```
 
 Library documentation: https://central.sonatype.com/artifact/org.pragmatica-lite/core

@@ -315,13 +315,13 @@ The AI tools complement the CLI:
 
 ## Pragmatica Core
 
-All tools use **Pragmatica Core 0.25.0** for functional types.
+All tools use **Pragmatica Core 1.0.0-rc1** for functional types.
 
 ```xml
 <dependency>
    <groupId>org.pragmatica-lite</groupId>
    <artifactId>core</artifactId>
-   <version>0.25.0</version>
+   <version>1.0.0-rc1</version>
 </dependency>
 ```
 

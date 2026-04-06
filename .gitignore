@@ -35,6 +35,9 @@ website/node_modules/
 website/dist/
 website/package-lock.json
 
+# Index
+.ndx/
+
 # Generated books
 book/*.pdf
 book/*.epub

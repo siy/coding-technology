@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.3.0] - 2026-04-06
+
+### Added
+- **Aether Coder skill** — full slice development skill covering patterns, resources, deployment, and testing
+- **Promise.allOrCancel()** documentation — static and instance variants (1-15 params), cancels remaining on first failure
+- **Promise.allOfOrCancel()** documentation — collection variant with cancellation
+- **Promise.any()** documentation — first success wins
+
+### Changed
+- Updated Pragmatica Core version from 0.25.0 to 1.0.0-rc1 across all documentation, AI tools, examples, and training
+- Updated JBCT version from 2.2.0 to 2.3.0 in book metadata
+- Corrected Promise.all() arity documentation from 1-9 to 1-15
+- Documented instance all()/allOrCancel() for-comprehension style variants
+- Fixed instance all() description to reflect parallel execution (was sequential, now fixed in core)
+
 ## [2.2.0] - 2026-03-27
 
 ### Changed

@@ -27,9 +27,9 @@ public Promise<Dashboard> loadDashboard(UserId userId) {
 }
 ```
 
-### Up to 9 Parallel Operations
+### Up to 15 Parallel Operations
 
-Promise.all supports 1-9 operations:
+Promise.all supports 1-15 operations:
 
 ```java
 // 2 operations
@@ -40,7 +40,27 @@ Promise.all(op1, op2)
 Promise.all(op1, op2, op3)
     .map((r1, r2, r3) -> combine(r1, r2, r3));
 
-// ... up to 9 operations
+// ... up to 15 operations
+```
+
+### allOrCancel — Parallel with Cancellation
+
+`Promise.allOrCancel()` behaves like `Promise.all()` but **cancels remaining promises** on first failure. Use when outstanding operations become pointless after any failure.
+
+```java
+// Cancel remaining if any fails — no wasted work
+Promise.allOrCancel(
+    chargePayment.apply(order),
+    reserveInventory.apply(order),
+    notifyWarehouse.apply(order)
+).map(this::confirmOrder);
+```
+
+Both `all()` and `allOrCancel()` have instance variants for for-comprehension style:
+
+```java
+promise.all(fn1, fn2, fn3).map(combine);            // fail-fast, no cancel
+promise.allOrCancel(fn1, fn2, fn3).map(combine);     // fail-fast + cancel remaining
 ```
 
 ## With Result.all for Validation
@@ -55,7 +75,7 @@ public Result<ValidRequest> validate(Request request) {
 }
 ```
 
-**Key difference**: `Result.all` accumulates all failures (CompositeCause), while `Promise.all` fails fast on first error.
+**Key difference**: `Result.all` accumulates all failures (CompositeCause), while `Promise.all` fails fast on first error. Use `Promise.allOrCancel` to also cancel remaining promises on failure.
 
 ## Thread Safety
 
@@ -287,13 +307,16 @@ Promise.all(fetchA, fetchB)
 // DO - Use Promise.allOf for independent failures
 Promise.allOf(List.of(fetchA, fetchB))
     .map(results -> combinePartial(results));
+
+// DO - Use Promise.allOfOrCancel to also cancel remaining on first failure
+Promise.allOfOrCancel(List.of(fetchA, fetchB))
+    .map(results -> combinePartial(results));
 ```
 
 ### ❌ Excessive Parallelism
 
 ```java
-// DON'T - 15 parallel operations
-Promise.all(op1, op2, op3, ..., op15);  // Too many!
+// DON'T - Too many parallel operations to reason about
 
 // DO - Group related operations
 Promise.all(

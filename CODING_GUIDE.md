@@ -6,7 +6,7 @@ description: "Revolutionary technology for writing deterministic, AI-friendly, h
 
 # Java Backend Coding Technology: Writing Code in the Era of AI
 
-**Version:** 2.2.0 | **Repository:** [github.com/siy/coding-technology](https://github.com/siy/coding-technology) | **Changelog:** [CHANGELOG.md](https://github.com/siy/coding-technology/blob/main/CHANGELOG.md)
+**Version:** 2.3.0 | **Repository:** [github.com/siy/coding-technology](https://github.com/siy/coding-technology) | **Changelog:** [CHANGELOG.md](https://github.com/siy/coding-technology/blob/main/CHANGELOG.md)
 
 ## Introduction: Code in a New Era
 
@@ -696,13 +696,13 @@ private Promise<Availability> checkInventory(ValidRequest request) {
 > <dependency>
 >    <groupId>org.pragmatica-lite</groupId>
 >    <artifactId>core</artifactId>
->    <version>0.25.0</version>
+>    <version>1.0.0-rc1</version>
 > </dependency>
 > ```
 >
 > **Gradle:**
 > ```gradle
-> implementation 'org.pragmatica-lite:core:0.25.0'
+> implementation 'org.pragmatica-lite:core:1.0.0-rc1'
 > ```
 
 ### The Four Return Kinds
@@ -5938,7 +5938,7 @@ JBCT provides tools for both human developers and AI assistants. For complete do
 
 - **JBCT CLI** - Command-line tool for formatting and linting
   - `jbct format` - Format Java code to JBCT style
-  - `jbct lint` - Check compliance with 36 lint rules
+  - `jbct lint` - Check compliance with 37 lint rules
   - `jbct check` - Combined format + lint (recommended for CI)
 - **Maven Plugin** - Build integration for automated checks
 

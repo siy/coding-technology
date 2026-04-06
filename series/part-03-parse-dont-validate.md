@@ -288,7 +288,7 @@ public record Age(int value) {
 }
 ```
 
-For comprehensive list, see main [Coding Guide](../CODING_GUIDE.md#pragmatica-lite-validation-and-parsing-utilities).
+For comprehensive list, see main [Coding Guide](../CODING_GUIDE.md#pragmatica-core-validation-and-parsing-utilities).
 
 ---
 

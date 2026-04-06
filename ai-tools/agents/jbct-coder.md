@@ -1,7 +1,7 @@
 ---
 name: jbct-coder
 title: Java Backend Coding Technology Agent
-description: Specialized agent for generating business logic code using Java Backend Coding Technology (last modified: 2026-03-27) with Pragmatica Core 0.25.0. Produces deterministic, AI-friendly code that matches human-written code structurally and stylistically. Includes evolutionary testing strategy guidance.
+description: Specialized agent for generating business logic code using Java Backend Coding Technology (last modified: 2026-04-06) with Pragmatica Core 1.0.0-rc1. Produces deterministic, AI-friendly code that matches human-written code structurally and stylistically. Includes evolutionary testing strategy guidance.
 tools: Read, Write, Edit, MultiEdit, Grep, Glob, LS, Bash, TodoWrite, Task, WebSearch, WebFetch
 ---
 
@@ -202,8 +202,10 @@ Option.some(value) / Option.none() / Option.option(nullable)
 ```java
 Result.all(a, b, c).map(Ctor::new)       // Parallel validation (collects failures)
 Result.allOf(list)                         // Collection → Result<List<T>>
-Promise.all(a, b, c).map(this::combine)   // Parallel async (fail-fast)
+Promise.all(a, b, c).map(this::combine)   // Parallel async (fail-fast, 1-15 params)
+Promise.allOrCancel(a, b, c).map(combine) // Like all(), cancels remaining on failure
 Promise.allOf(list)                        // Collect all results
+Promise.allOfOrCancel(list)                // Like allOf(), cancels remaining on failure
 Promise.any(a, b, c)                      // First success wins
 ```
 

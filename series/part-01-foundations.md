@@ -1,6 +1,6 @@
 # Part 1: Introduction & Foundations
 
-**Series:** [Java Backend Coding Technology](INDEX.md) | **Part:** 1 of 10 | **Next:** [Part 2: The Four Return Types](part-02-four-return-types.md)
+**Series:** [Java Backend Coding Technology](INDEX.md) | **Part:** 1 of 10 | **Previous:** [Part 0: Design Methodology](part-00-design-methodology.md) | **Next:** [Part 2: The Four Return Types](part-02-four-return-types.md)
 
 ---
 

@@ -28,11 +28,14 @@ Run these searches and report ALL hits:
 | Impl classes | `class.*Impl` | Use lambdas/method refs |
 | Null in business logic | `== null`, `!= null`, `return null` in domain/usecase | Use `Option<T>` |
 | Business exceptions | `throw new`, `throws \w`, `try {`, `catch (` in domain/usecase | Use `Result`/`Promise` with `Cause` |
-| Void type parameter | `Result<Void>`, `Promise<Void>` | Use `Unit`. Note: `void` return is OK for fire-and-forget |
+| Void type parameter | `Result<Void>`, `Promise<Void>` | Use `Unit`. `void` return OK with `@Contract` (external API) or fire-and-forget |
 | Static failure factories | `Result.failure(`, `Promise.failure(` | Use `cause.result()`/`cause.promise()` |
 | Multi-statement lambdas | `-> {` | Extract to named method |
 | Constructor bypass | `new ValueObject(` outside factory | Use factory method |
 | Nested error channels | `Promise<Result<` | Use `Promise<T>` only |
+| Blocking in business logic | `.await()` in domain/usecase without `@TerminalOperation` | Stay in monadic chain. OK in tests; legitimate uses require `@TerminalOperation` |
+| `@SuppressWarnings` misuse | `@SuppressWarnings` instead of `@Contract`/`@TerminalOperation` | Use dedicated annotations for void return (`@Contract`) and await (`@TerminalOperation`) |
+| Abandoned values | Statement-style calls to methods returning `Result`/`Promise` without using return value | Every Result/Promise must be returned or chained |
 
 **If ANY count > 0, those are confirmed violations.**
 

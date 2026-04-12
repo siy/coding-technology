@@ -1,7 +1,7 @@
 # Java Backend Coding Technology
 ## Unified Code Through Functional Composition
 
-**Based on:** JBCT v2.3.1 | **Pragmatica Core:** 1.0.0-rc1
+**Based on:** JBCT v2.4.0 | **Pragmatica Core:** 1.0.0-rc1
 
 ---
 

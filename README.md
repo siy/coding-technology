@@ -243,7 +243,7 @@ void username_acceptsValidInput() {
 ### Changelog & Versioning
 
 - **[CHANGELOG.md](CHANGELOG.md)** - Version history following [Keep a Changelog](https://keepachangelog.com/)
-  - Current version: 3.0.0 (2026-03-27)
+  - Current version: 3.0.0 (2026-04-12)
   - Golden formatting patterns, Pragmatica Core 1.0.0-rc1, 37 lint rules
   - Semantic versioning for documentation releases
 
@@ -409,6 +409,6 @@ If you find this useful, consider [sponsoring](https://github.com/sponsors/siy).
 
 ---
 
-**Version:** 3.0.0 | **Last Updated:** 2026-03-27 | **[Full Changelog](CHANGELOG.md)**
+**Version:** 3.0.0 | **Last Updated:** 2026-04-12 | **[Full Changelog](CHANGELOG.md)**
 
 **Copyright © 2025 Sergiy Yevtushenko. Released under the [MIT License](LICENSE).**

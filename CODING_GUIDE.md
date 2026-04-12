@@ -257,6 +257,8 @@ This is not a lack of modeling — it's modeling at the right granularity. A `Re
 
 Consider a `Seat` concept used across multiple features: in booking context, a Seat is a row and number. In reservation context, it's a status and timestamp. In pricing context, it's a category and base price. Three different records, three different processes. No shared entity, no conflict, no coupling. Each process models exactly what it needs.
 
+**Processes as knowledge gathering:** every backend process is an act of knowledge gathering. Each step acquires a piece of knowledge; the process ends when enough knowledge has accumulated to formulate an answer. Data types are models of what a process needs to know, not models of what exists in the database. This view produces a natural formalism: the **data dependency graph** (DDG), where `ALL(A, B)` maps to Fork-Join / `Promise.all()`, sequential chaining maps to Sequencer / `flatMap`, and `ANY(A, B)` maps to fallback / `recover`. Sketching the DDG before coding makes pattern selection mechanical — the code structure mirrors the knowledge dependency structure. For full treatment with worked examples, see the book's [Design Methodology chapter](book/ch02-design-methodology.md).
+
 ### Design by Elimination
 
 Once you identify the process and its data flow, most "design decisions" are already made:
@@ -268,6 +270,7 @@ Once you identify the process and its data flow, most "design decisions" are alr
 | Where do types go? | Request/Response/Error nested in use case; shared VOs in `domain/shared/` |
 | How to handle errors? | Sealed Cause hierarchy; enum for fixed messages, records for contextual |
 | How to test? | Integration-first: stub steps, test the composition |
+| What is the data model? | The data dependency graph — what knowledge does this process need to formulate its answer |
 
 **What's left to decide:**
 

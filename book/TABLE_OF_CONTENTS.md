@@ -1,7 +1,7 @@
 # Java Backend Coding Technology
 ## Unified Code Through Functional Composition
 
-**Based on:** JBCT v2.3.1 | **Pragmatica Core:** 1.0.0-rc1
+**Based on:** JBCT v3.0.0 | **Pragmatica Core:** 1.0.0-rc1
 
 ---
 
@@ -15,13 +15,23 @@
 - The five evaluation criteria for design decisions
 - Foundational concepts: side effects, composition, monads
 
-**[Chapter 2: The Four Return Types](ch02-four-return-types.md)**
+**[Chapter 2: Design Methodology](ch02-design-methodology.md)**
+- An emerging direction: convergent evolution toward process-first design
+- Process-first design: the questions framework
+- Worked example: E-Commerce Checkout
+- Data follows process: per-context types, no shared domain model
+- Design by elimination: most decisions follow from the process
+- Composition at scale: recursive application
+- BPMN as shared language
+- Ubiquitous language as natural byproduct
+
+**[Chapter 3: The Four Return Types](ch02-four-return-types.md)**
 - `T`, `Option<T>`, `Result<T>`, `Promise<T>`
 - Type selection criteria
 - Type conversions and lifting
 - Core operations: map, flatMap, fold
 
-**[Chapter 3: Pragmatica Core Essentials](ch03-pragmatica-lite-essentials.md)**
+**[Chapter 4: Pragmatica Core Essentials](ch03-pragmatica-lite-essentials.md)**
 - Library philosophy and design goals
 - Type factories and conversions
 - Validation utilities (Verify.Is, Parse)
@@ -31,19 +41,19 @@
 
 ### Part II: Core Principles
 
-**[Chapter 4: Parse, Don't Validate](ch04-parse-dont-validate.md)**
+**[Chapter 5: Parse, Don't Validate](ch04-parse-dont-validate.md)**
 - Value objects that enforce invariants
 - Factory method patterns
 - Cross-field validation
 - Normalization during construction
 
-**[Chapter 5: Error Handling & Composition](ch05-error-handling.md)**
+**[Chapter 6: Error Handling & Composition](ch05-error-handling.md)**
 - Sealed interfaces for typed errors
 - Error accumulation with Result.all()
 - Short-circuit vs accumulation
 - Composing error handlers
 
-**[Chapter 6: Null Policy & Recovery](ch06-null-policy-recovery.md)**
+**[Chapter 7: Null Policy & Recovery](ch06-null-policy-recovery.md)**
 - Null only at adapter boundaries
 - Option for intentional absence
 - Recovery patterns: or, orElse, recover
@@ -53,20 +63,20 @@
 
 ### Part III: Patterns
 
-**[Chapter 7: Basic Patterns (Leaf, Condition, Iteration)](ch07-basic-patterns.md)**
+**[Chapter 8: Basic Patterns (Leaf, Condition, Iteration)](ch07-basic-patterns.md)**
 - Three-zone architecture (External, Adapter, Domain)
 - Leaf pattern for atomic I/O
 - Condition pattern for routing
 - Iteration pattern for collections
 - Zone-based naming conventions
 
-**[Chapter 8: Advanced Patterns (Sequencer, Fork-Join, Aspects)](ch08-advanced-patterns.md)**
+**[Chapter 9: Advanced Patterns (Sequencer, Fork-Join, Aspects)](ch08-advanced-patterns.md)**
 - Sequencer: linear dependent chains (2-5 rule)
 - Fork-Join: parallel independent operations
 - Aspects: cross-cutting concerns (retry, timeout, audit)
 - Compensation pattern for rollback
 
-**[Chapter 9: Thread Safety & Immutability](ch09-thread-safety.md)**
+**[Chapter 10: Thread Safety & Immutability](ch09-thread-safety.md)**
 - Safety guarantees by pattern
 - Promise resolution semantics
 - Mutable state boundaries
@@ -76,13 +86,13 @@
 
 ### Part IV: Testing
 
-**[Chapter 10: Testing Philosophy](ch10-testing-philosophy.md)**
+**[Chapter 11: Testing Philosophy](ch10-testing-philosophy.md)**
 - Integration-first testing
 - Evolutionary testing process
 - Test data builders
 - Testing pyramid for JBCT
 
-**[Chapter 11: Testing in Practice](ch11-testing-practice.md)**
+**[Chapter 12: Testing in Practice](ch11-testing-practice.md)**
 - Test organization with nested classes
 - Parameterized tests for validation
 - Stub implementations for step interfaces
@@ -92,23 +102,23 @@
 
 ### Part V: Production Systems
 
-**[Chapter 12: Complete Example - RegisterUser](ch12-registeruser-example.md)**
+**[Chapter 13: Complete Example - RegisterUser](ch12-registeruser-example.md)**
 - Requirements to implementation walkthrough
 - Value objects: Email, Password
 - Use case with step interfaces
 - Full test suite
 
-**[Chapter 13: Complete Example - PlaceOrder](ch13-placeorder-example.md)**
+**[Chapter 14: Complete Example - PlaceOrder](ch13-placeorder-example.md)**
 - E-commerce domain
 - Fork-Join for inventory checks
 - Compensation for payment failures
 - Best-effort notifications
 
-**[Chapter 14: Focused Examples](ch14a-publisharticle-example.md)**
+**[Chapter 15: Focused Examples](ch14a-publisharticle-example.md)**
 - [PublishArticle](ch14a-publisharticle-example.md): Condition pattern for routing
 - [TransferFunds](ch14b-transferfunds-example.md): Aspects composition
 
-**[Chapter 15: Project Structure & Framework Integration](ch15-project-structure.md)**
+**[Chapter 16: Project Structure & Framework Integration](ch15-project-structure.md)**
 - Vertical slicing philosophy
 - Package organization
 - Module boundaries (when needed)
@@ -119,26 +129,26 @@
 
 ### Part VI: Adoption
 
-**[Chapter 16: Systematic Application Guide](ch16-systematic-application.md)**
+**[Chapter 17: Systematic Application Guide](ch16-systematic-application.md)**
 - 8 checkpoints for coding and review
 - Violation → Fix patterns
 - Application order for new code
 - Review completeness checklist
 
-**[Chapter 17: Migration Strategies](ch17-migration-strategies.md)**
+**[Chapter 18: Migration Strategies](ch17-migration-strategies.md)**
 - 4-phase migration playbook
 - Team adoption strategies
 - Bridging old and new code
 - Common resistance and responses
 
-**[Chapter 18: Comparison with Other Approaches](ch18-comparison.md)**
+**[Chapter 19: Comparison with Other Approaches](ch18-comparison.md)**
 - vs Traditional Layered Architecture
 - vs Hexagonal Architecture
 - vs Clean Architecture
 - vs Railway-Oriented Programming
 - vs vavr and Arrow-kt
 
-**[Chapter 19: Troubleshooting & FAQ](ch19-troubleshooting-faq.md)**
+**[Chapter 20: Troubleshooting & FAQ](ch19-troubleshooting-faq.md)**
 - Debugging monadic chains
 - Common mistakes and fixes
 - IDE setup recommendations
@@ -177,19 +187,19 @@
 ## Reading Paths
 
 **New to JBCT:**
-Chapters 1-3 → Chapter 4 → Chapter 7 → Chapter 12 → Appendix D
+Chapter 1 → Chapter 2 → Chapters 3-4 → Chapter 5 → Chapter 8 → Chapter 13
 
 **Experienced Developer:**
-Chapter 1 → Chapters 7-8 → Chapter 16 → Chapter 17
+Chapter 1 → Chapter 2 → Chapters 8-9 → Chapter 17 → Chapter 18
 
 **Team Lead/Architect:**
-Chapter 1 → Chapter 15 → Chapters 16-18
+Chapter 1 → Chapter 2 → Chapter 16 → Chapters 17-19
 
 **Coming from FP background:**
-Chapter 3 → Chapter 18 → Chapters 7-8 → Chapter 15
+Chapter 2 → Chapter 4 → Chapter 19 → Chapters 8-9 → Chapter 16
 
 ---
 
-**Total:** 19 chapters + 3 appendices
+**Total:** 20 chapters + 3 appendices
 **Estimated reading time:** 8-12 hours
 **Practice exercises:** 24 (with solutions)

@@ -6,7 +6,7 @@ description: "Revolutionary technology for writing deterministic, AI-friendly, h
 
 # Java Backend Coding Technology: Writing Code in the Era of AI
 
-**Version:** 2.3.1 | **Repository:** [github.com/siy/coding-technology](https://github.com/siy/coding-technology) | **Changelog:** [CHANGELOG.md](https://github.com/siy/coding-technology/blob/main/CHANGELOG.md)
+**Version:** 3.0.0 | **Repository:** [github.com/siy/coding-technology](https://github.com/siy/coding-technology) | **Changelog:** [CHANGELOG.md](https://github.com/siy/coding-technology/blob/main/CHANGELOG.md)
 
 ## Introduction: Code in a New Era
 
@@ -168,6 +168,170 @@ com.example.app/
 - **Errors** → sealed interface inside use case package (never shared)
 
 **Guideline:** Start specific (use case package), move to broader scope only when actually reused. Don't prematurely extract to `shared/`.
+
+---
+
+## Design Methodology
+
+### An Emerging Direction
+
+A new direction in software design is emerging. Independent practitioners — from different languages, domains, and traditions — are converging on the same insight: **business processes, not data entities, are the natural unit of software decomposition.**
+
+Across the industry, this shift is visible:
+
+- **Scott Wlaschin** ([Domain Modeling Made Functional](https://pragprog.com/titles/swdddf/domain-modeling-made-functional/)) models domains as workflows with typed inputs and outputs, composing small functions into complete use cases. "Make illegal states unrepresentable" through the type system.
+- **Rico Fritzsche** ([How to Model Domain Logic Without Shared Entities](https://levelup.gitconnected.com/how-to-model-domain-logic-without-shared-entities-05c938eee73f)) models domains as contextual decisions, not shared entities. Each feature slice owns its own state reconstruction. Entities are "flexible, context-dependent manifestations."
+- **Roman Weis** ([Alternative Approach to DDD](https://medium.com/codex/lets-build-business-software-an-alternative-approach-to-the-standard-ddd-implementation-47e586b5f81f)) proposes focusing "100% on behavior — the commands" instead of finding the perfect aggregate root.
+- **Sandro Mancuso** ([Introducing Interaction-Driven Design](https://www.codurance.com/publications/2017/12/08/introducing-idd)) starts from external usage (use cases), letting the domain model emerge from actual needs rather than speculative entity modeling.
+- **Jimmy Bogard** ([Vertical Slice Architecture](https://www.jimmybogard.com/vertical-slice-architecture/)) organizes code by features, not layers. "Minimize coupling between slices, maximize coupling in a slice."
+- **Debasish Ghosh** ([Functional and Reactive Domain Modeling](https://www.manning.com/books/functional-and-reactive-domain-modeling)) expresses behavior as pure function compositions rather than object methods.
+
+What these approaches share:
+
+- **Processes over entities** — behavior is the primary decomposition unit
+- **Per-context types** — data structures are shaped by the process that uses them, not shared across the system
+- **Functional composition** — small, pure, testable functions composed into complete workflows
+- **No shared domain model** — domain knowledge is distributed across processes, not centralized in entity classes
+
+This is convergent evolution — the same pressures (complex domains, evolving requirements, distributed systems, AI-assisted development) producing the same structural adaptations. JBCT is one mature, practical expression of this direction, with formalized patterns, tooling, and implementation guidance.
+
+### Process-First Design
+
+JBCT formalizes this direction into a practical methodology. The design activity is identifying **processes** and their boundaries. A process has:
+
+- **Typed input** — request record
+- **Typed output** — response record
+- **Typed failures** — sealed `Cause` hierarchy
+- **Steps** — sub-processes with their own typed boundaries
+
+Data types are derived from processes, not the other way around.
+
+**Use case identification** from requirements is mechanical:
+
+- Each "user can..." or "system shall..." is a candidate use case
+- Verb phrases map to use cases: "register," "login," "place order," "generate report"
+- A use case is too big if it has independent sub-outcomes — split it
+- A use case is too small if it can't fail independently — merge it into the parent
+
+**Boundary test:**
+
+| Question | Classification |
+|----------|---------------|
+| Can this be triggered independently? | Use case |
+| Does it always happen as part of something else? | Step |
+| Is it a pure computation with no I/O? | Leaf |
+
+**The design questions framework:**
+
+1. What triggers this process?
+2. What data does it need? → Request record
+3. What does success look like? → Response record
+4. What can go wrong? → Error types (sealed Cause)
+5. What are the steps? → Step interfaces
+6. Which steps depend on each other? → Sequencer vs Fork-Join
+7. Are there conditional paths? → Condition pattern
+8. Is there collection processing? → Iteration pattern
+
+These questions are concrete and answerable. They don't require deep domain expertise to ask or architectural experience to answer. The structure of the code emerges from the answers.
+
+### Data Follows Process
+
+Every record type is owned by a process. Shared types exist only for validated domain concepts (value objects).
+
+**Design flow:**
+
+1. Identify use case → define `Request` and `Response` records
+2. Identify validation → define `ValidRequest` with factory method
+3. Identify steps → each step defines its own input/output types if needed
+4. Identify errors → define sealed `Cause` hierarchy
+5. Only then: extract shared value objects when 2+ use cases validate the same concept
+
+**Why this eliminates the "domain model" problem:**
+
+- No God objects (`User`, `Order`, `Product` with 50 fields)
+- No mapping layers (DTO → Entity → DTO)
+- No Aggregate boundaries to debate
+- Each use case's types ARE its domain model
+
+This is not a lack of modeling — it's modeling at the right granularity. A `RegisterUser.ValidRequest(Email, Password)` contains exactly the domain knowledge relevant to registration. A `LoginUser.ValidRequest(Email, Password)` is independently evolvable. When requirements change for registration, login is unaffected.
+
+Consider a `Seat` concept used across multiple features: in booking context, a Seat is a row and number. In reservation context, it's a status and timestamp. In pricing context, it's a category and base price. Three different records, three different processes. No shared entity, no conflict, no coupling. Each process models exactly what it needs.
+
+**Processes as knowledge gathering:** every backend process is an act of knowledge gathering. Each step acquires a piece of knowledge; the process ends when enough knowledge has accumulated to formulate an answer. Data types are models of what a process needs to know, not models of what exists in the database. This view produces a natural formalism: the **data dependency graph** (DDG), where `ALL(A, B)` maps to Fork-Join / `Promise.all()`, sequential chaining maps to Sequencer / `flatMap`, and `ANY(A, B)` maps to fallback / `recover`. Sketching the DDG before coding makes pattern selection mechanical — the code structure mirrors the knowledge dependency structure. For full treatment with worked examples, see the book's [Design Methodology chapter](book/ch02-design-methodology.md).
+
+### Design by Elimination
+
+Once you identify the process and its data flow, most "design decisions" are already made:
+
+| Question | Answer |
+|----------|--------|
+| What pattern? | Determined by step dependencies (sequential → Sequencer, independent → Fork-Join) |
+| What return type? | Determined by the decision tree (can fail? async? optional?) |
+| Where do types go? | Request/Response/Error nested in use case; shared VOs in `domain/shared/` |
+| How to handle errors? | Sealed Cause hierarchy; enum for fixed messages, records for contextual |
+| How to test? | Integration-first: stub steps, test the composition |
+| What is the data model? | The data dependency graph — what knowledge does this process need to formulate its answer |
+
+**What's left to decide:**
+
+- Naming — guided by zone-based vocabulary
+- Step granularity — guided by "one pattern per method"
+- Value object extraction timing — guided by "2+ use cases" rule
+
+These are small, local decisions. Not architectural ones. The design process has eliminated the need for architecture.
+
+### Composition at Scale
+
+Larger processes compose smaller ones using the same rules. There is no point at which the methodology requires different concepts.
+
+- **Single use case:** Request → ValidRequest → Steps → Response
+- **Multi-step process:** Use case → Step interfaces → Each step is its own composition
+- **Cross-domain process:** Higher-level use case with other use cases as step dependencies
+
+A reporting query that spans "user" and "order" data is just another use case with its own `ReportRequest` and `ReportResult` records. It doesn't need access to other use cases' domain models — it defines its own dedicated domain model for this particular process.
+
+In Aether, this same principle operates at the deployment level: Slice (top-level use case) → Step (sub-process, transitively provisioned) → Leaf (atomic operation). The design methodology scales by recursion, not by adding new concepts.
+
+### BPMN as Shared Language
+
+Since the six patterns map directly to BPMN constructs (see [Pattern-BPMN Mapping](#the-pattern-bpmn-mapping)), the design process has a natural shared notation:
+
+1. Describe the business process (with domain expert, whiteboard, or BPMN tool)
+2. Each BPMN element maps to a pattern and a method
+3. Types emerge from the flow: inputs, outputs, decision criteria
+4. Gap detection: if a BPMN element has no method, something is missing; if a method has no BPMN element, it may be unnecessary abstraction
+
+The code IS the business process specification. Not a translation of it. The design document and the implementation are the same artifact.
+
+### Design Evolution
+
+JBCT designs evolve mechanically:
+
+| Change | Evolution |
+|--------|-----------|
+| New step in process | Add step interface, insert in chain |
+| Step becomes complex | Decompose into sub-steps (same rules) |
+| Steps become independent | Sequencer → Fork-Join |
+| New use case needs shared concept | Extract value object to `domain/shared/` |
+| Cross-cutting concern | Aspects pattern (wrapping, not mixing) |
+| Process grows too large | Extract sub-process as separate use case |
+
+No "refactoring to patterns" — patterns are used from the start. Evolution is adding, extracting, or recomposing — never restructuring. When patterns emerge across slices, extract them — but based on evidence, not speculation.
+
+### Ubiquitous Language
+
+DDD's most enduring contribution — **ubiquitous language** — remains essential. The insistence that developers and domain experts share vocabulary is a prerequisite for building correct software.
+
+In JBCT, ubiquitous language emerges naturally from the design process: use case names (`RegisterUser`, `PlaceOrder`), value objects (`Email`, `OrderId`), error types (`EmailAlreadyRegistered`, `InsufficientFunds`), and step interfaces (`ValidateCart`, `ProcessPayment`) all become the shared vocabulary. The language isn't constructed in separate modeling sessions — it's a direct byproduct of use case identification and type definition.
+
+### Why Now
+
+Several forces make process-first design practical where it wasn't before:
+
+- **Functional programming went mainstream** — Java records, sealed interfaces, pattern matching. The language supports typed composition natively.
+- **Practitioners report tactical DDD patterns showing wear at scale** — aggregates becoming God objects, bounded contexts becoming organizational politics, entity models fighting domain evolution.
+- **Distributed systems demand it** — microservices and serverless naturally align with process-based decomposition. Each service IS a process.
+- **AI-assisted development rewards deterministic patterns** — AI generates better code when the structure is mechanical and the design space is constrained. Process-first design is inherently AI-friendly.
 
 ---
 

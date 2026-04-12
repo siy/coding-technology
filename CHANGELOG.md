@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.0.0] - 2026-04-12
+
+### Added
+- **Design Methodology section** in CODING_GUIDE.md — process-first design, use case identification, data follows process, design by elimination, composition at scale, BPMN as shared language, ubiquitous language, references to emerging direction
+- **Series Part 0: Design Methodology** — tutorial with worked e-commerce checkout example
+- **Book Chapter 2: Design Methodology** — full treatment with context-specific entities, worked examples, further reading
+- **`Promise.await()` forbidden in business logic** — zero-tolerance rule; `@TerminalOperation` for legitimate cases
+- **Abandoned `Result`/`Promise` values** — zero-tolerance rule; expression-based code enforcement
+- **`@Contract` and `@TerminalOperation` annotations** — replace `@SuppressWarnings` for exemptions
+
+### Changed
+- Major version bump to 3.0.0 for new design methodology
+- Book renumbered: new Chapter 2 shifts all subsequent chapters by one (20 chapters + 3 appendices)
+- ndx section added to CLAUDE.md
+
 ## [2.3.1] - 2026-04-11
 
 ### Added

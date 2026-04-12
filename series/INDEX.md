@@ -1,6 +1,6 @@
 # Java Backend Coding Technology: Complete Learning Series
 
-**Based on:** [CODING_GUIDE.md](../CODING_GUIDE.md) v2.3.1
+**Based on:** [CODING_GUIDE.md](../CODING_GUIDE.md) v3.0.0
 
 ## About This Series
 
@@ -24,6 +24,24 @@ This ten-part series teaches you how to write backend Java code that's predictab
 - Understanding of REST APIs and databases (for later parts)
 
 ## The Series
+
+### [Part 0: Design Methodology](part-00-design-methodology.md)
+**~30 min read** | *Start here to understand the design philosophy*
+
+Learn the process-first design methodology that underpins JBCT. Understand why business processes — not data entities — are the natural unit of decomposition, and how to go from requirements to code structure mechanically.
+
+**Topics:**
+- An emerging direction: convergent evolution toward process-first design
+- Process-first design: the questions framework for use case identification
+- Data follows process: per-context types, no shared domain model
+- Design by elimination: how identifying the process makes most decisions for you
+- Composition at scale: recursive application of the same rules
+- BPMN as shared language: design notation that maps directly to code
+- Ubiquitous language as a natural byproduct
+
+**Key takeaway:** Identify the process, and the code structure follows mechanically. No architecture to debate.
+
+---
 
 ### [Part 1: Introduction & Foundations](part-01-foundations.md)
 **~45 min read** | *Start here if you're new to functional composition*

@@ -69,10 +69,13 @@ These patterns are **never acceptable** in JBCT code. Hunt for them aggressively
 | Null checks in business logic | `if (x == null)` or `!= null` | Use `Option<T>` instead |
 | Throwing exceptions | `throw new` in business code | Use `Result<T>` or `Promise<T>` |
 | Catching exceptions | `catch` in business code | Lift at adapter boundaries only |
-| `Void` type parameter | `Result<Void>`, `Promise<Void>` | Use `Unit` type. Note: `void` return is OK for fire-and-forget |
+| `Void` type parameter | `Result<Void>`, `Promise<Void>` | Use `Unit`. `void` return OK with `@Contract` (external API) or fire-and-forget |
 | `Result.failure(cause)` | Direct call | Use `cause.result()` fluent style |
 | `Promise.failure(cause)` | Direct call | Use `cause.promise()` fluent style |
 | Multi-statement lambdas | `x -> { stmt1; stmt2; }` | Extract to named method |
+| `Promise.await()` in business logic | `.await()` in domain/usecase | Blocks thread. Stay in chain. OK in tests; use `@TerminalOperation` for CLI/fire-and-forget |
+| `@SuppressWarnings` misuse | Used instead of `@Contract`/`@TerminalOperation` | Use `@Contract` for void return (external API), `@TerminalOperation` for legitimate `await()` |
+| Abandoned `Result`/`Promise` | Statement discarding return value | Every Result/Promise must be returned or handled |
 
 **Exception:** Methods annotated with `@Contract` are exempt from all JBCT lint rules. Use `@Contract` for Java API boundary methods (annotation processors, Maven Mojos).
 

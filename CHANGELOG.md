@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.3.1] - 2026-04-11
+
+### Added
+- **`Promise.await()` forbidden in business logic** — new zero-tolerance rule; use `@TerminalOperation` for legitimate cases (CLI, fire-and-forget)
+- **Abandoned `Result`/`Promise` values** — new zero-tolerance rule; every value must be returned or handled
+- **`@Contract` and `@TerminalOperation` annotations** — dedicated annotations replace `@SuppressWarnings` for void return and await exemptions
+- **ndx section** in CLAUDE.md for recall palace quick reference
+
+### Changed
+
 ## [2.3.0] - 2026-04-06
 
 ### Added

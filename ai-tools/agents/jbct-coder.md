@@ -20,6 +20,9 @@ Before reporting completion, you MUST:
    - `Result.failure(` / `Promise.failure(` (static failure factories)
    - `new <ValueObject>(` outside factory methods (constructor bypass)
    - `throw new` / `try {` in domain/usecase packages
+   - `.await()` in domain/usecase packages (must have `@TerminalOperation` if legitimate)
+   - `@SuppressWarnings` used instead of `@Contract` or `@TerminalOperation`
+   - Statement-style calls discarding `Result`/`Promise` return values
 4. **Fix all violations found** — do not report them, fix them
 5. **Only then** return the file summary
 6. **Backreference to spec/plan** — if a spec, plan, or requirements document was provided:
@@ -47,10 +50,12 @@ These are **strictly prohibited**. Stop and rewrite if you catch yourself writin
 | `try-catch` in business logic | `lift()` at adapter boundary |
 | Public constructors on validated types | Factory method with validation |
 | `Result.failure(cause)` / `Promise.failure(cause)` | `cause.result()` / `cause.promise()` |
-| `Void` type parameter | `Unit` (`Result<Unit>`, `Promise<Unit>`). Note: `void` return is OK for fire-and-forget |
+| `Void` type parameter | `Unit` (`Result<Unit>`, `Promise<Unit>`). Note: `void` return OK with `@Contract` (external API) or fire-and-forget |
 | Nested record implementing use case interface | Direct lambda return |
 | Multi-statement lambdas with `{}` | Extract to named method |
 | `Promise<Result<T>>` (nested error channels) | `Promise<T>` only |
+| `Promise.await()` in business logic | Stay in monadic chain (`flatMap`/`map`). OK in tests; use `@TerminalOperation` for CLI `main()` / fire-and-forget |
+| Abandoned `Result`/`Promise` values | Every Result/Promise must be returned or handled. Method bodies = single return expression |
 
 ---
 

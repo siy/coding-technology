@@ -328,4 +328,6 @@ See [Appendix B](appendix-b-exercises.md) for exercises on:
 
 ## What's Next
 
-[Chapter 2](ch02-four-return-types.md) introduces the four return types that form the foundation of everything else: `T`, `Option<T>`, `Result<T>`, and `Promise<T>`. You'll learn when to use each one, how they compose, and why these four types are all you need.
+[Chapter 2](ch02-design-methodology.md) presents the design methodology: how to go from requirements to code structure by identifying processes and their typed boundaries. You'll learn why business processes — not data entities — are the natural unit of decomposition.
+
+[Chapter 3](ch02-four-return-types.md) then introduces the four return types that form the implementation foundation: `T`, `Option<T>`, `Result<T>`, and `Promise<T>`. You'll learn when to use each one, how they compose, and why these four types are all you need.

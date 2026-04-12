@@ -32,3 +32,13 @@ For Java formatting rules, Pragmatica Core API reference, and JBCT patterns, see
 - **Tag versions** only after explicit command. Multiple changes may precede a tag.
 - **jbct-coder.md header**: Preserve during edits. Update description if needed; ask before changing other fields.
 - **PR merged** → check current branch; if not main, switch to main and pull.
+
+## ndx
+
+`ndx` is available in this project. Use `/ndx` for full CLI reference.
+
+Key commands: `ndx recall search "query"` (hybrid search), `ndx recall wake` (context), `ndx xref drawer <file>` (cross-ref).
+
+Skills: `/ndx-recall-classify`, `/ndx-recall-score`, `/ndx-recall-dedupe`, `/ndx-recall-contradict`, `/ndx-recall-summarize`, `/ndx-recall-handover`.
+
+If recall palace is not initialized, run `ndx recall init` then `ndx recall mine --from-memory`.

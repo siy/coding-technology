@@ -270,7 +270,7 @@ private Promise<CompleteBooking.Response> notifyAndAudit(IssuedContext context) 
 }
 ```
 
-The growing-context discipline holds across use cases just as it held inside the single Pass 1 use case: `HoldContext`, `AuthorizedContext`, `ConfirmedContext`, `IssuedContext` are records that thread the workflow's accumulated knowledge forward. Each step's response becomes the precondition for the next. The compiler enforces that no step runs out of order.
+Growing context threads here too: `HoldContext`, `AuthorizedContext`, `ConfirmedContext`, `IssuedContext` carry the workflow's accumulated knowledge forward, each step's response the precondition for the next, and the compiler enforces that no step runs out of order.
 
 The first use case (`HoldOrExtend`) carries the workflow's first internal decision: was an existing hold passed in? If yes, the use case extends the hold's lease, refreshing the expiry. If no, the use case acquires a new hold. The decision is encoded as the use case's body, not as a Condition at the workflow level. The workflow asks the use case to produce a `HoldToken`; the use case figures out whether to extend or acquire. Each use case is responsible for its own internal Condition; the workflow composes use cases as if each were a single-outcome step.
 

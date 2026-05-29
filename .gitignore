@@ -37,3 +37,5 @@ website/package-lock.json
 # Generated books
 book/*.pdf
 book/*.epub
+book-pfd-meta/*.pdf
+book-pfd-meta/*.epub

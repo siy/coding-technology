@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Process-First Design — full cover, in the JBCT visual language
+     (black geometric line-art on warm off-white) for maximum series cohesion.
+     One spot of colour: an amber node at the hourglass neck — the system-altitude
+     pinch, the book's thesis-point, and a quiet nod to the brand amber.
+     Hero motif: a telescoped hourglass — four nested levels tapering to the neck
+     and reopening into synthesis. 2100x3000. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2100 3000">
+  <rect width="2100" height="3000" fill="#f4f3f0"/>
+
+  <!-- ===== Scattered geometric shapes (entities), denser above the funnel mouth ===== -->
+  <g fill="#000000" stroke="#000000">
+    <!-- upper band -->
+    <polygon points="300,825 365,700 235,700" stroke="none"/>
+    <rect x="1735" y="650" width="92" height="92" stroke="none"/>
+    <circle cx="1648" cy="775" r="46" fill="none" stroke-width="6"/>
+    <polygon points="560,640 612,702 560,764 508,702" stroke="none"/>
+    <circle cx="1838" cy="612" r="26" stroke="none"/>
+
+    <!-- left margin -->
+    <polygon points="205,1185 275,1060 135,1060" stroke="none"/>
+    <rect x="158" y="1360" width="112" height="112" fill="none" stroke-width="6"/>
+    <polygon points="300,1560 352,1622 300,1684 248,1622" stroke="none"/>
+
+    <!-- right margin -->
+    <rect x="1800" y="1075" width="96" height="96" stroke="none"/>
+    <circle cx="1782" cy="1382" r="44" fill="none" stroke-width="6"/>
+    <polygon points="1702,1560 1842,1560 1802,1640 1662,1640" stroke="none"/>
+
+    <!-- lower (order side), sparse -->
+    <rect x="250" y="2060" width="82" height="82" fill="none" stroke-width="6"/>
+    <rect x="1822" y="2118" width="70" height="70" stroke="none"/>
+  </g>
+
+  <!-- ===== Telescoped hourglass: 4 nested frames sharing the neck (1050,1650) ===== -->
+  <g fill="none" stroke="#000000" stroke-linejoin="round">
+    <path d="M 530,890 L 1570,890 L 1050,1650 L 1570,2410 L 530,2410 L 1050,1650 Z" stroke-width="6"/>
+    <path d="M 686,1118 L 1414,1118 L 1050,1650 L 1414,2182 L 686,2182 L 1050,1650 Z" stroke-width="5"/>
+    <path d="M 821,1316 L 1279,1316 L 1050,1650 L 1279,1984 L 821,1984 L 1050,1650 Z" stroke-width="4"/>
+    <path d="M 946,1498 L 1154,1498 L 1050,1650 L 1154,1802 L 946,1802 L 1050,1650 Z" stroke-width="3.5"/>
+  </g>
+
+  <!-- the neck: the one spot of colour — amber node at the system altitude -->
+  <circle cx="1050" cy="1650" r="16" fill="#E9A23C" stroke="#000000" stroke-width="4"/>
+
+  <!-- ===== Type (JBCT house style) ===== -->
+  <text x="1050" y="330" font-family="Inter, Roboto, 'Source Sans Pro', sans-serif"
+        font-size="120" font-weight="700" fill="#000000" text-anchor="middle">Process-First Design</text>
+  <text x="1050" y="470" font-family="Inter, Roboto, 'Source Sans Pro', sans-serif"
+        font-size="56" font-weight="400" font-style="italic" fill="#333333" text-anchor="middle">Less art, more engineering</text>
+  <text x="1050" y="2880" font-family="Inter, Roboto, 'Source Sans Pro', sans-serif"
+        font-size="54" font-weight="400" fill="#000000" text-anchor="middle">Sergiy Yevtushenko</text>
+</svg>

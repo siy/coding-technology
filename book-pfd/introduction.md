@@ -1,95 +1,74 @@
 # Introduction
 
-This book is the methodology layer.
-
-Process-First Design (PFD) is one proposal for an industrialized vocabulary of enterprise backend software — six composition primitives, four type-honest shapes, six altitudes of work, six axes of architecture selection, and a small set of recovery patterns for when things go wrong. None of these are inventions; they are what survived in real codebases, verified empirically across multiple domains.
-
-The book teaches what the structures are, why they earn their place, how they compose at every scale of work, what changes when you adopt them, and how to recognize when you've adopted them poorly. It is language-neutral by design. The principles work in Java, Scala, Kotlin, C#, Rust, and TypeScript with adjustments for each language's idioms. The companion book, *Java Backend Coding Technology* (JBCT), is the Java-specific implementation; readers who want the concrete Java path can move between the two as needed.
-
-PFD treats business processes as the units of decomposition. That is where the load-bearing structure sits. The two methodologies that share some intuitions here — DDD primary among them — differ from PFD in placing bounded contexts and aggregates at the center instead. Where the methodologies overlap, the book describes PFD positively rather than comparing. Readers familiar with DDD will recognize the conversation; readers without DDD background will not need it.
-
-The four type-honest shapes — `T`, `Option<T>`, `Result<T>`, `Promise<T>` — carry domain meaning. That is what they are for. They are tools the methodology uses, not a category-theory commitment. There is no monad transformer chapter, no comparison with effect systems, no requirement that the reader understand functor laws.
-
-PFD is a small vocabulary that lets a team make structural decisions with reasoning attached. Best-practices discourse accumulated practices that contradict each other across contexts and across years; the industrialization moment the book describes replaces that discourse with a stable, composable set of primitives.
-
-The vocabulary works above frameworks — Spring, Quarkus, and any other named platform. Teams that have made framework choices can apply Process-First Design without changing them. And PFD is bounded to enterprise backend software — primarily Java, with the methodology generalizing more broadly — with no claim to embedded systems, scientific computing, real-time control, or game engines. Each of those domains has its own standardization arc; PFD points at one specific arc happening at one specific layer.
+*Software design is the last craft in the building. The chips were standardized, then the languages, the protocols, the deployment — and the shape of the code was left to taste, so that the same business problem yields a different structure in every shop and every sprint. This book is about the part that never got standardized, and the quiet evidence that it is standardizing anyway.*
 
 ---
 
 ## The thesis
 
-Software is at its industrialization moment. The craft has accumulated enough shared learning to distill a small vocabulary of structural patterns, semantically meaningful types, and named domain operations that makes code predictable, portable across teams, and durable against turnover, tooling churn, and methodology fashion. AI has simultaneously commoditized the mechanical work, freeing human attention for architecture and domain judgment. Process-First Design is one proposal for what the industrialized vocabulary is, why each element earns its place, and how teams that adopt it change their relationship to code — from artisan effort to industrial process, without losing the craft's dignity.
+Process-First Design is a way of deciding what software is made of. Its claim is one sentence: **the unit of design is the process, not the entity** — what the software *does*, not what it *is*. You design a thing that happens, a trigger producing an outcome, and you shape the data around the processes that use it rather than around a model of the domain that exists before any use.
+
+That is a small statement with a large consequence, because the dominant tradition runs the other way. Entity-first design starts from a shared model of each domain concept — one `Customer`, one `Order`, one `Product` — and builds behavior on top of it. Process-first inverts the order: the process comes first, and types belong to processes. A "customer" in one process is the shape that process needs; what is genuinely common across processes is a small, shared kernel of value objects, and nothing else is shared by default.
+
+The book's subtitle is *less art, more engineering*, and it is meant literally. Most of what makes software design feel like art is the absence of a method for the decisions it forces — so the decisions get answered by taste, and taste varies by person, by mood, by deadline. A method does not remove the judgment that genuinely belongs to design; it removes the judgment that never should have been judgment, the dozen small structural decisions that have a right shape and were being re-litigated every time. What remains for human judgment is the part worth a human: the architecture, the domain, the hard trade-offs. The mechanical part becomes engineering.
+
+This is the methodology layer. It is language-neutral: the principles hold in Scala, Kotlin, Rust, C#, TypeScript as readily as in Java. Where the book shows code, it shows Java, because the Java implementation — Java Backend Coding Technology — is the most fully developed instance and the audience is largely Java. But the methodology is the *why*; JBCT is one *how*. A reader can adopt process-first design in any of those languages without opening the JBCT book.
 
 ---
 
-## Five principles that govern this book
+## A convergence, not an invention
 
-Five principles set the voice of every chapter that follows. They appear here because the reader deserves to know the contract before signing it.
+The methodology does not claim to have discovered process-first design. It claims to have *named* something practitioners keep arriving at independently.
 
-### 1. Legibility first
+Across the last several years, designers working in different languages, different domains, and different communities have converged on the same structural move: organize around business operations rather than shared entities; shape types to the process; compose small, pure, well-typed operations instead of layering services over a data model. Scott Wlaschin reached it in F#, modeling domains as workflows with typed inputs and outputs. Debasish Ghosh reached it in Scala through algebraic composition. Jimmy Bogard reached it in .NET by organizing code in vertical slices. Sandro Mancuso reached it from craftsmanship, letting the domain emerge from use. Rico Fritzsche reached it building capability-owned processing units. None cites the others as the source; they were solving the same problem and the same structure fell out. From a different direction entirely — formal rather than empirical — Yannick Loth's Independent Variation Principle reaches the same partition by asking what causes each element to change. The full survey of this convergence is a story in itself, developed in the author's *The Quiet Consensus*; here it is enough to know that the convergence exists and that it is wide.
 
-Code is optimized for the reader, not the writer. Every structural choice in this book is a concession to the future reader — the teammate, the auditor, the successor, the AI agent reviewing changes at three in the morning. Where two valid forms exist and one is more legible, the legible form wins. Where a few extra words help a reader recognize what the code is doing, the extra words are purchased legibility, not ceremony.
+That convergence is this book's anchor, and it is worth being precise about what an anchor is. It is not proof. Six practitioners agreeing does not make a methodology correct; the book's actual case rests on the methodology *working*, demonstrated on real code through the spiral that follows, not on the company it keeps. The convergence does something narrower and still valuable: it suggests the structure is real — discovered, not imposed — because independent people keep discovering it. A method that merely recognizes what good designers already do, and makes it teachable and consistent, is on firmer ground than one inventing a new way to think.
 
-This principle rebuts the brevity objection that arises with any structural methodology. Yes, the patterns sometimes ask for more visible structure than the cleverest one-liner would. The trade is worth it. You write the code once. You read it for years.
-
-### 2. Show possibilities, don't make claims
-
-This book describes structural properties and demonstrates them with examples. It does not promise compliance-readiness. It does not promise productivity multipliers. It does not promise bug-count reductions, defect-density improvements, or any of the metrics that vendor decks treat as load-bearing.
-
-What you will find instead: properties of the methodology that you can verify by reading the code in your own codebase. Possibilities you can map to your own situation. Where data exists, the book cites it. Where data is absent, the book says so explicitly. The reader stays in the position of judgment; the book stays in the position of describing.
-
-### 3. More time for the interesting work
-
-The structural discipline this book describes offloads mechanical work — boilerplate, defensive copies, exception wrapping, mapping layers, manual nullability handling — so human attention can move up to where it belongs. Most developers want more architecture time. Most developers want more domain understanding time. Most developers want fewer hours spent on the kinds of code review where the conversation is about whether to use `Optional.orElse` or `Optional.orElseGet`.
-
-PFD is one route to those things. Not the only route. One route, articulated, with the trade-offs visible. Low-level-focused developers get their own invitation in these pages: the interesting problems live at higher altitudes than where they are currently looking.
-
-### 4. Methodology fits the work, not the reverse
-
-Vocabulary scales with complexity. Trivial code stays trivial. Methodology earns its weight at the scale where complexity demands it; at smaller scales, the same primitives are present but the architecture they would otherwise compose stays collapsed.
-
-This principle has a name in the book: the telescope property. The same six composition primitives that organize a single use case organize a workflow, a subsystem, a system. They do not change as the system grows; what changes is the multiplicity that earns each altitude. A team building a personal task manager does not need workflow primitives because there are no workflows. A team building an enterprise carrier does. The methodology covers both. It does not impose either.
-
-### 5. Show it's happening; don't argue it should
-
-Standardization at the application-vocabulary layer is not a future the book is asking the reader to believe in. It is a trajectory the reader can observe. Stripe runs ten engineers supporting fifteen million lines of Ruby across thousands of product engineers. Spotify reduced service creation lead times from a week to ten minutes by formalizing the paths most teams used anyway. Google's monorepo lets a Java developer recognize the directory structure of a Python team's project on first contact.
-
-This book is observational where it can be and persuasive only where the evidence has not yet arrived. The single objection where evidence is still thin — that AI lowers the cost of creating non-standard alternatives faster than convergence forces can absorb them — gets dedicated treatment in Part I. Most of the rest of the book points at what is already happening and names what is next.
+It also reframes what the book is doing. It is not arguing that the industry *ought* to standardize on process-first design. It is observing that the industry is *already* converging on it, and offering a vocabulary for what is emerging. The reader is invited to observe, not to be persuaded — the same way every other engineering discipline industrialized, moving from craft, where each artifact is unique and taste-driven, to standardized practice, where parts are interchangeable and the process is predictable, without ever losing the room for genuine design. The author's *Software's Industrialization Moment* develops that parallel; this book is what the standardized practice looks like for backend software design.
 
 ---
 
-## The five parts
+## What this book commits to
 
-The book is organized into five parts that move from why this methodology exists, through what it is, to how teams adopt it.
+Five principles run through every chapter. They are stated here and enforced throughout; where the book seems to make a choice, it is usually one of these.
 
-**Part I — Why We're Stuck.** Industry-state critique. What the productivity plateau, best-practices contradictions, and AI-meets-code mismatch are actually signaling. Five chapters; respectful framing throughout.
+1. **Legibility first.** Code is written to be read — by the next developer, by the author a year later, by the reviewer who met neither. Every structural choice is a concession to that reader. Extra words that aid the reader are purchased legibility, not ceremony.
 
-**Part II — The Shift Already Happening.** Convergence evidence and philosophical foundation. The Quiet Consensus across language ecosystems; process-first as alternative to entity-first; the semantic potential of types; knowledge gathering as upstream design work.
+2. **Show possibilities, don't make claims.** The book describes what the methodology makes possible and demonstrates it on real code. It does not promise productivity multipliers, fewer bugs, or compliance readiness. Where evidence is absent, it says so plainly, and leaves the reader to map the possibilities onto their own situation.
 
-**Part III — Process-First Design: The Framework.** The vocabulary itself. The four shapes; the six patterns; recovery classes (compensate, continue degraded, design out); leaves and the quarantine principle; use case as architectural unit; assembly versus provisioning.
+3. **More time for the interesting work.** The discipline offloads the mechanical decisions — where failures live, how state threads through a process — so attention moves up to architecture and domain judgment. Most developers want more of that work, not less; this is how the structure buys it for them.
 
-**Part IV — End-to-End Practice.** How the pieces compose. Architecture as axis-vector selection (Phase-5 of the methodology, the part where the framework chooses its substrate); a worked example walking a request through the full methodology; naming as design; knowledge preservation in code; observable by construction; less code, more business.
+4. **Methodology fits the work, not the reverse.** The vocabulary scales with complexity. Trivial code stays trivial; the methodology earns its weight only where complexity demands it. It is a tool, not a recipe to be applied at uniform strength to everything.
 
-**Part V — Adoption.** Moving from reading to practicing. Migration and continuous transformation; what to do first and what to skip; team as choice (work allocation, fluid teams, hiring by domain); failure modes (PFD done badly, what to recognize); and what we expect, with explicit predictions and the commitment to update them as evidence accumulates.
+5. **Show it's happening; don't argue it should.** The book reveals a convergence rather than advocating a position. The reader becomes an observer of something already underway, not the target of a case for adoption.
 
-A closing chapter at the end states what PFD does not cover, looks forward, and ends as an invitation rather than a manifesto.
-
----
-
-## A note on what made this book possible
-
-The phrase *semantic potential* in the subtitle came from William Jackson, in a Medium comment on an earlier article that planted the framing this book grew from. He coined it; he gave permission for the book to use it; he gets credit here and a free copy of the finished book at ship time. Naming things well is hard. Strangers who name things well, then offer the naming back to people they barely know, are a small grace the field does not deserve and gets anyway. Thanks, William.
-
-Other readers and contributors will be acknowledged as the chapters land. The list is maintained from day one so that nothing is forgotten in the final pass.
+There is also a discipline of scope, load-bearing enough to state once and keep: this methodology is bounded to enterprise backend software — systems large enough and long-lived enough for structural coupling to become the dominant cost. It does not claim to be the right tool for real-time control loops, numerical kernels, game engines, or throwaway scripts. Knowing where a method does not apply is part of applying it honestly.
 
 ---
 
-## Where to start
+## The running example
 
-If you are reading the book sequentially, the next pages are Part I, where the industry-state argument is made before the methodology framework arrives. If you want to skip directly to the framework — the vocabulary you can pick up and use — Part III is your start.
+One example runs through the whole book: a ticketing platform. It starts as small as software gets — a customer buys a ticket for a specific seat at a specific event — and grows, pass by pass, into a multi-venue, multi-tenant platform. The domain never changes; only its scope expands.
 
-If you have read the warm-up articles (*Saga Is Not a Pattern*, *Software's Industrialization Moment*, *Scaling Methodology: from ToDo App to Enterprise*), you have already seen the load-bearing arguments at higher resolution than the chapters will use. The book is the longer treatment, with the methodology framework laid out completely and the worked examples extended to chapter length. You will find the articles' arguments referenced throughout.
+This is deliberate. A methodology's claims are easy to make on a fresh toy in each chapter and hard to make on the same material at increasing magnification. Carrying one domain up through every altitude — use case, workflow, subsystem, system — is the honest test: the reader watches the methodology handle the same seats, holds, and payments at four scales and can judge whether it holds together or frays. Event ticketing is chosen because it is universally recognizable, because its concepts (seats, holds, reservations, prices, events) are rich enough to exercise every part of the methodology, and because nobody needs a domain expert to follow it.
 
-If you came to this book skeptical — convinced that the methodology fashion cycle will absorb whatever comes next, including this — you are reading from the right starting position. This book does not need you to believe anything that is not in your own codebase already. Look there as you read. The methodology is what survives the reading; everything else can be set aside.
+---
 
-What follows is the description.
+## How to read this book
+
+The book is built to be read in one sitting — start to finish in an afternoon, not a chapter a week. That target is not a courtesy; methodology read in fragments loses its connective tissue, and a reader who cannot hold the whole vocabulary in working memory cannot see the through-line. The structure serves that reading:
+
+- **Spiral 0** comes before any methodology: the decisions a single use case forces, and why you are already answering them. It is the problem the rest of the book solves.
+- **Foundations** names the vocabulary — four shapes, six patterns, six properties, the telescope, three recovery classes. Read it once; refer back as needed.
+- **The spiral** is the core: four passes applying that vocabulary to the running example at successive altitudes, use case through system. The passes get shorter as they climb, and that is the point rather than an accident — each altitude reuses the vocabulary and adds only its own small delta. By the last pass you will have learned almost nothing new, which is the methodology demonstrating its central claim on itself.
+- **Architecture Synthesis** then pays the debts the spiral defers: how to turn a design into an architecture, the full decision framework the passes only gesture at.
+- **Brownfield** applies all of it in reverse — to a system you inherited rather than one you start clean.
+- **Closing** looks at what the methodology does not cover, and what to expect.
+
+Every chapter names, at its foot, which of the book's narrative threads it advances; a second reading can follow a thread rather than the chapters. The prose keeps a surface that lands on first read, with the deeper structure available to a reader who returns. None of it requires the second read; all of it rewards one.
+
+The spiral begins where the work begins — at the smallest unit of it, one customer buying one ticket. But before the methodology, the problem it answers: the decisions that use case forces whether or not anyone has a method for them.
+
+---
+
+*Threads advanced: 3 (industrialization), 5 (legibility), 11 (the interesting work), 15 (standardization).*

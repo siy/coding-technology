@@ -153,35 +153,17 @@ Business cross-cutting also surfaces as Condition at subsystem altitude — bran
 
 ## The six patterns at subsystem altitude
 
-The same six patterns reappear, composing whole workflows now. The distribution shifts again, and the shift carries information about what subsystem altitude is for.
+The same six patterns reappear, composing whole workflows now — the fractal property the spiral keeps demonstrating. Five of them are the lower-altitude primitives one granularity up, and the table is the whole of it:
 
-### Sequencer composes workflows
+| Pattern | At subsystem altitude |
+|---|---|
+| **Sequencer** | Composes whole workflows in order (qualify event → set pricing → open for sale), the same `flatMap` chain short-circuiting on the first typed failure; past four or five, the subsystem extracts named sub-sequences. |
+| **Fork-Join** | Independent workflows that converge — on a completed purchase, the ledger-feeding and customer-notification workflows run concurrently and join. More frequent here, because subsystems have more genuinely independent work. |
+| **Condition** | Routes on subsystem-level business facts (KYC-required bookings, premium-qualifying events, jurisdiction-dependent tax), dispatching on a typed variant into whole downstream workflows. |
+| **Iteration** | Applies a workflow across a collection (`Promise.allOf`): the end-of-day pass over every open event, the demand-adjustment pass over every seat block. |
+| **Leaf** | A whole workflow is atomic from the subsystem's vantage — invoked, returning a typed outcome, its internals out of view. At the next altitude the subsystem itself becomes a Leaf. |
 
-At workflow altitude the Sequencer composed use cases; here it composes workflows. A subsystem operation that runs several workflows in order — qualify the event, set its pricing, open it for sale — is a Sequencer whose steps are whole workflows, composed through the same `flatMap` chain, short-circuiting on the first typed failure. The shape is recognizable from both earlier passes; the granularity is one level higher. The chain-length discipline holds: past four or five composed workflows, the subsystem extracts named sub-sequences and composes those.
-
-### Fork-Join across workflows
-
-Independent workflows that converge run as a Fork-Join. When booking completes a purchase, the ledger-feeding workflow and the customer-notification workflow are independent of each other; both depend on the booking completing; they run concurrently and join. The primitive is unchanged — `Promise.all` over workflow invocations, joined into the subsystem's next context — and it appears more often here than at use-case altitude because subsystems have more genuinely independent work to coordinate.
-
-### Condition in subsystem decisions
-
-Condition routes on subsystem-level business facts, as the previous section described: KYC-required bookings, premium-qualifying events, jurisdiction-dependent tax paths. The branch is a typed sum; the dispatch is on the variant. Condition appears more centrally here than at use-case altitude because subsystem operations more often turn on a business classification that selects between whole downstream workflows.
-
-### Iteration over workflows
-
-Iteration applies a workflow across a collection. Event-management's end-of-day pass iterates the release-expired-holds workflow across every open event; pricing's demand-adjustment pass iterates the tier-reassignment workflow across every seat block. The body of the iteration is a whole workflow; the subsystem does not look inside it. The primitive is the same `Promise.allOf` collection the lower altitudes used; what is iterated over is larger.
-
-### Aspects become first-class
-
-This is the altitude where Aspects stop being mostly-runtime and become a design concern the subsystem owns. The audit ledger, the compliance checks, the regulatory-reporting hooks — these are business-cross-cutting Aspects (or audit-as-data, by the choice above) that the subsystem declares and the methodology places deliberately. Technical Aspects (tracing, retries) are still supplied by the runtime and still invisible to business code; what changes is that *business* Aspects are now load-bearing and explicit. The subsystem's design names them and decides where they live.
-
-### Leaf at subsystem altitude
-
-A Leaf is atomic from the altitude observing it. From the subsystem's point of view, a whole workflow can be a Leaf — invoked, returning a typed outcome, its internals not the subsystem's concern. The fractal property is visible once more: what was a composition at workflow altitude is a Leaf at subsystem altitude, just as a use case was a Leaf to its workflow and a boundary call was a Leaf to its use case. At the next altitude, the booking subsystem itself becomes a Leaf in the system's composition.
-
-### What the distribution shows
-
-Subsystem altitude leans on Sequencer (composing workflows), Condition (subsystem-level business routing), and Aspects (business cross-cutting, now first-class), with Fork-Join and Iteration present where the work is genuinely parallel or collection-shaped. The move from workflow altitude is the rise of business Aspects from spare to load-bearing — the signature of what this altitude is for: coordinating cohesive workflows under business-level concerns that span them.
+The sixth changes character. **Aspects become first-class**: the business cross-cutting of the previous section — the audit ledger, the compliance checks, the regulatory hooks — is declared and placed by the subsystem's design, not supplied invisibly by the runtime the way technical Aspects (tracing, retries) still are. That rise of *business* Aspects from spare to load-bearing is the signature of what subsystem altitude is for: coordinating cohesive workflows under business-level concerns that span them.
 
 ---
 

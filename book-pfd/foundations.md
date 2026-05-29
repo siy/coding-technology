@@ -39,7 +39,7 @@ Name these six for any process and it is, in the methodology's terms, specified.
 
 ## The four shapes
 
-Every value a process handles has one of four shapes, and the shape is a domain statement, not a stylistic choice. They are type-honest: the type says what the domain knows about the value.
+Every value a process handles has one of four shapes, and the shape is a domain statement, not a stylistic choice. They are type-honest: the type says what the domain knows about the value. A type's capacity to carry a business statement rather than merely a layout is its *semantic potential* — the term is William Jackson's — and the four shapes are the first place the methodology spends it.
 
 - **`T`** — the value exists, unconditionally. No absence, no failure, no waiting.
 - **`Option<T>`** — the value may or may not exist, and its absence is a domain fact, not an error.

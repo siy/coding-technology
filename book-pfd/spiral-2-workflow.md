@@ -30,9 +30,9 @@ A workflow is named after the business outcome it composes. Booking-and-payment 
 
 A workflow has the same six properties as a use case. Trigger, typed inputs, typed outputs, typed failures, steps, dependencies. The granularity differs: the trigger fires the workflow rather than a single use case; the steps are use cases rather than atomic operations; the dependencies are between use cases rather than between operations inside one use case. The failures are workflow-level — some bubble up from constituent use cases, some are workflow-specific (the workflow as a whole timed out before any individual use case did). The methodology's claim, restated at this altitude, is that the same vocabulary describes both scales without losing precision.
 
-The workflow's types are mostly composed from its use cases, not invented for it. Internally, the workflow threads the use cases' own types: `HoldOrExtend` produces a `HoldToken`, `AuthorizePayment` consumes a context built from it and produces an `Authorization`, and so on, threaded forward as growing context. The workflow does not wrap these in workflow-specific equivalents; it hands the use-case types from one step to the next.
+The workflow's types are mostly composed from its use cases, not invented for it. Internally, the workflow threads the use cases' own types forward as growing context — each step's output is the next step's input — rather than wrapping them in workflow-specific equivalents.
 
-What the workflow owns is its boundary. `CompleteBooking.Request` is the shape the trigger carries, and it is broader than any single use case's input — it holds the payment method and notification preference that the hold step never sees but later steps need, gathered once at the boundary and threaded forward. `CompleteBooking.Response` is shaped from the terminal steps: the issued ticket, and whether notification was delivered. `CompleteBooking.Failure` is the sum of the constituent failures that can reach the caller (`PaymentDeclined` from authorization, `CustomerIneligible` from the eligibility check) plus the failures only the composition can produce (`HoldExpired` between steps, `InternalConsistencyError` across them). The rule: a workflow invents a type only where the composition produces something no single use case has — an aggregate input the trigger carries, or a failure only the orchestration can hit. Everything else is the use cases' own types, composed.
+What the workflow owns is its boundary. Its request is the shape the trigger carries, often broader than any one use case's input because it gathers at the boundary what later steps will need; its response is shaped from the terminal steps; its failure type sums the constituent failures that can reach the caller with the failures only the composition can produce. The rule: a workflow invents a type only where the composition produces something no single use case has — an aggregate input the trigger carries, or a failure only the orchestration can hit. Everything else is the use cases' own types, composed.
 
 Sharing across workflow boundaries still happens only at the value-object layer: `CustomerId`, `EventId`, `SeatId`, `Money` travel intact between workflows because they carry the same meaning everywhere.
 
@@ -44,15 +44,7 @@ What changes at this altitude is not the methodology. What changes is what the m
 
 The cancellation-and-refund workflow lives in event ticketing because the customer who bought a ticket sometimes wants to cancel. The trigger is a customer's request to cancel a specific booking, surfaced through the customer-facing channel. The work the workflow has to do — reverse the reservation, initiate the refund, invalidate the ticket, send the customer a confirmation — composes use cases that are each invokable on their own at use-case altitude. An administrator can manually cancel a reservation. The payment provider can initiate a refund from an out-of-band trigger. An operator can invalidate a ticket directly. They cohere into one workflow because the cancellation policy governs all of them: change what cancellation means in the business (the cancellation window, who is eligible, what the refund policy is, how refunds are processed) and the four use cases change together. That cohesion is the workflow.
 
-### The workflow's six properties
-
-A workflow has the same six properties as a use case. Trigger, typed inputs, typed outputs, typed failures, steps, dependencies. The granularity differs: the trigger fires the workflow rather than a single use case; the steps are use cases rather than atomic operations; the dependencies are between use cases rather than between operations inside one use case. Some failures bubble up from constituent use cases; some are workflow-specific (the workflow as a whole timed out before any individual use case did). The vocabulary does not change; what it describes does.
-
-The workflow is named in business terms: *cancel booking*. Its trigger is the customer's intent to cancel, a customer-facing channel request distinct from any internal step's trigger. Its typed input names what the workflow needs to begin. Its typed output names what it produces on success. Its typed failures enumerate the workflow's terminal failure modes.
-
-The workflow's types are mostly composed from its use cases, not invented for it. Internally, the workflow threads the use cases' own types: `LoadBooking` produces a `Booking`, `VerifyCancellationEligibility` consumes that and produces an `EligibleBooking`, and so on, threaded forward as growing context. The workflow does not wrap these in workflow-specific equivalents; it hands the use-case types from one step to the next.
-
-What the workflow owns is its boundary. `CancelBooking.Request` is the shape the trigger carries. `CancelBooking.Response` is shaped from the terminal steps. `CancelBooking.Failure` is the sum of the constituent failures that can reach the caller plus the failures only the composition can produce. The rule: a workflow invents a type only where the composition produces something no single use case has — an aggregate input the trigger carries, or a failure only the orchestration can hit. Everything else is the use cases' own types, composed.
+The workflow is *cancel booking*, and it has the six properties at workflow granularity. Its trigger is the customer's intent to cancel, a customer-facing request distinct from any internal step's trigger. Internally it threads its use cases' types forward as growing context: `LoadBooking` produces a `Booking`, `VerifyCancellationEligibility` consumes it and produces an `EligibleBooking`, and so on. What it owns at its boundary is three types: `CancelBooking.Request` (what the trigger carries), `CancelBooking.Response` (shaped from the terminal steps), and `CancelBooking.Failure` (the constituent failures that reach the caller plus the ones only the orchestration can hit).
 
 ```
 CancelBooking.Request:
@@ -85,7 +77,7 @@ The steps of the workflow are use cases: *load booking*, *verify cancellation el
 
 ### The workflow body
 
-`Workflow.WithPromise<Response, Request>` below is the methodology's workflow interface, parallel to the `UseCase.WithPromise` from Pass 1: same shape, workflow granularity. It is a methodology-level type; a framework may supply it directly or compose it from primitives. The book names the shape, not a specific library's class.
+`Workflow.WithPromise<Response, Request>` below is the methodology's workflow interface — the workflow-altitude analogue of the single use case Pass 1 composed: the same shape, one granularity up. It is a methodology-level type; a framework may supply it directly or compose it from primitives. The book names the shape, not a specific library's class.
 
 ```java
 public interface CancelBooking extends Workflow.WithPromise<Response, Request> {
@@ -216,14 +208,12 @@ The architectural choice produces what the chapter calls the **booking-and-payme
 
 ```
 CompleteBooking.Request:
-    customer: String
-    event: String
-    section: String
-    row: String
-    number: int
-    paymentMethod: String
-    notificationPreference: String
-    existingHold: Option<String>
+    customer: CustomerId
+    event: EventId
+    seat: SeatLocation
+    paymentMethod: PaymentMethod
+    notificationPreference: NotificationChannel
+    existingHold: Option<HoldToken>
 ```
 
 ```
@@ -288,7 +278,7 @@ Notification and audit run in parallel as a Fork-Join at the workflow's end. Bot
 
 ### This is also a saga
 
-The saga reduction applies to *complete booking* exactly as it applies to *cancel booking*, by the same four qualifiers. The forward chain is at workflow altitude; the use cases are autonomous; the inverses are themselves use cases registered in the compensation Aspect (`HoldSeat` ↔ `ReleaseHold`, `AuthorizePayment` ↔ `VoidAuthorization`, `ConfirmReservation` ↔ `CancelReservation`, `IssueTicket` ↔ `InvalidateTicket`); the workflow is eventually consistent. When *issue ticket* fails after confirmation has committed, the Aspect unwinds confirm → authorize → hold in reverse order, invoking the registered inverses.
+The saga reduction applies to *complete booking* exactly as it applies to *cancel booking*, by the same four qualifiers. The forward chain is at workflow altitude; the use cases are autonomous; the inverses are themselves use cases registered in the compensation Aspect (`HoldOrExtend` ↔ `ReleaseHold`, `AuthorizePayment` ↔ `VoidAuthorization`, `ConfirmReservation` ↔ `CancelReservation`, `IssueTicket` ↔ `InvalidateTicket`); the workflow is eventually consistent. When *issue ticket* fails after confirmation has committed, the Aspect unwinds confirm → authorize → hold in reverse order, invoking the registered inverses.
 
 What is sharper here than at cancel-booking: the inverses do not exist for their own sake in the business; they exist as the architecture's compensation surface. *ReleaseHold* is rarely a customer-facing use case; it is the inverse the architecture needs because the architecture chose autonomous use cases over a transactional substrate. The saga reduction is what makes the choice cheap. The architecture commits, and the compensation surface emerges from the inverses the constituent use cases already had to define. There is no separate compensation grammar.
 
@@ -374,7 +364,7 @@ return findExpiredHolds.apply(sweepCriteria)
                                                              .toList()));
 ```
 
-The *process expired holds* workflow iterates over the collection of holds whose expiry has passed, applying *release hold* to each. The methodology's Iteration primitive uses `Promise.allOf` to collect results; failure-fast or all-or-cancel variants apply depending on policy.
+The *process expired holds* workflow iterates over the collection of holds whose expiry has passed, applying *release hold* to each. The methodology's Iteration primitive uses `Promise.allOf` to collect results — `allOf` is the collection-shaped sibling of the fixed-arity `Promise.all` used in Fork-Join: `all` joins a known set of heterogeneous promises into a tuple, `allOf` joins a homogeneous collection into a list. Failure-fast or all-or-cancel variants apply depending on policy.
 
 Iteration appears in several workflow shapes:
 
@@ -509,7 +499,7 @@ The workflows in this pass are not unrelated to each other. The booking-and-paym
 
 The workflows cluster. Booking-and-payment, cancellation-and-refund, temporary-hold, group-booking, gift-purchase: these are all booking workflows, because one business change — what a reservation is, how holds and confirmations and cancellations relate — forces all of them to change together. They contend over the same seats and holds, but that contention is a symptom of the shared change driver, not its cause; the shared-data view has the arrow backwards, here as it did when workflows formed from use cases. Pricing workflows cluster differently, around the pricing model: change how demand maps to price or how tiers are defined and every pricing workflow moves while the booking workflows stay still. Event-management workflows cluster differently again, around the event's lifecycle: event creation, capacity adjustment, schedule management move together and leave the other two clusters untouched.
 
-The clusters are subsystems. The methodology does not impose subsystem boundaries; they emerge from change-driver cohesion one altitude up — workflows group into a subsystem when a single coarser business change would force them all to change together. At subsystem altitude, the methodology applies again — same six properties, same six patterns, same four shapes, same recovery triple — at the granularity of subsystem-level concerns. Business cross-cutting becomes load-bearing because there are domain reasons for things to happen across subsystems. Aspects rise to subsystem-level orchestration. Architecture decisions about persistence topology and substrate choice become forced because workflows that span subsystems cannot pretend to share a substrate any longer.
+The clusters are subsystems. The methodology does not impose subsystem boundaries; they emerge from change-driver cohesion one altitude up: workflows group into a subsystem when a single coarser business change would force them all to change together. At subsystem altitude, the methodology applies again — same six properties, same six patterns, same four shapes, same recovery triple — at the granularity of subsystem-level concerns. Business cross-cutting becomes load-bearing because there are domain reasons for things to happen across subsystems. Aspects rise to subsystem-level orchestration. Architecture decisions about persistence topology and substrate choice become forced because workflows that span subsystems cannot pretend to share a substrate any longer.
 
 The next pass walks subsystem altitude.
 

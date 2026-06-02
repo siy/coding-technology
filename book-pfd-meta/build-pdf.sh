@@ -1,5 +1,5 @@
 #!/bin/bash
-# Build the Process-First Design PDF (cover + manuscript) with pandoc + pdflatex.
+# Build the Process-First Design PDF (cover + manuscript) with pandoc + xelatex.
 #
 # Usage:
 #   ./build-pdf.sh                 # draft: DRAFT watermark + "Draft — <date>", output *-DRAFT.pdf
@@ -24,8 +24,8 @@ for arg in "$@"; do
   esac
 done
 
-command -v pandoc   >/dev/null 2>&1 || { echo "Error: pandoc not installed";   exit 1; }
-command -v pdflatex >/dev/null 2>&1 || { echo "Error: pdflatex not installed"; exit 1; }
+command -v pandoc  >/dev/null 2>&1 || { echo "Error: pandoc not installed";  exit 1; }
+command -v xelatex >/dev/null 2>&1 || { echo "Error: xelatex not installed"; exit 1; }
 
 # --- reading order (matches book-pfd/root.md) ---
 CHAPTERS=(
@@ -61,20 +61,23 @@ else
 fi
 OUTPUT="$SCRIPT_DIR/${BASENAME}${SUFFIX}.pdf"
 
-# --- LaTeX header: Unicode glyph mappings the default font lacks (+ watermark in draft) ---
+# --- LaTeX header (watermark in draft; chapter breaks; keep code blocks whole) ---
 cat > "$BUILD/header.tex" <<'HDR'
-\DeclareUnicodeCharacter{2192}{\ensuremath{\rightarrow}}
-\DeclareUnicodeCharacter{2194}{\ensuremath{\leftrightarrow}}
-\DeclareUnicodeCharacter{2080}{\textsubscript{0}}
-\DeclareUnicodeCharacter{2081}{\textsubscript{1}}
 \usepackage{eso-pic}
 \usepackage{graphicx}
 \usepackage{xcolor}
+% Start each chapter (top-level heading) on a fresh page; this also breaks before
+% the table of contents (article's \tableofcontents uses \section*), giving a clean
+% title-page / contents / first-chapter split.
+\let\pfdoldsection\section
+\renewcommand{\section}{\clearpage\pfdoldsection}
+\usepackage{etoolbox}
+% Keep plain code blocks (pseudo-code and the ASCII dependency graph) from
+% splitting across a page break.
+\BeforeBeginEnvironment{verbatim}{\par\noindent\begin{minipage}{\linewidth}}
+\AfterEndEnvironment{verbatim}{\end{minipage}\par}
 HDR
 [[ -n "$WATERMARK" ]] && printf '%s\n' "$WATERMARK" >> "$BUILD/header.tex"
-
-# --- front-break: force the Introduction onto a fresh page after the Contents ---
-printf '```{=latex}\n\\clearpage\n```\n' > "$BUILD/frontbreak.md"
 
 # --- cover: render cover.svg -> PNG (fallback to a committed cover-preview.png) ---
 COVER=""
@@ -87,11 +90,12 @@ fi
 echo "Building $MODE PDF -> $OUTPUT"
 
 # --- content PDF ---
-INPUTS=("$BUILD/frontbreak.md")
+INPUTS=()
 for f in "${CHAPTERS[@]}"; do INPUTS+=("$MANUSCRIPT_DIR/$f"); done
 
-pandoc --pdf-engine=pdflatex \
+pandoc --pdf-engine=xelatex \
   -V fontsize=11pt -V geometry:margin=1in \
+  -V mainfont="DejaVu Serif" -V sansfont="DejaVu Sans" -V monofont="DejaVu Sans Mono" \
   -V colorlinks=true -V linkcolor=black -V urlcolor=blue \
   -M title="Process-First Design" \
   -M subtitle="Less art, more engineering" \
@@ -116,8 +120,8 @@ if [[ -n "$COVER" ]]; then
 \includepdf[pages=-]{$BUILD/content.pdf}
 \end{document}
 EOF
-  ( cd "$BUILD" && pdflatex -interaction=batchmode combine.tex >/dev/null 2>&1; \
-    pdflatex -interaction=batchmode combine.tex >/dev/null 2>&1 )
+  ( cd "$BUILD" && xelatex -interaction=batchmode combine.tex >/dev/null 2>&1; \
+    xelatex -interaction=batchmode combine.tex >/dev/null 2>&1 )
   if [[ -f "$BUILD/combine.pdf" ]]; then
     cp "$BUILD/combine.pdf" "$OUTPUT"
   else

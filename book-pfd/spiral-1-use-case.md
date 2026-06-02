@@ -113,6 +113,33 @@ For *buy ticket*:
 - Ticket issuance depends on seat confirmation succeeding.
 - Customer notification depends on ticket issuance succeeding.
 
+```
+             Validate request
+                     |
+          +----------+----------+
+          |                     |
+          v                     v
+     Check event           Check customer
+       selling               eligibility
+          |                     |
+          +----------+----------+
+                     |
+                     v
+               Reserve seat
+                     |
+                     v
+            Authorize payment
+                     |
+                     v
+               Confirm seat
+                     |
+                     v
+               Issue ticket
+                     |
+                     v
+             Notify customer
+```
+
 That is the graph. It has two parallel branches early (event-selling and customer-eligibility), then a linear sequence. The graph is small enough to hold in the reader's head. It is also small enough that the implementation can be read and the graph can be reconstructed without external documentation.
 
 The six properties are now stated. The use case is, in methodology terms, specified. Implementation follows.

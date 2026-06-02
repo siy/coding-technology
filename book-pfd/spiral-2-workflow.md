@@ -24,6 +24,8 @@ A workflow is a named set of use cases that share a change driver and compose to
 
 Booking shows the test passing. *Hold seat*, *confirm reservation*, *cancel reservation*, and *release expired holds* belong to one workflow because the reservation policy governs all four: change what holding and confirming a seat means — the hold duration, the confirmation rules, the conditions for release — and all four change together. They also contend over the same seat record, but that contention is a symptom of their cohesion, not its cause: they touch the same state because the same force governs them, not the other way round. The shared-data view has the arrow backwards. Cohesion comes first; contention is what the methodology then has to manage, and later sections do.
 
+The set passes both directions the recognition test has. It is *complete*: every use case the reservation policy governs is here, so a policy change lands in this one workflow rather than scattering across several (the shotgun surgery a split would cause). And it is *pure*: nothing in it answers to a different driver, so pricing's changes never ripple through booking (the accidental coupling a foreign member would invite). A set that passes only one direction is not a workflow — drop *release expired holds* elsewhere and a hold-duration change must be made twice; fold a pricing use case in and pricing's churn reaches booking.
+
 The change-together test is sharper than "these feel related," and it cuts against the data intuition directly: shared data is neither necessary nor sufficient for cohesion. Two use cases can write the same record yet answer to different forces (not one workflow); two can never touch the same data yet answer to the same force (one workflow). Organize by what changes things together, not by what they store. The Foundations chapter named this criterion's independent counterpart: the Independent Variation Principle, reached from the change-driver side rather than the process side. The convergence is corroboration, not foundation, and the workflow altitude is where Process-First Design first uses the criterion to draw a boundary.
 
 A workflow is named after the business outcome it composes. Booking-and-payment is the lifecycle from "customer asks to buy" through "customer has a confirmed ticket and the venue has the money." Cancellation-and-refund is the lifecycle from "customer asks to cancel" through "the seat is back in inventory and the customer has their money back." Temporary-hold is the lifecycle from "customer puts a seat on hold" through "the hold is either consumed by a confirmed booking or released because expiry passed." Each name carries a complete business arc; each arc decomposes into several use cases.
@@ -77,10 +79,11 @@ The steps of the workflow are use cases: *load booking*, *verify cancellation el
 
 ### The workflow body
 
-`Workflow.WithPromise<Response, Request>` below is the methodology's workflow interface — the workflow-altitude analogue of the single use case Pass 1 composed: the same shape, one granularity up. It is a methodology-level type; a framework may supply it directly or compose it from primitives. The book names the shape, not a specific library's class.
+A workflow's own signature — `Request` in, `Promise<Response>` out, the `Promise` carrying asynchrony and failure — is the same shape a use case has, one altitude up. That sameness is the point: because every use case and workflow presents this one invocation shape, a framework can invoke and Aspect-wrap them uniformly, and a subsystem can later compose a whole workflow exactly as a workflow composes a use case. The shape is what matters; whether a framework names it or you write the method out, as below, is a detail.
 
 ```java
-public interface CancelBooking extends Workflow.WithPromise<Response, Request> {
+public interface CancelBooking {
+    Promise<Response> apply(Request request);
     interface LoadBooking                   { Promise<Booking> apply(ValidRequest request); }
     interface VerifyCancellationEligibility { Promise<EligibleBooking> apply(Booking booking); }
     interface CancelReservation             { Promise<CancelledReservation> apply(EligibleBooking booking); }
@@ -241,7 +244,8 @@ The workflow's failure set differs from any single constituent use case's failur
 The workflow's body composes the use cases through their step interfaces. The implementation detail of whether each step runs in-process or arrives via the event substrate is supplied by the runtime; the workflow's body reads as composition either way.
 
 ```java
-public interface CompleteBooking extends Workflow.WithPromise<Response, Request> {
+public interface CompleteBooking {
+    Promise<Response> apply(Request request);
     interface HoldOrExtend       { Promise<HoldToken> apply(ValidRequest request); }
     interface AuthorizePayment   { Promise<Authorization> apply(HoldContext context); }
     interface ConfirmReservation { Promise<Reservation> apply(AuthorizedContext context); }

@@ -48,9 +48,11 @@ There is also a discipline of scope, load-bearing enough to state once and keep:
 
 ## The running example
 
-One example runs through the whole book: a ticketing platform. It starts as small as software gets — a customer buys a ticket for a specific seat at a specific event — and grows, pass by pass, into a multi-venue, multi-tenant platform. The domain never changes; only its scope expands.
+One example carries the book's main arc: a ticketing platform. It starts as small as software gets — a customer buys a ticket for a specific seat at a specific event — and grows, pass by pass, into a multi-venue, multi-tenant platform. Across the spiral and the synthesis that follows it, the domain never changes; only its scope expands.
 
 This is deliberate. A methodology's claims are easy to make on a fresh toy in each chapter and hard to make on the same material at increasing magnification. Carrying one domain up through every altitude — use case, workflow, subsystem, system — is the honest test: the reader watches the methodology handle the same seats, holds, and payments at four scales and can judge whether it holds together or frays. Event ticketing is chosen because it is universally recognizable, because its concepts (seats, holds, reservations, prices, events) are rich enough to exercise every part of the methodology, and because nobody needs a domain expert to follow it.
+
+One domain is carried this way on purpose, and one chapter just as deliberately breaks from it. Brownfield, at the end, applies the methodology in reverse to a second domain — a payroll system the book never designed. That is not a lapse in the single-example discipline; it is the other half of the test. Carrying one domain up through every altitude shows the methodology under magnification; turning it loose on an unfamiliar one shows that it travels, rather than having been quietly shaped to fit the first.
 
 ---
 

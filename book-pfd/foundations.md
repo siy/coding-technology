@@ -37,6 +37,14 @@ Name these six for any process and it is, in the methodology's terms, specified.
 
 ---
 
+## A process gathers knowledge
+
+Underneath the six properties is a simpler way to see what a process is: an act of knowledge gathering. A process begins knowing only its trigger and its input, and each step acquires one more piece of what it needs — *buy ticket* learns that the request is well-formed, then that the event is selling, then that the seat is held, then that the payment cleared. The process ends, success or failure, the moment it knows enough to answer. A declined payment is not a missing outcome but knowledge in its own right, enough to answer *the ticket cannot be sold*, so the process stops there rather than gather what it no longer needs. Typed failures and short-circuiting are not machinery bolted on; they are the process recognizing it is done.
+
+This is also why the types belong to the process. Ask of a domain "what data exists?" and the answer is entities: one `Customer`, one `Order`, one shared shape every process must accept. Ask instead "what does *this* process need to know?" and the answer is the per-process types the methodology produces — the smallest input the trigger carries, the typed knowledge each step adds, the closed set of facts, failures included, that let the process answer. Process-first is what falls out when you model around the knowledge a process gathers rather than the data a system stores.
+
+---
+
 ## The four shapes
 
 Every value a process handles has one of four shapes, and the shape is a domain statement, not a stylistic choice. They are type-honest: the type says what the domain knows about the value. A type's capacity to carry a business statement rather than merely a layout is its *semantic potential* — the term is William Jackson's — and the four shapes are the first place the methodology spends it.
@@ -76,7 +84,7 @@ Each function implements exactly one pattern; mixing patterns is the signal to s
 
 ## The telescope
 
-The methodology's organizing structure is a telescope: the same vocabulary at successive scales. A **use case** is one business operation — one trigger, one outcome. A **workflow** is a composition of use cases for one business outcome. A **subsystem** is a coherent business concern, a cluster of workflows. A **system** is the composition of subsystems. The enterprise above the system is outside this book's scope.
+The methodology's organizing structure is a telescope: the same vocabulary at successive scales. A **use case** is one business operation — one trigger, one outcome. A **workflow** is a composition of use cases for one business outcome. A **subsystem** is a coherent business concern, a cluster of workflows. A **system** is the composition of subsystems, and the top of the telescope. There is a rung above it, the enterprise, but the book stops at the system on purpose: above the system the composing force is organizational and strategic, Conway's law and the shape of the business itself, not change-driver cohesion the code can express. The telescope reaches as far as its mechanism holds, and no further.
 
 Altitudes are not imposed; they emerge from multiplicity. One use case is one use case. When several cohere, a workflow appears. When several workflows cohere, a subsystem appears. The methodology lets the emergence happen rather than forcing a hierarchy in advance.
 
@@ -95,7 +103,11 @@ The recognition test for grouping is one question, asked at each transition: *wh
 
 The use case is the floor of this ladder: the smallest business-meaningful unit, not formed by grouping a lower *business* altitude. Its steps are internal composition, not a lower altitude — so the grouping question begins at the workflow and recurs upward, while the use case has only within-altitude composition.
 
+That question has two directions, and a grouping is right only when both hold. *Completeness*: is every unit this driver governs inside the group, or are some scattered elsewhere, so that one change has to chase them across modules — the smell teams know as shotgun surgery? *Purity*: is only what this driver governs inside, or is a foreign unit riding along, so that its unrelated changes leak in as accidental coupling? The sharpened test asks both at once: does this one change force *all* of these, and *only* these, to change? Pass both and the group is cohesive; pass one and it is not.
+
 The same criterion, derived independently and given formal shape, is [Yannick Loth's Independent Variation Principle](https://dev.to/yannick555/the-principle-of-independent-variation-as-a-thought-framework-4aaa): unify elements with the same change-driver assignment, separate those with different ones. Process-First Design reaches the criterion from the process side; the Independent Variation Principle reaches the same partition from the change-driver side — two paths to one territory. The methodology uses change-driver cohesion as its own; it recognizes IVP as corroboration, not foundation.
+
+Loth gives the cohesion behind the test its own formal account in [*On the Nature of Cohesion*](https://doi.org/10.5281/zenodo.20492913): cohesion as correctness relative to a modularization principle, along exactly these two axes. Process-First Design's change driver is one such principle, so the convergence IVP named now reaches cohesion itself — and the same account explains why the old structural metrics never captured it, since they measure what code shares rather than what governs it.
 
 One consequence of the telescope is worth stating because the spiral relies on it: a unit's composition at one altitude is a Leaf at the altitude above. A workflow is a composition of use cases, and a Leaf to its subsystem. A subsystem is a composition of workflows, and a Leaf to its system. The patterns recur because the structure is fractal.
 

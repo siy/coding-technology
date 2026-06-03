@@ -8,7 +8,7 @@
 
 The previous chapter raised the decisions every use case forces and claimed they have simple, consistent answers. This chapter names the pieces those answers are built from. It defines; it does not demonstrate. Demonstration is the spiral's job — four passes that take this vocabulary and apply it at use-case, workflow, subsystem, and system altitude. Read this once and refer back to it; nothing here needs to be memorized, because the spiral will use every piece often enough to make it stick.
 
-The vocabulary is deliberately small. Four shapes, six patterns, six properties, three recovery classes, one organizing structure. That smallness is the point Spiral 0 made: a vocabulary you can hold in your head is one you apply from memory, the same way every time. The list below is the whole of it. The reason the book can be read in one sitting is that the list does not grow as the altitudes climb.
+The vocabulary is deliberately small. Four shapes, six patterns, six properties, three recovery classes, two axes of cohesion, one organizing structure. That smallness is the point Spiral 0 made: a vocabulary you can hold in your head is one you apply from memory, the same way every time. The list below is the whole of it. The reason the book can be read in one sitting is that the list does not grow as the altitudes climb.
 
 ---
 
@@ -103,7 +103,7 @@ The recognition test for grouping is one question, asked at each transition: *wh
 
 The use case is the floor of this ladder: the smallest business-meaningful unit, not formed by grouping a lower *business* altitude. Its steps are internal composition, not a lower altitude — so the grouping question begins at the workflow and recurs upward, while the use case has only within-altitude composition.
 
-That question has two directions, and a grouping is right only when both hold. *Completeness*: is every unit this driver governs inside the group, or are some scattered elsewhere, so that one change has to chase them across modules — the smell teams know as shotgun surgery? *Purity*: is only what this driver governs inside, or is a foreign unit riding along, so that its unrelated changes leak in as accidental coupling? The sharpened test asks both at once: does this one change force *all* of these, and *only* these, to change? Pass both and the group is cohesive; pass one and it is not.
+That question has two directions, and a grouping is right only when both hold. **Completeness**: is every unit this driver governs inside the group, or are some scattered elsewhere, so that one change has to chase them across modules — the smell teams know as shotgun surgery? **Purity**: is only what this driver governs inside, or is a foreign unit riding along, so that its unrelated changes leak in as accidental coupling? The sharpened test asks both at once: does this one change force *all* of these, and *only* these, to change? Pass both and the group is cohesive; pass one and it is not.
 
 The same criterion, derived independently and given formal shape, is [Yannick Loth's Independent Variation Principle](https://dev.to/yannick555/the-principle-of-independent-variation-as-a-thought-framework-4aaa): unify elements with the same change-driver assignment, separate those with different ones. Process-First Design reaches the criterion from the process side; the Independent Variation Principle reaches the same partition from the change-driver side — two paths to one territory. The methodology uses change-driver cohesion as its own; it recognizes IVP as corroboration, not foundation.
 

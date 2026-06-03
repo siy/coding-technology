@@ -180,6 +180,25 @@ CompensationAspect.builder()
 
 When the workflow's Sequencer short-circuits on a typed failure, the compensation Aspect unwinds prior committed steps in reverse order, invoking each inverse use case. The compensation runs as use cases. Each inverse is its own use case with its own trigger, inputs, outputs, and failure modes. The Aspect orchestrates them. This is the methodology's structural commitment: compensation does not live as exception handlers scattered through the workflow body. It lives as a registered Aspect that the workflow runtime applies uniformly.
 
+The shape is easier to see than to say:
+
+```
+   forward (Sequencer, top to bottom)         inverse (compensation Aspect)
+
+   Hold seat            <--------->   Release hold
+       |                                   ^
+       v                                   |
+   Authorize payment    <--------->   Void authorization
+       |                                   ^
+       v                                   |
+   Confirm reservation  <--------->   Cancel reservation
+       |                                   ^
+       v                                   |
+   Issue ticket         <--------->   Invalidate ticket
+```
+
+The forward chain runs top to bottom; a typed failure runs the committed steps' inverses bottom to top, the last commit undone first. That is the whole of a saga — a Sequencer, the inverses its steps already define, and an Aspect that applies them in reverse.
+
 ---
 
 ## An architectural choice: when one customer action becomes a workflow

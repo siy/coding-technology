@@ -108,6 +108,26 @@ Event-management's recovery is mixed in its own way: BER for operational changes
 
 Three subsystems, three boundary shapes, one recognition test. Booking is the transaction concern with BER at its core; pricing is the cost concern with design-out at its core; event-management is the lifecycle concern with a mix. The test that separated them — what business change forces these workflows to change together — is the test that separated use cases into workflows. Only the granularity moved.
 
+Three subsystems, and the little that crosses between them:
+
+```
+   +-------------------+   PriceQuote (versioned)   +-------------------+
+   |     Booking       | ------------------------>  |     Pricing       |
+   |  reservations     |      (booking reads)       |  cost model       |
+   |  BER              |                            |  design-out       |
+   +---------+---------+                            +-------------------+
+             |   ^
+   SeatSold, |   |  EventOpened,
+   Released  v   |  sale status
+   +-------------+--------------+
+   |   Event-management         |
+   |   event lifecycle          |
+   |   BER + FER                |
+   +----------------------------+
+```
+
+Each subsystem owns its internal types; only the small versioned facts cross — a quote, a sale status, a pair of seat facts. The lines between the boxes are the published contracts, and they are the only coupling the subsystems carry.
+
 ## Business cross-cutting becomes load-bearing
 
 At use-case altitude, Aspects were mostly technical and mostly supplied by the runtime: logging, tracing, retries. At subsystem altitude, a different kind of cross-cutting becomes load-bearing — concerns that span subsystems because the *business* requires it, not because the platform instruments it.

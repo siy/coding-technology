@@ -12,7 +12,7 @@ The use cases interact. Multiple use cases write to the same seat, the same cust
 
 This pass walks workflow altitude through a single domain. The running example holds: event ticketing. The use cases have multiplied. *Buy ticket* from Pass 1 is one of them, kept intact at its own altitude; the customer can also *cancel ticket*, *refund ticket*, *hold seat*, *check availability*; the venue's operations fire scheduled work like *release expired holds*. These are genuinely distinct use cases with their own external triggers, and they cohere into workflows around shared change drivers.
 
-By the time the pass closes, the reader has seen the six patterns reappear with a different distribution. Iteration earns its first strong appearance. Aspects surface as load-bearing rather than runtime-handled. Sequencer composes use cases rather than steps inside one use case. Compensation becomes load-bearing because failures cross use-case boundaries. Time stops being a fixed point in some workflows and becomes a category (fresh, stale, expired) that the system reasons about. The cancellation-and-refund workflow decomposes into the structure the industry calls a saga, with the methodology naming it as a composite of patterns it already has. And one architectural choice — committing the customer-facing booking flow to an event-driven substrate — turns Pass 1's single *buy ticket* use case into a workflow over genuinely independent use cases, demonstrating that workflow altitude is partly what Phase-5 substrate decisions surface.
+By the time the pass closes, the reader has seen the six patterns reappear with a different distribution. Iteration earns its first strong appearance. Aspects surface as load-bearing rather than runtime-handled. Sequencer composes use cases rather than steps inside one use case. Compensation becomes load-bearing because failures cross use-case boundaries. Time stops being a fixed point in some workflows and becomes a category (fresh, stale, expired) that the system reasons about. The cancellation-and-refund workflow decomposes into the structure the industry calls a saga, with the methodology naming it as a composite of patterns it already has.
 
 The pass closes by naming what does not appear at this altitude either. Subsystem boundaries are still implicit. Cross-subsystem coordination is still hidden in the assumption that all workflows share a substrate. Persistence topology is still a question to be deferred. The multiplicity that earns the next altitude is not yet here, but it is coming.
 
@@ -38,7 +38,7 @@ What the workflow owns is its boundary. Its request is the shape the trigger car
 
 Sharing across workflow boundaries still happens only at the value-object layer: `CustomerId`, `EventId`, `SeatId`, `Money` travel intact between workflows because they carry the same meaning everywhere.
 
-What changes at this altitude is not the methodology. What changes is what the methodology has to express. Composition runs across autonomous use cases that have their own triggers, their own SLOs, their own deployment characteristics. Some compositions are short and synchronous; others stretch across minutes or hours. Some compositions need compensation when a downstream step fails; some compositions tolerate partial success and continue with degraded state. The workflow is the unit at which the methodology names that variety.
+What changes at this altitude is not the methodology. What changes is what the methodology has to express. Composition runs across autonomous use cases that have their own triggers, their own SLOs, their own deployment characteristics. Some compositions are short and direct; others stretch across minutes or hours. Some compositions need compensation when a downstream step fails; some compositions tolerate partial success and continue with degraded state. The workflow is the unit at which the methodology names that variety.
 
 ---
 
@@ -107,7 +107,8 @@ private Promise<CancelBooking.Response> executeCancellation(EligibleBooking book
 }
 
 private Promise<CancelBooking.Response> finalizeCancellation(RefundedBooking refunded) {
-    return Promise.all(invalidateTicket.apply(refunded), sendCancellationConfirmation.apply(refunded))
+    return Promise.all(invalidateTicket.apply(refunded), 
+                       sendCancellationConfirmation.apply(refunded))
                   .map((_inv, _conf) -> CancelBooking.Response.response(refunded));
 }
 ```
@@ -159,14 +160,16 @@ The methodology does not introduce saga as a primitive. The methodology recogniz
 
 The reduction holds when four qualifiers are satisfied:
 
-1. **Workflow altitude.** Saga lives at the composition of autonomous use cases, not inside a single use case's body. A use case that has multiple internal steps with compensation between them is a Sequencer with a compensation Aspect at use-case altitude; that is not a saga. Saga is the workflow-altitude pattern.
-2. **Autonomous use cases.** Each step is a use case with its own boundary. They do not share a transactional substrate that could roll back atomically; they coordinate through typed handoffs and explicit inverses. If the steps share an atomic transaction, the workflow's coordination problem disappears and saga is not the right framing.
+1. **Committed, accumulating state.** Each forward step commits state that a later failure has to unwind, and the steps pile those effects up with no single transaction to discard them at once. A composition whose steps only read has nothing to compensate and is not a saga.
+2. **Autonomous steps.** Each step is a unit with its own typed boundary, coordinating through typed handoffs and explicit inverses rather than a shared call stack. If the steps share an atomic transaction that could roll back together, the coordination problem disappears and saga is not the right framing.
 3. **Inverses are themselves use cases.** Each forward step's compensation is itself a use case in the system (*cancel reservation* is a use case; *void authorization* is a use case; *initiate refund* is itself a workflow that the compensation Aspect can invoke). They are not exception handlers, not catch blocks, not finalizers. They are first-class objects with their own Requests, Responses, Failures.
-4. **Eventual consistency.** The workflow's state is consistent in the limit, not at every intermediate point. A reader observing the system during a saga's execution sees partial states; the saga's terminal contract is that the system either reaches the success state or returns to the pre-workflow state via compensation.
+4. **Eventual consistency.** State is consistent in the limit, not at every intermediate point. A reader observing the system during a saga's execution sees partial states; the saga's terminal contract is that the system either reaches the success state or returns to the pre-saga state via compensation.
 
-When these four qualifiers hold, the workflow is a saga, and the methodology names it as a composite of Sequencer + Condition + Aspect. When one of the qualifiers does not hold, the workflow is some other shape, usually a Sequencer with simpler recovery, or a higher-altitude composition of sagas. (The separate published treatment of this reduction — [*Saga Is Not a Pattern* (Yevtushenko, 2026)](https://medium.com/@sergiy-yevtushenko/saga-is-not-a-pattern-6973bdcebde5) — develops the reduction's historical context and the article-length argument against introducing saga as a primitive.)
+None of the four is an altitude. The saga is recognized by this shape wherever it appears: most elaborately at workflow altitude, across autonomous use cases that share no transactional substrate, but the same shape governs a use case like *buy ticket*, whose committed steps — hold, authorize, confirm, issue — must unwind in reverse if a late step fails. That forward chain is the one the diagram below uses.
 
-The recognition matters because it constrains what the workflow has to commit to. A Sequencer is something the methodology already knows how to compose. A Condition is something it already knows how to type. An Aspect is something it already orchestrates. There is no new vocabulary, no new primitive, no special-case handling. The workflow's saga-ness is a property of how its existing components are arranged. Naming the property does not require giving it its own grammatical category.
+When these four qualifiers hold, the composition is a saga, and the methodology names it as a composite of Sequencer + Condition + Aspect. When one of the qualifiers does not hold, the composition is some other shape, usually a Sequencer with simpler recovery, or a higher composition of sagas. (The separate published treatment of this reduction — [*Saga Is Not a Pattern* (Yevtushenko, 2026)](https://medium.com/@sergiy-yevtushenko/saga-is-not-a-pattern-6973bdcebde5) — develops the reduction's historical context and the article-length argument against introducing saga as a primitive.)
+
+The recognition matters because it constrains what the composition has to commit to. A Sequencer is something the methodology already knows how to compose. A Condition is something it already knows how to type. An Aspect is something it already orchestrates. There is no new vocabulary, no new primitive, no special-case handling. A composition's saga-ness is a property of how its existing components are arranged. Naming the property does not require giving it its own grammatical category.
 
 The compensation Aspect, illustratively:
 
@@ -198,116 +201,6 @@ The shape is easier to see than to say:
 ```
 
 The forward chain runs top to bottom; a typed failure runs the committed steps' inverses bottom to top, the last commit undone first. That is the whole of a saga — a Sequencer, the inverses its steps already define, and an Aspect that applies them in reverse.
-
----
-
-## An architectural choice: when one customer action becomes a workflow
-
-Pass 1 walked *buy ticket* as one use case. That decomposition was correct under Pass 1's implicit Phase-5 commitments: a single deployable, synchronous calls from step to step inside one use-case body, one team operating the whole flow, one set of SLOs covering the path end to end. Most enterprise backend systems live for years against exactly those commitments and never have a reason to revisit them; *buy ticket* as a single Sequencer is the right shape and stays the right shape.
-
-But the commitments are commitments, not constants. A team that hits enough scale, enough team independence, or enough operational pressure on the booking flow eventually faces a Phase-5 decision: keep the synchronous single-use-case shape, or commit the substrate to events and decompose the same business work into a workflow over genuinely independent use cases. This section walks the second choice, because it is the one that turns a single use case into a workflow, and because it is where the methodology's *when-to-decompose* judgment earns its sharpest worked example.
-
-### The architectural commitment
-
-The commitment is concrete. The composition substrate for the booking flow becomes asynchronous events. *Hold seat* publishes a `SeatHeld` event when it completes; *authorize payment* is triggered by `SeatHeld`. *Authorize payment* publishes `PaymentAuthorized`; *confirm reservation* is triggered by that. *Confirm reservation* publishes `ReservationConfirmed`; *issue ticket* is triggered by that; and so on. Each step is now a use case with a real external trigger — the event the previous step published — not "the workflow above invoked me synchronously."
-
-The trigger story is what makes each step a genuine use case at this altitude. A use case at Pass 1 was *one trigger, one outcome*, and the methodology will not call something a use case if its only trigger is the orchestrator's call. Once the substrate carries typed events between steps, each step's trigger is external in the methodology's sense: another component in the system published an event the step subscribes to. The step does not know who published the event, or whether the event came from the booking workflow or from an administrative tool that issued the same event for an out-of-band reason. The step responds to the event; its outcome is its own. That is the use-case shape the methodology recognizes.
-
-### When the decomposition rewards itself
-
-The methodology's decomposition-granularity judgment was named in the Architecture Synthesis module: a unit earns being split out when four criteria are present. Each criterion holds for the booking flow under the right Phase-4 inputs.
-
-- **Distinct triggers.** Each step's event trigger admits sources other than the booking workflow. *Authorize payment* fires from the booking flow's `SeatHeld`, but also from a deferred-payment workflow, from an administrative re-authorize action, from a fraud-review override. The trigger surface is not synthetic; the same use case serves multiple workflows.
-- **Distinct SLOs.** *Authorize payment* lives on the payment provider's external SLA, which has different latency and availability characteristics than the system's internal use cases. *Issue ticket* may run on the venue's local infrastructure with different reliability assumptions than the customer-facing path. Each use case earns its own SLO, which different teams may own.
-- **Non-trivial compensation.** Each forward step has an inverse use case that is itself non-trivial: *release hold*, *void authorization*, *cancel reservation*, *invalidate ticket*. Naming the inverses as use cases and registering them in a compensation Aspect is the methodology's structural answer to a compensation surface this large. A single-use-case version handles compensation inside its body; the workflow version makes it a registered Aspect.
-- **Independent operation.** Each step may deploy, scale, and fail apart from the others. *Authorize payment* scales with payment-provider call volume; *issue ticket* scales with successful purchases; *notify customer* scales with the customer's preferred channel. Operating them apart costs more than operating them together at low scale; at high scale the cost reverses.
-
-When all four criteria hold, the decomposition earns itself. When fewer hold, *buy ticket* stays as Pass 1 wrote it. The judgment is the four criteria, not the appearance of the decomposition.
-
-### The workflow
-
-The architectural choice produces what the chapter calls the **booking-and-payment workflow**, named *complete booking* in code. It composes hold-seat, authorize-payment, confirm-reservation, issue-ticket, notify-customer — each now a genuine use case with its own trigger, its own SLO, its own failure modes, its own deployment characteristics.
-
-```
-CompleteBooking.Request:
-    customer: CustomerId
-    event: EventId
-    seat: SeatLocation
-    paymentMethod: PaymentMethod
-    notificationPreference: NotificationChannel
-    existingHold: Option<HoldToken>
-```
-
-```
-CompleteBooking.Response:
-    ticket: TicketId
-    seat: SeatLocation
-    eventStartsAt: ZonedDateTime
-    receipt: ReceiptId
-    notificationDelivered: Boolean
-```
-
-```
-CompleteBooking.Failure:
-    SeatUnavailable
-    HoldExpired
-    PaymentDeclined(reason: String)
-    PaymentProviderUnavailable(category: String)
-    EventNotSelling(closure: ClosureType)
-    CustomerIneligible(restriction: Restriction)
-    InternalConsistencyError
-```
-
-The workflow's failure set differs from any single constituent use case's failure set. Some failures propagate from constituent use cases (`PaymentDeclined`, `CustomerIneligible`). Some are workflow-specific: `HoldExpired` (the existing hold's expiry passed mid-workflow) and `InternalConsistencyError` (the workflow observed a state that should be impossible — a hold token referencing a seat now confirmed for a different customer, or a payment the provider reports as authorized for which no local authorization record exists). One use-case-level failure does not appear in the workflow's failure list at all: *notify customer* failures are absorbed into the success path. The workflow returns success with `notificationDelivered=false` because the customer's claim to the seat is already valid; notification is a downstream concern. This is FER at workflow altitude.
-
-The workflow's body composes the use cases through their step interfaces. The implementation detail of whether each step runs in-process or arrives via the event substrate is supplied by the runtime; the workflow's body reads as composition either way.
-
-```java
-public interface CompleteBooking {
-    Promise<Response> apply(Request request);
-    interface HoldOrExtend       { Promise<HoldToken> apply(ValidRequest request); }
-    interface AuthorizePayment   { Promise<Authorization> apply(HoldContext context); }
-    interface ConfirmReservation { Promise<Reservation> apply(AuthorizedContext context); }
-    interface IssueTicket        { Promise<Ticket> apply(ConfirmedContext context); }
-    interface NotifyCustomer     { Promise<NotificationOutcome> apply(IssuedContext context); }
-    interface EmitAudit          { Promise<Unit> apply(IssuedContext context); }
-}
-```
-
-```java
-return CompleteBooking.ValidRequest.validRequest(request)
-                                   .async()
-                                   .flatMap(holdOrExtend::apply)
-                                   .flatMap(authorizePayment::apply)
-                                   .flatMap(this::completeAfterAuthorization);
-
-private Promise<CompleteBooking.Response> completeAfterAuthorization(AuthorizedContext context) {
-    return confirmReservation.apply(context)
-                             .flatMap(issueTicket::apply)
-                             .flatMap(this::notifyAndAudit);
-}
-
-private Promise<CompleteBooking.Response> notifyAndAudit(IssuedContext context) {
-    return Promise.all(notifyCustomer.apply(context), emitAudit.apply(context))
-                  .map((notificationOutcome, _audit) -> CompleteBooking.Response.response(context, notificationOutcome));
-}
-```
-
-Growing context threads here too: `HoldContext`, `AuthorizedContext`, `ConfirmedContext`, `IssuedContext` carry the workflow's accumulated knowledge forward, each step's response the precondition for the next, and the compiler enforces that no step runs out of order.
-
-The first use case (`HoldOrExtend`) carries the workflow's first internal decision: was an existing hold passed in? If yes, the use case extends the hold's lease, refreshing the expiry. If no, the use case acquires a new hold. The decision is encoded as the use case's body, not as a Condition at the workflow level. The workflow asks the use case to produce a `HoldToken`; the use case figures out whether to extend or acquire. Each use case is responsible for its own internal Condition; the workflow composes use cases as if each were a single-outcome step.
-
-Notification and audit run in parallel as a Fork-Join at the workflow's end. Both depend on the ticket being issued; neither depends on the other. The result tuple is the customer-facing notification outcome plus the audit completion signal. The workflow's response folds them together, with notification failure encoded into the response as a Boolean rather than as a workflow-level failure.
-
-### This is also a saga
-
-The saga reduction applies to *complete booking* exactly as it applies to *cancel booking*, by the same four qualifiers. The forward chain is at workflow altitude; the use cases are autonomous; the inverses are themselves use cases registered in the compensation Aspect (`HoldOrExtend` ↔ `ReleaseHold`, `AuthorizePayment` ↔ `VoidAuthorization`, `ConfirmReservation` ↔ `CancelReservation`, `IssueTicket` ↔ `InvalidateTicket`); the workflow is eventually consistent. When *issue ticket* fails after confirmation has committed, the Aspect unwinds confirm → authorize → hold in reverse order, invoking the registered inverses.
-
-What is sharper here than at cancel-booking: the inverses do not exist for their own sake in the business; they exist as the architecture's compensation surface. *ReleaseHold* is rarely a customer-facing use case; it is the inverse the architecture needs because the architecture chose autonomous use cases over a transactional substrate. The saga reduction is what makes the choice cheap. The architecture commits, and the compensation surface emerges from the inverses the constituent use cases already had to define. There is no separate compensation grammar.
-
-### The honest framing
-
-This workflow exists *because* the architecture chose to put it there. Under a different Phase-5 vector — single deployable, synchronous calls — the same business work is the Pass 1 use case and there is no workflow to discuss. The methodology does not prefer one shape over the other; it provides the framework for either. What the methodology refuses is a workflow that pretends its constituent use cases earned independence when they did not. The four when-to-decompose criteria are exactly that refusal: a workflow whose constituent use cases do not pass them is a single use case whose body has been chopped into pieces under the wrong heading.
 
 ---
 
@@ -366,13 +259,13 @@ The same six patterns reappear at workflow altitude. The distribution differs fr
 
 ### Sequencer composes use cases
 
-At use-case altitude, the Sequencer composed steps inside one use case's body. At workflow altitude, the Sequencer composes use cases inside one workflow's body. The booking-and-payment workflow is a Sequencer of `HoldOrExtend` → `AuthorizePayment` → `ConfirmReservation` → `IssueTicket` → notify-and-audit. Each step is a use case; each is composed through the workflow's chain via `flatMap`; the chain short-circuits on the first typed failure. The shape is recognizable from Pass 1; the granularity is different.
+At use-case altitude, the Sequencer composed steps inside one use case's body. At workflow altitude, the Sequencer composes use cases inside one workflow's body. The cancellation-and-refund workflow is a Sequencer of `LoadBooking` → `VerifyCancellationEligibility` → `CancelReservation` → `InitiateRefund` → invalidate-and-notify. Each step is a use case; each is composed through the workflow's chain via `flatMap`; the chain short-circuits on the first typed failure. The shape is recognizable from Pass 1; the granularity is different.
 
-Sequencer is again the most common pattern at this altitude. Every workflow with multiple steps that depend on each other is a Sequencer. The methodology's discipline on chain length (four or five steps before extraction) applies at workflow altitude too; longer workflows extract named sub-Sequencers — `holdAndAuthorize`, `confirmAndIssue`, `notifyAndAudit` — and the outer workflow body composes those.
+Sequencer is again the most common pattern at this altitude. Every workflow with multiple steps that depend on each other is a Sequencer. The methodology's discipline on chain length (four or five steps before extraction) applies at workflow altitude too; longer workflows extract named sub-Sequencers — `executeCancellation`, `finalizeCancellation` — and the outer workflow body composes those.
 
 ### Fork-Join becomes common
 
-At use-case altitude, Fork-Join was present once in *buy ticket* (the parallel checks). At workflow altitude, parallel composition is more frequent. Notification and audit run in parallel at the end of the booking-and-payment workflow. Pre-flight checks (eligibility, fraud screen, availability) in some workflow variations run in parallel as their own Fork-Join. The compensation Aspect, when unwinding multiple committed steps, may run their inverses in parallel if no inverse depends on another.
+At use-case altitude, Fork-Join was present once in *buy ticket* (the parallel checks). At workflow altitude, parallel composition is more frequent. Invalidating the ticket and sending the cancellation confirmation run in parallel at the end of the cancellation-and-refund workflow. Pre-flight checks (eligibility, fraud screen, availability) in some workflow variations run in parallel as their own Fork-Join. The compensation Aspect, when unwinding multiple committed steps, may run their inverses in parallel if no inverse depends on another.
 
 The pattern's structure is unchanged: `Promise.all(...)` (or `Promise.allOrCancel(...)`) joins parallel use case invocations into a tuple; `.map` builds the next workflow context; `.flatMap` proceeds to the next step. The frequency increases because workflows have more independence between their constituents than use cases have between their internal steps.
 
@@ -419,7 +312,7 @@ Aspects compose in order, and the order matters: each Aspect's scope of measurem
 
 Leaves are usually use-case-altitude objects. At workflow altitude, the workflow's constituent use cases are themselves the Leaves from the workflow's perspective: atomic from the workflow's point of view, internally composed at their own altitude. A workflow whose decomposition has a single use case at one of its steps treats that use case as a Leaf; the workflow does not look inside the use case any more than a use case looks inside an external API call.
 
-The fractal property is visible here. Leaf, Sequencer, Fork-Join, Condition, Iteration, Aspects compose at every altitude. The atomicity of a Leaf depends on the altitude observing it. From use-case altitude, a payment provider call is a Leaf. From workflow altitude, the payment authorization use case (which contains the Leaf and orchestrates retries and validation around it) is the Leaf. From subsystem altitude (Pass 3), the booking-and-payment workflow itself becomes a Leaf in the larger composition.
+The fractal property is visible here. Leaf, Sequencer, Fork-Join, Condition, Iteration, Aspects compose at every altitude. The atomicity of a Leaf depends on the altitude observing it. From use-case altitude, a payment provider call is a Leaf. From workflow altitude, the payment authorization use case (which contains the Leaf and orchestrates retries and validation around it) is the Leaf. From subsystem altitude (Pass 3), the cancellation-and-refund workflow itself becomes a Leaf in the larger composition.
 
 ### What the pattern distribution shows at workflow altitude
 
@@ -445,7 +338,7 @@ Pass 1 noted that recovery selection at use-case altitude was driven mostly by r
 - **Domain shape.** Workflows in domains with strong immutability (event sourcing, append-only ledgers) have design-out options that workflows in mutable-state domains do not. A workflow whose state is an append-only stream does not compensate failures; it appends a corrective event.
 - **Coordination cost.** Workflows that span autonomous use cases pay coordination cost for compensation. Each inverse use case may need to coordinate with external systems, may fail itself, may produce its own residuals. Workflows that stay inside a single use case's bounded transaction pay minimal coordination cost. The selection is governed in part by what the workflow's substrate provides.
 
-Mixed strategies are normal. The booking-and-payment workflow uses BER for money flows (the payment authorization-and-capture-and-void chain inverts cleanly through the payment provider's domain-internal inverse), uses FER for notification (the ticket exists; notification failure is not a workflow-level failure), and uses design-out for seat reservation (the reservation model prevents the conflict from arising rather than compensating for it).
+Mixed strategies are normal; most workflows use more than one class, chosen per step by what the step's domain allows.
 
 The cancellation-and-refund workflow uses BER as its forward path (the workflow's purpose is to revert), uses FER for residuals (the workflow names what cannot be reverted and proceeds anyway), and invokes design-out at the workflow-design phase rather than at runtime (delaying physical ticket issuance to reduce residuals during cancellation, for instance).
 
@@ -461,15 +354,15 @@ The architecture decisions that surface at workflow altitude expand on the use-c
 
 ### Workflow-level SLOs
 
-A workflow has its own SLO triple, distinct from any constituent use case's triple. The booking-and-payment workflow's latency target is the cumulative latency of its forward chain, including the longest plausible compensation if a downstream step fails. The throughput target is the rate at which complete bookings flow through. The availability target is the workflow's terminal-state availability, which differs from the per-use-case availability because the workflow succeeds (with `notificationDelivered=false`, for instance) even when constituent use cases failed.
+A workflow has its own SLO triple, distinct from any constituent use case's triple. The cancellation-and-refund workflow's latency target is the cumulative latency of its forward chain, including the longest plausible compensation if a downstream step fails. The throughput target is the rate at which cancellations flow through. The availability target is the workflow's terminal-state availability, which differs from the per-use-case availability because the workflow can succeed in a degraded mode — the cancellation committed and the refund initiated even when the confirmation message has not yet been sent — where a constituent use case failed.
 
-For the booking-and-payment workflow (the numbers below are illustrative; in practice they derive from the Phase-4 elicitation treated in the Architecture Synthesis module):
+For the cancellation-and-refund workflow (the numbers below are illustrative; in practice they derive from the Phase-4 elicitation treated in the Architecture Synthesis module):
 
-- **Latency.** P50 under 5 seconds, P99 under 15 seconds, including compensation if the workflow short-circuits and unwinds. The customer is waiting; the workflow's failure-with-rollback latency matters too.
-- **Throughput.** 500 complete bookings per second sustained; 2,000 per second peak burst.
-- **Availability.** 99.9% during business hours, including degraded modes (`notificationDelivered=false` counts as availability).
+- **Latency.** P50 under 3 seconds, P99 under 10 seconds, including compensation if the workflow short-circuits and unwinds. The customer is waiting on the cancellation outcome; the failure-with-rollback latency matters too.
+- **Throughput.** 50 cancellations per second sustained; 200 per second peak burst — well below the purchase path, since cancellations are a fraction of sales.
+- **Availability.** 99.9% during business hours, including degraded modes (a committed cancellation with the confirmation message still queued counts as availability).
 
-These differ from any single use case's SLOs. The constituent *authorize payment* use case has tighter latency (it lives on the payment provider's SLA) but more relaxed throughput (most workflow attempts will not reach payment authorization because earlier checks short-circuit). The workflow-level SLO is the customer-facing commitment; the use-case-level SLOs are the internal contracts that the workflow's composition must satisfy to meet its workflow-level number.
+These differ from any single use case's SLOs. The constituent *initiate refund* use case has tighter latency (it lives on the payment provider's SLA) but more relaxed throughput (most cancellation attempts that fail eligibility never reach the refund step). The workflow-level SLO is the customer-facing commitment; the use-case-level SLOs are the internal contracts that the workflow's composition must satisfy to meet its workflow-level number.
 
 ### Per-data-class consistency
 
@@ -497,9 +390,9 @@ The idempotency Aspect carries the key propagation and the deduplication policy.
 
 ### Cross-workflow coordination
 
-Some workflows produce events that other workflows consume. The booking-and-payment workflow produces a "booking completed" event that the analytics workflow consumes. The cancellation-and-refund workflow produces a "cancellation completed" event that the loyalty workflow consumes (to credit the customer with whatever consolation the program offers). Cross-workflow coordination is the question of how these events flow.
+Some workflows produce events that other workflows consume. *Buy ticket* produces a "booking completed" event that the analytics workflow consumes. The cancellation-and-refund workflow produces a "cancellation completed" event that the loyalty workflow consumes (to credit the customer with whatever consolation the program offers). Cross-workflow coordination is the question of how these events flow.
 
-At workflow altitude, the methodology names the coordination question but defers the answer. The substrate choice (synchronous calls between workflows, asynchronous event-bus publication, durable message queues, hybrid combinations) is a Phase-5 architectural decision that the Architecture Synthesis module fully treats. At workflow altitude, the workflow declares its outbound events (typed records emitted on success and failure) and its inbound triggers (typed events the workflow subscribes to); the substrate that carries them is decided at architecture synthesis.
+At workflow altitude, the methodology names the coordination question but defers the answer. The substrate choice (direct calls between workflows, event-based publication, durable message queues, hybrid combinations) is a Phase-5 architectural decision that the Architecture Synthesis module fully treats. At workflow altitude, the workflow declares its outbound events (typed records emitted on success and failure) and its inbound triggers (typed events the workflow subscribes to); the substrate that carries them is decided at architecture synthesis.
 
 ### What is deferred
 
@@ -507,7 +400,7 @@ The questions Pass 2 does not yet have force to decide:
 
 - **Subsystem boundaries.** Workflows cluster into subsystems; the clustering is the next altitude. At workflow altitude, all workflows are treated as if they share a substrate.
 - **Persistence topology for cross-workflow data.** Where does the reservation store live? One database for all workflows? Separate stores per workflow with replication? The question has weight only when subsystem boundaries are explicit.
-- **Composition substrate.** Sync vs async vs hybrid for cross-workflow coordination. Same deferral: substrate decisions belong to Architecture Synthesis.
+- **Composition substrate.** Direct vs event-based vs hybrid for cross-workflow coordination. Same deferral: substrate decisions belong to Architecture Synthesis.
 - **Deployment topology.** Workflows-as-services, workflows-as-functions, workflows-in-a-monolith — the choice belongs to subsystem-altitude and architecture-synthesis considerations.
 
 The deferrals are honest about what the altitude has earned. Pass 3 brings subsystem boundaries; Architecture Synthesis brings the substrate decisions.
@@ -518,9 +411,9 @@ The deferrals are honest about what the altitude has earned. Pass 3 brings subsy
 
 This pass has shown workflows. Workflows compose use cases. Workflows have their own typed shapes, their own failure modes, their own architecture decisions. The compensation discipline that *buy ticket* hinted at in Pass 1 became load-bearing. The time-as-decay shape that the methodology has been claiming became typed and operational. The saga reduction took its position as a recognized composite rather than a new primitive.
 
-The workflows in this pass are not unrelated to each other. The booking-and-payment workflow, the cancellation-and-refund workflow, and the temporary-hold workflow all interact with the seat, the customer, the payment, the ticket. They live in the same operational space; they share value objects; they share resource contention. They are not, however, indistinguishable from other workflows in the system. The pricing workflow that computes the seat's price tier from event-pricing rules looks different from the booking workflow; it interacts with the event's pricing model, not with the customer or the payment provider. The event-management workflow that opens an event for sale, adjusts capacity, or cancels an event looks different from the pricing workflow; it operates on the event's lifecycle, not on per-customer transactions.
+The workflows in this pass are not unrelated to each other. The cancellation-and-refund workflow, the temporary-hold workflow, and the *buy ticket* use case all interact with the seat, the customer, the payment, the ticket. They live in the same operational space; they share value objects; they share resource contention. They are not, however, indistinguishable from other workflows in the system. The pricing workflow that computes the seat's price tier from event-pricing rules looks different from the booking workflows; it interacts with the event's pricing model, not with the customer or the payment provider. The event-management workflow that opens an event for sale, adjusts capacity, or cancels an event looks different from the pricing workflow; it operates on the event's lifecycle, not on per-customer transactions.
 
-The workflows cluster. Booking-and-payment, cancellation-and-refund, temporary-hold, group-booking, gift-purchase: these are all booking workflows, because one business change — what a reservation is, how holds and confirmations and cancellations relate — forces all of them to change together. They contend over the same seats and holds, but that contention is a symptom of the shared change driver, not its cause; the shared-data view has the arrow backwards, here as it did when workflows formed from use cases. Pricing workflows cluster differently, around the pricing model: change how demand maps to price or how tiers are defined and every pricing workflow moves while the booking workflows stay still. Event-management workflows cluster differently again, around the event's lifecycle: event creation, capacity adjustment, schedule management move together and leave the other two clusters untouched.
+The workflows cluster. Cancellation-and-refund, temporary-hold, group-booking, gift-purchase, together with the *buy ticket* use case that starts the lifecycle: these are all booking work, because one business change — what a reservation is, how holds and confirmations and cancellations relate — forces all of them to change together. They contend over the same seats and holds, but that contention is a symptom of the shared change driver, not its cause; the shared-data view has the arrow backwards, here as it did when workflows formed from use cases. Pricing workflows cluster differently, around the pricing model: change how demand maps to price or how tiers are defined and every pricing workflow moves while the booking workflows stay still. Event-management workflows cluster differently again, around the event's lifecycle: event creation, capacity adjustment, schedule management move together and leave the other two clusters untouched.
 
 The clusters are subsystems. The methodology does not impose subsystem boundaries; they emerge from change-driver cohesion one altitude up: workflows group into a subsystem when a single coarser business change would force them all to change together. At subsystem altitude, the methodology applies again — same six properties, same six patterns, same four shapes, same recovery triple — at the granularity of subsystem-level concerns. Business cross-cutting becomes load-bearing because there are domain reasons for things to happen across subsystems. Aspects rise to subsystem-level orchestration. Architecture decisions about persistence topology and substrate choice become forced because workflows that span subsystems cannot pretend to share a substrate any longer.
 

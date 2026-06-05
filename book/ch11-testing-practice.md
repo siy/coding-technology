@@ -462,7 +462,7 @@ void timeout_failsSlowOperation() {
         // Never resolves
     });
 
-    var useCase = UseCase.create(slowStep);
+    var useCase = UseCase.useCase(slowStep);
 
     useCase.execute(request)
            .timeout(TimeSpan.millis(100))

@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Instrumentation completeness (Ch. 8)** — new subsection in *Pattern: Aspects (Decorators)*: because effects live only at leaves, wrapping every leaf (and every injected dependency) instruments the whole request path by construction, with the business body naming none of it. Reframes the existing logging-at-leaves rule as a completeness guarantee, adds the structural error-telemetry and cross-module-seam points, and a matching key-takeaway.
+
+### Changed
+- **Factory-naming rationale (Ch. 4)** — made explicit that type-named factories (lowercase-first, e.g. `email`, `money`) allow static imports *without collision*, which is the reason shared names like `of`/`create`/`valueOf` are rejected.
+
+### Fixed
+- **Factory-naming consistency in examples** — `appendix-b` TransferFunds exercises now use the canonical factories `Money.money(...)` and `TransferFunds.transferFunds(...)` (were `Money.of` / `TransferFunds.create`); `ch11` timeout test uses `UseCase.useCase(...)` (was `UseCase.create`).
+
 ## [3.0.0] - 2026-04-12
 
 ### Added

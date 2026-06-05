@@ -98,7 +98,7 @@ Password.password(raw)
 AccountId.accountId(raw)
 ```
 
-This creates a natural, readable call site that's grep-friendly and allows static imports.
+This creates a natural, readable call site that's grep-friendly and allows static imports: because each factory is named for its own type, many of them can be statically imported into one scope without the collisions a shared name like `of` would cause.
 
 **Validated input naming**: Use the `Valid` prefix for types representing validated inputs:
 

@@ -581,6 +581,18 @@ static ProcessOrder processOrder(UserRepository users, Logger log) {
 }
 ```
 
+### Instrumentation Completeness
+
+**Principle:** Because effects live only at leaves, wrapping every leaf instruments the whole request path - completely, by construction.
+
+The Logging Philosophy above is a placement rule; combined with the quarantine of effects at leaves, it becomes a guarantee. I/O, clock reads, outbound calls, message publishing - every effect exists only behind a leaf interface, and composition is pure routing. The set of leaves is therefore the complete set of points where the program touches the outside world. Wrap them all at construction and no path is left uninstrumented, because there is no effect outside a leaf to miss.
+
+**Injected dependencies wrap on the same seam.** A capability injected from another module is itself a `Promise`-returning interface, so cross-module calls are observed exactly like local leaves - no extra mechanism, the same decorator.
+
+**Error telemetry is structural.** Because `Promise<T>` carries failure as a typed value rather than throwing, one wrapper records both outcomes at a single point: a success becomes a normal span and a latency metric, a typed `Cause` becomes an error span and an error metric. There is no `try`/`catch` to write and none to forget.
+
+The honest boundary: wrapping for observability is old (proxies, decorators, AOP). What the quarantine discipline adds is the pair of guarantees - **completeness** (no effect escapes a leaf, so none escapes instrumentation) and **cleanliness** (the business body names none of it).
+
 ---
 
 ## Key Takeaways
@@ -589,8 +601,9 @@ static ProcessOrder processOrder(UserRepository users, Logger log) {
 2. **Fork-Join** - Parallel independent operations, strict immutability requirement
 3. **Aspects** - Cross-cutting concerns as decorators, tested separately
 4. **Logging Philosophy** - Logging only at leaves and boundaries, composition is transparent
-5. **Independence validation** - Prevents Fork-Join mistakes; use Sequencer if unsure
-6. **Pattern composition** - Sequencers call Fork-Joins, Aspects wrap both
+5. **Instrumentation completeness** - Wrapping every leaf instruments the whole path by construction; no effect outside a leaf to miss
+6. **Independence validation** - Prevents Fork-Join mistakes; use Sequencer if unsure
+7. **Pattern composition** - Sequencers call Fork-Joins, Aspects wrap both
 
 ---
 

@@ -825,8 +825,8 @@ class TransferFundsTest {
     // Success stubs
     private static final ValidateAccounts VALID_ACCOUNTS =
         (from, to) -> Promise.success(new ValidatedAccounts(
-            new Account(from, Money.of(1000)),
-            new Account(to, Money.of(500))
+            new Account(from, Money.money(1000)),
+            new Account(to, Money.money(500))
         ));
 
     private static final ExecuteTransfer TRANSFER_SUCCESS =
@@ -841,11 +841,11 @@ class TransferFundsTest {
 
     @Test
     void transfer_succeeds_forValidAccounts() {
-        var useCase = TransferFunds.create(VALID_ACCOUNTS, TRANSFER_SUCCESS);
+        var useCase = TransferFunds.transferFunds(VALID_ACCOUNTS, TRANSFER_SUCCESS);
         var request = new TransferRequest(
             new AccountId("ACC-001"),
             new AccountId("ACC-002"),
-            Money.of(100)
+            Money.money(100)
         );
 
         useCase.execute(request)
@@ -857,11 +857,11 @@ class TransferFundsTest {
 
     @Test
     void transfer_fails_whenSourceNotFound() {
-        var useCase = TransferFunds.create(SOURCE_NOT_FOUND, TRANSFER_SUCCESS);
+        var useCase = TransferFunds.transferFunds(SOURCE_NOT_FOUND, TRANSFER_SUCCESS);
         var request = new TransferRequest(
             new AccountId("INVALID"),
             new AccountId("ACC-002"),
-            Money.of(100)
+            Money.money(100)
         );
 
         useCase.execute(request)

@@ -8,7 +8,7 @@ In-progress draft. Read top-to-bottom; each piece is written to land naturally f
 
 ## Spiral 0 — the entry ramp
 - [Spiral 0 — The Decisions a Use Case Forces](spiral-0-decisions.md) — what every use case forces a designer to settle, named without code.
-- [Foundations](foundations.md) — the small vocabulary the spiral reuses: four shapes, six properties, six patterns, the telescope, the recovery triple.
+- [Foundations](foundations.md) — the small vocabulary the spiral reuses: four shapes, six properties, six patterns, the telescope, the recovery triple, two axes of cohesion.
 
 ## Spiral — methodology walked at four altitudes
 - [Spiral Pass 1 — Use Case Altitude](spiral-1-use-case.md) — one trigger, one outcome, *buy ticket* end to end.

@@ -178,6 +178,8 @@ SeatAvailability:
     holdExpiresAt: Option<Instant>
 ```
 
+A hold may or may not be present; both cases are legitimate from the business perspective. The `Option<Instant>` expresses that fact explicitly: a seat for sale carries no hold expiration, a held seat does, and the type makes the difference unmissable rather than encoding it as a null or a sentinel instant.
+
 **Quote a price for a seat** is a third process. Before the customer commits to a purchase, they ask: what does this specific seat at this specific event cost? The seat in this process is a price tier — premium, standard, economy, accessible, restricted-view — paired with the pricing rules for this event's tier schedule. The information needed is the seat's price tier and the event's pricing rules; the physical location of the seat is irrelevant to pricing. Pricing is a per-tier concern, not a per-seat-location concern.
 
 ```
@@ -215,7 +217,16 @@ The methodology asks that construction enforce the claim. A `CustomerId` cannot 
 
 Implementation choices vary across languages — some compilers enforce these invariants directly via refinement types; others enforce through factory-method discipline. The Foundations section named four enforcement levels. The methodology's structural commitment is the same across all four; the teeth differ. *Buy ticket* in Java with JBCT uses the factory-method pattern: the type has a non-public constructor and a public static factory that returns `Result<T>`. The factory performs validation; success wraps a valid instance, failure carries the named cause. Callers must address both branches — the type system insists. Invalid instances cannot exist as values of the type because no caller can construct one without the factory's `Result`. Same discipline as in languages with refinement-type support; the teeth here are structural through the factory's `Result` return rather than syntactic through the type signature itself.
 
-Composite construction accumulates. When `BuyTicket.ValidRequest` is built from independently validated fields (`CustomerId`, `EventId`, `SeatLocation`, each with its own factory returning `Result<T>`), the JBCT-canonical composition is `Result.all(customerIdResult, eventIdResult, seatLocationResult).map(BuyTicket.ValidRequest::validRequest)`. The composition collects per-field failures rather than short-circuiting at the first; a caller receiving the structured rejection sees every invalid field at once, which is what a customer-facing client needs to render. Async equivalents (`Promise.all`, `Promise.allOrCancel`) accumulate the same way for I/O-touching factories.
+Composite construction accumulates. When `BuyTicket.ValidRequest` is built from independently validated fields (`CustomerId`, `EventId`, `SeatLocation`, each with its own factory returning `Result<T>`), the JBCT-canonical composition is
+
+```
+Result.all(customerIdResult,
+           eventIdResult,
+           seatLocationResult)
+      .map(BuyTicket.ValidRequest::validRequest);
+```
+
+The composition collects per-field failures rather than short-circuiting at the first; a caller receiving the structured rejection sees every invalid field at once, which is what a customer-facing client needs to render. Async equivalents (`Promise.all`, `Promise.allOrCancel`) accumulate the same way for I/O-touching factories.
 
 ### Types evolve within the use case
 
@@ -318,6 +329,10 @@ When multiple Aspects wrap a single operation their composition order matters, b
 The use case body is therefore short. It contains domain logic and nothing else. Aspects are visible in the use case's behavior at runtime (the logs appear, the traces propagate, the retries happen) without being visible in the use case's source. The discipline that produces this separation is the quarantine principle plus the Leaf interface: business code calls domain-named Leaves; Leaves carry whatever technical Aspects the operation needs.
 
 Aspects earn more visibility at higher altitudes. At subsystem altitude, business cross-cutting (audit-as-data versus audit-as-Aspect, regulatory compliance hooks) becomes load-bearing and the methodology has to make explicit choices about where the cross-cutting lives. At use-case altitude, the choices are not yet forced.
+
+That deferral is not a reason to undervalue the separation; it is load-bearing. The composition skeleton — the Sequencer spine, the Fork-Join, the steps that compute rather than call out — is this use case's business logic in pure form, and it is testable as such, exercised against stand-in Leaves with no database, payment provider, or clock in sight. "Pure" here is meant in the business sense rather than the functional-programming one: the skeleton is a faithful account of how this use case processes, independent of the machinery that runs it.
+
+Because the skeleton is independent of its Leaves, the same skeleton attaches to different Leaf implementations to become a running application: real adapters in production, doubles under test. That attachment is also where technical instrumentation enters. Because every Leaf and every injected dependency crosses the same uniform seam, the runtime can wrap them with logging, tracing, and metrics automatically, and the use case body names none of it. This is the technical cross-cutting the runtime already owns; the skeleton-and-Leaf structure is what lets the wrapping be applied systematically rather than written by hand. The wiring itself is assembly-time work, taken up at system altitude.
 
 ### What the pattern distribution shows
 

@@ -66,16 +66,34 @@ cat > "$BUILD/header.tex" <<'HDR'
 \usepackage{eso-pic}
 \usepackage{graphicx}
 \usepackage{xcolor}
+\usepackage{etoolbox}
+\usepackage{listings}
+% All code blocks render through listings (pandoc --listings) so long Java lines
+% wrap at the text measure instead of overflowing the page. TeXLive-basic ships
+% listings; fvextra (which would let pandoc's tango Highlighting wrap) is absent
+% and uninstallable here (2025 local vs 2026 remote), so listings is the path.
+% columns=fullflexible + keepspaces keep the aligned interface tables and ASCII
+% diagrams intact (DejaVu Mono is fixed-width); literate maps the two code-comment
+% em-dashes to hyphens.
+\definecolor{pfdkw}{RGB}{0,0,160}
+\definecolor{pfdcmt}{RGB}{110,110,110}
+\definecolor{pfdstr}{RGB}{150,70,0}
+\lstset{%
+  basicstyle=\footnotesize\ttfamily,
+  keywordstyle=\color{pfdkw}\bfseries,
+  commentstyle=\color{pfdcmt}\itshape,
+  stringstyle=\color{pfdstr},
+  breaklines=true,breakatwhitespace=false,
+  columns=fullflexible,keepspaces=true,showstringspaces=false,
+  literate={—}{{-}}1 {–}{{-}}1 {→}{{$\rightarrow$}}1}
 % Start each chapter (top-level heading) on a fresh page; this also breaks before
 % the table of contents (article's \tableofcontents uses \section*), giving a clean
 % title-page / contents / first-chapter split.
 \let\pfdoldsection\section
 \renewcommand{\section}{\clearpage\pfdoldsection}
-\usepackage{etoolbox}
-% Keep plain code blocks (pseudo-code and the ASCII dependency graph) from
-% splitting across a page break.
-\BeforeBeginEnvironment{verbatim}{\par\noindent\begin{minipage}{\linewidth}}
-\AfterEndEnvironment{verbatim}{\end{minipage}\par}
+% Keep each code block whole on one page (no split across a page break).
+\BeforeBeginEnvironment{lstlisting}{\par\noindent\begin{minipage}{\linewidth}}
+\AfterEndEnvironment{lstlisting}{\end{minipage}\par}
 HDR
 [[ -n "$WATERMARK" ]] && printf '%s\n' "$WATERMARK" >> "$BUILD/header.tex"
 
@@ -94,15 +112,16 @@ INPUTS=()
 for f in "${CHAPTERS[@]}"; do INPUTS+=("$MANUSCRIPT_DIR/$f"); done
 
 pandoc --pdf-engine=xelatex \
-  -V fontsize=11pt -V geometry:margin=1in \
+  -V fontsize=10pt -V geometry:margin=1in -V geometry:bindingoffset=0.5in \
   -V mainfont="DejaVu Serif" -V sansfont="DejaVu Sans" -V monofont="DejaVu Sans Mono" \
+  -V linestretch=1.15 -V code-block-font-size='\small' \
   -V colorlinks=true -V linkcolor=black -V urlcolor=blue \
   -M title="Process-First Design" \
   -M subtitle="Less art, more engineering" \
   -M author="Sergiy Yevtushenko" \
   -M date="$DATE" \
   --include-in-header="$BUILD/header.tex" \
-  --standalone --toc --toc-depth=2 --highlight-style=tango \
+  --standalone --toc --toc-depth=2 --syntax-highlighting=idiomatic \
   -o "$BUILD/content.pdf" \
   "${INPUTS[@]}"
 

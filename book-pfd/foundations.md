@@ -80,6 +80,8 @@ Composition has six primitives, and the same six compose a process at every alti
 
 Each function implements exactly one pattern; mixing patterns is the signal to split. The patterns are not invented by the methodology — practitioners arrived at them independently, and they parallel the constructs business-process notations have used for decades. The methodology recognizes the structure rather than imposing it.
 
+How those steps reach one another is a second question, and it has two answers. In **direct step composition**, a step calls the next and composes on the result it returns: the chain is written out, output feeding input, the shape every pass of this book uses by default. In **event-based step composition**, a step publishes a typed fact and the next is triggered by it: the same steps, wired through events rather than return values. The two are not a timing distinction — direct composition is still `Promise`-based and non-blocking; the difference is whether coordination rides the return path or a published fact. It is not an altitude distinction either: a use case's steps can compose either way without becoming anything other than that use case. Which substrate a given composition uses is an architectural choice, decided in Architecture Synthesis against the system's Phase-4 inputs; the methodology names both and prefers neither.
+
 ---
 
 ## The telescope

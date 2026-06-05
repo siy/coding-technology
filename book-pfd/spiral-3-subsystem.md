@@ -6,7 +6,7 @@
 
 ## What this pass does
 
-Pass 2 closed on clustering. The booking-and-payment workflow, the cancellation-and-refund workflow, and the temporary-hold workflow change for the same reasons — alter what a reservation means and all three move together. They cluster. The pricing workflows cluster differently, around the event's pricing model. The event-management workflows cluster differently again, around the event's lifecycle. Each cluster is a subsystem.
+Pass 2 closed on clustering. The *buy ticket* use case, the cancellation-and-refund workflow, and the temporary-hold workflow change for the same reasons — alter what a reservation means and all three move together. They cluster. The pricing workflows cluster differently, around the event's pricing model. The event-management workflows cluster differently again, around the event's lifecycle. Each cluster is a subsystem.
 
 This pass walks subsystem altitude through the same domain. The use cases multiplied into workflows at Pass 2; the workflows now cluster into subsystems. The methodology applies again — same six properties, same six patterns, same four shapes, same recovery-class triple — with the granularity shifted up once more. A subsystem has a trigger surface, typed inputs and outputs at its boundary, typed failures it can surface to other subsystems, steps that are now whole workflows, and dependencies between those workflows. The telescope holds: the vocabulary does not change, only what it describes.
 
@@ -18,7 +18,7 @@ By the time the pass closes, the reader has seen subsystem boundaries earned rat
 
 ## Subsystems emerge from clustering
 
-A subsystem is what shows up when workflows cohere. The criterion is the one from Pass 2, one altitude up: workflows cohere into a subsystem when a single coarser change driver governs them, when one business change would force all of them to change together. Nothing in the test is new; only the granularity moved. A change to the booking domain (what a reservation means, how holds and confirmations and cancellations relate) rewrites the booking-and-payment, cancellation-and-refund, and temporary-hold workflows together; a change to the pricing model leaves them untouched. The first set is one subsystem, the second another. The boundary is where workflows stop sharing domain assumptions.
+A subsystem is what shows up when workflows cohere. The criterion is the one from Pass 2, one altitude up: workflows cohere into a subsystem when a single coarser change driver governs them, when one business change would force all of them to change together. Nothing in the test is new; only the granularity moved. A change to the booking domain (what a reservation means, how holds and confirmations and cancellations relate) rewrites *buy ticket*, the cancellation-and-refund workflow, and the temporary-hold workflow together; a change to the pricing model leaves them untouched. The first set is one subsystem, the second another. The boundary is where workflows stop sharing domain assumptions.
 
 Three subsystems fall out of the running example:
 
@@ -36,7 +36,7 @@ The coarser the change driver, the higher the altitude. A fine driver (reservati
 
 ## The booking subsystem
 
-The booking subsystem owns the customer-facing transaction lifecycle. Its workflows are the ones Pass 2 walked: booking-and-payment, cancellation-and-refund, temporary-hold, and the variants that cluster with them (group-booking, gift-purchase). They cohere because the reservation domain governs them all: change what a reservation is and every one of them changes.
+The booking subsystem owns the customer-facing transaction lifecycle. Its work is what Pass 2 walked: the *buy ticket* use case, the cancellation-and-refund and temporary-hold workflows, and the variants that cluster with them (group-booking, gift-purchase). They cohere because the reservation domain governs them all: change what a reservation is and every one of them changes.
 
 ### The subsystem's six properties
 
@@ -46,7 +46,7 @@ The subsystem is named for its concern, as the workflows were named for their ou
 
 ### What the subsystem owns
 
-The composed-not-invented rule holds one altitude up. A subsystem does not invent a fresh internal vocabulary; it composes its workflows' types internally and owns only its boundary. Inside booking, the workflows hand their own types to one another — a `CompleteBooking.Response` is what the booking-and-payment workflow produces, and the subsystem does not wrap it in a subsystem-specific equivalent. What the subsystem owns is the thin contract at its edge: what another subsystem must send to ask booking for something, what booking sends back, and which failures booking exposes.
+The composed-not-invented rule holds one altitude up. A subsystem does not invent a fresh internal vocabulary; it composes its workflows' types internally and owns only its boundary. Inside booking, the use cases and workflows hand their own types to one another — a `BuyTicket.Response` is what *buy ticket* produces, and the subsystem does not wrap it in a subsystem-specific equivalent. What the subsystem owns is the thin contract at its edge: what another subsystem must send to ask booking for something, what booking sends back, and which failures booking exposes.
 
 That edge is deliberately small, and it is **explicitly versioned**. Subsystems evolve independently — that is the point of the boundary — so what crosses it cannot be an internal type shared by reference. When booking asks pricing for a quote, a small `PriceQuote` crosses, carrying a tier, an amount, and a version stamp; booking never sees pricing's internal pricing-schedule types, and pricing never sees booking's reservation types. The boundary type is a published contract, versioned so that one subsystem can change its internals without breaking the other, and so that a change to the contract itself is a visible, deliberate event rather than a silent ripple.
 
@@ -64,9 +64,9 @@ The value-object layer still travels intact, as it has at every altitude: `Custo
 
 ### A subsystem operation, composed
 
-Most of booking's workflows are invoked directly by their own triggers — a customer reaches checkout and the booking-and-payment workflow runs. But some booking operations compose several workflows, and those are where the Sequencer reappears at subsystem granularity. Changing a seat is one. A customer with a confirmed ticket wants a different seat: the subsystem has to acquire the new seat and give up the old one, moving the money by the difference, without ever leaving the customer holding neither.
+Most of booking's work is invoked directly by its own triggers — a customer reaches checkout and *buy ticket* runs. But some booking operations compose several use cases and workflows, and those are where the Sequencer reappears at subsystem granularity. Changing a seat is one. A customer with a confirmed ticket wants a different seat: the subsystem has to acquire the new seat and give up the old one, moving the money by the difference, without ever leaving the customer holding neither.
 
-The operation composes two workflows the subsystem already owns — booking-and-payment (acquire the replacement, charge the difference) and cancellation-and-refund (release the original, refund the difference) — in an order the domain dictates:
+The operation composes work the subsystem already owns — the purchase that *buy ticket* performs (acquire the replacement, charge the difference) and the cancellation-and-refund workflow (release the original, refund the difference) — in an order the domain dictates:
 
 ```java
 return ChangeSeat.ValidRequest.validRequest(request)
@@ -76,7 +76,7 @@ return ChangeSeat.ValidRequest.validRequest(request)
                               .map(ChangeSeat.Response::response);
 ```
 
-`acquireReplacement` runs the booking-and-payment workflow for the new seat and produces a `ReplacementHeld` context; `releaseOriginal` runs the cancellation-and-refund workflow for the old seat, threaded the context as growing context. The steps are whole workflows; the handoffs are between workflows; the chain short-circuits on the first typed failure. This is the Sequencer the reader has seen twice already, one altitude up again.
+`acquireReplacement` runs *buy ticket* for the new seat and produces a `ReplacementHeld` context; `releaseOriginal` runs the cancellation-and-refund workflow for the old seat, threaded the context as growing context. The steps are whole use cases and workflows; the handoffs are between them; the chain short-circuits on the first typed failure. This is the Sequencer the reader has seen twice already, one altitude up again.
 
 The order is a recovery decision the subsystem makes deliberately. Acquire-then-release, not release-then-acquire: the replacement is secured before the original is surrendered, so a failure midway leaves the customer with their original seat rather than none. If acquiring the replacement fails, nothing has changed and the operation returns the failure. If releasing the original fails after the replacement is secured, the customer briefly holds two seats and a reconciliation sweep settles it (the same scheduled-sweep shape that releases expired holds at workflow altitude), a far cheaper residual than a customer with no seat at all. The subsystem composes workflows the way a workflow composes use cases, and it chooses the order so that the residual which can occur is the one the business can absorb.
 
@@ -142,7 +142,7 @@ The audit ledger is the clean example. Every money-touching workflow — a compl
 
 The methodology recognizes two encodings, and names them as a pair rather than ranking them.
 
-**Audit-as-data** makes the audit record a first-class output of the workflow that produces it. The booking-and-payment workflow does not have audit bolted onto it; producing the booking-completed fact, with the financial detail the ledger requires, is part of what the workflow *does*. The audit record is domain data the workflow returns, and the ledger is assembled from the facts the workflows already produce. This fits when the audit content is domain-meaningful and varies by what happened — when the record is a business fact, not a uniform trace.
+**Audit-as-data** makes the audit record a first-class output of the use case or workflow that produces it. *Buy ticket* does not have audit bolted onto it; producing the booking-completed fact, with the financial detail the ledger requires, is part of what it *does*. The audit record is domain data it returns, and the ledger is assembled from the facts the work already produces. This fits when the audit content is domain-meaningful and varies by what happened — when the record is a business fact, not a uniform trace.
 
 **Audit-as-Aspect** makes the audit emission a cross-cutting wrapper that intercepts workflows uniformly and emits records on their completion. The workflow is unaware; the Aspect observes and records. This fits when the audit content is uniform across many operations — when every workflow's record has the same shape and the same trigger, and the audit concern is genuinely orthogonal to what each workflow means.
 
@@ -151,7 +151,7 @@ The choice is a real design decision with consequences. Audit-as-data keeps the 
 In code, the difference is where the record lives. Audit-as-data adds it to the workflow's output type:
 
 ```
-CompleteBooking.Response:
+BuyTicket.Response:
     ticket: TicketId
     receipt: ReceiptId
     ledgerEntry: BookingLedgerEntry
@@ -160,7 +160,7 @@ CompleteBooking.Response:
 The ledger is assembled from entries the workflows already return. Audit-as-Aspect leaves the output untouched and wraps the workflow instead:
 
 ```java
-auditLedger.wrap(completeBooking)
+auditLedger.wrap(buyTicket)
 ```
 
 A uniform record is emitted on completion, the workflow unaware. The first form's cost is the audit concern in the output type; it buys explicitness — the workflow's contribution to the ledger is visible in its signature. The second form's cost is a step's distance from the business fact; it buys clean workflow types. Neither is the default; the concern's shape decides.
@@ -217,7 +217,7 @@ The architecture decisions that surface here are about boundaries, the stores be
 
 **Cross-subsystem consistency.** Once booking and event-management own separate stores, the seat booking sold and the capacity event-management tracks are two records in two places, consistent only eventually. The methodology's answer is the design-out already chosen for recovery: the subsystems exchange typed facts and converge, rather than sharing a transactional write. Consistency becomes a property of the fact exchange — its ordering, its idempotency, its lag bound — not of a shared transaction. Naming what each data class requires (strong within a subsystem, eventual across) is a subsystem-altitude decision; the substrate that delivers it is deferred.
 
-**Cross-subsystem coordination mechanism.** When booking needs a quote from pricing, is that a synchronous call, an asynchronous exchange, a cached read? Each subsystem declares its inbound and outbound contracts as typed, versioned shapes; the substrate that carries them between subsystems is a Phase-5 decision deferred to Architecture Synthesis. At subsystem altitude the contracts are named; the wire is not yet chosen.
+**Cross-subsystem coordination mechanism.** When booking needs a quote from pricing, is that a direct call, an event-based exchange, a cached read? Each subsystem declares its inbound and outbound contracts as typed, versioned shapes; the substrate that carries them between subsystems is a Phase-5 decision deferred to Architecture Synthesis. At subsystem altitude the contracts are named; the wire is not yet chosen.
 
 What this altitude still defers: system-level resource provisioning (what the deployed system needs from its environment), technical cross-cutting at the platform level (observability, tracing, idempotency supplied uniformly), and the composition substrate between subsystems. These are the questions the system altitude raises and the Architecture Synthesis module answers.
 

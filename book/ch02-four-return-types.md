@@ -103,7 +103,7 @@ The signature `Result<Email>` tells you: this might fail (invalid format), compl
 > | Mechanism | Transparency | Ergonomics | Reliability |
 > |-----------|--------------|------------|-------------|
 > | **Checked exceptions** | ✅ Explicit | ❌ Verbose, coupling | ✅ Compiler-enforced |
-> | **Unchecked exceptions** | ❌ Hidden | ⚠️ Mental overhead | ❌ Silent failures |
+> | **Unchecked exceptions** | ❌ Hidden | ⚠ Mental overhead | ❌ Silent failures |
 > | **Errors as values** (Go) | ✅ Visible | ❌ Manual propagation | ❌ Easy to ignore |
 > | **Functional (Result)** | ✅ In type | ✅ Monadic composition | ✅ Compiler-enforced |
 >

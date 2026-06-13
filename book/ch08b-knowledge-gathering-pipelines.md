@@ -124,11 +124,11 @@ into the next stage. Before 1.0.0-rc1, that shape forced a nested lambda with a 
 binding:
 
 ```java
-// ❌ before: nesting + capture, just to keep the container alive
+// BEFORE: nesting + capture, just to keep the container alive
 validRequest.flatMap(valid -> profiles.fetch(valid.userId())
                                       .map(profile -> new UserProfile<>(valid, profile)));
 
-// ✅ after: source accessor + operation + next-stage constructor
+// AFTER: source accessor + operation + next-stage constructor
 validRequest.mapWith(ValidRequest::userId, profiles::fetch, UserProfile::new);
 ```
 

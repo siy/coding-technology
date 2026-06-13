@@ -1,4 +1,4 @@
-# Chapter 18: Comparison with Other Approaches
+# Chapter 19: Comparison with Other Approaches
 
 JBCT doesn't exist in isolation. This chapter compares it to other architectural approaches you may encounter, helping you understand where JBCT fits and what it borrows from or rejects in other methodologies.
 

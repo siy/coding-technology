@@ -1,4 +1,4 @@
-# Chapter 16: Systematic Application Guide
+# Chapter 17: Systematic Application Guide
 
 ## What You'll Learn
 
@@ -7,7 +7,7 @@
 - Violation -> Fix patterns for common mistakes
 - Application order for new code and reviews
 
-**Prerequisites:** [Chapter 15: Project Structure](ch15-project-structure.md)
+**Prerequisites:** [Chapter 16: Project Structure](ch15-project-structure.md)
 
 ---
 
@@ -346,4 +346,4 @@ See [Appendix B](appendix-b-exercises.md) for exercises on:
 
 ## What's Next
 
-[Chapter 17](ch17-migration-strategies.md) covers migration strategies for adopting JBCT in existing codebases.
+[Chapter 18](ch17-migration-strategies.md) covers migration strategies for adopting JBCT in existing codebases.

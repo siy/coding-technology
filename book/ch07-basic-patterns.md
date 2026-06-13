@@ -1,4 +1,4 @@
-# Chapter 7: Basic Patterns & Structure
+# Chapter 8: Basic Patterns & Structure
 
 ## What You'll Learn
 
@@ -7,7 +7,7 @@
 - The three basic patterns: Leaf, Condition, Iteration
 - Zone-based naming conventions
 
-**Prerequisites:** [Chapter 6: Null Policy & Error Recovery](ch06-null-policy-recovery.md)
+**Prerequisites:** [Chapter 7: Null Policy & Error Recovery](ch06-null-policy-recovery.md)
 
 ---
 
@@ -319,7 +319,7 @@ When you model business processes using patterns, **gaps become visible**. The p
 | **Condition** | What determines the path? Mutually exclusive? Default? |
 | **Iteration** | Stop on first failure? Order matters? Can parallelize? |
 
-Advanced patterns (Sequencer, Fork-Join, Aspects) covered in Chapter 8.
+Advanced patterns (Sequencer, Fork-Join, Aspects) covered in Chapter 9.
 
 ---
 
@@ -700,4 +700,4 @@ See [Appendix B](appendix-b-exercises.md) for exercises on:
 
 ## What's Next
 
-[Chapter 8](ch08-advanced-patterns.md) covers advanced patterns - Sequencer, Fork-Join, and Aspects - that compose these basic patterns into sophisticated workflows.
+[Chapter 9](ch08-advanced-patterns.md) covers advanced patterns - Sequencer, Fork-Join, and Aspects - that compose these basic patterns into sophisticated workflows.

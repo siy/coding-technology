@@ -1,4 +1,4 @@
-# Chapter 8: Advanced Patterns
+# Chapter 9: Advanced Patterns
 
 ## What You'll Learn
 
@@ -6,13 +6,13 @@
 - **Fork-Join**: Parallel composition for independent operations
 - **Aspects**: Adding cross-cutting concerns without mixing responsibilities
 
-**Prerequisites:** [Chapter 7: Basic Patterns & Structure](ch07-basic-patterns.md)
+**Prerequisites:** [Chapter 8: Basic Patterns & Structure](ch07-basic-patterns.md)
 
 ---
 
 ## Discovery Questions for Advanced Patterns
 
-Chapter 7 introduced gap detection and the pattern-BPMN mapping. Here are the discovery questions for advanced patterns — they emerge from the BPMN constructs themselves:
+Chapter 8 introduced gap detection and the pattern-BPMN mapping. Here are the discovery questions for advanced patterns — they emerge from the BPMN constructs themselves:
 
 | Pattern | BPMN | Key Questions |
 |---------|------|--------------|
@@ -617,4 +617,4 @@ See [Appendix B](appendix-b-exercises.md) for exercises on:
 
 ## What's Next
 
-[Chapter 9](ch09-thread-safety.md) provides a comprehensive thread safety quick reference, consolidating all the thread safety rules across JBCT patterns.
+[Chapter 9b](ch08b-knowledge-gathering-pipelines.md) turns from composing *behavior* to composing *data*: the records that flow between pipeline steps, and the `mapWith` family that makes each stage one line. [Chapter 10](ch09-thread-safety.md) then consolidates the thread-safety rules across JBCT patterns.

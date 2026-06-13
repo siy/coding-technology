@@ -1,4 +1,4 @@
-# Chapter 13: Complete Example - PlaceOrder
+# Chapter 14: Complete Example - PlaceOrder
 
 This chapter walks through building a complete e-commerce order placement use case from requirements to production-ready code.
 

@@ -1,4 +1,4 @@
-# Chapter 9: Thread Safety
+# Chapter 10: Thread Safety
 
 ## What You'll Learn
 
@@ -7,7 +7,7 @@
 - Promise resolution semantics
 - Common mistakes and how to avoid them
 
-**Prerequisites:** [Chapter 8: Advanced Patterns](ch08-advanced-patterns.md)
+**Prerequisites:** [Chapter 9: Advanced Patterns](ch08-advanced-patterns.md)
 
 ---
 
@@ -279,4 +279,4 @@ See [Appendix B](appendix-b-exercises.md) for exercises on:
 
 ## What's Next
 
-[Chapter 10](ch10-testing-philosophy.md) introduces the testing philosophy - evolutionary testing and integration-first approaches that work naturally with JBCT patterns.
+[Chapter 11](ch10-testing-philosophy.md) introduces the testing philosophy - evolutionary testing and integration-first approaches that work naturally with JBCT patterns.

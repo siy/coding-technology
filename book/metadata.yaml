@@ -35,6 +35,12 @@ header-includes:
     \usepackage{titlesec}
     \usepackage{parskip}
 
+    % Emoji fallback: route emoji codepoints (absent from DejaVu) to monochrome Noto Emoji
+    \newfontfamily\emojifont{Noto Emoji}
+    \catcode`✅=\active \protected\def✅{{\emojifont\char"2705 }}
+    \catcode`❌=\active \protected\def❌{{\emojifont\char"274C }}
+    \catcode`⚠=\active \protected\def⚠{{\emojifont\char"26A0 }}
+
     % Chapter formatting
     \titleformat{\chapter}[display]
       {\normalfont\huge\bfseries}{\chaptertitlename\ \thechapter}{20pt}{\Huge}

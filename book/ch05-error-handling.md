@@ -28,7 +28,7 @@ Different languages use different mechanisms for error propagation, each with di
 | Mechanism | Transparency | Ergonomics | Reliability |
 |-----------|--------------|------------|-------------|
 | **Checked exceptions** | ✅ Explicit in signature | ❌ Verbose, tight coupling | ✅ Compiler-enforced |
-| **Unchecked exceptions** | ❌ Hidden in implementation | ⚠️ Acceptable, but mental overhead | ❌ Silent failures |
+| **Unchecked exceptions** | ❌ Hidden in implementation | ⚠ Acceptable, but mental overhead | ❌ Silent failures |
 | **Errors as values** (Go) | ✅ Return value visible | ❌ Manual `if err != nil` everywhere | ❌ Easy to ignore |
 | **Functional (Result/Either)** | ✅ Type signature | ✅ Monadic composition | ✅ Compiler-enforced |
 

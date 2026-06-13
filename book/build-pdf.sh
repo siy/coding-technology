@@ -17,6 +17,7 @@ COVER_IMAGE="cover.png"
 # Check dependencies
 command -v pandoc >/dev/null 2>&1 || { echo "Error: pandoc not installed"; exit 1; }
 command -v xelatex >/dev/null 2>&1 || { echo "Error: xelatex not installed"; exit 1; }
+fc-list 2>/dev/null | grep -qi "noto emoji" || echo "Warning: font 'Noto Emoji' not found — emoji in comparison tables will render blank. Install: brew install --cask font-noto-emoji"
 
 # Chapter order
 CHAPTERS=(

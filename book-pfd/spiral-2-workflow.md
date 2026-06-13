@@ -276,8 +276,8 @@ Pass 1 noted Iteration as absent in *buy ticket*. At workflow altitude, Iteratio
 ```java
 return findExpiredHolds.apply(sweepCriteria)
                        .flatMap(holds -> Promise.allOf(holds.stream()
-                                                             .map(releaseHold::apply)
-                                                             .toList()));
+                                                            .map(releaseHold::apply)
+                                                            .toList()));
 ```
 
 The *process expired holds* workflow iterates over the collection of holds whose expiry has passed, applying *release hold* to each. The methodology's Iteration primitive uses `Promise.allOf` to collect results — `allOf` is the collection-shaped sibling of the fixed-arity `Promise.all` used in Fork-Join: `all` joins a known set of heterogeneous promises into a tuple, `allOf` joins a homogeneous collection into a list. Failure-fast or all-or-cancel variants apply depending on policy.

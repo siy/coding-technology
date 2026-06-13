@@ -2,7 +2,7 @@
 
 ## What You'll Learn
 
-- **Knowledge-accreting stage records** — make the type that flows between pipeline steps a compiler-checked proof of progress
+- **Growing context** — thread accumulated knowledge forward as an ever-richer record, so the type between pipeline steps is a compiler-checked proof of progress
 - **The `mapWith` family** (`mapWith` / `flatMapWith` / `ensureWith`, Pragmatica Core 1.0.0-rc1) — turn each stage into one lambda-free line
 - **Gating vs. evidence** — the one place a fallible check may discard its result, and when it must accrete it instead
 
@@ -25,6 +25,11 @@ exactly the knowledge gathered so far, and how the context-preserving combinator
 Pragmatica Core 1.0.0-rc1 (`mapWith`, `flatMapWith`, `ensureWith`) collapse those records into
 one-line stages.
 
+The discipline this produces — each step receiving the prior context, adding what it learned, and
+passing an enriched context forward — is what the methodology calls **growing context**. This
+chapter is its concrete realization: the records that carry it, and the combinators that keep each
+stage to one line.
+
 ## The Problem: What Flows Between Steps?
 
 A use case rarely answers from its input alone. A typical flow validates the request, loads a
@@ -41,7 +46,11 @@ The requirement they miss: **at every point in the pipeline, the type should exp
 knowledge gathered so far** — no more, no less. This is "make invalid states unrepresentable"
 applied to pipeline *progress*.
 
-## The Data Structure: Knowledge-Accreting Stage Records
+## The Data Structure: Growing Context
+
+Growing context is built from **stage records** — small records that each pair the previous stage
+with the knowledge just gained, so the composed type is the running proof of how far the pipeline
+has gotten.
 
 ### First attempt: concrete chaining
 
@@ -160,7 +169,7 @@ propagates as empty; on `Promise`, the chain genuinely awaits the operation befo
 ### Why the factory slot fits the data structure
 
 Look at the factory's shape: `(T, B) -> U`. That is *exactly* the canonical constructor of a
-knowledge-accreting stage record — `(previous container, new knowledge) -> next stage`. The data
+stage record — `(previous container, new knowledge) -> next stage`. The data
 structure and the combinator family are two halves of one design: a well-shaped stage is a
 single line of method references, with no lambda bodies at all:
 
@@ -341,8 +350,8 @@ container untouched (assert the same instance flows through).
 
 ## Key Takeaways
 
-- Each pipeline stage's container = **previous container as a type parameter + new knowledge**;
-  the composed type is a compiler-checked proof of pipeline progress.
+- **Growing context**: each pipeline stage's container = **previous container as a type parameter
+  + new knowledge**, so the composed type is a compiler-checked proof of pipeline progress.
 - The canonical constructor `(T, Knowledge)` of a stage record is exactly the factory shape
   `mapWith`/`flatMapWith` expect — a well-shaped stage is one lambda-free line: getter,
   operation, constructor.

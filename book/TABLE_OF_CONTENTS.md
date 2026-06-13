@@ -73,7 +73,7 @@
 - Compensation pattern for rollback
 
 **[Chapter 9b: Knowledge-Gathering Pipelines](ch08b-knowledge-gathering-pipelines.md)**
-- Knowledge-accreting stage records as progress proofs
+- Growing context: stage records as compiler-checked progress proofs
 - The `mapWith` / `flatMapWith` / `ensureWith` family
 - Gating vs. evidence: when a check accretes its result
 

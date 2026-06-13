@@ -43,6 +43,8 @@ Underneath the six properties is a simpler way to see what a process is: an act 
 
 This is also why the types belong to the process. Ask of a domain "what data exists?" and the answer is entities: one `Customer`, one `Order`, one shared shape every process must accept. Ask instead "what does *this* process need to know?" and the answer is the per-process types the methodology produces — the smallest input the trigger carries, the typed knowledge each step adds, the closed set of facts, failures included, that let the process answer. Process-first is what falls out when you model around the knowledge a process gathers rather than the data a system stores.
 
+Not every step adds to that store. Some only confirm a precondition (the caller is entitled, the request within its rate) and nothing downstream reads their result; they gate the process without enriching it. The test is whether a later step needs the outcome: when it does, the step must carry it forward as knowledge the next step consumes, for a result some later step depends on, discarded once tested, is the loss *parse, don't validate* warns against, one boundary inward. When nothing does, the check is a pure gate, and its single fact — *the process may continue* — is spent the moment it does.
+
 ---
 
 ## The four shapes

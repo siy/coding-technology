@@ -1,6 +1,6 @@
 # Spiral Pass 2 — Workflow Altitude
 
-*A customer holds a seat. Five minutes later the system has to decide what to do with the unbought claim. Across the booking, cancellation, and held-seat workflows the same six patterns appear again — but now Iteration has work to do, time stops being a fixed point and becomes a category, and one workflow turns out to be a saga without needing the name.*
+*A customer holds a seat. Five minutes later the system has to decide what to do with the unbought claim. Across the booking, cancellation, and held-seat workflows, Iteration finally has work to do, time stops being a fixed point and becomes a category, and one workflow turns out to be a saga without needing the name.*
 
 ---
 
@@ -8,7 +8,7 @@
 
 Pass 1 closed on multiplicity. *Buy ticket* is one use case; the system that contains it is not. The customer who bought a ticket might cancel it. The customer who has not yet bought might hold a seat while consulting friends. The venue operator periodically releases blocked seats for last-minute sale. The pricing system adjusts tier prices before each batch of holds becomes a purchase. Each of these is a use case in its own right, and the system that runs them all is not just a list of unrelated transactions.
 
-The use cases interact. Multiple use cases write to the same seat, the same customer record, the same event's selling state. Multiple use cases produce events that other use cases consume. Some use cases compensate others; some use cases must wait for others; some use cases coordinate against shared time-bounded constraints. The structure that emerges from those interactions is the workflow. At workflow altitude the same methodology applies again — same six properties, same six patterns, same four shapes, same recovery-class triple — but with the granularity shifted up.
+The use cases interact. Multiple use cases write to the same seat, the same customer record, the same event's selling state. Multiple use cases produce events that other use cases consume. Some use cases compensate others; some use cases must wait for others; some use cases coordinate against shared time-bounded constraints. The structure that emerges from those interactions is the workflow.
 
 This pass walks workflow altitude through a single domain. The running example holds: event ticketing. The use cases have multiplied. *Buy ticket* from Pass 1 is one of them, kept intact at its own altitude; the customer can also *cancel ticket*, *refund ticket*, *hold seat*, *check availability*; the venue's operations fire scheduled work like *release expired holds*. These are genuinely distinct use cases with their own external triggers, and they cohere into workflows around shared change drivers.
 
@@ -30,7 +30,7 @@ The change-together test is sharper than "these feel related," and it cuts again
 
 A workflow is named after the business outcome it composes. Booking-and-payment is the lifecycle from "customer asks to buy" through "customer has a confirmed ticket and the venue has the money." Cancellation-and-refund is the lifecycle from "customer asks to cancel" through "the seat is back in inventory and the customer has their money back." Temporary-hold is the lifecycle from "customer puts a seat on hold" through "the hold is either consumed by a confirmed booking or released because expiry passed." Each name carries a complete business arc; each arc decomposes into several use cases.
 
-A workflow has the same six properties as a use case. Trigger, typed inputs, typed outputs, typed failures, steps, dependencies. The granularity differs: the trigger fires the workflow rather than a single use case; the steps are use cases rather than atomic operations; the dependencies are between use cases rather than between operations inside one use case. The failures are workflow-level — some bubble up from constituent use cases, some are workflow-specific (the workflow as a whole timed out before any individual use case did). The methodology's claim, restated at this altitude, is that the same vocabulary describes both scales without losing precision.
+A workflow has the same six properties as a use case. Trigger, typed inputs, typed outputs, typed failures, steps, dependencies. The granularity differs: the trigger fires the workflow rather than a single use case; the steps are use cases rather than atomic operations; the dependencies are between use cases rather than between operations inside one use case. The failures are workflow-level — some bubble up from constituent use cases, some are workflow-specific (the workflow as a whole timed out before any individual use case did).
 
 The workflow's types are mostly composed from its use cases, not invented for it. Internally, the workflow threads the use cases' own types forward as growing context — each step's output is the next step's input — rather than wrapping them in workflow-specific equivalents.
 
@@ -255,7 +255,7 @@ The temporary-hold workflow's failure modes are domain-specific: `HoldNotFound`,
 
 ## The six patterns at workflow altitude
 
-The same six patterns reappear at workflow altitude. The distribution differs from use-case altitude. Some patterns that were absent or rare now earn strong appearances. Some patterns that were strongly present now appear less centrally because the work has shifted up a level. The methodology's claim of fractal-pattern composition holds because the same primitives compose the same way at each altitude; the claim is empirical, validated across the workflows the running example has surfaced.
+The distribution differs from use-case altitude. Some patterns that were absent or rare now earn strong appearances; some that were strongly present appear less centrally because the work has shifted up a level.
 
 ### Sequencer composes use cases
 
@@ -415,7 +415,7 @@ The workflows in this pass are not unrelated to each other. The cancellation-and
 
 The workflows cluster. Cancellation-and-refund, temporary-hold, group-booking, gift-purchase, together with the *buy ticket* use case that starts the lifecycle: these are all booking work, because one business change — what a reservation is, how holds and confirmations and cancellations relate — forces all of them to change together. They contend over the same seats and holds, but that contention is a symptom of the shared change driver, not its cause; the shared-data view has the arrow backwards, here as it did when workflows formed from use cases. Pricing workflows cluster differently, around the pricing model: change how demand maps to price or how tiers are defined and every pricing workflow moves while the booking workflows stay still. Event-management workflows cluster differently again, around the event's lifecycle: event creation, capacity adjustment, schedule management move together and leave the other two clusters untouched.
 
-The clusters are subsystems. The methodology does not impose subsystem boundaries; they emerge from change-driver cohesion one altitude up: workflows group into a subsystem when a single coarser business change would force them all to change together. At subsystem altitude, the methodology applies again — same six properties, same six patterns, same four shapes, same recovery triple — at the granularity of subsystem-level concerns. Business cross-cutting becomes load-bearing because there are domain reasons for things to happen across subsystems. Aspects rise to subsystem-level orchestration. Architecture decisions about persistence topology and substrate choice become forced because workflows that span subsystems cannot pretend to share a substrate any longer.
+The clusters are subsystems. The methodology does not impose subsystem boundaries; they emerge from change-driver cohesion one altitude up: workflows group into a subsystem when a single coarser business change would force them all to change together. What is new at subsystem altitude is that business cross-cutting becomes load-bearing, because there are domain reasons for things to happen across subsystems; Aspects rise to subsystem-level orchestration; and architecture decisions about persistence topology and substrate choice become forced, because workflows that span subsystems cannot pretend to share a substrate any longer.
 
 The next pass walks subsystem altitude.
 

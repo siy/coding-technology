@@ -1,4 +1,4 @@
-# Chapter 12: Complete Example - RegisterUser
+# Chapter 13: Complete Example - RegisterUser
 
 ## What You'll Learn
 
@@ -6,7 +6,7 @@
 - How all patterns work together in practice
 - Step-by-step evolutionary development
 
-**Prerequisites:** [Chapter 11: Testing in Practice](ch11-testing-practice.md)
+**Prerequisites:** [Chapter 12: Testing in Practice](ch11-testing-practice.md)
 
 ---
 
@@ -410,4 +410,4 @@ See [Appendix B](appendix-b-exercises.md) for exercises on:
 
 ## What's Next
 
-[Chapter 13](ch13-placeorder-example.md) presents another complete example - PlaceOrder - demonstrating more complex patterns including Fork-Join for parallel data fetching.
+[Chapter 14](ch13-placeorder-example.md) presents another complete example - PlaceOrder - demonstrating more complex patterns including Fork-Join for parallel data fetching.

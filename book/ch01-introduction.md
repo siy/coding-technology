@@ -1,6 +1,6 @@
 # Chapter 1: Introduction - Code Unification
 
-**Based on:** JBCT v3.0.0 | **Pragmatica Core:** 1.0.0-rc1
+**Based on:** JBCT v3.1.0 | **Pragmatica Core:** 1.0.0-rc1
 
 ## What You'll Learn
 
@@ -328,6 +328,6 @@ See [Appendix B](appendix-b-exercises.md) for exercises on:
 
 ## What's Next
 
-[Chapter 2](ch02-design-methodology.md) presents the design methodology: how to go from requirements to code structure by identifying processes and their typed boundaries. You'll learn why business processes — not data entities — are the natural unit of decomposition.
+[Chapter 2](ch02-design-methodology.md) bridges design and code: it views a process as knowledge gathering, captures it as a data dependency graph, and maps that graph onto the patterns you write. The full design methodology behind it is the subject of the companion *Process-First Design* book.
 
 [Chapter 3](ch02-four-return-types.md) then introduces the four return types that form the implementation foundation: `T`, `Option<T>`, `Result<T>`, and `Promise<T>`. You'll learn when to use each one, how they compose, and why these four types are all you need.

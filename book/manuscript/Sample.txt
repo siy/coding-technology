@@ -1,3 +1,0 @@
-ch01-introduction.md
-ch02-four-return-types.md
-ch04-parse-dont-validate.md

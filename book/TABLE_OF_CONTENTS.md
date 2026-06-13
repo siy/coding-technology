@@ -1,7 +1,7 @@
 # Java Backend Coding Technology
 ## Unified Code Through Functional Composition
 
-**Based on:** JBCT v3.0.0 | **Pragmatica Core:** 1.0.0-rc1
+**Based on:** JBCT v3.1.0 | **Pragmatica Core:** 1.0.0-rc1
 
 ---
 
@@ -15,15 +15,11 @@
 - The five evaluation criteria for design decisions
 - Foundational concepts: side effects, composition, monads
 
-**[Chapter 2: Design Methodology](ch02-design-methodology.md)**
-- An emerging direction: convergent evolution toward process-first design
-- Process-first design: the questions framework
-- Worked example: E-Commerce Checkout
-- Data follows process: per-context types, no shared domain model
-- Design by elimination: most decisions follow from the process
-- Composition at scale: recursive application
-- BPMN as shared language
-- Ubiquitous language as natural byproduct
+**[Chapter 2: From Process to Patterns](ch02-design-methodology.md)**
+- Backend processes as knowledge gathering
+- The data dependency graph (DDG)
+- Mapping DDG operators to JBCT patterns and Pragmatica code
+- Pointer to the companion *Process-First Design* book for the full design methodology
 
 **[Chapter 3: The Four Return Types](ch02-four-return-types.md)**
 - `T`, `Option<T>`, `Result<T>`, `Promise<T>`
@@ -76,6 +72,11 @@
 - Aspects: cross-cutting concerns (retry, timeout, audit)
 - Compensation pattern for rollback
 
+**[Chapter 9b: Knowledge-Gathering Pipelines](ch08b-knowledge-gathering-pipelines.md)**
+- Knowledge-accreting stage records as progress proofs
+- The `mapWith` / `flatMapWith` / `ensureWith` family
+- Gating vs. evidence: when a check accretes its result
+
 **[Chapter 10: Thread Safety & Immutability](ch09-thread-safety.md)**
 - Safety guarantees by pattern
 - Promise resolution semantics
@@ -114,7 +115,7 @@
 - Compensation for payment failures
 - Best-effort notifications
 
-**[Chapter 15: Focused Examples](ch14a-publisharticle-example.md)**
+**[Chapter 15a: Focused Examples](ch14a-publisharticle-example.md)**
 - [PublishArticle](ch14a-publisharticle-example.md): Condition pattern for routing
 - [TransferFunds](ch14b-transferfunds-example.md): Aspects composition
 

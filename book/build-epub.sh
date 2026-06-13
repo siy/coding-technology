@@ -23,6 +23,7 @@ command -v pandoc >/dev/null 2>&1 || { echo "Error: pandoc not installed"; exit 
 CHAPTERS=(
     # Part I: Foundations
     "ch01-introduction.md"
+    "ch02-design-methodology.md"
     "ch02-four-return-types.md"
     "ch03-pragmatica-lite-essentials.md"
 
@@ -34,6 +35,7 @@ CHAPTERS=(
     # Part III: Patterns
     "ch07-basic-patterns.md"
     "ch08-advanced-patterns.md"
+    "ch08b-knowledge-gathering-pipelines.md"
     "ch09-thread-safety.md"
 
     # Part IV: Testing

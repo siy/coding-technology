@@ -7,13 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.1.0] - 2026-06-13
+
 ### Added
+- **Chapter 8b: Knowledge-Gathering Pipelines** — new chapter developing the knowledge-gathering view (Ch. 2) to implementation depth. Knowledge-accreting stage records carry the previous stage as a type parameter, so the composed type is a compiler-checked proof of pipeline progress; the Pragmatica Core 1.0.0-rc1 `mapWith` / `flatMapWith` / `ensureWith` combinator family collapses each stage to one lambda-free line. Includes the gating-vs-evidence rule: `ensureWith` is where parse-don't-validate runs out (transient outcomes only), while a load-bearing check must return evidence and accrete it. Wired into both build scripts and the TOC.
 - **Instrumentation completeness (Ch. 8)** — new subsection in *Pattern: Aspects (Decorators)*: because effects live only at leaves, wrapping every leaf (and every injected dependency) instruments the whole request path by construction, with the business body naming none of it. Reframes the existing logging-at-leaves rule as a completeness guarantee, adds the structural error-telemetry and cross-module-seam points, and a matching key-takeaway.
 
 ### Changed
+- **Chapter 2 reshaped into a design→code bridge** — *Design Methodology* slimmed to *From Process to Patterns*: keeps the knowledge-gathering view and the data-dependency-graph → pattern → Pragmatica-code mapping (which the pattern chapters and Ch. 8b depend on, and which the implementation-agnostic *Process-First Design* book does not carry), and defers the full design treatment (process-first design, worked design example, data-follows-process, design by elimination, composition at scale, BPMN, ubiquitous language) to the companion *Process-First Design* book. Wired the chapter into both build scripts for the first time — it had been authored at 3.0.0 but omitted from the build.
 - **Factory-naming rationale (Ch. 4)** — made explicit that type-named factories (lowercase-first, e.g. `email`, `money`) allow static imports *without collision*, which is the reason shared names like `of`/`create`/`valueOf` are rejected.
 
 ### Fixed
+- **Chapter numbering reconciled with the table of contents** — the 3.0.0 design-methodology insertion (as Chapter 2) had renumbered only the front chapters' titles, leaving everything from *Pragmatica Core Essentials* onward one number behind the TOC (two chapters were both titled "Chapter 3", and the built book skipped from Chapter 1 to Chapter 3 because `ch02-design-methodology` was missing from both build scripts). Added that chapter to the build, and reconciled every body title and cross-reference to the canonical TOC numbering (1–20, with 9b and 15a/15b as lettered sub-chapters). Removed the unused, stale `book/manuscript/` mirror.
 - **Factory-naming consistency in examples** — `appendix-b` TransferFunds exercises now use the canonical factories `Money.money(...)` and `TransferFunds.transferFunds(...)` (were `Money.of` / `TransferFunds.create`); `ch11` timeout test uses `UseCase.useCase(...)` (was `UseCase.create`).
 
 ## [3.0.0] - 2026-04-12

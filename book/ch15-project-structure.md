@@ -1,4 +1,4 @@
-# Chapter 15: Project Structure & Framework Integration
+# Chapter 16: Project Structure & Framework Integration
 
 ## What You'll Learn
 
@@ -8,7 +8,7 @@
 - Framework integration with Spring Boot and JOOQ
 - Where types go (placement rules)
 
-**Prerequisites:** [Chapter 14: More Examples](ch14a-publisharticle-example.md)
+**Prerequisites:** [Chapter 15a: More Examples](ch14a-publisharticle-example.md)
 
 ---
 
@@ -400,4 +400,4 @@ See [Appendix B](appendix-b-exercises.md) for exercises on:
 
 ## What's Next
 
-[Chapter 16](ch16-systematic-application.md) covers systematic application - checkpoints and checklists for writing and reviewing JBCT code.
+[Chapter 17](ch16-systematic-application.md) covers systematic application - checkpoints and checklists for writing and reviewing JBCT code.

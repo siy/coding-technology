@@ -1,4 +1,4 @@
-# Chapter 4: Parse, Don't Validate
+# Chapter 5: Parse, Don't Validate
 
 ## What You'll Learn
 
@@ -8,7 +8,7 @@
 - Real-world validation scenarios
 - How to adopt this incrementally in existing codebases
 
-**Prerequisites:** [Chapter 2: The Four Return Types](ch02-four-return-types.md)
+**Prerequisites:** [Chapter 3: The Four Return Types](ch02-four-return-types.md)
 
 ---
 
@@ -390,4 +390,4 @@ See [Appendix B](appendix-b-exercises.md) for exercises on:
 
 ## What's Next
 
-[Chapter 5](ch05-error-handling.md) covers error handling - how to define typed errors, compose them, and handle failures cleanly without exceptions.
+[Chapter 6](ch05-error-handling.md) covers error handling - how to define typed errors, compose them, and handle failures cleanly without exceptions.

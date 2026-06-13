@@ -1,4 +1,4 @@
-# Chapter 3: Pragmatica Core Essentials
+# Chapter 4: Pragmatica Core Essentials
 
 This chapter introduces Pragmatica Core—the library that provides the foundational types for JBCT. You'll learn why the library exists, its design philosophy, and how to use its core features effectively.
 
@@ -594,5 +594,5 @@ The library is intentionally minimal. It provides the building blocks for JBCT w
 ## What's Next
 
 With the foundation in place, we move to the core principles:
-- **Chapter 4:** Parse, Don't Validate - Making invalid states unrepresentable
-- **Chapter 5:** Error Handling & Composition - Typed errors and recovery patterns
+- **Chapter 5:** Parse, Don't Validate - Making invalid states unrepresentable
+- **Chapter 6:** Error Handling & Composition - Typed errors and recovery patterns

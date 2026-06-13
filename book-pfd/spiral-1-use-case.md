@@ -484,7 +484,7 @@ The next pass starts where this one ends. *Buy ticket* is one use case. The syst
 
 The use cases share resources. Multiple use cases interact with the same seat. Multiple use cases interact with the same customer. Multiple use cases produce events that other use cases consume. The composition of these use cases is not just a list; it is structured. Workflows emerge from the structure.
 
-At workflow altitude, the methodology applies again. The same six properties describe workflows, with the granularity shifted up. The same six patterns appear, with some that were absent at use-case altitude (Iteration, Aspects) earning their first strong appearances. The same four shapes carry domain modalities. Recovery class selection becomes more interesting because the design space opens: compensation across use cases, time-as-decay as a first-class concern, saga as a recognizable composite rather than a primitive.
+At workflow altitude, the methodology applies again — and this is where the patterns that stayed quiet here come alive. Iteration and Aspects earn their first strong appearances, and recovery-class selection grows more interesting as the design space opens: compensation across use cases, time-as-decay as a first-class concern, saga as a recognizable composite rather than a primitive.
 
 The next pass walks through that.
 

@@ -1,6 +1,6 @@
 # Spiral Pass 3 — Subsystem Altitude
 
-*A customer's booking, a price change, and an event opening for sale all have to land in the same audit ledger by the close of business — yet none of the three subsystems that produce them shares code with the others. By the time this pass ends, booking, pricing, and event-management have drawn their own boundaries, the same six patterns have reappeared composing whole workflows, and the ledger turns out to belong to the business, not the runtime.*
+*A customer's booking, a price change, and an event opening for sale all have to land in the same audit ledger by the close of business — yet none of the three subsystems that produce them shares code with the others. By the time this pass ends, booking, pricing, and event-management have drawn their own boundaries, and the ledger turns out to belong to the business, not the runtime.*
 
 ---
 
@@ -8,7 +8,7 @@
 
 Pass 2 closed on clustering. The *buy ticket* use case, the cancellation-and-refund workflow, and the temporary-hold workflow change for the same reasons — alter what a reservation means and all three move together. They cluster. The pricing workflows cluster differently, around the event's pricing model. The event-management workflows cluster differently again, around the event's lifecycle. Each cluster is a subsystem.
 
-This pass walks subsystem altitude through the same domain. The use cases multiplied into workflows at Pass 2; the workflows now cluster into subsystems. The methodology applies again — same six properties, same six patterns, same four shapes, same recovery-class triple — with the granularity shifted up once more. A subsystem has a trigger surface, typed inputs and outputs at its boundary, typed failures it can surface to other subsystems, steps that are now whole workflows, and dependencies between those workflows. The telescope holds: the vocabulary does not change, only what it describes.
+This pass walks subsystem altitude through the same domain. The use cases multiplied into workflows at Pass 2; the workflows now cluster into subsystems. A subsystem has a trigger surface, typed inputs and outputs at its boundary, typed failures it can surface to other subsystems, steps that are now whole workflows, and dependencies between those workflows.
 
 One element that was present but spare at lower altitudes becomes load-bearing here: **business cross-cutting**. At use-case altitude, cross-cutting was mostly technical and mostly handled by the runtime. At subsystem altitude, there are *business* reasons for things to happen across subsystem boundaries — a financial audit ledger that every money-touching workflow must feed, a regulatory check that gates high-value bookings, a tax calculation that depends on jurisdiction. These are not instrumentation. They are part of what the business requires the system to do, and the methodology has to make an explicit choice about where they live.
 
@@ -18,7 +18,7 @@ By the time the pass closes, the reader has seen subsystem boundaries earned rat
 
 ## Subsystems emerge from clustering
 
-A subsystem is what shows up when workflows cohere. The criterion is the one from Pass 2, one altitude up: workflows cohere into a subsystem when a single coarser change driver governs them, when one business change would force all of them to change together. Nothing in the test is new; only the granularity moved. A change to the booking domain (what a reservation means, how holds and confirmations and cancellations relate) rewrites *buy ticket*, the cancellation-and-refund workflow, and the temporary-hold workflow together; a change to the pricing model leaves them untouched. The first set is one subsystem, the second another. The boundary is where workflows stop sharing domain assumptions.
+A subsystem is what shows up when workflows cohere. The criterion is the one from Pass 2, one altitude up: workflows cohere into a subsystem when a single coarser change driver governs them, when one business change would force all of them to change together. A change to the booking domain (what a reservation means, how holds and confirmations and cancellations relate) rewrites *buy ticket*, the cancellation-and-refund workflow, and the temporary-hold workflow together; a change to the pricing model leaves them untouched. The first set is one subsystem, the second another. The boundary is where workflows stop sharing domain assumptions.
 
 Three subsystems fall out of the running example:
 
@@ -30,7 +30,7 @@ None of the three is carved out in advance. Each is recognized after the workflo
 
 The test earns its keep on the cases that feel ambiguous. Where does refund belong — booking or pricing? It moves money, and pricing owns money-shaped concerns, so the instinct is to file it near pricing. The test overrides the instinct: ask what business change forces refund to change. A change to refund policy (eligibility windows, partial-refund rules, what a cancellation entitles a customer to) rewrites refund alongside cancellation and booking and leaves the pricing model untouched. Refund changes with the reservation domain, not the pricing domain; it belongs to booking. The noun it touches (money) pointed one way; the force that changes it pointed the other, and the force wins. That is the discipline of choosing per-process types over shared entities, applied to subsystem boundaries: group by what changes together, not by what is touched. In the two axes, filing refund under pricing would cost pricing its *purity*: a member answering to the reservation driver, dragging cancellation's churn into the pricing model as accidental coupling. Keeping it in booking with cancellation keeps booking *complete*, so a refund-policy change lands in one place rather than scattering. The force-wins rule is the purity check, made at the boundary.
 
-The coarser the change driver, the higher the altitude. A fine driver (reservation rules) groups use cases into a workflow; a coarse driver (the booking domain as a whole) groups workflows into a subsystem; a coarser driver still (the platform's reason for existing) will group subsystems into the system at the next pass. The telescope is what the change-driver criterion produces when applied at successive granularities. Nothing new is introduced to get from one altitude to the next; the same question is asked of larger and larger candidate sets.
+The coarser the change driver, the higher the altitude. A fine driver (reservation rules) groups use cases into a workflow; a coarse driver (the booking domain as a whole) groups workflows into a subsystem; a coarser driver still (the platform's reason for existing) will group subsystems into the system at the next pass. The telescope is what the change-driver criterion produces when applied at successive granularities.
 
 ---
 
@@ -76,7 +76,7 @@ return ChangeSeat.ValidRequest.validRequest(request)
                               .map(ChangeSeat.Response::response);
 ```
 
-`acquireReplacement` runs *buy ticket* for the new seat and produces a `ReplacementHeld` context; `releaseOriginal` runs the cancellation-and-refund workflow for the old seat, threaded the context as growing context. The steps are whole use cases and workflows; the handoffs are between them; the chain short-circuits on the first typed failure. This is the Sequencer the reader has seen twice already, one altitude up again.
+`acquireReplacement` runs *buy ticket* for the new seat and produces a `ReplacementHeld` context; `releaseOriginal` runs the cancellation-and-refund workflow for the old seat, threaded the context as growing context. The steps are whole use cases and workflows; the handoffs are between them; the chain short-circuits on the first typed failure: the Sequencer, now composing whole workflows.
 
 The order is a recovery decision the subsystem makes deliberately. Acquire-then-release, not release-then-acquire: the replacement is secured before the original is surrendered, so a failure midway leaves the customer with their original seat rather than none. If acquiring the replacement fails, nothing has changed and the operation returns the failure. If releasing the original fails after the replacement is secured, the customer briefly holds two seats and a reconciliation sweep settles it (the same scheduled-sweep shape that releases expired holds at workflow altitude), a far cheaper residual than a customer with no seat at all. The subsystem composes workflows the way a workflow composes use cases, and it chooses the order so that the residual which can occur is the one the business can absorb.
 
@@ -106,7 +106,7 @@ The event-management subsystem owns the event lifecycle: opening an event for sa
 
 Event-management's recovery is mixed in its own way: BER for operational changes that have clean inverses (a capacity increase can be decreased, a block can be released) and FER for the analytics its changes feed (a dashboard showing approximate remaining capacity tolerates lag). Its relationship to booking is the design-out exchange the recovery section develops below: booking does not write event-management's capacity; the two exchange typed facts (`SeatSold`, `SeatReleased`, `EventOpened`) and converge.
 
-Three subsystems, three boundary shapes, one recognition test. Booking is the transaction concern with BER at its core; pricing is the cost concern with design-out at its core; event-management is the lifecycle concern with a mix. The test that separated them — what business change forces these workflows to change together — is the test that separated use cases into workflows. Only the granularity moved.
+Three subsystems, three boundary shapes, one recognition test. Booking is the transaction concern with BER at its core; pricing is the cost concern with design-out at its core; event-management is the lifecycle concern with a mix. The test that separated them — what business change forces these workflows to change together — is the test that separated use cases into workflows.
 
 Three subsystems, and the little that crosses between them:
 
@@ -173,7 +173,7 @@ Business cross-cutting also surfaces as Condition at subsystem altitude — bran
 
 ## The six patterns at subsystem altitude
 
-The same six patterns reappear, composing whole workflows now — the fractal property the spiral keeps demonstrating. Five of them are the lower-altitude primitives one granularity up, and the table is the whole of it:
+Five of the six patterns are the lower-altitude primitives one granularity up; the table is the whole of it:
 
 | Pattern | At subsystem altitude |
 |---|---|
@@ -225,7 +225,7 @@ What this altitude still defers: system-level resource provisioning (what the de
 
 ## Closing — the system is next
 
-This pass has shown subsystems. Subsystems cluster cohesive workflows, draw boundaries where workflows stop sharing domain assumptions, own thin versioned contracts at their edges, and carry business cross-cutting as a first-class design concern rather than a runtime afterthought. The same six patterns reappeared composing whole workflows; the same composed-not-invented discipline held one altitude up; the change-driver criterion drew the boundaries, as it drew workflows from use cases.
+This pass has shown subsystems. Subsystems cluster cohesive workflows, draw boundaries where workflows stop sharing domain assumptions, own thin versioned contracts at their edges, and carry business cross-cutting as a first-class design concern rather than a runtime afterthought.
 
 The three subsystems in this pass — booking, pricing, event-management — are one venue's worth of the domain. The full system is not that. A real ticketing platform runs many venues, many events, many tenants, and the subsystems multiply and coordinate across all of them. The booking subsystem is not one thing; it is the booking concern instantiated across every venue, coordinating with a pricing concern and an event-management concern that are themselves instantiated at the same scale. The platform is many subsystem sets coordinating.
 

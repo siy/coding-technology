@@ -54,7 +54,7 @@ Every value a process handles has one of four shapes, and the shape is a domain 
 - **`T`** — the value exists, unconditionally. No absence, no failure, no waiting.
 - **`Option<T>`** — the value may or may not exist, and its absence is a domain fact, not an error.
 - **`Result<T>`** — the operation may or may not have produced the value; failure is a typed outcome carried in the type, synchronous.
-- **`Promise<T>`** — the value arrives later, and may fail; `Promise<T>` carries both the asynchrony and the failure, so there is no `Promise<Result<T>>`.
+- **`Promise<T>`** — the value arrives later, and may fail; `Promise<T>` carries both the asynchrony and the failure.
 
 Asynchrony emerges from leaves: any operation that touches I/O is a `Promise`, and the `Promise` propagates outward through everything that depends on it. It is not a decision made at the top; it is a fact that rises from the bottom.
 
@@ -136,7 +136,3 @@ That is the whole vocabulary. The spiral now applies it — four passes through 
 One thing to watch as you read: how little is new after the first pass. The vocabulary does not grow; each altitude reuses it and adds only the small delta that altitude makes visible. The passes get shorter as they climb, and that is deliberate — not the book running out of things to say, but the telescope doing exactly what it claims. Keep that in view; by the end it will be the clearest evidence the methodology offers about itself.
 
 The spiral begins at the smallest unit of the work: one customer, one seat, one event.
-
----
-
-*Threads advanced: 1 (compositional complexity), 2 (deterministic rules), 5 (legibility), 14 (telescope).*

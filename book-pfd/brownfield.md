@@ -231,7 +231,3 @@ The chapter began with the reviewer's challenge: a methodology that looks elegan
 What the chapter does *not* produce is a target-state migration plan. The team that finished it has no vector it is migrating toward — it has a procedure for deriving the next correct step from where the system stands now, and the discipline to take that one step and then re-derive. The plan, if a plan is needed at all, is the sequence of small derivations the team performs over months and years; it is not written down in advance, because writing it down in advance is what produces the multi-year programs that fail their own justifications by the time they ship.
 
 The book closes from here. What remains is honest scope — what the methodology does not cover, what it predicts, and what it invites the reader to test against their own systems. The closing names what the methodology bets on, what would force a rethink, and where the open work is.
-
----
-
-*Threads advanced: 1 (compositional complexity), 3 (fractal composition), 7 (less code, more business), 9 (adoption and scope), 11 (the interesting work), 13 (honest scope), 14 (telescope).*

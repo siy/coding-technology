@@ -72,7 +72,3 @@ The book is built to be read in one sitting — start to finish in an afternoon,
 Every chapter names, at its foot, which of the book's narrative threads it advances; a second reading can follow a thread rather than the chapters. The prose keeps a surface that lands on first read, with the deeper structure available to a reader who returns. None of it requires the second read; all of it rewards one.
 
 The spiral begins where the work begins — at the smallest unit of it, one customer buying one ticket. But before the methodology, the problem it answers: the decisions that use case forces whether or not anyone has a method for them.
-
----
-
-*Threads advanced: 3 (industrialization), 5 (legibility), 11 (the interesting work), 15 (standardization).*

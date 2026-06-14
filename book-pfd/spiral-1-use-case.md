@@ -487,7 +487,3 @@ The use cases share resources. Multiple use cases interact with the same seat. M
 At workflow altitude, the methodology applies again — and this is where the patterns that stayed quiet here come alive. Iteration and Aspects earn their first strong appearances, and recovery-class selection grows more interesting as the design space opens: compensation across use cases, time-as-decay as a first-class concern, saga as a recognizable composite rather than a primitive.
 
 The next pass walks through that.
-
----
-
-*Threads advanced: 5 (legibility), 6 (knowledge preservation), 11 (interesting work), 14 (telescope).*

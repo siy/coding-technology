@@ -418,7 +418,3 @@ The workflows cluster. Cancellation-and-refund, temporary-hold, group-booking, g
 The clusters are subsystems. The methodology does not impose subsystem boundaries; they emerge from change-driver cohesion one altitude up: workflows group into a subsystem when a single coarser business change would force them all to change together. What is new at subsystem altitude is that business cross-cutting becomes load-bearing, because there are domain reasons for things to happen across subsystems; Aspects rise to subsystem-level orchestration; and architecture decisions about persistence topology and substrate choice become forced, because workflows that span subsystems cannot pretend to share a substrate any longer.
 
 The next pass walks subsystem altitude.
-
----
-
-*Threads advanced: 1 (compositional complexity), 2 (deterministic rules), 6 (knowledge preservation), 8 (observable by construction), 9 (failure modes), 14 (telescope).*

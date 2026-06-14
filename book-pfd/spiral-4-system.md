@@ -112,7 +112,3 @@ At each altitude, architecture decisions surfaced. They were named and deferred:
 The Architecture Synthesis module is where the methodology stops surfacing decisions and starts making them — the full Phase-4 elicitation, the six-axis Phase-5 vector, the Phase-5/Phase-6 boundary, the recovery-class selection, the continuous-transformation framework. The spiral narrowed to this point on purpose; the synthesis is where it opens back out.
 
 That module is next.
-
----
-
-*Threads advanced: 6 (knowledge preservation), 7 (less code, more business), 8 (observable by construction), 11 (the interesting work), 14 (telescope).*

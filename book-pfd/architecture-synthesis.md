@@ -240,7 +240,3 @@ Sometimes the honest output is that there is no good next step, and saying so is
 The spiral surfaced the decisions; this module made them. The eleven questions of Phase 4, the six axes of Phase 5, the line where Phase 6 begins, the three recovery classes and the judgment that picks among them, and the framework that treats every architecture as a step rather than a destination. The three-profile walkthrough showed the whole of it in motion: one domain, three sets of answers, three architectures that share a method and almost nothing else, and not one moment where the architecture was chosen rather than derived.
 
 The reframe at the end points the way forward. If even a greenfield architecture is only the first derivative — the next correct step from a blank page, given the answers in hand — then the system that arrives already built, already running, already carrying decisions nobody alive remembers making, is the same problem from a harder starting point. The Brownfield chapter takes it up: the reader who inherits the system rather than designs it, and who needs the next correct step most of all. It is the harder version of the problem, and by far the more common one, because most working systems are inherited rather than begun.
-
----
-
-*Threads advanced: 1 (compositional complexity), 2 (deterministic rules), 11 (the interesting work), 13 (honest scope), 14 (telescope), 15 (standardization already happening).*

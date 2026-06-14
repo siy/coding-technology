@@ -79,7 +79,3 @@ The reviewer's bar from the Brownfield chapter applies here too. A methodology t
 What the reader takes away, if the book worked, is not a recipe. It is a small vocabulary, a small set of derivations, and a discipline of asking the right questions in the right order. The architecture is downstream of the questions, the choice of vector is downstream of the answers, and the next correct step is downstream of where the system currently stands. None of those steps was hidden; all of them are repeatable. The methodology is what makes them repeatable. And one reframe is worth carrying out on its own: a process is an act of knowledge gathering, so software modeled around the knowledge a process gathers, rather than the data a system stores, is what the whole method has been building toward.
 
 The work the book invites the reader to do is the same work the methodology asks for: derive rather than copy, name rather than assume, take the next correct step rather than the largest one, and report back what the system actually does when treated this way. The book ends here. The methodology begins where the reader's code already lives.
-
----
-
-*Threads advanced: 9 (adoption and scope), 13 (honest scope), 15 (standardization already happening).*

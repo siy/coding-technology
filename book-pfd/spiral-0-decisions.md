@@ -55,7 +55,3 @@ The simplicity is not a happy accident; it is the mechanism. A methodology you c
 The decisions do not go away. There is no design so clever that "buy a ticket" stops needing to know where its failures live or what becomes of a held seat. The methodology does not remove the decisions; it answers them once, simply, and the same way every time, so that you stop re-deciding them and the codebase stops drifting.
 
 The chapters that follow supply the answers. The next names the vocabulary — the small fixed set of shapes, patterns, and properties the answers are built from. The spiral after it walks that vocabulary through the same use case you just met, then up through workflows, subsystems, and the whole system, applying the same answers at every scale. Watch, as you read, how few new things you have to learn after the first pass. That is the methodology keeping the promise this chapter makes: the decisions are small, the answers are small, and small is what lets them hold.
-
----
-
-*Threads advanced: 2 (deterministic rules), 5 (legibility), 15 (standardization).*

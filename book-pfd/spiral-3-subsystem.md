@@ -232,7 +232,3 @@ The three subsystems in this pass — booking, pricing, event-management — are
 That multiplicity earns the final altitude. At system altitude the subsystems are deployed, and deployment is where the methodology meets infrastructure. Technical cross-cutting becomes load-bearing — observability, tracing, idempotency, retries, supplied uniformly by the runtime across every subsystem rather than coded into any of them. Resource provisioning surfaces as an architectural concern: what the system needs from its environment, each resource a typed dependency invoked through a Leaf. And the distinction the methodology has been carrying quietly since Pass 1, between assembling a system's internal composition and provisioning the external resources it runs on, finally has to be made explicit.
 
 The next pass walks system altitude.
-
----
-
-*Threads advanced: 5 (legibility), 6 (knowledge preservation), 7 (less code, more business), 14 (telescope).*

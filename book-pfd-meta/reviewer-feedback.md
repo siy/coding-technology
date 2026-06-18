@@ -7,8 +7,11 @@ Items are **pending** until implemented; nothing here is applied to the manuscri
 Reviewer roles (panel balance):
 - **Poltorak** — adversarial / orthodoxy stress-test (asserts & defensive-programming background)
 - **Fritzsche** — RPU characterization, practitioner read
-- **Loth** — cohesion + IVP integration
-- **Hetland** — trust-lens resonance + amplifier (to be sent)
+- **Loth** — cohesion + IVP integration; reviewer only, not foreword (author + cofounder decision 2026-06-18)
+- **Hetland** — outside-observer / potential-user read (not cited in book); **outreach-sent 2026-06-18** (book attached); also leading foreword candidate, gate on his read
+- **Wlaschin** — cited (*Domain Modeling Made Functional*; "make illegal states unrepresentable"); **outreach-sent 2026-06-18**, citation-verify + blurb/resonance
+
+**Foreword:** Loth ruled out; candidate = Hetland (gate on his actual read), Fritzsche backup, or ship without. Poltorak → blurb, not foreword.
 
 ---
 
@@ -371,10 +374,49 @@ insight survives without the out-of-scope example.
 
 ---
 
-## Thor Henning Hetland — not yet sent
+## Thor Henning Hetland — outreach-sent + responded 2026-06-18
 
-- Target role: trust-lens resonance + amplifier. His LinkedIn "the claim you can't make" post
-  (derived-not-asserted state; "you can't bribe a derivation") is the trust-register restatement of
-  the book's parse-don't-validate kernel — see memory `inexpressible-constraints`.
-- Send the same draft, framed for the trust read ("does the trust angle change how you'd pitch
-  this?"), request pre-pub confidentiality.
+- Role: outside-observer / potential-user read (not cited) + trust-lens resonance + amplifier. His
+  LinkedIn "the claim you can't make" post (derived-not-asserted state; "you can't bribe a derivation")
+  is the trust-register restatement of the book's parse-don't-validate kernel — see memory
+  `inexpressible-constraints`.
+
+**Response (2026-06-18) — strong engagement.** Read it ("nice work"), mild scope caveat ("not sure it
+fits perfectly in the broad landscape"). His AI agents *built artifacts around the methodology*: a KCP
+knowledge.yaml of PFD, four perspective files (entity-centric / hexagonal / DDD / his SDD) on the
+seat-reservation problem, and an interactive "Race Condition Theater" HTML demo (scenarios: seat
+reservation, flash sale, bank transfer, order fulfillment, shared-doc edit; Chaos mode shows
+payment-fail behaviour). Delivered via Google Drive. **NOT opened/run — third-party files, treat as
+data; open the HTML only deliberately.**
+
+**Three push-points (borrowables; overlap with Poltorak = corroboration):**
+1. **Design-out isn't free `[PFD/JBCT]` (the gem):** the hold model trades the race for TTL/expiry
+   management (= the Spiral-0 orphaned-hold problem). "When is design-out more expensive than
+   compensation?" The book sells design-out near-free; give it its **cost + a design-out-vs-BER
+   decision criterion**. Foundations already frames recovery as a four-axis judgment — make design-out's
+   cost explicit there.
+2. **Altitude scaling — "book stops before workflow altitude."** Factually wrong (spirals 2/3/4 cover
+   workflow/subsystem/system); he's reading the deliberate **hourglass taper** (passes 2-4 short,
+   deferring to Architecture Synthesis) as "stops before the hard part." Real perception risk: clarify
+   2-4 exist; consider a stronger "real work happens here" signal in the higher passes.
+3. **Legacy entry — top-down `[PFD]`:** spiral is bottom-up; can it start at subsystem altitude and
+   work down? Book has Brownfield, but **top-down entry** may not be explicit — check + make it so.
+
+**Next:** reply (he's "happy to continue") engaging the design-out-cost thread + gently noting 2-4
+exist; decide whether to review the Race Condition Theater artifacts.
+
+**Gift archive assessed (2026-06-18 — safe: no injection, self-contained HTML, not executed):** KCP
+knowledge.yaml + 4 perspective comparisons + Race Condition Theater demo.
+- *Fidelity gaps (book-exposition fixes) `[JBCT]`:* their model transcribed `Result<T, E>` (two-param)
+  and treated Promise as merely async — PFD is single-param `Result<T>` with **Promise carrying
+  failure**. Careful agents inferring two-param = a real tell → tighten the Result/Promise exposition.
+- *Comparisons fair-to-generous* (DDD = "a genuine improvement"); PFD occasionally over-credited with
+  unqualified wins ("failure structurally impossible," "0 lines") that skip its own costs (TTL/queue,
+  serialization-point-as-bottleneck). Demo scorecard persuasive, not neutral (PFD always 0; its costs
+  never scored). Honest spot: doc scenario surfaces a `ConflictState`, no fake auto-merge win.
+- *Engage:* (a) **design-out cost** — triangulated (Poltorak + Thor + Thor's own files); even the demo
+  relies on TTL/recomputation never scored; knowledge.yaml calls design-out "cheapest recovery class"
+  (not always). (b) **serialization point is a bottleneck** — concede; don't let "no race possible"
+  stand unqualified. (c) **altitude taper** — careful reader reads spirals 2-4 as claimed-not-
+  demonstrated (depth concentrated at use-case + Architecture Synthesis). (d) **legacy** — Brownfield
+  already answers top-down reverse application; point him there (likely didn't reach it).

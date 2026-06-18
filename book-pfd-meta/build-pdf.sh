@@ -53,7 +53,7 @@ trap 'rm -rf "$BUILD"' EXIT
 if [[ "$MODE" == "draft" ]]; then
   DATE="Draft — $(date '+%-d %B %Y')"
   SUFFIX="-DRAFT"
-  WATERMARK='\AddToShipoutPictureBG{\AtPageCenter{\makebox(0,0){\rotatebox{55}{\textcolor[gray]{0.85}{\fontsize{2.2cm}{2.2cm}\selectfont DRAFT}}}}}'
+  WATERMARK='\AddToShipoutPictureBG{\AtPageCenter{\makebox(0,0){\rotatebox{55}{\textcolor[gray]{0.90}{\fontsize{2.2cm}{2.2cm}\selectfont DRAFT}}}}}'
 else
   DATE="$(date '+%B %Y')"
   SUFFIX=""
@@ -79,7 +79,7 @@ cat > "$BUILD/header.tex" <<'HDR'
 \definecolor{pfdcmt}{RGB}{110,110,110}
 \definecolor{pfdstr}{RGB}{150,70,0}
 \lstset{%
-  basicstyle=\footnotesize\ttfamily,
+  basicstyle=\small\ttfamily,
   keywordstyle=\color{pfdkw}\bfseries,
   commentstyle=\color{pfdcmt}\itshape,
   stringstyle=\color{pfdstr},

@@ -298,10 +298,15 @@ The cross-cutting distinction the Foundations section drew applies cleanly here.
 A Fork-Join is the pattern for parallel steps that converge. *Buy ticket* has one natural Fork-Join: the event-selling check and the customer-eligibility check are independent. Both depend on validation completing; neither depends on the other. They can run concurrently and their results join before reservation begins. The Fork-Join also grows context, as the prior subsection named: each check on success returns a typed status that the reservation step needs.
 
 ```
-return Promise.all(checkEventSelling.apply(validRequest.event()),
-                   checkCustomerEligibility.apply(validRequest.customer(), validRequest.event()))
-              .map((selling, eligibility) -> ReservationContext.reservationContext(validRequest, selling, eligibility))
-              .flatMap(reserveSeat::apply);
+return Promise.all(
+        checkEventSelling.apply(validRequest.event()),
+        checkCustomerEligibility.apply(
+                validRequest.customer(),
+                validRequest.event()))
+    .map((selling, eligibility) ->
+            ReservationContext.reservationContext(
+                    validRequest, selling, eligibility))
+    .flatMap(reserveSeat::apply);
 ```
 
 `checkEventSelling` returns `Promise<EventSaleStatus>`; `checkCustomerEligibility` returns `Promise<CustomerBookingContext>`. `Promise.all` runs both concurrently and joins them into a tuple, propagating either's typed failure if it occurs. The `.map` builds the next step's context: `ReservationContext` combines the validated request with both statuses. `reserveSeat::apply` is a single-arg method reference taking that context. The step interface stays single-method, single-arg, as the methodology asks; the growing context absorbs what the Fork-Join produced.
@@ -447,7 +452,7 @@ Phase-5 architecture-vector selection operates across six axes (deployment topol
 
 ### Per-use-case SLOs
 
-The architecture decision that surfaces immediately at use-case altitude is the SLO triple per use case: latency, throughput, availability. *Buy ticket* needs to respond to the customer in seconds, not minutes. It needs to handle the venue's peak booking rate, which for a popular event can be thousands of attempts per second in the first minutes of sale. It needs to remain available during exactly those peak periods.
+The architecture decision that surfaces immediately at use-case altitude is the service-level objective (SLO) triple per use case: latency, throughput, availability. *Buy ticket* needs to respond to the customer in seconds, not minutes. It needs to handle the venue's peak booking rate, which for a popular event can be thousands of attempts per second in the first minutes of sale. It needs to remain available during exactly those peak periods.
 
 These SLOs do not appear out of nowhere. They come from the business's understanding of what the use case is for. They are inputs to architecture, not outputs. The Phase-4 elicitation that the Architecture Synthesis module fully treats begins here: what does *this* use case need to deliver in operational terms? Answer that, in the use case's own scope, and the answer constrains the architecture choices that follow.
 

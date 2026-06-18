@@ -362,7 +362,7 @@ For the cancellation-and-refund workflow (the numbers below are illustrative; in
 - **Throughput.** 50 cancellations per second sustained; 200 per second peak burst — well below the purchase path, since cancellations are a fraction of sales.
 - **Availability.** 99.9% during business hours, including degraded modes (a committed cancellation with the confirmation message still queued counts as availability).
 
-These differ from any single use case's SLOs. The constituent *initiate refund* use case has tighter latency (it lives on the payment provider's SLA) but more relaxed throughput (most cancellation attempts that fail eligibility never reach the refund step). The workflow-level SLO is the customer-facing commitment; the use-case-level SLOs are the internal contracts that the workflow's composition must satisfy to meet its workflow-level number.
+These differ from any single use case's SLOs. The constituent *initiate refund* use case has tighter latency (it lives on the payment provider's service-level agreement, or SLA) but more relaxed throughput (most cancellation attempts that fail eligibility never reach the refund step). The workflow-level SLO is the customer-facing commitment; the use-case-level SLOs are the internal contracts that the workflow's composition must satisfy to meet its workflow-level number.
 
 ### Per-data-class consistency
 

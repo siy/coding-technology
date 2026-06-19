@@ -3,6 +3,7 @@
 ## What You'll Learn
 
 - Vertical slicing philosophy and package organization
+- The telescope rule: how the package tree grows as the design discovers altitudes
 - Module organization for larger systems
 - File structure guidelines: import ordering, member ordering, utility interfaces
 - Framework integration with Spring Boot and JOOQ
@@ -96,6 +97,69 @@ com.example.app/
 - Bean wiring, dependency injection setup
 
 **Rule**: No business logic, only infrastructure configuration.
+
+---
+
+## The Telescope Rule: How Structure Grows
+
+The layout above is a snapshot, not a starting point. A new codebase has no workflows or subsystems yet - only use cases, sitting flat. Structure is not designed up front; it **grows as the design discovers it**, and the package tree grows with it. JBCT calls this the **telescope rule**, after the discovery hierarchy in *Process-First Design*: the same altitudes that organize the design - use case, workflow, subsystem, system - organize the packages. As the design discovers a higher altitude, a package level **telescopes open** to hold it.
+
+The rule is mechanical, which is the point: placement stops being a matter of taste.
+
+**A new app is flat.** Every use case is a package directly under `usecase`; the only shared package is the system-wide `domain.shared`. This is the structure shown above.
+
+```
+com.example.app/
+|-- usecase/
+|   |-- holdseat/
+|   |-- confirmseat/
+|   |-- releaseexpiredholds/
+|   |-- searchevents/
+|-- domain/shared/
+```
+
+**A workflow appears, and the tree expands.** When several use cases cohere under one change driver - a reservation policy governing hold, confirm, and release - a workflow package appears and those use cases **move under it**. A level that did not exist now sits between `usecase` and the slices it groups.
+
+```
+com.example.app/
+|-- usecase/
+|   |-- reservation/                # workflow package (appeared)
+|   |   |-- holdseat/               # use cases moved under it
+|   |   |-- confirmseat/
+|   |   |-- releaseexpiredholds/
+|   |   |-- shared/                 # shared *within* reservation
+|   |-- searchevents/               # still flat - in no workflow yet
+|-- domain/shared/                  # shared across everything
+```
+
+**A subsystem appears, and it expands again.** When workflows cluster under a domain concern - booking, pricing - a subsystem package appears and the workflows move under it. The same move, one altitude up; a system boundary does it once more. Each level appears only when something earns it: one use case is not a workflow, one workflow is not a subsystem. Do not create empty levels in anticipation.
+
+### Shared code lives at the lowest common ancestor
+
+This generalizes a rule you already know - *move a reused element to the nearest `shared` package* (Chapter 7) - now that there is more than one altitude to be near. **The nearest shared package is the lowest common ancestor of the element's users.**
+
+- Used by two use cases in one workflow → that workflow's `shared`.
+- Used across two workflows in a subsystem → that subsystem's `shared`.
+- Used across subsystems → `domain.shared` at the root.
+
+`domain.shared` is simply the top of this hierarchy - the system-altitude shared package - and the tiered placement (`domain/<module>/` then `domain/shared/`) is this same rule seen at two levels. Shared code **floats up, never down**: when a new user appears at a higher altitude, lift the element to the new lowest common ancestor; never push it down speculatively, and never park it in `domain.shared` "just in case."
+
+**The altitude of a shared element measures the blast radius of changing it.** Something that had to climb to `domain.shared` is reachable by the whole system; something in a workflow's `shared` is reachable by that workflow alone. Where shared code sits tells you how far a change to it can travel.
+
+### Dependencies point up the telescope
+
+The existing dependency rules still hold (use cases depend on shared domain code; adapters depend on use cases; never the reverse). The telescope adds one:
+
+**Dependencies point up the tree, never sideways.** A use case may depend on shared code at its own altitude or any ancestor's. It must **not** import from a sibling workflow's package. Two workflows that need each other interact through a use case or step interface at their common ancestor - not by reaching into one another's slices. An import that crosses sideways between workflow packages is a visible smell: the telescope makes the wrong dependency wrong on sight.
+
+### The reorg is a deliberate refactor
+
+Expanding a level moves files - imports change, git records the move, parallel branches may conflict on moved files. Do the move **when the workflow is confirmed**, not on a hunch: reactively, the way the design discovers the altitude, never speculatively. It is cheap with an IDE's package-move refactor, but it is not free; batch it as one commit.
+
+**Why this matters (by criteria):**
+- **Mental Overhead**: placement becomes an algorithm - lowest common ancestor - not a judgment call (+3)
+- **Complexity**: sideways coupling between features surfaces as a sideways import (+2)
+- **Business/Technical Ratio**: the package tree mirrors the business hierarchy at every altitude (+2)
 
 ---
 
@@ -378,6 +442,8 @@ All I/O operations live in adapters. Framework swapping (Spring -> Micronaut) af
 | Repositories | `adapter.persistence` | Database access |
 | Config | `config` | Bean wiring |
 
+This table is the flat base case. As the design discovers workflows and subsystems, use case packages nest under them and shared code settles at the lowest common ancestor of its users - see *The Telescope Rule* above.
+
 ---
 
 ## Key Takeaways
@@ -387,6 +453,7 @@ All I/O operations live in adapters. Framework swapping (Spring -> Micronaut) af
 3. **Framework at edges** - Pure business logic in use cases
 4. **Adapters implement step interfaces** - Clear contracts
 5. **Modules when needed** - Don't prematurely modularize
+6. **The telescope rule** - Structure grows as the design discovers altitudes; use cases nest under workflows/subsystems, shared code lives at the lowest common ancestor, dependencies point up the tree
 
 ---
 

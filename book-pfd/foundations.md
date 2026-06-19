@@ -20,13 +20,15 @@ The immediate consequence is that types belong to processes. A "customer" in *bu
 
 This is a bet, and it is worth naming as one. Entity-first design — one shared model of each domain concept, used everywhere — has a real advantage: no duplication, one place to look. Process-first gives that up; it pays in per-process types and in the discipline of deciding what is genuinely shared. The bet is that the coupling cost of the shared model grows faster than the duplication cost of per-process types, so that past a certain scale process-first is cheaper to maintain. The spiral does not argue this bet; it shows the methodology operating and lets the reader judge whether the result is the kind of code they want to maintain. The bet's scope is bounded: enterprise backend, where systems are large and long-lived enough for the coupling cost to bite. The methodology does not claim to be the right tool below that scale or outside that domain.
 
+None of this is a ban on entities. An entity earns its place when a business invariant genuinely spans more than one field — when a whole assembled from individually-valid fields can still be invalid, so the combination needs guarding, not each field alone. Its role is to enforce that cross-field invariant during persistence: it is the composite every write to that state passes through, so the store can never hold a combination the invariant forbids. Process-first changes only the default — the process is the unit of design, and an entity is introduced where a cross-field invariant demands one, not placed at the centre of the domain because a concept happens to have a name.
+
 ---
 
 ## The six properties of a process
 
 A process has six properties, and they are the same six at every altitude — that is what makes the telescope below possible. Their granularity changes as you climb; the list does not.
 
-- **Trigger** — what makes the process run. An incoming request, a scheduled tick, an event, a human approval resolving. The trigger is not the protocol that carries it; the same work behind a different trigger is a different process.
+- **Trigger** — what makes the process run: an incoming request, a scheduled tick, an event, a human approval resolving. The trigger is not the transport that carries it; HTTP versus a queue is not a different trigger. A process needs at least one trigger and may have several (a fulfilment process can begin from a purchase or from a restock), but its *outcome* is what defines it: the same outcome reached through different triggers is one process, while the same steps performed for a different outcome are different processes.
 - **Typed input** — what the process needs to begin, as a precise type carrying exactly that and no more.
 - **Typed output** — what the process produces on success.
 - **Typed failures** — the enumerable, closed set of ways it can fail, each a named domain fact, part of the specification rather than an exception raised elsewhere.
@@ -114,6 +116,8 @@ The same criterion, derived independently and given formal shape, is [Yannick Lo
 Loth gives the cohesion behind the test its own formal account in [*On the Nature of Cohesion*](https://doi.org/10.5281/zenodo.20492913): cohesion as correctness relative to a modularization principle, along exactly these two axes. Process-First Design's change driver is one such principle, so the convergence IVP named now reaches cohesion itself — and the same account explains why the old structural metrics never captured it, since they measure what code shares rather than what governs it.
 
 One consequence of the telescope is worth stating because the spiral relies on it: a unit's composition at one altitude is a Leaf at the altitude above. A workflow is a composition of use cases, and a Leaf to its subsystem. A subsystem is a composition of workflows, and a Leaf to its system. The patterns recur because the structure is fractal.
+
+Because the structure is fractal, it is also how the code is organized. The altitudes are not only the order in which the design is discovered; they are the order in which a reader navigates the codebase, browsing from system to subsystem to workflow to use case — which is the answer to the worry about a flat list of a thousand use cases. The companion volume, Java Backend Coding Technology, names the package realization of this the *telescope rule*: each altitude becomes a package level that appears only when the design discovers it, the use cases below moving under it, while shared code settles at the lowest altitude that covers all its users.
 
 ---
 

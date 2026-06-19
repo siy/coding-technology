@@ -157,7 +157,7 @@ BuyTicket.Response:
     ledgerEntry: BookingLedgerEntry
 ```
 
-The ledger is assembled from entries the workflows already return. Audit-as-Aspect leaves the output untouched and wraps the workflow instead:
+The ledger is assembled from entries the workflows already return. Returning the entry is not the same as writing it: the append to the ledger is a step inside *buy ticket*, performed by the use case as it completes the booking, not after the fact, and the `ledgerEntry` in the response is that already-written record handed back as data, not a write deferred to the caller. Nothing intercepts the call: a controller that invokes *buy ticket* directly receives a response whose entry is already persisted. *Assembled* means the ledger accumulates what each use case appends, not that a downstream collector gathers return values. Audit-as-Aspect, by contrast, leaves the output untouched and wraps the workflow instead:
 
 ```java
 auditLedger.wrap(buyTicket)

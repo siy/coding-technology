@@ -68,6 +68,9 @@ cat > "$BUILD/header.tex" <<'HDR'
 \usepackage{xcolor}
 \usepackage{etoolbox}
 \usepackage{listings}
+\usepackage{titlesec}
+\usepackage{tikz}
+\usetikzlibrary{automata,positioning,arrows.meta}
 % All code blocks render through listings (pandoc --listings) so long Java lines
 % wrap at the text measure instead of overflowing the page. TeXLive-basic ships
 % listings; fvextra (which would let pandoc's tango Highlighting wrap) is absent
@@ -86,6 +89,15 @@ cat > "$BUILD/header.tex" <<'HDR'
   breaklines=true,breakatwhitespace=false,
   columns=fullflexible,keepspaces=true,showstringspaces=false,
   literate={—}{{-}}1 {–}{{-}}1 {→}{{$\rightarrow$}}1}
+% Headings: make subsection/subsubsection visibly larger than inline bold text.
+\titleformat{\subsection}{\Large\bfseries}{}{0pt}{}
+\titlespacing*{\subsection}{0pt}{1.6ex plus .2ex}{0.8em}
+\titleformat{\subsubsection}{\large\bfseries}{}{0pt}{}
+\titlespacing*{\subsubsection}{0pt}{1.3ex plus .2ex}{0.6em}
+% Discourage orphan/widow lines (a lone line stranded at a page top or bottom).
+\clubpenalty=10000
+\widowpenalty=10000
+\displaywidowpenalty=10000
 % Start each chapter (top-level heading) on a fresh page; this also breaks before
 % the table of contents (article's \tableofcontents uses \section*), giving a clean
 % title-page / contents / first-chapter split.

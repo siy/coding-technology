@@ -46,3 +46,54 @@ public interface OrderPersistence {
 ```
 
 Wire into slice: `static OrderService orderService(@PgSql OrderPersistence orders) { ... }`
+
+## jOOQ Integration
+
+### Offline Code Generation via pg-tools
+
+pg-tools generates jOOQ `XMLDatabase`-compatible XML from PostgreSQL migration files — no live DB, no Docker, no H2:
+
+```bash
+mvn pg:export-jooq-xml     # generates src/main/resources/jooq/jooq-schema.xml
+```
+
+CI drift detection:
+```xml
+<execution>
+  <id>check-jooq-schema</id>
+  <phase>verify</phase>
+  <goals><goal>check-jooq-xml</goal></goals>
+</execution>
+```
+
+Then wire standard jOOQ codegen against the XML:
+```xml
+<plugin>
+  <groupId>org.jooq</groupId>
+  <artifactId>jooq-codegen-maven</artifactId>
+  <configuration>
+    <generator>
+      <database>
+        <name>org.jooq.meta.xml.XMLDatabase</name>
+        <properties>
+          <property><key>xmlFile</key>
+            <value>${project.basedir}/src/main/resources/jooq/jooq-schema.xml</value></property>
+          <property><key>dialect</key><value>POSTGRES</value></property>
+        </properties>
+      </database>
+    </generator>
+  </configuration>
+</plugin>
+```
+
+Workflow: edit migration → `mvn pg:export-jooq-xml` → commit XML alongside migration → jOOQ codegen reads XML offline.
+
+Supported types: all PG built-ins (int, text, uuid, jsonb, timestamptz, arrays, enums, domains, composites as USER-DEFINED). 
+
+### jOOQ Runtime Connectors
+
+```java
+static MySlice mySlice(@JooqConnector JooqConnector jooq) { ... }
+```
+
+Available connectors: `JdbcJooqConnector` (sync), `JooqR2dbcConnector` (reactive). Both support `transactional()` with auto-commit/rollback.

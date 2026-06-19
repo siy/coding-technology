@@ -1,94 +1,59 @@
-# Leanpub Publishing Setup
+# Leanpub Publishing (upload mode)
 
-## One-Time Setup
+Both books ship as **self-built PDF/EPUB uploaded to Leanpub** ("upload" writing mode).
+Leanpub is the storefront; the files are produced by our own pandoc/xelatex build, not by
+Leanpub's generator. (An earlier native-sync attempt lived in `book/sync-leanpub.sh`; it was
+abandoned and removed. Do not resurrect it — Leanpub's generator cannot reproduce the custom
+typography, code listings, fonts, or draft watermark.)
 
-### 1. Create Leanpub Account
-- Go to https://leanpub.com and create author account
-- Set up payment info for royalties (Stripe/PayPal)
+## One-time setup
 
-### 2. Create Book Project
-- Go to https://leanpub.com/author_dashboard/new_book
-- Choose "I want to write in my web browser and sync to GitHub/Dropbox" or "Upload"
-- Book slug (URL): choose something like `jbct` → leanpub.com/jbct
+1. **Leanpub account + Pro plan.** The upload API requires a Pro membership. Add payout info
+   (Stripe/PayPal) for royalties.
+2. **Create each book in upload mode.** https://leanpub.com/author_dashboard/new_book → choose
+   **Upload** (or `POST /books.json` with `sync_mode: "upload"`). Note each slug
+   (e.g. `jbct-book`, `process-first-design`).
+3. **API key.** https://leanpub.com/author_dashboard/settings → copy it.
+4. **Environment.** In `~/.zshrc` (never commit the key):
+   ```bash
+   export LEANPUB_API_KEY="..."
+   ```
+5. **Book settings on Leanpub** (title, subtitle, description, cover, price, categories) — set
+   once in the dashboard.
 
-### 3. Get API Key
-- Go to https://leanpub.com/author_dashboard/settings
-- Copy your API key
+## Publishing a new version
 
-### 4. Configure Environment
-Add to your shell profile (`~/.zshrc` or `~/.bashrc`):
+Build the book, then upload with the shared script (repo root `publish-leanpub.sh`):
 
 ```bash
-export LEANPUB_API_KEY="your-api-key-here"
-export LEANPUB_BOOK_SLUG="jbct"  # your book's URL slug
+# JBCT
+./book/build-pdf.sh
+./publish-leanpub.sh jbct-book book/jbct-book.pdf book/jbct-book.epub --publish
+
+# PFD (use the final build so the watermark is gone)
+./book-pfd-meta/build-pdf.sh --final
+./publish-leanpub.sh process-first-design book-pfd-meta/process-first-design.pdf --publish
 ```
 
-Then reload: `source ~/.zshrc`
+Script behaviour:
+- Uploads PDF (and EPUB, if given) via `POST /{slug}/upload.json` with `edition_type=full`.
+- `--sample` uploads the free sample edition instead.
+- `--publish` releases a new live version after upload (separate confirm; may email readers).
+- Polls `job_status.json` (uploads are processed asynchronously).
+- `--dry-run` prints actions without calling the API.
+- Reads `$LEANPUB_API_KEY`; never prints it.
 
-### 5. Configure Book Settings on Leanpub
-In book settings (https://leanpub.com/jbct/settings):
+## Notes / limitations (upload mode)
 
-- **Title**: Java Backend Coding Technology
-- **Subtitle**: Unified Code Through Functional Composition
-- **Description**: (copy from README or create new)
-- **Cover**: Upload `cover.png` (1600x2400 px recommended)
-- **Pricing**: Set minimum/suggested price
-- **Categories**: Programming, Java, Software Architecture
-
-## Directory Structure
-
-```
-book/
-├── manuscript/           # Leanpub content directory
-│   ├── Book.txt         # Chapter order manifest
-│   ├── Sample.txt       # Free sample chapters
-│   ├── ch01-*.md        # Chapter files
-│   ├── ...
-│   └── images/
-│       └── title_page.png
-├── sync-leanpub.sh      # Sync and build script
-└── LEANPUB_SETUP.md     # This file
-```
-
-## Usage
-
-### Preview Build
-```bash
-./sync-leanpub.sh preview
-```
-
-### Publish New Version
-```bash
-./sync-leanpub.sh publish
-```
-
-### Check Build Status
-```bash
-./sync-leanpub.sh status
-```
-
-## Alternative: GitHub Integration
-
-Instead of API uploads, you can connect Leanpub directly to GitHub:
-
-1. In Leanpub book settings, choose "Writing Mode" → "GitHub"
-2. Connect your GitHub account
-3. Select repository and branch
-4. Set manuscript path to `book/manuscript`
-5. Leanpub will auto-build on push
+- Accepted upload formats: **PDF and EPUB** (MOBI is not accepted via the API).
+- Leanpub does not generate other formats from your file — you ship exactly what you build.
+- No Leanpub-generated sample; upload your own with `--sample`.
+- Self-made EPUBs are sold as downloads but are not readable in the Leanpub reading app.
+- Whether an upload goes live immediately or needs `--publish` depends on book settings; the
+  script defaults to upload-only. Verify against the dashboard the first time.
 
 ## Troubleshooting
 
-### API Key Not Working
-- Verify key at https://leanpub.com/author_dashboard/settings
-- Ensure no extra whitespace in environment variable
-
-### Build Fails
-- Check Leanpub's build log in dashboard
-- Verify Book.txt lists existing files
-- Ensure markdown is valid (no unclosed tags)
-
-### Cover Not Appearing
-- Must be named `title_page.png` in `manuscript/images/`
-- Recommended size: 1600x2400 pixels
-- Also upload via Leanpub web interface as backup
+- *"Uploads are only available for upload-mode books"* → the book is not `sync_mode: upload`.
+- `401`/`403` → API key wrong, or the account is not Pro.
+- Build/processing errors → check the Leanpub dashboard build log.

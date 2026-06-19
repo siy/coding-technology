@@ -39,3 +39,6 @@ book/*.pdf
 book/*.epub
 book-pfd-meta/*.pdf
 book-pfd-meta/*.epub
+
+# Claude Code (local config)
+.claude/

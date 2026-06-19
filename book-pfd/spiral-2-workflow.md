@@ -22,7 +22,20 @@ The pass closes by naming what does not appear at this altitude either. Subsyste
 
 A workflow is a named set of use cases that share a change driver and compose toward one business outcome, and that is also how you recognize one. Take a candidate set of use cases and ask: what business change would force all of them to change together? If a single force (the reservation policy, say) rewrites every one of them when it shifts, they cohere into one workflow. If a change touches only some, the set is not one workflow but two that happen to sit near each other. The cohesion is in the business, not in shared data; a workflow is not a deployment unit, a transaction boundary, or "the use cases that touch the same record."
 
-Booking shows the test passing. *Hold seat*, *confirm reservation*, *cancel reservation*, and *release expired holds* belong to one workflow because the reservation policy governs all four: change what holding and confirming a seat means — the hold duration, the confirmation rules, the conditions for release — and all four change together. They also contend over the same seat record, but that contention is a symptom of their cohesion, not its cause: they touch the same state because the same force governs them, not the other way round. The shared-data view has the arrow backwards. Cohesion comes first; contention is what the methodology then has to manage, and later sections do.
+Booking shows the test passing. *Hold seat*, *confirm reservation*, *cancel reservation*, and *release expired holds* belong to one workflow because one change driver governs all four: the reservation policy (the hold duration, the confirmation rules, the conditions for release). Concretely, that policy is a small state machine over a seat's reservation state — free, held, confirmed — and the four use cases are its transitions: *hold seat* moves free to held, *confirm* held to confirmed, *cancel* and *release expired holds* return a held seat to free. Not every facet touches all four; a shorter hold duration reaches holding and expiry, not cancellation. What makes them one workflow is that they are the transitions of one machine answering to one policy, not that they move in lockstep. They also contend over the same seat record, but that contention is a symptom of their cohesion, not its cause: they touch the same state because the same force governs them, not the other way round. The shared-data view has the arrow backwards. Cohesion comes first; contention is what the methodology then has to manage, and later sections do.
+
+\begin{center}
+\begin{tikzpicture}[->,>=stealth,thick,node distance=3.4cm,
+  every state/.style={draw,minimum size=1cm,font=\small},
+  every edge/.style={font=\footnotesize}]
+  \node[state,initial,initial text={}] (free) {free};
+  \node[state] (held) [right=of free] {held};
+  \node[state,accepting] (confirmed) [right=of held] {confirmed};
+  \path (free) edge node[above] {hold seat} (held)
+        (held) edge node[above] {confirm} (confirmed)
+        (held) edge[bend left=50] node[below] {cancel / release} (free);
+\end{tikzpicture}
+\end{center}
 
 The set passes both directions the recognition test has. It is *complete*: every use case the reservation policy governs is here, so a policy change lands in this one workflow rather than scattering across several (the shotgun surgery a split would cause). And it is *pure*: nothing in it answers to a different driver, so pricing's changes never ripple through booking (the accidental coupling a foreign member would invite). A set that passes only one direction is not a workflow — drop *release expired holds* elsewhere and a hold-duration change must be made twice; fold a pricing use case in and pricing's churn reaches booking.
 
@@ -81,16 +94,20 @@ The steps of the workflow are use cases: *load booking*, *verify cancellation el
 
 A workflow's own signature — `Request` in, `Promise<Response>` out, the `Promise` carrying asynchrony and failure — is the same shape a use case has, one altitude up. That sameness is the point: because every use case and workflow presents this one invocation shape, a framework can invoke and Aspect-wrap them uniformly, and a subsystem can later compose a whole workflow exactly as a workflow composes a use case. The shape is what matters; whether a framework names it or you write the method out, as below, is a detail.
 
+A workflow does not have to exist in code at all. By default it is a logical unit: the grouping a shared change driver defines, the lens you design and reason through, its use cases invoked directly by whatever triggers each of them. It takes code form only when the workflow itself has a trigger of its own, distinct from any of its use cases' triggers — a schedule, an external event, an entry point that starts the whole chain and belongs to no single use case. Even then it keeps the use-case shape above, one `apply` over the workflow's own trigger input composing its use cases as steps; it is never a single interface that contains them. The steps stay their own use cases, defined independently, as the previous section named.
+
 ```java
 public interface CancelBooking {
     Promise<Response> apply(Request request);
-    interface LoadBooking                   { Promise<Booking> apply(ValidRequest request); }
-    interface VerifyCancellationEligibility { Promise<EligibleBooking> apply(Booking booking); }
-    interface CancelReservation             { Promise<CancelledReservation> apply(EligibleBooking booking); }
-    interface InitiateRefund                { Promise<RefundedBooking> apply(CancelledReservation cancelled); }
-    interface InvalidateTicket              { Promise<InvalidatedTicket> apply(RefundedBooking refunded); }
-    interface SendCancellationConfirmation  { Promise<NotificationOutcome> apply(RefundedBooking refunded); }
 }
+
+// Each step is its own use case, defined independently, not nested in the workflow:
+interface LoadBooking                   { Promise<Booking> apply(ValidRequest request); }
+interface VerifyCancellationEligibility { Promise<EligibleBooking> apply(Booking booking); }
+interface CancelReservation             { Promise<CancelledReservation> apply(EligibleBooking booking); }
+interface InitiateRefund                { Promise<RefundedBooking> apply(CancelledReservation cancelled); }
+interface InvalidateTicket              { Promise<InvalidatedTicket> apply(RefundedBooking refunded); }
+interface SendCancellationConfirmation  { Promise<NotificationOutcome> apply(RefundedBooking refunded); }
 ```
 
 ```java

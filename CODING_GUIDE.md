@@ -169,6 +169,8 @@ com.example.app/
 
 **Guideline:** Start specific (use case package), move to broader scope only when actually reused. Don't prematurely extract to `shared/`.
 
+**The telescope rule:** these tiers are one hierarchy — use case, then workflow, then subsystem, then system — and each level appears as a package only when the design discovers it (a workflow grouping its use cases, a subsystem grouping its workflows). When a level appears, the use cases it groups move under it; the package tree telescopes open along the same altitudes the design discovered. Shared code lives at the **lowest common ancestor** of its users and floats up as new users appear at higher altitudes, never down. The altitude of a shared element is the blast radius of changing it. Dependencies point up the tree (toward shared ancestors), never sideways into a sibling's package. Full treatment in the Project Structure chapter.
+
 ---
 
 ## Design Methodology

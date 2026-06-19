@@ -367,6 +367,166 @@ insight survives without the out-of-scope example.
 
 ---
 
+### Round 6 (2026-06-19) — cohesion overstatement + multi-trigger workflows
+
+**1. Cohesion claim overstated `[PFD]` (real fix) — `spiral-2-workflow.md:25`.** The booking example says
+the four reservation use cases "all change together." Poltorak: a hold-duration change doesn't touch
+*cancel reservation*; a confirmation-rules change doesn't touch *release expired holds*. He's right —
+"all four change together" is false for single changes. The principle is sound (one change driver, the
+reservation policy, governs all four) and **:27 already frames it correctly** (complete + pure, driver-
+based). Fix = align :25 to :27: cohesion is **shared change driver / same reason to change, NOT lockstep
+co-change**. Reworded (offered): "...one change driver governs all four: the reservation policy
+(the hold duration, the confirmation rules, the conditions for release). Concretely, that policy is a
+small state machine over a seat's reservation state (free, held, confirmed) and the four use cases are
+its transitions... Not every facet touches all four... they are the transitions of one machine
+answering to one policy, not that they move in lockstep." Author addition: frame the four as the
+**transitions of the seat's reservation state machine** — the policy made concrete (machine = the
+driver/cause; shared seat record = where its state lives/symptom, consistent with :25's driver-first
+argument). Ties this example to the sum-type-state-machine reframe (Rounds 4-5). High value: sharpens
+the recognition test itself (change-driver cohesion != co-change frequency).
+
+**2. Multi-trigger processes `[PFD]` (model refinement — author's call to encode).** Poltorak: workflow
+with 2 triggers (delivery starts on purchase-with-stock OR on restock-of-a-paid-order)? **Author's model:
+a process needs at least one trigger and the count is unlimited; the OUTCOME defines the process, not the
+trigger.** Tension to reconcile: `foundations:29` currently says "the same work behind a different trigger
+is a different process" (trigger-individuates), which contradicts multi-trigger. Fix = revise :29 to
+**outcome-individuates**: >=1 trigger, may have several (purchase or restock), same outcome via different
+triggers = one process, same steps for a different outcome = different processes (preserves the old
+clause's don't-over-merge intent, e.g. *cancel* vs *release expired holds* stay distinct). Keep
+`foundations:91` "one trigger, one outcome" as the canonical shape; nuance lives in :29. Equivalent
+elegant form: one process triggered by a derived fact with multiple producers. Revised :29 **applied 2026-06-19**.
+
+**Status (2026-06-19):** `:25` cohesion rewrite (driver + seat state machine) and `:29` trigger revision (>=1 trigger, outcome-individuates) both **APPLIED, built, verified in PDF**. Poltorak reply pending.
+
+### Round 6 cont. (2026-06-19) — extended discussion: formatting + content
+
+**Formatting (the 3 author tasks):**
+- *Header font size* `[build]` — `##`/`###` rendered at `\normalsize\bfseries` (= inline bold) under
+  pandoc's default `article` class. **FIXED**: added `titlesec` (subsection -> `\Large`, subsubsection ->
+  `\large`) to `book-pfd-meta/build-pdf.sh`; verified distinct in the rebuild (113pp).
+- *Hanging lines (orphans/widows)* `[build]` — no penalties set. **FIXED**: added
+  `\clubpenalty/\widowpenalty/\displaywidowpenalty=10000` (preventive; visual spot-check still advised).
+- *Diagrams* `[build]` — ASCII-in-listings is hard to parse (Poltorak). **DECISION PENDING**: TikZ
+  (pure-LaTeX, no new dependency — recommended) vs Graphviz/Mermaid (easier authoring, adds a binary) vs
+  improved ASCII. Convert the few structural diagrams (use-case dependency graph; the new seat state machine).
+
+**Content items from the extended debate (author acknowledged "поправлю"; book edits PENDING) `[PFD]`:**
+- *Workflow-as-one-interface looks like an entity* — `CancelBooking` nesting all use-case interfaces reads
+  as a god-object and isn't needed physically (workflow = logical grouping; if in code, a thin
+  orchestrator interface+method). Rework the representation. (Author: "на практиці не потрібен".)
+- *Code fragment without its function* (p.43) — `return CancelBooking.ValidRequest.validRequest(request)`
+  shown as a bare body; add the enclosing function/signature so fragments read as valid Java.
+- *Buy-ticket unwind line* — "committed steps hold/authorize/confirm must unwind": Poltorak says hold/auth
+  have nothing to undo; author: the hold must be released. Sharpen so the unwind (release hold, void auth)
+  is concrete.
+- *Iteration return semantics* — 50-ticket buy / refund saga: state explicitly that iteration returns each
+  operation's result and the caller decides; name fail-fast vs all-and-mark-cancelled (often parallel).
+- *Time-as-condition / release-expired-holds phrasing* — reads as in-memory logic; in practice often a DB
+  status/criteria check. Optional clarify.
+
+Note: most of Poltorak's coupling/entity arguments are the recurring entity-vs-process debate (accidental
+vs essential coupling) — already covered; no new action beyond the above.
+
+### Round 7 (2026-06-19) — the long entity debate: the missing "not anti-entity" statement + 2 code fixes
+
+The whole multi-hour thread reduces to one charge: **"PFD is anti-entity and has no invariant story."**
+Author's own replies hold the rebuttal the book lacks (5:12: an entity is needed only when constraints
+cross field boundaries; valid-fields -> valid-whole means a separate entity adds nothing; 6:04: entities
+exist "in a sense" as the DB data representation). The book never states this, so it reads as anti-entity
+though the author isn't.
+
+**1. Entity clarification `[PFD]` (priority; ties to the entity-at-db-boundary gap).** Add to foundations
+after the `:21` bet: PFD is NOT a ban on entities. An entity earns its place when an invariant crosses
+field boundaries (a whole of valid fields can still be invalid); where that invariant must hold in
+storage, the guarding composite **reappears at the persistence boundary** (the shape state is saved in,
+the gate writes pass through). Process-first changes the DEFAULT (process = unit of design; entity
+introduced where an invariant demands, not centred by assumption). Defuses Poltorak's core charge,
+matches the author's position, supplies the entity-at-db-boundary acknowledgment the book was missing.
+Draft ready (offered).
+
+**2. Seat-change pricing example `[PFD]` (real fix) — `spiral-3:69`.** "(acquire the replacement, charge
+the difference)" / "(release the original, refund the difference)" is inaccurate: *buy ticket* charges
+the FULL new price and cancel-refund refunds the FULL old price; the NET is the difference, but each leg
+is a whole transaction. Reword to "(acquire and charge for the replacement)" / "(release and refund the
+original)" + note the net is the difference settled as two whole transactions (a single difference-charge
+would need a difference-pricing variant: reuse vs fewer transactions).
+
+**3. Buy-ticket unwind wording `[PFD]` — `spiral-2:181`.** "committed steps hold/authorize/confirm/issue
+must unwind in reverse" is defensible (each has an inverse) but reads as "nothing to undo." Sharpen by
+naming the inverses (release the hold, void the authorization, un-confirm, invalidate the ticket),
+unwound from the failure point. Ties to the seat state machine (held vs sold are distinct states).
+
+**Recurring (mostly covered / 1 open):** persisted cross-field invariant (the "car with 3 wheels") = the
+deferred write-gate / stateful-edge `[JBCT]`, now located by fix #1. Compensation forward/inverse drift:
+author's shared-module answer is defensible, no action. **OPEN consideration: navigation/discovery at
+scale** (thousands of flat use cases) — the telescope (subsystem -> workflow -> use case) IS the
+navigation hierarchy; the book could state that explicitly as the answer (it currently doesn't connect
+the telescope to large-surface discovery).
+
+### Round 8 (2026-06-19) — entity + workflow model encoded (APPLIED, built, verified)
+
+Three rules the author settled, now in the book and the 114pp PDF:
+1. **Entity** — `foundations` (after :21): not a ban on entities; an entity is for a **cross-field invariant
+   enforced at persistence**; process-first changes the *default*, not bans entities. Answers the whole
+   Round-7 "anti-entity" charge, and supplies the entity-at-db-boundary acknowledgment.
+2. **Workflow materialization** — `spiral-2` (workflow-body section): a workflow is **logical by default**;
+   it materializes as code only when it has a trigger of its own, distinct from its use cases'.
+3. **Materialized = use-case-like** — `spiral-2`: `CancelBooking` de-nested from a container of six step
+   interfaces to a **use-case-shaped interface** (one `apply`, workflow-trigger input); the six steps are
+   now independent use cases. Kills the "workflow interface = entity" shape Poltorak flagged.
+
+### Round 9 (2026-06-19) — the telescope rule (cross-book; closes the navigation-at-scale OPEN item)
+
+The Round-7/8 OPEN consideration — navigation/discovery at scale ("thousands of flat use cases") — is now
+answered, and the answer is the **telescope rule**: the discovery hierarchy (use case -> workflow ->
+subsystem -> system) is also how the package tree is organized, so it doubles as the codebase's navigation
+hierarchy. Author's framing accepted: it *expands packages*, so the telescope is literally visible. Applied
+across both books (built + verified):
+- **PFD** `foundations` (after the fractal-consequence para, :118): 3 sentences — the fractal structure is
+  also how the code is organized; names that *Java Backend Coding Technology* calls the package realization
+  the *telescope rule*; states the lowest-covering-altitude shared rule. Explicitly answers the flat-1000-
+  use-cases worry. Kept brief by design (mechanics live in JBCT).
+- **JBCT** `book/ch15-project-structure.md`: new section **"The Telescope Rule: How Structure Grows"** —
+  flat base case -> workflow appears (tree expands, use cases move under it) -> subsystem appears; **shared
+  code at the lowest common ancestor** (generalizes ch07 "nearest shared package" + CODING_GUIDE's tiered
+  rule; floats up never down; altitude = blast radius); **dependencies point up, never sideways** (sibling-
+  workflow import = visible smell); reorg-as-deliberate-refactor; by-criteria block. Plus hooks (What
+  You'll Learn, Key Takeaways #6, a note under the "Where Things Go" table).
+- **CODING_GUIDE.md** (after the tiered-placement guideline, :170): names the telescope rule, generalizes
+  the tiers to LCA + float-up + blast-radius + dependencies-point-up; points to the Project Structure chapter.
+
+Reconciliation (no contradiction): today's flat `usecase/<name>` + single `domain/shared` is the
+telescope's **base case** (t=0, before any workflow emerged); "nearest shared package" = the LCA once
+intermediate altitudes exist. Value to JBCT is **determinism**: placement becomes an algorithm (LCA), not
+taste — AI-friendly.
+
+### Round 10 (2026-06-19) — audit-as-data: who writes it (APPLIED, built, verified) + Poltorak sign-off
+
+**Question:** "Who intercepts the result and writes the audit, if the web calls the BuyTicket use case
+directly?" (re the `BuyTicket.Response { ticket, receipt, ledgerEntry }` audit-as-data example, spiral-3).
+
+**Answer/fix:** nobody intercepts — that is the point of audit-as-data. The ledger append is a **step inside
+the use case**, performed as it completes the booking; the `ledgerEntry` in the response is the
+already-written record handed back as **data**, not a write deferred to the caller. The output type is the
+contract surface, not the persistence trigger. The misleading line was *"the ledger is assembled from
+entries the workflows already return"* (reads as if a downstream collector exists). Fixed in
+`spiral-3-subsystem.md` (after the `BuyTicket.Response` block): added that returning ≠ writing, the use case
+writes its own entry, nothing intercepts a direct call, and *assembled* = the ledger accumulates what each
+use case appends. Built, verified (115pp).
+
+Note: author's chat reply used "...стосуються всього воркфлоу, дизайн на цьому рівні" — risk is Denys reads
+"workflow" as the bypassed higher altitude; the precise framing is use-case level (the entry is a
+whole-process fact the use case produces and writes) with ledger *consistency across use cases* designed at
+subsystem altitude. The book now states it unambiguously regardless.
+
+**Poltorak finished the spiral (2026-06-19): verdict "солідно" (solid).** Said he tried to surface every
+problem he saw; overall solid, and the detailed backend was "what I was missing for understanding
+processes." Offered to **recommend the book to a couple of communities ("чатики")** once he finishes the
+whole thing — a warm amplifier lead, pending his full read. This closes the active Poltorak review thread
+on a positive note; remaining reviewer gate is the native-speaker copy edit.
+
+---
+
 ## Rico Fritzsche — started reading PFD (2026-06-15)
 
 - Liked the thesis line unprompted on page 1: *"the unit of design is the process, not the entity."*

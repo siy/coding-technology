@@ -61,5 +61,13 @@ reading the book), not authoring/tooling detail.
 
 ## Tagging
 
-Git tags are created only on explicit command. Writing a CHANGELOG entry records
-the version a book builds as; it does not create a tag.
+Each book is tagged independently with an **annotated** tag named
+`<book>-v<X.Y.Z>` — `jbct-v3.2.0`, `pfd-v0.9.0`, `aether-v0.1.0`. The tag points at
+the commit the book builds as that version (the commit whose `CHANGELOG.md` top
+entry is that version).
+
+The pre-3.x repository-wide tags (`v1.0.0`..`v3.0.0`) are kept as frozen history of
+the unified-repo era; they are not deleted or re-attributed to a single book.
+
+Tags are created only on explicit command. Writing a CHANGELOG entry records the
+version a book builds as; it does not create the tag.

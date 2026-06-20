@@ -542,6 +542,14 @@ after the materialization rule covering all three cases (logical / materialized 
 
 (Reply to Denys delivered separately; same content. This entry records the book change.)
 
+### Round 12 (2026-06-21) — workflow as state machine + essential coupling (cross-book, APPLIED)
+
+Two complementary points from the workflow thread, split across both books (full in the native book, short pointer in the other):
+- **PFD `spiral-2`** (after the cohesion passage): a logical workflow is usually a **state machine** over persisted state, its use cases the transitions; explicit or implicit, make explicit when transition guards are load-bearing. Making it explicit does not add coupling, it **relocates essential coupling** the domain already has — represent once, not duplicated. Short pointer to the deterministic placement (JBCT).
+- **JBCT ch16** (telescope/LCA section): the workflow state machine as the **worked example** of the LCA rule (lives in the workflow package's `shared`, dependencies point up), plus the **essential-vs-accidental** gloss on minimal-sharing. Short pointer to PFD for why the coupling is essential.
+
+Built, verified. No version bump (rolls into the current draft / pre-next-cut, consistent with Round 11).
+
 ---
 
 ## Rico Fritzsche — started reading PFD (2026-06-15)

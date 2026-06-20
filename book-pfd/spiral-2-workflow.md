@@ -96,6 +96,8 @@ A workflow's own signature — `Request` in, `Promise<Response>` out, the `Promi
 
 A workflow does not have to exist in code at all. By default it is a logical unit: the grouping a shared change driver defines, the lens you design and reason through, its use cases invoked directly by whatever triggers each of them. It takes code form only when the workflow itself has a trigger of its own, distinct from any of its use cases' triggers — a schedule, an external event, an entry point that starts the whole chain and belongs to no single use case. Even then it keeps the use-case shape above, one `apply` over the workflow's own trigger input composing its use cases as steps; it is never a single interface that contains them. The steps stay their own use cases, defined independently, as the previous section named.
 
+What advances a workflow follows from this. When the workflow has only the triggers of its individual use cases, nothing in code advances it: between steps it lives as persisted state, each use case is triggered from outside (by the user, an event, or a schedule) independently, and what connects the calls is the state each leaves behind, not an orchestrator stepping through them. When the workflow has a trigger of its own, independent of any individual use case's trigger, that trigger advances it as a single process, the materialized form just described. The two can combine: a workflow may have user-triggered transitions and one trigger of its own (say a scheduled step), in which case only the transition with its own trigger takes code form, while the rest stay use cases invoked directly.
+
 ```java
 public interface CancelBooking {
     Promise<Response> apply(Request request);

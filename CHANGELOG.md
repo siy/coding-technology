@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+> **Scope:** this file tracks the repository and shared assets — tooling, AI skills,
+> `CODING_GUIDE.md`, build scripts, and Pragmatica Core version bumps. Each book now
+> versions independently with its own reader-facing changelog: `book/CHANGELOG.md`
+> (JBCT) and `book-pfd/CHANGELOG.md` (PFD). See `BOOK-VERSIONING.md`. Pre-existing
+> entries below that describe book content are kept as history.
+
 ## [Unreleased]
 
 ## [3.1.0] - 2026-06-13

@@ -14,6 +14,17 @@ cd "$SCRIPT_DIR"
 OUTPUT_NAME="${1:-jbct-book}"
 COVER_IMAGE="cover.png"
 
+# --- Version + change history (single source of truth: CHANGELOG.md) ---
+CHANGELOG="CHANGELOG.md"
+VER_LINE="$(grep -m1 -E '^## \[[0-9]' "$CHANGELOG" 2>/dev/null || true)"
+BOOK_VERSION="$(printf '%s' "$VER_LINE" | sed -E 's/^## \[([^]]+)\].*/\1/')"
+BOOK_DATE="$(printf '%s' "$VER_LINE" | sed -E 's/^## \[[^]]+\][[:space:]]*-[[:space:]]*//')"
+BOOK_VERSION="${BOOK_VERSION:-0.0.0}"
+TITLE_DATE="Version ${BOOK_VERSION}${BOOK_DATE:+ ($BOOK_DATE)}"
+# Render the changelog as a "Revision History" appendix (title swapped, preamble dropped).
+REVISION_MD="/tmp/jbct-revision-history.md"
+{ echo "# Revision History"; echo; awk '/^## \[/{p=1} p' "$CHANGELOG"; } > "$REVISION_MD" 2>/dev/null || true
+
 # Check dependencies
 command -v pandoc >/dev/null 2>&1 || { echo "Error: pandoc not installed"; exit 1; }
 command -v xelatex >/dev/null 2>&1 || { echo "Error: xelatex not installed"; exit 1; }
@@ -92,6 +103,7 @@ build_content_pdf() {
     pandoc \
         --pdf-engine=xelatex \
         --metadata-file=metadata.yaml \
+        --metadata=date:"$TITLE_DATE" \
         --standalone \
         --toc \
         --toc-depth=2 \
@@ -169,7 +181,7 @@ echo ""
 echo "Building full book..."
 CONTENT_PDF="${OUTPUT_NAME}-content.pdf"
 OUTPUT_FILE="${OUTPUT_NAME}.pdf"
-build_content_pdf "$CONTENT_PDF" "${CHAPTERS[@]}"
+build_content_pdf "$CONTENT_PDF" "${CHAPTERS[@]}" "$REVISION_MD"
 add_cover "$CONTENT_PDF" "$OUTPUT_FILE"
 
 echo ""

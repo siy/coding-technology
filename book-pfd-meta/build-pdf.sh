@@ -49,13 +49,21 @@ done
 BUILD="$(mktemp -d)"
 trap 'rm -rf "$BUILD"' EXIT
 
+# --- version + change history (single source: book-pfd/CHANGELOG.md) ---
+PFD_CHANGELOG="$MANUSCRIPT_DIR/CHANGELOG.md"
+VER_LINE="$(grep -m1 -E '^## \[[0-9]' "$PFD_CHANGELOG" 2>/dev/null || true)"
+BOOK_VERSION="$(printf '%s' "$VER_LINE" | sed -E 's/^## \[([^]]+)\].*/\1/')"
+BOOK_VERSION="${BOOK_VERSION:-0.0.0}"
+REVISION_MD="$BUILD/revision-history.md"
+{ echo "# Revision History"; echo; awk '/^## \[/{p=1} p' "$PFD_CHANGELOG"; } > "$REVISION_MD" 2>/dev/null || true
+
 # --- draft vs final ---
 if [[ "$MODE" == "draft" ]]; then
-  DATE="Draft — $(date '+%-d %B %Y')"
+  DATE="Version $BOOK_VERSION (Draft) — $(date '+%-d %B %Y')"
   SUFFIX="-DRAFT"
   WATERMARK='\AddToShipoutPictureBG{\AtPageCenter{\makebox(0,0){\rotatebox{55}{\textcolor[gray]{0.90}{\fontsize{2.2cm}{2.2cm}\selectfont DRAFT}}}}}'
 else
-  DATE="$(date '+%B %Y')"
+  DATE="Version $BOOK_VERSION — $(date '+%B %Y')"
   SUFFIX=""
   WATERMARK=""
 fi
@@ -122,6 +130,7 @@ echo "Building $MODE PDF -> $OUTPUT"
 # --- content PDF ---
 INPUTS=()
 for f in "${CHAPTERS[@]}"; do INPUTS+=("$MANUSCRIPT_DIR/$f"); done
+[[ -f "$REVISION_MD" ]] && INPUTS+=("$REVISION_MD")
 
 pandoc --pdf-engine=xelatex \
   -V fontsize=10pt -V geometry:margin=1in -V geometry:bindingoffset=0.5in \

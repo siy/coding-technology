@@ -525,6 +525,23 @@ processes." Offered to **recommend the book to a couple of communities ("чат�
 whole thing — a warm amplifier lead, pending his full read. This closes the active Poltorak review thread
 on a positive note; remaining reviewer gate is the native-speaker copy edit.
 
+### Round 11 (2026-06-20) — workflow progression: who advances a non-materialized workflow (APPLIED, built, verified)
+
+**Question (Poltorak):** split a 10-use-case workflow into two "so they're not too long" — who launches
+the second workflow when the first finishes, and who launches use case 2 in workflow 1 if the web only
+triggers use case 1 and the workflow has no code entity?
+
+**Answer/fix:** the premise (split by length) is wrong — workflow membership is set by change driver
+(completeness + purity), not step count. On progression: a logical workflow is **advanced by external
+triggers over persisted state, not by an orchestrator** — between steps it lives as persisted state, and
+each use case is triggered from outside (user/event/schedule) independently; the state each step leaves is
+what connects the calls. A workflow materializes only when it has a **trigger of its own, independent of any
+individual use case's trigger** (then it runs as a single process), and the two can combine (only the
+own-trigger transition takes code form). Added a complete-construction paragraph to `spiral-2-workflow.md`
+after the materialization rule covering all three cases (logical / materialized / mixed). Built, verified.
+
+(Reply to Denys delivered separately; same content. This entry records the book change.)
+
 ---
 
 ## Rico Fritzsche — started reading PFD (2026-06-15)

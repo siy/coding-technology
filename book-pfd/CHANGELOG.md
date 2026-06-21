@@ -7,6 +7,14 @@ All notable changes to the PFD book, newest first. Format:
 This book is a pre-1.0 **draft**: `0.x` versions are preview editions, and `1.0.0`
 will mark the first edition released to readers.
 
+## [1.0.0] - 2026-06-21
+
+First edition. Changes since the 0.9.0 preview:
+
+### Added
+- **Workflow progression** (*Spiral 2*): how a workflow advances in each case — logical (persisted state, external triggers, no orchestrator), materialized (its own trigger, a single process), and mixed.
+- **Workflow as a state machine** (*Spiral 2*): a logical workflow is usually a state machine over persisted state, its use cases the transitions; making it explicit relocates essential coupling rather than adding it, with a pointer to the deterministic placement in the companion *Java Backend Coding Technology*.
+
 ## [0.9.0] - 2026-06-20
 
 Initial tracked draft (preview edition). Highlights of the recent pre-publication

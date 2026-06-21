@@ -13,6 +13,16 @@ cd "$SCRIPT_DIR"
 
 OUTPUT_NAME="${1:-jbct-book}"
 
+# --- Version + change history (single source of truth: CHANGELOG.md) ---
+CHANGELOG="CHANGELOG.md"
+VER_LINE="$(grep -m1 -E '^## \[[0-9]' "$CHANGELOG" 2>/dev/null || true)"
+BOOK_VERSION="$(printf '%s' "$VER_LINE" | sed -E 's/^## \[([^]]+)\].*/\1/')"
+BOOK_DATE="$(printf '%s' "$VER_LINE" | sed -E 's/^## \[[^]]+\][[:space:]]*-[[:space:]]*//')"
+BOOK_VERSION="${BOOK_VERSION:-0.0.0}"
+TITLE_DATE="Version ${BOOK_VERSION}${BOOK_DATE:+ ($BOOK_DATE)}"
+REVISION_MD="/tmp/jbct-revision-history.md"
+{ echo "# Revision History"; echo; awk '/^## \[/{p=1} p' "$CHANGELOG"; } > "$REVISION_MD" 2>/dev/null || true
+
 echo "=== JBCT Book EPUB Builder ==="
 echo ""
 
@@ -98,6 +108,7 @@ build_epub() {
 
     pandoc \
         --metadata-file="$metadata" \
+        --metadata=date:"$TITLE_DATE" \
         --standalone \
         --toc \
         --toc-depth=2 \
@@ -121,7 +132,7 @@ fi
 
 echo "Building full book..."
 OUTPUT_FILE="${OUTPUT_NAME}.epub"
-build_epub "$OUTPUT_FILE" "metadata-epub.yaml" "${CHAPTERS[@]}"
+build_epub "$OUTPUT_FILE" "metadata-epub.yaml" "${CHAPTERS[@]}" "$REVISION_MD"
 echo "  Full book: $SCRIPT_DIR/$OUTPUT_FILE ($(du -h "$OUTPUT_FILE" | cut -f1))"
 
 echo ""

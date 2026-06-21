@@ -66,7 +66,17 @@ echo "PDF       : $PDF ($(du -h "$PDF" | cut -f1))"
 echo "Publish   : $([[ $DO_PUBLISH == 1 ]] && echo 'yes (separate confirm)' || echo 'no (upload only)')"
 echo
 
-jqcat() { if command -v jq >/dev/null 2>&1; then jq . ; else cat ; fi }
+jqcat() {
+  # Leanpub occasionally returns a non-JSON body (e.g. "Unexpected Server Error")
+  # even when the action took effect; buffer and pretty-print only if it parses,
+  # so a non-JSON body never aborts the script under `set -o pipefail`.
+  local in; in="$(cat)"
+  if command -v jq >/dev/null 2>&1 && printf '%s' "$in" | jq . >/dev/null 2>&1; then
+    printf '%s' "$in" | jq .
+  else
+    printf '%s\n' "$in"
+  fi
+}
 
 poll_status() {
   # Leanpub processes uploads/publishes asynchronously; {} means done. Poll <= 1/5s.

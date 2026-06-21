@@ -7,6 +7,11 @@ All notable changes to the JBCT book, newest first. Format:
 Earlier history (1.x–2.x) predates per-book changelogs and lives in the
 repository root `CHANGELOG.md`.
 
+## [3.2.1] - 2026-06-21
+
+### Added
+- **Worked example for the telescope rule** (Chapter 16): a workflow's state machine as shared logic — it lives in the workflow package's `shared`, its transition use cases depend up on it, and it is the case where sharing is *essential* coupling rather than premature. Cross-references the companion *Process-First Design* for why the coupling is essential.
+
 ## [3.2.0] - 2026-06-20
 
 ### Added

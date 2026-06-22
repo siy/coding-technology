@@ -6,6 +6,7 @@
 - How to handle null at adapter boundaries
 - Error recovery patterns with fallback values
 - Graceful degradation strategies
+- The recovery triple: backward recovery, forward recovery, and designing failure out
 
 **Prerequisites:** [Chapter 6: Error Handling & Composition](ch05-error-handling.md)
 
@@ -422,6 +423,18 @@ Recovery is for **expected** failures where degradation makes sense (cache miss,
 
 ---
 
+## The Recovery Triple: BER, FER, Design-Out
+
+The patterns above answer "this operation failed — what value do I return instead?" A harder question sits one level up: a step fails *after earlier steps already changed state* — a seat is held, an authorization placed — and that state is now invalid. There are exactly three responses, and naming all three keeps the choice deliberate instead of defaulting to the first.
+
+- **BER — Backward Error Recovery.** Undo by an inverse action: release the held seat, void the authorization, reverse the ledger entry. The classic rollback or saga shape. Reach for it when the change is reversible and correctness demands the system look as if nothing happened — money, inventory.
+- **FER — Forward Error Recovery.** Do not undo; continue with degraded state. Queue a confirmation email for retry while the booking stands; let a cached value decay `fresh -> stale -> expired` rather than fail outright. The `.or(...)` and graceful-degradation patterns above are FER. Reach for it when forward progress is worth more than perfect consistency — telemetry, notifications, optional enrichment.
+- **Design-out.** Change the model so the invalidation cannot arise: a reservation type where two bookings of one seat is structurally impossible; an idempotent write safe to repeat; an append-only log corrected by appending. The failure mode is removed rather than handled — the strongest option, when the model permits it.
+
+Which applies is a judgment — reversibility, the value of partial progress, the domain's shape, coordination cost — and mixed strategies are normal: one booking flow can use BER for the payment, FER for the confirmation email, and design-out for the seat model, all at once. Name the triple for each step that changes state, and recovery becomes a design decision rather than an afterthought.
+
+---
+
 ## Key Takeaways
 
 1. **Null only at boundaries** - Adapters wrap external nulls in `Option`
@@ -430,6 +443,7 @@ Recovery is for **expected** failures where degradation makes sense (cache miss,
 4. **.or() for defaults** - Provide fallback values
 5. **.orElse() for alternatives** - Try another operation
 6. **.recover() for conditional** - Transform specific failures to success
+7. **The recovery triple** - when a step fails after state changed: BER (undo), FER (degrade forward), or design-out (make it impossible)
 
 ---
 

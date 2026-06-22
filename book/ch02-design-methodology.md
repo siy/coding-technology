@@ -4,17 +4,46 @@
 
 ## What You'll Learn
 
+- The **process** as the unit of design — its six properties, and why types belong to processes rather than to shared entities
 - Backend processes as **knowledge gathering** — each step adds a piece of knowledge until there is enough to answer
 - The **data dependency graph (DDG)** and how its operators map directly to JBCT patterns and Pragmatica code
+- The **telescope** — how use cases, workflows, subsystems, and systems emerge, and the one test that groups them
 - Why pattern selection follows from the process, not from preference
 
 **Prerequisites:** [Chapter 1: Introduction](ch01-introduction.md)
 
 ---
 
-JBCT is the coding half of a two-part methodology. The design half — how you discover a process, draw its boundary, derive per-process types instead of a shared domain model, and decompose at scale — is the subject of the companion book *Process-First Design* (PFD). This chapter does not reproduce that work. It takes the single design artifact the rest of JBCT builds on, a process viewed as **knowledge gathering** and captured as a **data dependency graph**, and shows how that artifact determines which patterns you write. For the full design treatment (use-case identification, data-follows-process, design by elimination, composition at scale, BPMN as shared language), see PFD.
+This chapter is the design half of JBCT: how you decide what a process *is* before writing a line of it, and how that decision determines the code. JBCT is design-to-code in one method — you do not need a second book to design a use case. (A companion volume, *Process-First Design*, develops the same ideas language-neutrally and in more depth; it is optional further reading, not a prerequisite.)
 
-One idea from that treatment is load-bearing here, so it is worth stating once: **data follows process.** Types are shaped by what a specific process needs to know, not by entities sitting in a database, so each process tends to own its types rather than share a central model. The question this chapter then answers is mechanical: given a process, which patterns implement it?
+It builds in four moves: the process as the unit of design, a process seen as knowledge gathering, that view captured as a data dependency graph, and the telescope that organizes processes once there are many. Each move is concrete and Java-first.
+
+## The Process Is the Unit of Design
+
+JBCT designs around **processes, not entities.** The unit of design is a thing that *happens* — a trigger producing an outcome — not a thing that *is*. `RegisterUser`, `PlaceOrder`, `TransferFunds` are processes; `User`, `Order`, `Account` are not where design starts. Data structures are shaped by the processes that use them, not by a domain model that exists before any use.
+
+The immediate consequence is that **types belong to processes.** The "user" `RegisterUser` needs is the shape registration needs — an email, a password, a chosen handle. The "user" a login process needs is a different shape — a credential and a lookup key. They share a noun, not a type. What is *genuinely* common — an identifier, a money amount, something that means exactly the same wherever it appears — becomes a small shared value object (`CustomerId`, `Money`). Everything else is local to the process that uses it.
+
+This is the opposite of the entity-first habit, where one shared `User` model serves every process and grows a field for each new need. That habit has a real advantage — no duplication, one place to look — and a real cost: every process is coupled to every other through the shared shape, so a change made for one risks all of them. JBCT trades the duplication for the decoupling, on the bet that at backend scale the coupling cost is the one that bites. Entities still earn their place when a business invariant spans more than one field and the combination must be guarded on every write — they simply stop being where design begins.
+
+### A Process Has Six Properties
+
+Name these six and a process is specified. They are the same six at every scale, which is what makes the telescope below possible:
+
+- **Trigger** — what makes it run: a request, a scheduled tick, an event, a human approval resolving. The transport (HTTP versus a queue) is not the trigger; the *outcome* defines the process.
+- **Typed input** — what it needs to begin, as a precise type carrying exactly that and no more.
+- **Typed output** — what it produces on success.
+- **Typed failures** — the closed, enumerable set of ways it can fail, each a named domain fact carried in the type, not an exception raised elsewhere.
+- **Steps** — its internal operations, named in domain terms.
+- **Dependencies** — which steps must precede which, which can run in parallel, which are conditional.
+
+The first four are the use case's signature — `Promise<Output> apply(Input)`, with the failures carried inside the type rather than thrown. The last two — steps and dependencies — are what the rest of this chapter turns into code.
+
+### Data Follows Process
+
+Why types belong to processes comes down to the question you ask of the domain. Ask "what data *exists*?" and the answer is entities — one `Customer`, one `Order`, a shared shape every process must accept. Ask "what does *this* process need to *know*?" and the answer is per-process types: the smallest input the trigger carries, the typed knowledge each step adds, the closed set of facts — failures included — that let the process answer.
+
+So in JBCT, **data follows process.** You do not model `Order` and then write `PlaceOrder` against it; you write down what `PlaceOrder` must know — valid items, secured inventory, cleared payment — and the types fall out of that. An `Order` record may well appear, but as the output `PlaceOrder` produces, not as a pre-existing model the process is forced to fit. The same noun in two processes is two types, unless they genuinely mean the same thing — and "genuinely the same" is a high bar, reserved for value objects.
 
 ## Processes as Knowledge Gathering
 
@@ -105,12 +134,42 @@ This is why JBCT eliminates architecture — the DDG IS the architecture, and it
 
 ---
 
+## The Telescope: Organizing Many Processes
+
+One process is one process. Real systems have hundreds, and JBCT organizes them with a single structure used at four scales — a **telescope**:
+
+- A **use case** is one business operation: one trigger, one outcome (`BuyTicket`).
+- A **workflow** is a composition of use cases for one business outcome (booking: hold a seat, take payment, confirm).
+- A **subsystem** is a cluster of workflows forming one business concern (the booking domain).
+- A **system** is the composition of subsystems — the whole platform.
+
+The altitudes are not declared up front; they **emerge from multiplicity.** You start with use cases. When several cohere, a workflow appears. When several workflows cohere, a subsystem appears. You let the structure reveal itself rather than forcing a hierarchy before there is anything to organize. The same six properties describe a unit at every altitude — a workflow has a trigger, typed input and output, typed failures, steps, and dependencies, exactly as a use case does — and a unit at one altitude is a single Leaf to the altitude above. The patterns recur because the structure is fractal.
+
+### The One Grouping Test
+
+What makes units "cohere"? One question, asked at every transition up the telescope:
+
+> What business change would force all of these to change together?
+
+If a single business force would rewrite them all, they belong together. The test has two halves, and a grouping is right only when both hold:
+
+- **Completeness** — is *every* unit that force governs inside the group, or are some scattered elsewhere, so one change has to chase them across modules? (The smell is shotgun surgery.)
+- **Purity** — is *only* what that force governs inside, or is something unrelated riding along, so its changes leak in as accidental coupling?
+
+Sharpened to one line: *does this one change force all of these, and only these, to change?* Pass both halves and the group is cohesive. The driver's character shifts as you climb — a business policy groups use cases into a workflow, a domain concern groups workflows into a subsystem, the product boundary groups subsystems into a system — but the test is identical at every rung.
+
+That is the design rule. Its realization in the package tree — how directories telescope open as altitudes are discovered, and where shared code lives — is the **telescope rule** of [Chapter 16: Project Structure](ch15-project-structure.md).
+
+---
+
 ## Key Takeaways
 
+- The **unit of design is the process, not the entity.** Types belong to processes; what is genuinely common becomes a small shared value object. Data follows process.
+- A process has **six properties** — trigger, typed input, typed output, typed failures, steps, dependencies. Name them and it is specified.
 - A backend process is **knowledge gathering**: each step adds a piece of knowledge, and the process ends — in success or failure — once it has enough to answer.
 - The **data dependency graph** turns that view into structure. Its three operators map mechanically onto JBCT patterns and Pragmatica code: **Sequential → Sequencer → `flatMap`**, **ALL → Fork-Join → `Promise.all`**, **ANY → Condition/fallback → `recover`**.
 - Sketch the DDG before writing code and pattern selection becomes mechanical — the code mirrors the knowledge-dependency structure rather than any architectural preference.
-- This is the one design artifact JBCT depends on. The methodology that produces it — process discovery, per-process types, decomposition at scale — is the companion book *Process-First Design*.
+- Many processes organize by the **telescope** — use case, workflow, subsystem, system — grouped by one test: *what change would force all of these, and only these, to change together?*
 
 ---
 
@@ -123,4 +182,4 @@ This is why JBCT eliminates architecture — the DDG IS the architecture, and it
 ## Further Reading
 
 - Sergiy Yevtushenko, [Hidden Anatomy of Backend Applications: Data Dependencies](https://medium.com/swlh/hidden-anatomy-of-backend-applications-data-dependencies-5e4ce735b0e1) — the data-dependency-graph view in article form.
-- The companion book *Process-First Design* — the full design methodology this chapter bridges from.
+- The companion book *Process-First Design* — the same design method developed language-neutrally and in more depth. Optional: this chapter is self-contained for Java.

@@ -331,7 +331,7 @@ Library documentation: https://central.sonatype.com/artifact/org.pragmatica-lite
 
 ## Resources
 
-- [JBCT Coding Guide](../CODING_GUIDE.md) - Complete technical reference
+- [JBCT book](../book/index.md) - Complete technical reference
 - [CLI Tools](../CLI-TOOLING.md) - Command-line formatting and linting
 - [Maven Plugin](../MAVEN-PLUGIN.md) - Build integration
 - [GitHub Repository](https://github.com/siy/coding-technology)

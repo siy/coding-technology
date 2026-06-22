@@ -605,7 +605,7 @@ With plugin bound to verify phase, `mvn verify` runs all checks.
 
 - [AI Tools](AI-TOOLING.md) - Claude Code integration
 - [Maven Plugin](MAVEN-PLUGIN.md) - Build integration
-- [JBCT Coding Guide](CODING_GUIDE.md) - Complete technical reference
+- [JBCT book](book/index.md) - Complete technical reference
 - [GitHub Repository](https://github.com/siy/jbct-cli)
 
 ## Support

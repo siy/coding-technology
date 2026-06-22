@@ -247,14 +247,28 @@ Tests are sequential, so mutable fixtures don't create races.
 
 ## Quick Reference Table
 
-| Pattern | Execution | Local Mutable State | Input Requirements |
-|---------|-----------|--------------------|--------------------|
-| Leaf | Sequential | Safe | Read-only |
-| Sequencer | Sequential | Safe | Immutable between steps |
-| Fork-Join | Parallel | Safe (confined) | Strictly immutable |
-| Condition | Sequential | Safe | Read-only |
-| Iteration | Sequential | Safe | Read-only |
-| Aspects | Inherits | Inherits | Inherits |
+| Pattern                    | Thread Safety Model                               | Local Mutable State                     | Input Data              | Result Data         |
+|----------------------------|---------------------------------------------------|-----------------------------------------|-------------------------|---------------------|
+| **Leaf**                   | Thread confinement (single invocation)            | Safe - confined to function scope       | Must be read-only       | Must be immutable |
+| **Sequencer**              | Sequential execution (steps don't overlap)        | Safe - confined to each step            | Must be read-only       | Must be immutable |
+| **Fork-Join**              | Parallel execution (no synchronization)           | Safe - confined within each branch      | **MUST be immutable**   | Must be immutable |
+| **Iteration (Sequential)** | Single-threaded (operations execute sequentially) | Safe - accumulators OK                  | Must be read-only       | Must be immutable |
+| **Iteration (Parallel)**   | Parallel execution (no synchronization)           | Safe - confined within each operation   | **MUST be immutable**   | Must be immutable |
+| **Condition**              | Depends on branch pattern                         | Follow pattern rules for each branch    | Must be read-only       | Must be immutable |
+| **Aspects**                | Inherits the wrapped operation's model            | Inherits                                | Inherits                | Inherits          |
+
+**Key Principles:**
+- Input data is always read-only - never mutate parameters
+- Results are always immutable - data crossing boundaries must be thread-safe
+- Local mutable state is safe when confined to single operation (thread confinement)
+- Parallel patterns require immutable inputs - Fork-Join and parallel iteration have no synchronization
+
+**Common Mistakes:**
+- Sharing mutable state between parallel branches
+- Mutating input parameters (even in sequential patterns)
+- Returning mutable collections or objects
+- Using local mutable builders/accumulators within a single operation is safe
+- Create new immutable instances instead of modifying inputs
 
 ---
 

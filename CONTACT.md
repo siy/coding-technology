@@ -164,8 +164,7 @@ Tell us about your situation. Free 30-minute discovery call for qualified inquir
 
 Not ready for consulting? Start here:
 
-- **[9-Part Learning Series](series/INDEX.md)** - Complete self-paced curriculum
-- **[CODING_GUIDE.md](CODING_GUIDE.md)** - Comprehensive technical reference
+- **[JBCT book](book/index.md)** - Complete self-paced guide from foundations to production
 - **[Get the Book](https://leanpub.com/jbct-book)** - $25 on Leanpub
 
 ---

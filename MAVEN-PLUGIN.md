@@ -473,7 +473,7 @@ If `format-check` fails but `format` shows no changes, ensure:
 
 - [AI Tools](AI-TOOLING.md) - Claude Code integration
 - [CLI Tools](CLI-TOOLING.md) - Command-line usage
-- [JBCT Coding Guide](CODING_GUIDE.md) - Complete technical reference
+- [JBCT book](book/index.md) - Complete technical reference
 - [GitHub Repository](https://github.com/siy/jbct-cli)
 
 ## Support

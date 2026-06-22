@@ -9,6 +9,18 @@ This appendix contains exercises for each part of the book, organized by difficu
 
 ---
 
+## Observation Exercises
+
+These warm-ups require no code changes - just observation. Before working through the implementation exercises below, spend a few minutes with your current codebase:
+
+- Find one place that uses `orElse(null)` with `Optional`. Consider how `Option` would make that type-safe.
+- Find one method that throws exceptions for business failures. Think about how `Result<T>` would make those failures explicit in the type signature.
+- Find one async operation using `CompletableFuture`. Notice the complexity of error handling - `Promise<T>` simplifies that pattern.
+
+Don't change anything yet - just observe the patterns. The implementation exercises that follow will show you how to refactor them.
+
+---
+
 ## Part I: Foundations (Chapters 1-3)
 
 ### Exercise 1.1 [Beginner] - Return Type Selection

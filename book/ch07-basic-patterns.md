@@ -665,6 +665,40 @@ record ValidatedRequest(...)
 | `format` | Build structured output | `formatDate()` |
 | `send` | Transmit over network | `sendEmail()` |
 
+### Acronym Naming
+
+Treat acronyms as normal words in camelCase, not all-uppercase. This makes identifiers flow smoothly and read faster.
+
+```java
+// DO: Treat acronyms as words
+HttpClient client;
+XmlParser parser;
+sendJsonRequest(data);
+setRestApiUrl(url);
+
+// DON'T: All-caps acronyms break readability
+HTTPClient client;
+XMLParser parser;
+sendJSONRequest(data);
+setRESTAPIURL(url);
+```
+
+**Edge case - two-letter acronyms:** Use lowercase for better flow:
+
+```java
+// DO
+IoException
+IdGenerator
+
+// DON'T
+IOException  // Harder to scan in mixed context
+IDGenerator
+```
+
+**Why:** Code is read far more often than it is written. Consistent casing rules eliminate special cases for acronyms and reduce mental friction.
+
+> Source: Daniel Moka, LinkedIn
+
 ### Test Naming
 
 Follow the pattern: `methodName_outcome_condition`

@@ -28,7 +28,7 @@ For Java formatting rules, Pragmatica Core API reference, and JBCT patterns, see
 
 ## Project Notes
 
-- **"The document"** = CODING_GUIDE.md unless context says otherwise.
+- **"The document"** = the JBCT book (`book/`) unless context says otherwise. (The former `CODING_GUIDE.md` and learning series were folded into the book; the site renders the book as the free web edition.)
 - **Tag versions** only after explicit command. Multiple changes may precede a tag.
 - **jbct-coder.md header**: Preserve during edits. Update description if needed; ask before changing other fields.
 - **PR merged** → check current branch; if not main, switch to main and pull.

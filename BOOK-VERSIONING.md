@@ -16,7 +16,7 @@ renders the whole file as the book's **Revision History** appendix. The version 
 book builds as cannot drift from its history, because both come from one file.
 
 The repository-wide root `CHANGELOG.md` covers tooling and shared assets (skills,
-`CODING_GUIDE.md`, build scripts, Pragmatica Core version bumps), not book content.
+build scripts, Pragmatica Core version bumps), not book content.
 
 ## What the numbers mean
 

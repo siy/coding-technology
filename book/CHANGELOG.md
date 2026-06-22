@@ -7,6 +7,32 @@ All notable changes to the JBCT book, newest first. Format:
 Earlier history (1.x–2.x) predates per-book changelogs and lives in the
 repository root `CHANGELOG.md`.
 
+## [4.0.0] - 2026-06-22
+
+A new edition: the book becomes a **self-contained Java methodology, design to code**, and
+the single canonical source. The standalone Coding Guide and Learning Series are retired and
+folded into the book, which the site now renders as the free web edition.
+
+### Changed
+- **Self-contained design on-ramp** (Chapter 2, *From Process to Patterns*): the book now carries
+  the design half itself — the **process as the unit of design** and its six properties,
+  **data-follows-process**, and the **telescope** (use case / workflow / subsystem / system) with
+  the change-driver **cohesion test**. A reader no longer needs a second book to design a use case.
+  The companion *Process-First Design* is now optional further reading, not a prerequisite; every
+  cross-reference that deferred design to it has been converted to in-book treatment (Chapters 2
+  and 16) or to an optional pointer.
+- **The Coding Guide and Learning Series are retired**, their unique content folded in. The book is
+  the one hand-maintained source; the website renders it instead of separately maintained pages.
+
+### Added
+- **The recovery triple** (Chapter 7, *Null Policy & Error Recovery*): Backward Error Recovery,
+  Forward Error Recovery, and design-out, named explicitly with a booking example.
+- **Thread-safety quick-reference matrix** (Chapter 10, *Thread Safety*): per-pattern guarantees
+  across all six patterns, consolidated into one reference table.
+- **Acronym naming** (Chapter 8, *Basic Patterns*): treat acronyms as words in camelCase
+  (`HttpClient`, not `HTTPClient`).
+- **Observation exercises** (Appendix B): warm-ups for reading an existing codebase.
+
 ## [3.2.1] - 2026-06-21
 
 ### Added

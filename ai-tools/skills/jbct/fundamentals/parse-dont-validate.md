@@ -2,6 +2,10 @@
 
 **Core Principle**: Validation is parsing. If an object instance exists, it must be valid.
 
+> `Email` below is a *teaching example* for the pattern. In production code, use the built-in
+> `org.pragmatica.lang.vo.Email` (see `vo/package-info.java` for the full built-in VO catalog);
+> hand-roll only domain-specific types.
+
 ## The Pattern
 
 **Traditional validation** (❌ Wrong):

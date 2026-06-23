@@ -1,6 +1,6 @@
 # Java Backend Coding Technology
 
-> **Version 3.0.0** | [Full Changelog](CHANGELOG.md)
+> **Version 4.1.0** | [Full Changelog](book/CHANGELOG.md)
 
 Executable business process specifications. Code that reads like a business process, because it is one. A framework-agnostic methodology for writing predictable, testable Java backend code optimized for human-AI collaboration.
 
@@ -227,10 +227,10 @@ void username_acceptsValidInput() {
 
 ### Changelog & Versioning
 
-- **[CHANGELOG.md](CHANGELOG.md)** - Version history following [Keep a Changelog](https://keepachangelog.com/)
-  - Current version: 3.0.0 (2026-04-12)
-  - Golden formatting patterns, Pragmatica Core 1.0.0-rc1, 37 lint rules
-  - Semantic versioning for documentation releases
+- **[Book changelog](book/CHANGELOG.md)** - Version history following [Keep a Changelog](https://keepachangelog.com/)
+  - Current version: 4.1.0 (2026-06-23)
+  - Self-contained design-to-code methodology on Pragmatica Core 1.0.0-rc1
+  - Per-book semantic versioning across the JBCT and PFD books
 
 ## 🔧 Tools
 
@@ -386,6 +386,6 @@ If you find this useful, consider [sponsoring](https://github.com/sponsors/siy).
 
 ---
 
-**Version:** 3.0.0 | **Last Updated:** 2026-04-12 | **[Full Changelog](CHANGELOG.md)**
+**Version:** 4.1.0 | **Last Updated:** 2026-06-23 | **[Full Changelog](book/CHANGELOG.md)**
 
 **Copyright © 2025 Sergiy Yevtushenko. Released under the [MIT License](LICENSE).**

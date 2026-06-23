@@ -1,6 +1,6 @@
 # Chapter 2: From Process to Patterns
 
-**Based on:** JBCT v3.1.0 | **Pragmatica Core:** 1.0.0-rc1
+**Based on:** JBCT v4.1.0 | **Pragmatica Core:** 1.0.0-rc1
 
 ## What You'll Learn
 
@@ -8,6 +8,7 @@
 - Backend processes as **knowledge gathering** — each step adds a piece of knowledge until there is enough to answer
 - The **data dependency graph (DDG)** and how its operators map directly to JBCT patterns and Pragmatica code
 - The **telescope** — how use cases, workflows, subsystems, and systems emerge, and the one test that groups them
+- **What earns a place in code** — when a workflow materializes, when an entity is justified, and why shared code is exposed coupling rather than reuse
 - Why pattern selection follows from the process, not from preference
 
 **Prerequisites:** [Chapter 1: Introduction](ch01-introduction.md)
@@ -16,7 +17,7 @@
 
 This chapter is the design half of JBCT: how you decide what a process *is* before writing a line of it, and how that decision determines the code. JBCT is design-to-code in one method — you do not need a second book to design a use case. (A companion volume, *Process-First Design*, develops the same ideas language-neutrally and in more depth; it is optional further reading, not a prerequisite.)
 
-It builds in four moves: the process as the unit of design, a process seen as knowledge gathering, that view captured as a data dependency graph, and the telescope that organizes processes once there are many. Each move is concrete and Java-first.
+It builds in five moves: the process as the unit of design, a process seen as knowledge gathering, that view captured as a data dependency graph, the telescope that organizes processes once there are many, and the rule for what earns a place in code — a materialized workflow, an entity, or a shared module. Each move is concrete and Java-first.
 
 ## The Process Is the Unit of Design
 
@@ -162,6 +163,54 @@ That is the design rule. Its realization in the package tree — how directories
 
 ---
 
+## Materialization: When Structure Earns Code
+
+Process-first has a default and a few exceptions. The default is plain: use cases, the per-process types each one needs, and a small shared kernel of value objects. Three other things — a workflow as a *code entity*, an entity, and a piece of *shared* code — are introduced only when they **earn it**. Adding them by reflex is how accidental structure accumulates; each has a test for whether it has earned its place.
+
+### A Workflow Is Logical Until It Earns a Trigger
+
+A workflow composes use cases for one business outcome, but composition is not the same as a code entity. Most workflows are **logical**: there is no orchestrator object. The use cases run on their own triggers, and what binds them into a workflow is a shared, usually persisted, **state machine** they advance — `free → held → confirmed → fulfilled`. `HoldSeat`, `ConfirmSeat`, and `ReleaseHold` are not invoked by a `ReservationWorkflow` class; each fires on its own trigger (a request, a payment event, a scheduled sweep) and moves the seat to its next legal state. The workflow is real, but it lives *as* that state machine spread across its use cases, not as code that runs them.
+
+Make the state machine **explicit**. A logical workflow almost always has one, and leaving it implicit — the legal transitions scattered as ad-hoc checks inside each use case — is exactly how illegal transitions slip through. Lift it into one place: a state type and its legal transitions, the workflow's spine, shared by the use cases that move it. (Where that shared machine sits in the package tree — the workflow's `shared` — is the telescope rule's job; see [Chapter 16](ch15-project-structure.md).)
+
+A workflow **materializes** into a code entity only when it gains a **trigger of its own** — an entry point distinct from any single use case's: a schedule ("each night, settle the day's holds"), an event ("on `payment.captured`, run fulfilment"), or an explicit orchestration call. Then it takes the *same shape as a use case*, one altitude up — a functional interface plus a factory — except that its **steps are the use cases it composes** (a use case is a Leaf to the workflow, per the telescope):
+
+```java
+public interface SettleHolds {                    // materialized: its own nightly trigger
+    record Request(BusinessDay day) {}
+    record Settled(int confirmed, int released) {}
+
+    Promise<Settled> execute(Request request);
+
+    // Its steps are use cases - one altitude up from a use case's adapter steps.
+    static SettleHolds settleHolds(ListExpiredHolds listExpired,
+                                   ConfirmSeat confirm,
+                                   ReleaseHold release) {
+        return request -> listExpired.apply(request.day())
+                                     .flatMap(holds -> settle(holds, confirm, release));
+    }
+}
+```
+
+The shape is deliberately identical to a use case's — interface + factory depending on its steps — and only the altitude differs: here the steps are use cases, not adapters. No trigger of its own, no materialized workflow: leave it logical and let the state machine carry the coupling.
+
+### An Entity Earns Code at a Persistence Edge or a Cross-Field Invariant
+
+Entities are not where design begins (the process is), but two conditions earn one:
+
+- **A persistence edge.** When state is written to a store, the entity is the composite that *every* write passes through, so the store can never hold a combination the domain forbids. It is the guard at the boundary, not a model threaded through the process.
+- **A cross-field invariant.** When a whole assembled from individually-valid fields can still be invalid — a booking whose seat and event must belong to the same venue, a range whose end must follow its start — the *combination* needs guarding, not each field alone. That guard is the entity.
+
+Either condition, or both, earns an entity; with neither, you have value objects and per-process types, which is the default. An entity introduced without one of these is the entity-first model creeping back in under another name.
+
+### Shared Code Is Exposed Coupling — Similarity Is Not a Reason to Share
+
+Moving code into a `shared` location is not a tidiness move; it is a **claim about the domain**: that these users are bound by one change driver and will change together. Shared code is *intrinsic coupling made visible* — which is precisely when sharing is correct, as with the state machine above, whose transitions the domain itself binds.
+
+The corollary is what most reuse instincts get wrong: **code similarity must not drive placement.** Two functions that look alike — even identical today — may answer to *different* change drivers, and folding them into one shared place couples what the domain leaves separate. The next change for one user then forces a flag, a parameter, or a branch onto the other; the duplication you "removed" returns as accidental coupling and shotgun edits. DRY is about one piece of *knowledge*, not one piece of *text*. Before promoting anything to `shared`, ask the cohesion question of its users: *do they change together, for the same reason?* If yes, the coupling is essential — share it. If they merely resemble one another, leave the copies apart; coincidental similarity is not coupling, and forcing it into one place manufactures the very coupling you meant to avoid.
+
+---
+
 ## Key Takeaways
 
 - The **unit of design is the process, not the entity.** Types belong to processes; what is genuinely common becomes a small shared value object. Data follows process.
@@ -170,6 +219,8 @@ That is the design rule. Its realization in the package tree — how directories
 - The **data dependency graph** turns that view into structure. Its three operators map mechanically onto JBCT patterns and Pragmatica code: **Sequential → Sequencer → `flatMap`**, **ALL → Fork-Join → `Promise.all`**, **ANY → Condition/fallback → `recover`**.
 - Sketch the DDG before writing code and pattern selection becomes mechanical — the code mirrors the knowledge-dependency structure rather than any architectural preference.
 - Many processes organize by the **telescope** — use case, workflow, subsystem, system — grouped by one test: *what change would force all of these, and only these, to change together?*
+- **Structure earns code.** A workflow stays logical — a state machine across its use cases — until it gains a trigger of its own, then materializes as an interface + factory whose steps are those use cases. An entity is justified only by a persistence edge or a cross-field invariant.
+- **Shared code is exposed coupling, not reuse.** Promote to `shared` because users share a change driver, never because code looks alike — similar code governed by different drivers belongs apart.
 
 ---
 

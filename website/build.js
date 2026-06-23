@@ -63,7 +63,8 @@ const BOOK_CHAPTERS = [
   'ch19-troubleshooting-faq.md',
   'appendix-a-api-reference.md',
   'appendix-b-exercises.md',
-  'appendix-c-glossary.md'
+  'appendix-c-glossary.md',
+  'CHANGELOG.md'
 ];
 
 // Helper functions

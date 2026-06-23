@@ -7,6 +7,20 @@ All notable changes to the JBCT book, newest first. Format:
 Earlier history (1.x–2.x) predates per-book changelogs and lives in the
 repository root `CHANGELOG.md`.
 
+## [4.1.0] - 2026-06-23
+
+### Added
+- **Materialization: when structure earns code** (Chapter 2): a workflow stays *logical* — a state
+  machine spread across its use cases — until it gains a trigger of its own, then materializes as a
+  use-case-shaped interface + factory whose steps are those use cases; an entity earns code only at a
+  persistence edge or a cross-field invariant; and shared code is exposed *intrinsic coupling*, so
+  placement follows the change driver, never code similarity.
+- **Workflow as a state machine, made explicit** (Chapter 2): the logical-workflow case named — lift
+  the legal transitions into one shared machine rather than scattering them across the use cases.
+- **Explicit subsystem and system package trees** (Chapter 16): the telescope rule now shows package
+  evolution at the subsystem and system altitudes, not only the workflow one, and where a
+  *materialized* workflow slice sits.
+
 ## [4.0.0] - 2026-06-22
 
 A new edition: the book becomes a **self-contained Java methodology, design to code**, and

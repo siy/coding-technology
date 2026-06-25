@@ -106,7 +106,10 @@ cat > "$BUILD/header.tex" <<'HDR'
   breaklines=true,breakatwhitespace=false,
   columns=fullflexible,keepspaces=true,showstringspaces=false,
   literate={—}{{-}}1 {–}{{-}}1 {→}{{$\rightarrow$}}1}
-% Headings: make subsection/subsubsection visibly larger than inline bold text.
+% Headings: a clear size ladder - section (chapter) > subsection > subsubsection > inline bold.
+% (Without an explicit \section format, the article default \Large collides with \subsection below.)
+\titleformat{\section}{\huge\bfseries}{}{0pt}{}
+\titlespacing*{\section}{0pt}{0pt}{1.2em}
 \titleformat{\subsection}{\Large\bfseries}{}{0pt}{}
 \titlespacing*{\subsection}{0pt}{1.6ex plus .2ex}{0.8em}
 \titleformat{\subsubsection}{\large\bfseries}{}{0pt}{}

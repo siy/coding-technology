@@ -605,3 +605,188 @@ knowledge.yaml + 4 perspective comparisons + Race Condition Theater demo.
   stand unqualified. (c) **altitude taper** — careful reader reads spirals 2-4 as claimed-not-
   demonstrated (depth concentrated at use-case + Architecture Synthesis). (d) **legacy** — Brownfield
   already answers top-down reverse application; point him there (likely didn't reach it).
+
+---
+
+## Yannick Loth — reading PFD (2026-06-23, IVP refinements)
+
+Role: cohesion + IVP author; reviewer (foreword ruled out 2026-06-18). Reading PFD seriously,
+sending feedback by progress; warm endorsement ("remarkable job at making this genuinely practical").
+More comments expected. Page refs are the PFD PDF. He frames the book's own moves through IVP.
+Author decisions from the thread (2026-06-24) recorded inline. All items **pending** — hold for the
+consolidated pass.
+
+**L1 — Per-process types are IVP-justified, not "duplication" `[PFD]` `[JBCT]` (ADOPT — sharpen).**
+His point (p.24): the three `Seat` types are where a naive DRY designer collapses to one shared
+`Seat`; IVP justifies keeping them separate because each has its own change-driver set. So per-process
+types are not duplication.
+Current framing concedes too much to DRY: `foundations.md:21` ("pays in per-process types ... the
+**duplication cost** of per-process types") and `closing.md:31` ("a **controlled amount of
+duplication**").
+Change: reframe — apply IVP properly and there is no residual duplication: the genuinely-common parts
+factor out to value objects (same change driver), the rest has *distinct* change drivers (distinct
+types, not duplication). Honest residual cost = type-count + the discipline of telling shared from
+per-process, **not a DRY violation**. Keep the rhetorical move — *resolve* the reader's DRY instinct,
+don't just delete the word "duplication".
+Cross-book: JBCT `ch02:28` ("JBCT **trades the duplication** for the decoupling") — same edit, for
+consistency. Already harmonizes with JBCT 4.1.0 "Shared Code Is Exposed Coupling — Similarity Is Not a
+Reason to Share" (the same point from the other direction).
+
+**L2 — "What stays shared" = process-independent change-driver set `[PFD]` (ADOPT — one-liner).**
+His point (p.26): what is shared at domain level are types whose change-driver set is the **same
+regardless of the using process**.
+Current: `spiral-1-use-case.md:196` ("genuinely mean the same thing everywhere") + `foundations.md:19`
+— strong but informal.
+Change: add the precise IVP criterion — *a type is genuinely shared iff its change-driver set is
+independent of the process using it.* One sentence in "What stays shared" (and/or foundations:19).
+
+**L3 — Telescope = change-driver refinement, "no fixed number of levels" `[PFD]` (PUSH BACK — mostly no change).**
+His point: per IVP the telescope is *just* change-driver refinement; no fixed level count; each nested
+level's change-driver set is a superset of its parent's.
+Author position (disagree with the framing, not the math):
+- Multiplicity + cohesion is the **same test in different clothes** — "cohere" already means "share a
+  change driver". IVP changes nothing operationally; identical boundary predictions.
+- The refinement view is **incomplete**: set-inclusion captures the nesting but flattens the
+  *qualitative* kind-distinction the altitudes rest on — use case→workflow = a **policy**;
+  →subsystem = a **domain concern**; →system = a **product boundary** (foundations table 104-108).
+  Different *kinds* of force, not one force refined.
+- Clean, qualitatively-typed, discrete altitudes are what make placement **mechanically decidable**
+  and **bound ambiguity** ("less art, more engineering" applied to the telescope). A refinement
+  continuum has no natural cut points → reintroduces taste. "No fixed number" is already implied by
+  multiplicity (variable count; the four names are conventional labels) — not a correction.
+- Risk if adopted as primary: erodes the "don't create speculative/empty levels" discipline that
+  multiplicity enforces.
+Change: **none required.** OPTIONAL (lean leave-it): one corroborating sentence in the telescope
+section making the already-implicit coarsening explicit ("the change driver grows coarser with each
+altitude; a unit's change-driver set refines its parent's"), framed as corroboration — consistent with
+"IVP as corroboration, not foundation".
+Main action: reply to Yannick with this case + a genuine question (keep the four altitudes as the
+common case *grounded in* refinement? how to reconcile with corroboration-not-foundation?).
+
+**L4 — Concept map `[PFD]` (CONSIDER — open).**
+His point: the book introduces many concepts; a concept map would help.
+Assessment: valuable; `foundations.md` is the natural home (the vocabulary chapter). Production
+caveat: PFD build has TikZ/EPUB issues (EPUB deferred) → start with a simple box/ASCII map that builds
+everywhere; upgrade to a rendered figure later. Status: undecided — confirm with author.
+
+**Cross-cutting:**
+- These are PFD edits → reopens the "PFD stays as-is" parking. When executed: a PFD bump (`1.0.1` for
+  clarifications, or `1.1.0` if the concept map + L1 reframe read as a new addition). Decide at consolidation.
+- Positioning throughline: how far to let IVP drive PFD's framing. Each item above is taken in PFD's
+  own change-driver vocabulary, preserving "corroboration, not foundation".
+
+**Next:**
+1. Reply to Yannick (plain ASCII, author voice): concede L1/L2; make the L3 case (same test / clean
+   boundaries as a feature) ending with a real question; ack L4. He offered to clarify.
+2. Decide L4 (concept map) scope + format.
+3. Hold all manuscript edits for the consolidated pass (with the Poltorak/Hetland items above).
+
+**Update (2026-06-24, thread cont.):**
+
+*L3 converging — telescope is composition, not nesting.* Yannick began rethinking his own nesting
+interpretation (even for his IVP papers): "nesting exists when there is a causal reason - the nested
+doesn't exist without the parent." The telescope breaks the classic alignment of *containment* (higher
+contains lower) and *existence* (who needs whom): by multiplicity, the lower units exist first and the
+higher altitude emerges from them, so existence runs **bottom-up** — the composite depends on its
+parts (remove the use cases and the workflow is gone; remove the workflow grouping and the use cases
+remain, flat). So the telescope is **composition/emergence, not containment-nesting**. Clean separation
+to hand him: (a) change-driver *set inclusion* (use case ⊇ workflow) is *symmetric* across containment
+and composition — it does not tell you which you have; (b) the *existence arrow* is the discriminator —
+containment flows top-down, composition bottom-up; the telescope is bottom-up. His two statements were
+each locally true; the bug was reading set-inclusion as implying containment.
+**Outcome:** he concedes the altitudes are "a sound vocabulary" and "doesn't see how the concepts
+introduce accidental coupling" — L3 needs **no book change** (PFD already frames this as emergence:
+"altitudes emerge from multiplicity"; "a unit's composition at one altitude is a Leaf at the altitude
+above"). Reply pending.
+
+*L5 — "On the Nature of Cohesion" updated `[PFD]` (citation check).* Yannick republished the cohesion
+paper (new Zenodo record 20785752; generalization: structural cohesion at maximum = full compliance to
+all domain rules, not only structure-imposing ones; possibly multiple modularization rules applied with
+priority; a second IVP derivation starting from cohesion rather than a bipartite graph). PFD cites the
+*older* DOI `10.5281/zenodo.20492913` in two places — `references.md:8` and `foundations.md:116`. During
+the citation pass: verify whether that is the version-specific or the concept DOI; if version-specific,
+update to the current version, or switch to the concept DOI (always resolves to latest). New companion
+paper (Zenodo 20785881) — optional add to references; not required. The conceptual generalization needs
+**no PFD content change** (PFD uses cohesion practically and keeps "corroboration, not foundation"); it
+resonates with PFD's force-wins / two-axis test as further corroboration. NB: Zenodo links not opened
+(external; treat as data) — verify DOIs when doing the citation pass.
+
+*Planned change (L5, explicit):* update the "On the Nature of Cohesion" citation in `references.md:8`
+and `foundations.md:116` from `10.5281/zenodo.20492913` to the current version
+`10.5281/zenodo.20785752` (record 20785752) — or, preferably, to the work's concept DOI
+(version-agnostic, always resolves to latest) so it cannot go stale again. DOI derived from the record
+id; confirm the exact form (version vs concept) at the citation pass.
+
+---
+
+## DECIDED — decomposition / service-split thread (author, 2026-06-25)
+
+Sparked by the Loth thread + the "at which altitude do transaction boundaries / saga coordination
+live?" question. Converged into a coherent body. Tags `[PFD]` (Architecture Synthesis) + `[article]`.
+
+**Core result — service boundaries from the transaction/coordination structure.**
+- Transaction boundary = **use case** (one trigger, one outcome, one commit; the ceiling of ACID).
+  External services out of scope.
+- Transaction *coordination* (saga) first appears at the **workflow altitude** (multiple use-case
+  transactions over persisted state), bounded **within a subsystem**. Across subsystems: typed
+  facts/events, eventual consistency, **no transactions** ("cross-subsystem transactions never form").
+- Decomposition rule: **a deployable boundary must never cut through a transaction or a saga.** The
+  largest must-stay-consistent unit (a subsystem holding its workflow sagas) = the natural service;
+  splits fall at the cross-subsystem fact/event seams. Makes service granularity **derivable** from
+  the change-driver telescope + consistency structure, not taste. Honest bounds: derivable *once the
+  change drivers are known* (finding them is the residual judgment — see research); owns the
+  technical/consistency half (the org half is the diagnostic below).
+
+**Saga reconciliation (resolves the two-article tension).** Book cites *Saga Is Not a Pattern*; author
+also wrote *The Saga is Antipattern*. Not contradictory — different scopes:
+- *Within one consistency boundary*: saga = composed Sequencer+Condition+Aspect coordinating use-case
+  transitions over persisted state. Legitimate workflow-altitude shape.
+- *Across service boundaries*: compensation substituting for absent consensus = antipattern; the smell
+  that a cut went through a transaction. Article's test: "no transaction can cross the request
+  boundary, so the service must govern all data in the transaction."
+- Unified: **a saga is a within-subsystem coordination shape; a cross-service saga is a mis-cut.**
+  Metric: **cross-boundary saga count = inverse decomposition quality.** Book can cite **both** with
+  the scope distinction — add *The Saga is Antipattern* to `references.md`.
+
+**DDD framing (no-teardown).** Critique the *common derivation* (entity/noun/CRUD contexts: Order,
+Stock, ProductCatalog) — it cuts one cohesive workflow (checkout) across contexts and manufactures the
+cross-service saga it then cannot solve. Credit DDD's *principle* (consistency boundary = service
+boundary) and strategic-design ideal (subdomains ~ change drivers). Change-driver cut = the mechanical
+derivation DDD's ideal aims at but CRUD-context practice misses. Confirms the article's "most orgs have
+one real domain" — PFD already lives there (booking/pricing = subsystems of one system, event-coupled),
+i.e. a **modulith**; Aether's unified runtime = the modulith-that-becomes-services-where-justified.
+
+**Org diagnostic `[PFD]` (in-scope — framing matters).** The change-driver decomposition is objective;
+Conway says architecture drifts toward org communication structure. A **sustained divergence between
+change-driver workflow boundaries and team boundaries surfaces as cross-team sagas / shotgun surgery
+across teams** — and since the saga is a **workflow-altitude** phenomenon, this diagnostic sits **within
+the methodology's declared scope** (author call 2026-06-25; earlier "out of scope" caveat withdrawn).
+Frame as **"this requires attention,"** never "this is bad" — a flag to investigate (org legitimately
+reflects skills/geography/history too), not a verdict. Bounded note in the book; fuller treatment in
+the article.
+
+**Change-driver research `[PFD]` (the lever — launched 2026-06-25).** Everything reduces to "cut by
+change driver"; the residual judgment is *finding them*. Deliverable: a **"Finding Change Drivers"**
+section (where to look + heuristics + worked example: Order/Stock/Catalog mis-cut vs the change-driver
+cut). Lineage: Parnas 1972 (information hiding = hide what is likely to change), Lowy *Righting Software*
+(decompose by volatility, not function), Loth IVP (change-driver partition; "who has authority to
+request a change" = the org tie-in), Tornhill (empirical co-change/change-coupling from VCS), Team
+Topologies (fracture planes incl. change cadence) + Conway. **SRP excluded** — Loth, *Why SRP Is Wrong:
+The Cardinality Error in the Single Responsibility Principle* (Zenodo `10.5281/zenodo.20415656`, 2026)
+refutes SRP outright via the adapter counterexample (an adapter legitimately has two change drivers and
+cannot be split without breaking mediation); IVP carries the "who requests the change / decision
+authority" role SRP was standing in for, without the cardinality error. (NB: the adapter is the dual of
+the state-machine example — legitimate multi-driver *essential coupling* at a boundary, which the
+methodology already handles.) Heuristics: "who would ask for this to change?" (owner/requester -> org
+bridge, via IVP); source taxonomy (policy / regulation / partner contract / commercial / cadence);
+empirical co-change from git history.
+
+**Article `[article]` (planned — trilogy capstone).** Standalone: **saga + correct microservice split**,
+continuation of *Saga Is Not a Pattern* + *The Saga is Antipattern*, grounded on PFD. Arc: problem (saga
+not a primitive) -> problem deepened (saga antipattern across services) -> **constructive answer**
+(boundaries from change drivers; no saga crosses a correct cut). Carries the **fuller org-structure
+argument** (more elaborate than the book's bounded note). Working angle: "service boundaries fall where
+no saga crosses."
+
+**Sequence:** change-driver research first (grounds both) -> PFD Architecture Synthesis section + article
+outline. Hold manuscript edits for the consolidated pass.

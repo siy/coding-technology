@@ -4,8 +4,20 @@ All notable changes to the PFD book, newest first. Format:
 [Keep a Changelog](https://keepachangelog.com/); the book uses
 [Semantic Versioning](https://semver.org/). See `../BOOK-VERSIONING.md`.
 
-This book is a pre-1.0 **draft**: `0.x` versions are preview editions, and `1.0.0`
-will mark the first edition released to readers.
+`0.x` versions were preview editions; `1.0.0` marked the first edition released to
+readers, and `1.x` are its maintenance and expansion releases.
+
+## [1.1.0] - 2026-06-25
+
+### Added
+- **Finding the change driver** (*Foundations*): how to find the change driver the cohesion test turns on — the convergence (Parnas, Löwy, IVP), the "who would ask for this to change?" criterion, the ask-forward and measure-backward (version-control co-change) modes, the source taxonomy, the similarity guardrail and its converse (a cohesive unit may carry more than one driver; the adapter as essential coupling), and the organizational diagnostic.
+- ***The Saga is Antipattern*** added to references, with the scope distinction against *Saga Is Not a Pattern* (a within-boundary composition vs a cross-service antipattern).
+
+### Changed
+- **Per-process types framing** (*Foundations*, *Closing*): what reads as duplication is per-process types that vary for different reasons, not a DRY violation; the real cost is the discipline of telling shared value objects from per-process types.
+- **What stays shared** (*Spiral 1*, *Foundations*): a type is genuinely shared exactly when its change-driver set is independent of the process using it.
+- Updated the *On the Nature of Cohesion* citation to the current version.
+- **Heading size ladder** (build): the section heading now sits clearly above the subsection (the article default collided with the customized subsection size).
 
 ## [1.0.0] - 2026-06-21
 

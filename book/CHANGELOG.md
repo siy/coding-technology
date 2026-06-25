@@ -7,6 +7,13 @@ All notable changes to the JBCT book, newest first. Format:
 Earlier history (1.x–2.x) predates per-book changelogs and lives in the
 repository root `CHANGELOG.md`.
 
+## [4.1.1] - 2026-06-25
+
+### Changed
+- **Per-process types framing** (Chapter 2): aligned the "data follows process" passage with the
+  change-driver view — what reads as duplication is per-process types that vary for different reasons,
+  not a DRY violation (reviewer feedback, Y. Loth).
+
 ## [4.1.0] - 2026-06-23
 
 ### Added

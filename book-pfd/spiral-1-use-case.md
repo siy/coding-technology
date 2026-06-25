@@ -195,7 +195,7 @@ Process-first declines the shared class. The three processes each get their own 
 
 ### What stays shared
 
-The reframe is sometimes mistaken for a position that nothing should be shared. That is not the position. Some types are genuinely shared because they genuinely mean the same thing everywhere they appear.
+The reframe is sometimes mistaken for a position that nothing should be shared. That is not the position. Some types are genuinely shared because they genuinely mean the same thing everywhere they appear. Put precisely: a type is genuinely shared exactly when its change-driver set is independent of the process using it — it changes for the same reasons wherever it appears, so no one process's evolution pulls it out of step with another's.
 
 `CustomerId`, `EventId`, `SeatId`, `TicketId` — opaque identifiers, used the same way wherever they appear. A typed wrapper around a string or a UUID. They travel; the things they identify do not need to travel as full objects with them.
 

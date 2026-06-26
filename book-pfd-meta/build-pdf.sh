@@ -156,24 +156,30 @@ build_book() {
     "${inputs[@]}"
 
   if [[ -n "$COVER" ]]; then
-    cat > "$BUILD/combine.tex" <<EOF
-\documentclass[letterpaper]{article}
+    # Cover -> standalone single full-bleed page, sized to match the content PDF
+    # exactly (pdfunite concatenates pages as-is, with no scaling).
+    local cpsize cw ch
+    cpsize=$(pdfinfo "$BUILD/content.pdf" 2>/dev/null | awk '/Page size/{print $3, $5}')
+    cw=$(printf '%s' "$cpsize" | cut -d' ' -f1); ch=$(printf '%s' "$cpsize" | cut -d' ' -f2)
+    cw=${cw:-612}; ch=${ch:-792}
+    cat > "$BUILD/cover.tex" <<EOF
+\documentclass{article}
 \usepackage{graphicx}
-\usepackage{pdfpages}
-\usepackage[margin=0pt]{geometry}
+\usepackage[margin=0pt,paperwidth=${cw}bp,paperheight=${ch}bp]{geometry}
 \pagestyle{empty}
 \begin{document}
 \AddToShipoutPictureBG*{\includegraphics[width=\paperwidth,height=\paperheight]{$COVER}}
-\null\newpage
-\includepdf[pages=-]{$BUILD/content.pdf}
+\null
 \end{document}
 EOF
-    ( cd "$BUILD" && xelatex -interaction=batchmode combine.tex >/dev/null 2>&1; \
-      xelatex -interaction=batchmode combine.tex >/dev/null 2>&1 )
-    if [[ -f "$BUILD/combine.pdf" ]]; then
-      cp "$BUILD/combine.pdf" "$out"
+    ( cd "$BUILD" && xelatex -interaction=batchmode cover.tex >/dev/null 2>&1 ) || true
+    # pdfunite PRESERVES the content PDF's hyperlink annotations; \includepdf (pdfpages)
+    # strips them, which is what left the blue URLs un-clickable.
+    if [[ -f "$BUILD/cover.pdf" ]] && command -v pdfunite >/dev/null 2>&1 \
+         && pdfunite "$BUILD/cover.pdf" "$BUILD/content.pdf" "$out" 2>/dev/null; then
+      :
     else
-      echo "  Warning: cover merge failed; using content-only PDF"
+      echo "  Warning: cover merge failed; using content-only PDF (links preserved)"
       cp "$BUILD/content.pdf" "$out"
     fi
   else

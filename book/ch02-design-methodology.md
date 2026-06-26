@@ -1,6 +1,6 @@
 # Chapter 2: From Process to Patterns
 
-**Based on:** JBCT v4.1.0 | **Pragmatica Core:** 1.0.0-rc1
+**Based on:** JBCT v4.1.1 | **Pragmatica Core:** 1.0.0-rc1
 
 ## What You'll Learn
 

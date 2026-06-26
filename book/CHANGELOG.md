@@ -7,6 +7,11 @@ All notable changes to the JBCT book, newest first. Format:
 Earlier history (1.x–2.x) predates per-book changelogs and lives in the
 repository root `CHANGELOG.md`.
 
+## [4.1.2] - 2026-06-27
+
+### Fixed
+- **Clickable links in the PDF.** The cover was merged with `pdfpages` (`\includepdf`), which strips interactive link annotations, so the blue URLs rendered but did not click. The cover is now concatenated with `pdfunite`, which preserves them; external links and the table of contents are live again (build).
+
 ## [4.1.1] - 2026-06-25
 
 ### Changed

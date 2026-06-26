@@ -156,28 +156,33 @@ What the walkthrough did not do, and what the next section does, is name the con
 The three profiles were not consulting a lookup table. They were running the same short set of considerations on each axis, and letting the Phase-4 answers decide. Named after the fact, the considerations are these. Read them as *also worth weighing*, never as a flowchart that returns a value, and notice that each one points back at a numbered Phase-4 input.
 
 **Deployment topology** — *primary inputs: scale shape (#11), multi-X (#10), deploy frequency (#8), cost (#9).*
+
 - Single team, bounded complexity budget, one region → a single deployable.
 - Several teams gaining independence, deployment complexity still bounded → a modulith, split by subdomain inside one deployable.
 - Strongly-coupled subsystems that scale together and want a transport-transparent wire → a unified runtime.
 - One part with a scaling shape unlike the rest (a high-fanout read path) → split that part out and leave the coupled core whole. The result is a hybrid, and that is fine.
 
 **Composition substrate** — *primary inputs: latency (#1), consistency (#4), scale shape (#11).*
+
 - One deployable, latency budget allows, no cross-unit fan-out → direct composition.
 - Cross-unit facts that tolerate propagation lag → event-based composition.
 - A continuous, ordered, high-volume feed → streaming for that feed.
 - Strict consistency inside a unit, lag tolerated across → mixed, and expect mixed at any real scale.
 
 **Read/write model** — *primary inputs: scale shape (#11), latency (#1), consistency (#4).*
+
 - Reads and writes at similar volume, no separate read SLO → unified.
 - A read path with its own tight latency target and tolerable staleness → separate the read model, for that path only.
 - Do not separate the model on a write-dominant strict path; the projection earns nothing and costs synchronization.
 
 **State storage** — *primary inputs: durability (#5), compliance (#6), consistency (#4).*
+
 - No audit-or-replay requirement → current-state.
 - Regulatory audit plus replay or dispute reconstruction → event-sourced, for that data class.
 - Audit needed but not replay → current-state with an audit log kept as data; do not let it slide into full event-sourcing.
 
 **Persistence configuration** — *primary inputs: scale shape (#11), multi-X (#10), mandates (#7), durability (#5).*
+
 - Single team, single region, modest scale → a single shared store.
 - Multi-region transactional guarantees → a distributed shared store.
 - Per-team independence and heterogeneous data shapes → per-component or polyglot.

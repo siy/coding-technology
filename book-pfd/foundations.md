@@ -49,6 +49,42 @@ Not every step adds to that store. Some only confirm a precondition (the caller 
 
 ---
 
+## Where data comes from
+
+Process-first design seems to have a hole in it. A process consumes data and produces data, so to describe a process you need the data first; but the data model is supposed to fall out of the processes, not precede them. Which comes first?
+
+Neither, because data is not a thing you design. It is the residue a process leaves behind. The chicken-and-egg only bites if you believe data has an existence of its own, waiting to be modeled. It does not. A field of stored state exists for exactly one reason: some operation writes it and some operation reads it. A column no process produces and no process consumes is unobservable and unproducible. There is nothing there to design. So data is not prior to process, and not even concurrent with it; data is downstream, the way a compiled program is downstream of its source.
+
+This reverses the usual order of work. You do not model the entities and then write operations over them. You describe the processes, and the stored state precipitates out of them. There is no data-modeling step to perform, the same way design-out removes a recovery step rather than making it cheaper. The cost other methods pay forever, in entity-relationship diagrams and aggregate boundaries argued and re-argued, is paid once, in describing what the business does.
+
+**The id is the seed.** Persistence enters at a single, locatable moment: when a process first needs to remember something past the end of its own run. At that moment one thing appears, and it is not a record full of fields. It is an identity. To persist something is to be able to find it again, and finding requires a name, so the first thing that exists is the name and nothing else.
+
+Identity is the one piece of state that needs no other. Every field is a fact about an identity; an identity is a fact about nothing but itself. You can have an id with no fields, a thing that exists about which nothing is yet known. You cannot have a field with no id, a fact about no one. That asymmetry is why persisted state begins at the id and grows outward from it.
+
+The id is not free either. Some operation mints it, and that operation is part of a process. In a ticketing system, *buy ticket* is the operation that brings a booking into being; the booking's identity is its first output. Even the seed obeys the rule that governs every field after it: it has a creator, and the creator is a step in a process.
+
+**The entity is an accretion, not a schema.** Once the id exists, fields attach to it as the process gathers knowledge. Each step that learns something durable fastens its result to the identity. A booking learns its seat, then its holder, then that it is confirmed; later, a different process learns that it is cancelled. The stored entity at any moment is exactly what processes have committed about that id so far, no more.
+
+It is a running total of what has been learned about one identity, assembled over time by independent steps, never authored as a whole. The schema, the table someone wants to draw on day one, is only the union of every field any process might ever attach. It is the integral of the accretions, and writing it first is writing the integral before you have the function.
+
+Each attached field carries four things: a name, an owner (the operation that creates it), the operations permitted on it, and the fact that it can be created at all. That last is a quiet gate. A field exists if and only if some operation can produce it; the uncreatable is not data, it is noise that never got born. Reference data has a seeding operation, an import or an admin action. A value that could be recomputed is data only if a process needs it remembered; otherwise it stays a calculation done on read and never becomes stored state. *Data appears only when a process needs to persist it* is precisely this gate.
+
+**The whole never materializes.** Because each field is fastened by the step that owns it, no process ever needs the entire record. The buy process sees a booking as something to create; the cancel process sees the same id as something to close. Each reads and writes only the fields it owns. The record is a place where independent processes park what they each know, keyed by a shared id: a coordinate, not an object. There is no shared `Booking` class, because nothing in the business needs one.
+
+The only field several processes write is, almost always, the one that carries the workflow's state: free, held, confirmed, cancelled. That field is a state machine, and writing it is a transition, not an overwrite. So the single point that needs coordination is the transition, and the way to coordinate it is to design the conflict out, not to lock. Every other field has one writer and needs no coordination at all.
+
+What couples two processes, then, is never an object or a service. It is a shared primitive: the id, the state enum, the value type of a field they both touch. And every such primitive is a word the business actually says. You share the seat's identity because it is the same seat; you share its reservation state because that state is a real shared fact. Co-location is not coupling: two processes that write different fields of one row are uncoupled at runtime, sharing only a schema, which is a coordination point touched at migration time, deliberately and rarely. The coupling that remains is the business's own, and only the business's own.
+
+**When a record earns its place.** One case looks like a counterexample. A new feature appears that must write two field-groups together, under an invariant that spans both. This does not break the model; it grows it. The feature is a new owner, and it absorbs those groups as subcomponents. The processes that wrote them before now write through it. The seam appears exactly at the invariant and nowhere else, and the realization that *these have to move together now* is itself a change in the business: the discovery of a governance boundary that did not exist yesterday.
+
+The familiar aggregate is the fossil of one such absorption: a write-need that once justified a boundary, frozen into a noun that persists after the need has moved. Process-first keeps the boundary a verb, an owning operation, so when the need moves the ownership moves with it and nothing fossilizes. This is why aggregates rot: they record an absorption and then stop recording.
+
+There is an honest limit. In a domain dense with invariants that span many fields at once, a ledger or a tax engine, the stored state has real structure that is not just per-process accretion, and a record genuinely earns its place. That is the same corner where an entity carries cross-field invariants of its own. Data is not eliminated there; it is minimized to the invariants that genuinely span. The claim does not break at that edge; it changes magnitude. Most line-of-business software lives at the other end, process-rich and invariant-poor, and has been modeled entity-first out of habit rather than fit.
+
+What is left when the data-modeling step is gone is a system whose stored state is the residue of its processes, whose every field has a creator, and whose every coupling is a word the business says. The architecture has no content the business did not put there.
+
+---
+
 ## The four shapes
 
 Every value a process handles has one of four shapes, and the shape is a domain statement, not a stylistic choice. They are type-honest: the type says what the domain knows about the value. A type's capacity to carry a business statement rather than merely a layout is its *semantic potential* — the term is William Jackson's — and the four shapes are the first place the methodology spends it.

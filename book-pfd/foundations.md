@@ -79,9 +79,25 @@ What couples two processes, then, is never an object or a service. It is a share
 
 The familiar aggregate is the fossil of one such absorption: a write-need that once justified a boundary, frozen into a noun that persists after the need has moved. Process-first keeps the boundary a verb, an owning operation, so when the need moves the ownership moves with it and nothing fossilizes. This is why aggregates rot: they record an absorption and then stop recording.
 
+What the aggregate fuses is four things that vary independently: the identity, the lifecycle state, the representation of what is stored, and the policy that acts on it. Process-first keeps them apart. The id mints identity, the state machine owns state, a value type owns the representation, and the use cases own policy. The value type is the part people fear is lost, and it is not: encapsulating the representation behind a stable interface is exactly what a value object does. The aggregate simply adds policy to that object, and the addition is the whole difference. A value type changes when the representation changes; an aggregate changes when the representation, or any policy, or any rule on any field changes, which is every driver at once. That is why it becomes the system's hotspot, and why a change an entity would absorb in one private method is, for process-first, the same change located differently: representation in the value type, each policy in its own use case. The magnitude is equal; the location is not. New behavior is then an addition, a use case appearing while the old ones stay untouched, where the aggregate must be modified in place. Locating change by its driver is the cohesion test applied to data, and the aggregate fails it by fusing drivers the value object keeps apart.
+
 There is an honest limit. In a domain dense with invariants that span many fields at once, a ledger or a tax engine, the stored state has real structure that is not just per-process accretion, and a record genuinely earns its place. That is the same corner where an entity carries cross-field invariants of its own. Data is not eliminated there; it is minimized to the invariants that genuinely span. The claim does not break at that edge; it changes magnitude. Most line-of-business software lives at the other end, process-rich and invariant-poor, and has been modeled entity-first out of habit rather than fit.
 
 What is left when the data-modeling step is gone is a system whose stored state is the residue of its processes, whose every field has a creator, and whose every coupling is a word the business says. The architecture has no content the business did not put there.
+
+---
+
+## How ownership moves
+
+The previous section fixed who owns a field at the moment it is created. Ownership is not frozen there. It has a lifecycle, and that lifecycle is what lets the model grow without rewriting itself.
+
+There are four moments. A datum is *minted* when an operation first needs an identity to remember past its own run: the id, owned by the operation that creates it. It *accretes* as later operations fasten fields to that id, each field owned by the operation that produces it, written by that one owner and read by anyone. It *transitions* when its workflow state changes — the state machine is ownership in motion, each transition owned by the operation that performs it, all of them coordinated at the single state field. And over the system's life one of two things happens to it: it is absorbed, or it is emancipated.
+
+**Absorption is the growth of the previous section, seen as a motion.** A record earns its place when a cross-field invariant summons a new owner that absorbs the field-groups; said as a motion, the pieces are not rewritten. A new owning process appears above them and takes them as its parts — it owns the cross-part invariant and the right to read the parts, and nothing else; the parts keep their own write-logic untouched and run inside the new process as steps. The only new code is the guard the invariant requires. A spanning rule adds a parent; it does not edit the children. That is the whole answer to the worry that a new rule forces a rewrite of everything the rule touches.
+
+**Emancipation is the same motion run backward.** A field one operation owned acquires a second, independent reason to change — another authority now writes it too, or it starts to vary on its own cadence. It leaves its old owner and becomes its own, the others reaching it through the shared primitive it has become. Absorption gathers the pieces an invariant binds; emancipation releases the piece a driver has split. In neither case does the data move. What restructures is the ownership above it. In a system already built, emancipation is a refactoring move with a name: the god-object is a field-cluster several drivers came to own at once, and prying loose the one whose driver has diverged is this same motion performed after the fact.
+
+**The hierarchy absorption builds is the telescope, read from the data side.** A part is owned data together with the process that owns it, and a part is a Leaf to its parent — the same fractal the altitudes are made of. And the invariant that summoned the parent is a change driver: it is the single reason all the parts must now change together. So absorption is an altitude emerging, driven from the data rather than from policy, and the force that groups use cases into a workflow is the force that gathers fields under a record. Where data comes from, how the telescope is built, and how the change driver is found are three views of one structure.
 
 ---
 
@@ -128,6 +144,8 @@ How those steps reach one another is a second question, and it has two answers. 
 
 The methodology's organizing structure is a telescope: the same vocabulary at successive scales. A **use case** is one business operation — one trigger, one outcome. A **workflow** is a composition of use cases for one business outcome. A **subsystem** is a coherent business concern, a cluster of workflows. A **system** is the composition of subsystems, and the top of the telescope. There is a rung above it, the enterprise, but the book stops at the system on purpose: above the system the composing force is organizational and strategic, Conway's law and the shape of the business itself, not change-driver cohesion the code can express. The telescope reaches as far as its mechanism holds, and no further.
 
+That one trigger need not be an external actor. A use case fires from one of three sources: an external request (a user at a screen, an inbound API call); a published event another process emitted; or the invocation of another use case or workflow that composes it as a step. It is the same use case under each — only what pulls it differs. Naming the three dispels the picture of use cases as a flat list of screen handlers: most of a mature system's use cases are triggered by other use cases, and the telescope is the shape that invocation traces.
+
 Altitudes are not imposed; they emerge from multiplicity. One use case is one use case. When several cohere, a workflow appears. When several workflows cohere, a subsystem appears. The methodology lets the emergence happen rather than forcing a hierarchy in advance.
 
 Two operations recur at every altitude, and keeping them distinct is essential:
@@ -171,6 +189,12 @@ Two cautions complete the picture, and they are mirror images. The first is the 
 
 One consequence reaches past the code. The *who would ask for this to change* question makes change drivers organizational — an authority that requests changes is usually a team — so change-driver boundaries and team boundaries should coincide. Where they persistently diverge, it shows as cross-team coordination for a single change, or as coordination forced across a boundary drawn on a team line rather than a domain one. That divergence is worth attention rather than alarm: a signal that the unit of ownership and the unit of change have come apart.
 
+Finding a driver is one thing; tracking which use case answers to which is another, and it is what makes the search scale. Without it, deciding whether a set of use cases is cohesive is a pairwise question, asking of each pair whether the two belong together, which is quadratic in the number of use cases and re-run from scratch every time one is added. Label each use case with its driver once, and cohesion stops being a comparison and becomes a sort: units that share a driver are the cohesive groups, and a new use case is placed by its label rather than weighed against all the others. The change driver is the key that turns a quadratic similarity search into a near-linear partition, which is the Independent Variation Principle read as a procedure.
+
+The artifact is a plain register, use case against driver, and it does triple duty: it is the grouping itself; it is the completeness-and-purity checklist, asking whether a driver's column holds all and only its use cases; and it is what version-control history can confirm, since use cases that share a driver should change together in the commits. A use case that lands in two columns is not an error but a sighting — an adapter or a boundary, the place to look for essential coupling.
+
+A driver is not a fixed fact about the world; it is the current shape of the business's volatility, and that shape moves. A new authority appears and a new driver with it; a concern that varied as one pulls into two; two that drifted independently begin to move together. When the set of drivers changes, the partition it induced changes, and the code restructures to match — which is exactly what absorption and emancipation are: a new spanning driver gathers parts under a new owner, a diverging driver releases one to its own. The register — those sorted heaps made literal — is therefore live, not written once, and the version-control history is where a driver's movement first shows: a coupling that strengthened until two heaps were really one, or weakened until one was really two. This also names the commonest origin of legacy decay: a driver moved and the code did not follow, leaving a structure partitioned for a business that no longer exists. Code is downstream of process, process of the drivers, the drivers of the business; keeping the reflection current as the business moves is not maintenance overhead but the same work continued.
+
 ---
 
 ## The recovery triple
@@ -182,6 +206,22 @@ When something is invalidated — a step fails after earlier steps have changed 
 - **Design-out** — change the model so the invalidation cannot arise. An immutable log corrected by appending rather than overwriting; a reservation model where two bookings of one seat is structurally impossible; an idempotent operation safe to repeat.
 
 Which applies is a judgment across four axes — reversibility, forward-progress value, domain shape, coordination cost — and mixed strategies are normal: a system can use BER for money, FER for telemetry, and design-out for collaborative state, coherently, at once. The spiral surfaces which response each altitude reaches for; the full selection mechanism is the Architecture Synthesis module's work.
+
+---
+
+## Designing out contention
+
+Design-out earns a second look where the invalidation is a race — two processes reaching for the same state at once. The recovery triple's instinct, change the model so the bad state cannot arise, has a specific shape here, and it is one principle with a small family of tactics. The principle: move the contention to a single named coordination point, and make the conflicting state impossible to write rather than something detected after it is written.
+
+The tactics are the ways to make it impossible:
+
+- **Derive, don't store** — a value you can recompute from authoritative facts is not stored at all, so it has no second copy to fall out of step; availability is the absence of an active reservation, never a flag that says *free*.
+- **Single-writer fields** — a field with exactly one owning operation needs no coordination, because nothing else can race it.
+- **The guarded transition** — the one field several processes do write, the workflow's state, changes only as a guarded transition, so the conflict is resolved at the single point it lives and nowhere else.
+- **Declarative constraints** — push the impossibility into the store: a uniqueness or exclusion constraint makes two bookings of one seat a write the database refuses, so the race is lost by construction, not by a check.
+- **Serialized intake** — where order itself is the hazard, a per-entity queue makes a new event meet only a fully-processed prior one, never a half-applied one.
+
+Each tactic removes a race by removing the thing that could be in two states at once. What is left needing coordination is the irreducible business contention, and the methodology funnels it to one visible transition where it is designed out rather than locked around. Locking is the admission that the conflict was left constructible; design-out is the decision that it never was.
 
 ---
 

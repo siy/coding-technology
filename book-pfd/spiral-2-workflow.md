@@ -274,6 +274,16 @@ The workflow body is not a single Sequencer. It is an event-driven composition w
 
 The temporary-hold workflow's failure modes are domain-specific: `HoldNotFound`, `HoldAlreadyConsumed`, `HoldInUnexpectedState` (defensive — the workflow detects an inconsistent state and refuses to operate). FER applies more here than at use-case altitude: a `Stale` hold that the system has not yet swept does not fail the workflow; it returns `Stale` and the caller decides how to proceed.
 
+### Contention, designed out
+
+The temporary-hold workflow carries a hazard the prior two did not: two customers can reach for the same seat at the same instant, and so can a customer and a premium auto-buy watching for the seat to free. This is the workflow-altitude form of the race the recovery triple answers with design-out, and the hold's state machine is what makes the answer structural rather than a lock.
+
+The naive model stores availability as a field — `seat.free = true` — and a purchase reads it, finds it free, and sets it false. Two purchases that read before either writes both find it free, and both proceed: the classic check-then-act race, and the seat is sold twice. A lock around the read-and-write closes it, at the cost of holding the seat against every other process for the duration.
+
+Design-out removes the thing that could be read stale. Availability is not stored; it is derived — a seat is free when no active hold or confirmed reservation covers it, a query against the reservations themselves, with no `free` field to fall out of step. The contended write is the seat's `held → confirmed` transition, performed as one guarded atomic step: the guard (no conflicting active reservation) is part of the write, not a separate check before it, so exactly one of two racing transitions commits and the other sees the seat already taken. The store carries the last word as a constraint — at most one active reservation per seat is an exclusion the database enforces, so a second confirming write is refused by construction rather than caught by application logic.
+
+The race is then lost structurally, not detected after the fact, and no lock is held across the workflow. The contention that remains is the irreducible business fact that two people want one seat, funneled to the single transition where it is decided. The workflow does not coordinate the conflict; it is shaped so the conflict cannot be written.
+
 ---
 
 ## The six patterns at workflow altitude

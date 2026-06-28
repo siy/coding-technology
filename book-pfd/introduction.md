@@ -48,6 +48,20 @@ There is also a discipline of scope, load-bearing enough to state once and keep:
 
 ---
 
+## The work, in one picture
+
+The methodology has a shape that is easier to see than to define, and a single picture holds it. Assembling a system is assembling a jigsaw, and at any moment every piece is in one of three states. Most are still in the box — the scope not yet looked at, undocumented and unanalyzed. Some are placed — use cases implemented and deployed, locked into the picture. And the rest are in between: pulled from the box, examined, and set into a small sorted heap with the pieces they will sit near — documented, their change driver identified, grouped with everything that shares it.
+
+That middle state is where the method does its work, and it pays for itself twice. The sorted heaps are not a staging area discarded once a piece is placed; they are the change-driver catalogue itself — each heap a driver, with every part that answers to it gathered in one spot: the use cases, the workflows, the data they touch. Sorting a piece and cataloguing a driver are the same act.
+
+The picture on the box lid is the thing you do not have, and that is not a flaw in the analogy — it is the whole point. You place a piece by its own edges, by the driver that decides what it sits next to, never by a finished image handed to you in advance. Which is why the starting state does not matter. A greenfield project is an empty board; a brownfield one is a board someone half-assembled, some pieces locked correctly and some jammed into the wrong place — and the work is identical either way: pull from the box, sort by driver, place what locks, un-jam what was forced. The methodology does not care whether the box was opened today or years ago.
+
+And the heaps themselves are not fixed. A business evolves and its change drivers move with it — a new one appears, two that used to be one pull apart, two that drifted independently merge. When a driver moves, the pieces re-sort and the picture restructures to follow. Code is downstream of process, process downstream of the drivers, the drivers downstream of the business; the method's whole job is to keep that reflection faithful as the business above it changes. A legacy system's worst tangles are exactly the places where a driver moved and the pieces never re-sorted — a heap that split while the code stayed fused.
+
+When the last piece is placed you have two things, not one: the working system, and a complete map of its change drivers and the parts each one touches — the second built for free, because building the first *was* sorting by driver.
+
+---
+
 ## The running example
 
 One example carries the book's main arc: a ticketing platform. It starts as small as software gets — a customer buys a ticket for a specific seat at a specific event — and grows, pass by pass, into a multi-venue, multi-tenant platform. Across the spiral and the synthesis that follows it, the domain never changes; only its scope expands.

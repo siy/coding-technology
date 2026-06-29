@@ -7,6 +7,13 @@ All notable changes to the JBCT book, newest first. Format:
 Earlier history (1.x–2.x) predates per-book changelogs and lives in the
 repository root `CHANGELOG.md`.
 
+## [4.2.0] - 2026-06-28
+
+### Added
+- **What an entity fuses, and what JBCT keeps apart** (*Design Methodology*): an entity-first aggregate fuses identity, lifecycle state, representation, and policy; JBCT keeps them apart (id, state machine, value object, use cases). A value object *is* representation behind a stable interface — the aggregate merely adds policy, so a representation change lands in one value type and a policy change in one use case: same change size as entity-first, smaller blast radius. Persistence follows the split — per-operation writes through a `Promise`-returning step interface, no aggregate loaded through an ORM, so the schema cannot leak into the code.
+- **Designing out contention** (*Thread Safety*): thread confinement protects state inside one execution; a new section covers contention *across* executions — derive-don't-store (no `free` flag to race), single-writer fields, the guarded atomic transition, database unique/exclusion constraints, and serialized intake — the Java and SQL realization of the methodology's design-out principle.
+- **Why test counts stay isolated** (*Testing in Practice*): use cases answer to one driver and stub their steps, so adding behavior adds a test file without touching existing ones, while the entity-first god-object accumulates every driver's scenarios in one suite that fails together — same total tests, isolated rather than entangled.
+
 ## [4.1.2] - 2026-06-27
 
 ### Fixed

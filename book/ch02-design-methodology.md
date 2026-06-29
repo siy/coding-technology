@@ -203,6 +203,12 @@ Entities are not where design begins (the process is), but two conditions earn o
 
 Either condition, or both, earns an entity; with neither, you have value objects and per-process types, which is the default. An entity introduced without one of these is the entity-first model creeping back in under another name.
 
+### What an Entity Fuses, and What JBCT Keeps Apart
+
+The split this protects is finer than entity-versus-value-object. An entity-first aggregate fuses four things that vary for different reasons: the **identity** (who this is), the **lifecycle state** (where it sits in its workflow), the **representation** (what fields are stored), and the **policy** (the rules each operation applies). JBCT keeps them apart — the id is minted by its creating operation, the state is a state machine whose transitions the domain binds, the representation is a value object behind a stable interface, and the policy lives in the use cases. The value object is the part people fear is lost when the aggregate goes; it is not. Encapsulating a representation behind a constructed, validated type *is* a value object — the aggregate merely adds policy to it, and that addition is the whole difference. A change to the representation then lands in one value type while every operation that only reads it through the interface is untouched, and a change to a policy lands in one use case while the shared object an aggregate would force every driver to edit does not exist. The change is the same size as entity-first; its blast radius is not.
+
+Persistence follows the same split. JBCT writes per operation — a step interface returning `Promise<T>` for exactly the fields that operation owns — not by loading a whole aggregate through an ORM and writing it back. There is no object whose shape is welded to a table, so the schema cannot leak into the code through a mapping that quietly drifts; the persistence edge above is a guard on one write, not a round-trip of the entire record.
+
 ### Shared Code Is Exposed Coupling — Similarity Is Not a Reason to Share
 
 Moving code into a `shared` location is not a tidiness move; it is a **claim about the domain**: that these users are bound by one change driver and will change together. Shared code is *intrinsic coupling made visible* — which is precisely when sharing is correct, as with the state machine above, whose transitions the domain itself binds.

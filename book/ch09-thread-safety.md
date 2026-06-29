@@ -22,6 +22,20 @@ These rules mean you can use mutable local variables in sequential code, but any
 
 ---
 
+## Designing Out Contention
+
+Thread confinement protects state *inside* one execution. It says nothing about two executions — two requests, or two nodes — reaching for the same row at once. That contention is real, and the JBCT answer is not a lock around the section but a design that makes the conflicting state impossible to write: move the contention to one named point, and make the bad combination unconstructible.
+
+- **Derive, don't store.** A value you can recompute is not a stored field that can fall out of step. A seat is free when no active reservation covers it (a query against the reservations), never a `free` boolean two requests can both read as `true`.
+- **Single-writer fields.** A field with exactly one owning operation needs no coordination — nothing else can race it. Most fields are this, and the model should keep them this way.
+- **The guarded transition.** The one field several operations write is the workflow's state. It changes only as a guarded atomic write, where the guard is part of the write rather than a check before it, so of two racing transitions exactly one commits.
+- **Database constraints.** Push the impossibility into the store. A unique or exclusion constraint makes a second active reservation on one seat a write the database refuses, so the race is lost by construction rather than caught by application code.
+- **Serialized intake.** Where ordering itself is the hazard, a per-entity queue makes a new event meet only a fully-processed prior one, never a half-applied one.
+
+`Promise` composition keeps these honest: the I/O that performs the guarded write is a leaf, the chain is non-blocking, and no lock is held across it. The contention that remains is the irreducible business fact — two people want one seat — funneled to the single transition where it is decided. The methodology states this design-out principle in general; this is the Java and SQL it becomes.
+
+---
+
 ## Pattern-by-Pattern Safety Guarantees
 
 ### Leaf (Sequential)

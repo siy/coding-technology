@@ -41,6 +41,7 @@ CHAPTERS=(
   architecture-synthesis.md
   brownfield.md
   closing.md
+  glossary.md
   references.md
 )
 for f in "${CHAPTERS[@]}"; do

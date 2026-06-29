@@ -7,6 +7,11 @@ All notable changes to the PFD book, newest first. Format:
 `0.x` versions were preview editions; `1.0.0` marked the first edition released to
 readers, and `1.x` are its maintenance and expansion releases.
 
+## [1.4.0] - 2026-06-29
+
+### Added
+- **Glossary** (*back matter*): the methodology's vocabulary defined once — some forty terms from *absorption* to *workflow*, each pointing to its home section — established as the shared spine the companion volumes build on. *Java Backend Coding Technology* keeps its own appendix for the Pragmatica-level terms this glossary does not cover.
+
 ## [1.3.0] - 2026-06-28
 
 ### Added

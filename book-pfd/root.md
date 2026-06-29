@@ -22,4 +22,5 @@ In-progress draft. Read top-to-bottom; each piece is written to land naturally f
 
 ## Back matter
 - [Closing](closing.md) — the reflexive taper-proof, honest scope, the falsifiable bet, numbered predictions, the invitation.
+- [Glossary](glossary.md) — the methodology's vocabulary defined once; the shared spine the companion volumes build on.
 - [References](references.md) — works cited, alphabetical: King, Loth, Poltorak, Yevtushenko.

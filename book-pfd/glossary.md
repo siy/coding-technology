@@ -100,7 +100,7 @@ The methodology's vocabulary, defined once. These terms are the shared spine the
 
 **The six patterns.** The sufficient set of composition primitives, the same six at every altitude: Leaf, Sequencer, Fork-Join, Condition, Iteration, Aspects. (Foundations.)
 
-**State machine.** The single field several processes write — the workflow's state (free, held, confirmed, cancelled) — written only as a typed transition, never an overwrite, so the one point needing coordination is the transition. (Where data comes from; Designing out contention.)
+**State machine.** The single field several processes write — the workflow's state (free, held, confirmed, cancelled) — written only as a typed transition, never an overwrite, so the one point needing coordination is the transition. Its type is named with a `*State` suffix, variants bare — a rule the companion *Java Backend Coding Technology* makes explicit. (Where data comes from; Designing out contention.)
 
 **Subsystem.** A coherent business concern, a cluster of workflows cohering under one domain driver; a Leaf to its system. (The telescope.)
 

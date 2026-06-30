@@ -39,6 +39,7 @@ CHAPTERS=(
   spiral-3-subsystem.md
   spiral-4-system.md
   architecture-synthesis.md
+  edge-cases.md
   brownfield.md
   closing.md
   glossary.md

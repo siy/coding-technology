@@ -6,7 +6,7 @@
 
 ## What this pass does
 
-Foundations named the pieces. This pass walks them through one use case, *buy a ticket for a specific seat at a specific event*: one trigger, one outcome, eight steps. By the end the six properties will have applied at the altitude where they are concrete and immediate, the per-process types will have been invented, the patterns that show up at this altitude will have, and the patterns that do not — compensation, time-as-decay, Aspects beyond runtime ones — will be visible as absences, clues to what the next altitude will earn. The methodology is not the pieces; it is what the pieces do when a team uses them on real work. This pass shows that.
+Foundations named the pieces. This pass walks them through one use case, *buy a ticket for a specific seat at a specific event*: one trigger, one outcome, eight steps. By the end the six properties will have applied at the altitude where they are concrete and immediate, the per-process types will have been invented, the patterns that show up at this altitude will have, and the patterns that do not — compensation, time-as-decay, Aspects beyond runtime ones — will be visible as absences, clues to what the next altitude will earn. **The methodology is not the pieces; it is what the pieces do when a team uses them on real work.** This pass shows that.
 
 ---
 
@@ -22,7 +22,7 @@ For *buy ticket* the customer is waiting. Latency matters in single-digit second
 
 The input is what *buy ticket* needs to begin. Three things, in this use case:
 
-- The customer placing the order. Specifically the customer's identifier, not the customer's full record. The use case needs to know who is buying; the use case does not need to know the customer's address, payment history, marketing preferences, or anything else stored on the customer. The minimal input is the smallest input that the use case actually needs.
+- The customer placing the order. Specifically the customer's identifier, not the customer's full record. The use case needs to know who is buying; the use case does not need to know the customer's address, payment history, marketing preferences, or anything else stored on the customer. **The minimal input is the smallest input that the use case actually needs.**
 - The event the customer is buying for. Again the identifier, not the event record. The use case will look up event-relevant facts (is the event still selling tickets, what is the current price for this seat category) at the point where those facts matter, not by passing them in.
 - The specific seat the customer wants. At use-case altitude this is a seat location — a section, a row, a number — not a free-text description and not a database row identifier. The seat is named in the venue's terms.
 
@@ -41,7 +41,7 @@ BuyTicket.Request:
 
 That is the use case's input type, in full. It carries what *buy ticket* needs and nothing more. If a different use case (cancel ticket, check availability) needs different information, that other use case has its own input type. The fact that both involve "a customer" and "an event" does not produce a shared parent type. Sharing without evidence of common meaning is a category error that produces structural problems downstream; the use cases involve customers and events but they involve them differently.
 
-`CustomerId`, `EventId`, and `SeatLocation` — the validated forms the use case parses these raw fields into — work the other way. They are value objects, and they must be defined identically across every use case that references them. The system's integrity depends on it: when *buy ticket* and *cancel ticket* both name `CustomerId`, they must refer to the *same* customers, with the *same* construction rules and the *same* equality semantics, not to use-case-local notions that happen to share a name. Value objects are the kernel of the type vocabulary that travels intact across processes; per-process types are the surface each use case shapes for its own needs. The discipline is recognizing which is which, and the rule is structural: per-process types must stay local because the same noun means different things in different processes; value objects must stay common because the same noun means exactly the same thing wherever it appears, and the system's invariants depend on that identity.
+`CustomerId`, `EventId`, and `SeatLocation` — the validated forms the use case parses these raw fields into — work the other way. They are value objects, and they must be defined identically across every use case that references them. The system's integrity depends on it: when *buy ticket* and *cancel ticket* both name `CustomerId`, they must refer to the *same* customers, with the *same* construction rules and the *same* equality semantics, not to use-case-local notions that happen to share a name. **Value objects are the kernel of the type vocabulary that travels intact across processes; per-process types are the surface each use case shapes for its own needs.** The discipline is recognizing which is which, and the rule is structural: per-process types must stay local because the same noun means different things in different processes; value objects must stay common because the same noun means exactly the same thing wherever it appears, and the system's invariants depend on that identity.
 
 ### Typed output
 
@@ -61,7 +61,7 @@ This output type is also process-local. The "ticket" referenced here is the cust
 
 ### Typed failures
 
-The use case can fail in specific, enumerable ways. They are not exceptions to be raised somewhere; they are part of the use case's specification.
+The use case can fail in specific, enumerable ways. **They are not exceptions to be raised somewhere; they are part of the use case's specification.**
 
 For *buy ticket*:
 
@@ -72,7 +72,7 @@ For *buy ticket*:
 - **PaymentProviderUnavailable** — the payment provider returned a transient error rather than a definitive accept or reject.
 - **ConcurrentBooking** — another booking process committed the seat between this use case's check and its reservation attempt.
 
-Each failure is a domain fact. Each one has a known set of responses (retry, fall back, surface to the customer, alert operations). The set is closed at design time; it does not grow at runtime through unanticipated paths. A new failure mode is a new entry, added deliberately, with its own response policy. In Java with JBCT, the closed set is encoded as a sealed interface extending `Cause`: fixed-message variants live in a nested enum, variants with data live in nested records. Failures are lifted into the return type via fluent construction (`cause.result()`, `cause.promise()`), never via `Result.failure(...)` or `throw`.
+Each failure is a domain fact. Each one has a known set of responses (retry, fall back, surface to the customer, alert operations). **The set is closed at design time; it does not grow at runtime through unanticipated paths.** A new failure mode is a new entry, added deliberately, with its own response policy. In Java with JBCT, the closed set is encoded as a sealed interface extending `Cause`: fixed-message variants live in a nested enum, variants with data live in nested records. Failures are lifted into the return type via fluent construction (`cause.result()`, `cause.promise()`), never via `Result.failure(...)` or `throw`.
 
 For *buy ticket* the split is mechanical. `SeatUnavailable` and `ConcurrentBooking` carry no extra data and live in the nested enum. The other four carry data the caller needs to render or retry (the provider's decline reason, the event's closure type, which eligibility restriction applies, the transient error's category) and live as nested records.
 
@@ -82,7 +82,7 @@ The use case's signature is short:
 Promise<BuyTicket.Response> buyTicket(BuyTicket.Request request)
 ```
 
-`Promise<T>` is the methodology's async shape, used by any use case that performs I/O — even when the trigger is synchronous, as it is here. Reads from stores, calls to the payment provider, writes to the ticket record, and notifications are each asynchronous Leaves, and the asynchrony propagates outward. `Promise<T>` carries both the async modality and the failure modality: it resolves to either the success value (`BuyTicket.Response`) or one of the enumerated `BuyTicket.Failure` variants. A caller pattern-matches on both branches; the compiler insists that both are addressed. The HTTP handler that calls this use case awaits the Promise's resolution and renders the response to the customer as a synchronous response from the client's point of view.
+**`Promise<T>` is the methodology's async shape, used by any use case that performs I/O — even when the trigger is synchronous, as it is here.** Reads from stores, calls to the payment provider, writes to the ticket record, and notifications are each asynchronous Leaves, and the asynchrony propagates outward. `Promise<T>` carries both the async modality and the failure modality: it resolves to either the success value (`BuyTicket.Response`) or one of the enumerated `BuyTicket.Failure` variants. A caller pattern-matches on both branches; the compiler insists that both are addressed. The HTTP handler that calls this use case awaits the Promise's resolution and renders the response to the customer as a synchronous response from the client's point of view.
 
 ### Steps
 
@@ -97,15 +97,15 @@ The steps are the use case's internal structure. *Buy ticket* has a small number
 7. Issue the ticket — create the customer's claim record.
 8. Notify the customer — send the confirmation through whatever channel the customer prefers.
 
-Eight steps. Each one named in domain terms. The reader looking at the use case implementation sees these names in order; the implementation is not hidden behind framework calls or scattered across helper classes. The methodology's structural commitment is that the steps are visible at the altitude they belong to, named in the domain's vocabulary.
+Eight steps. Each one named in domain terms. The reader looking at the use case implementation sees these names in order; the implementation is not hidden behind framework calls or scattered across helper classes. **The methodology's structural commitment is that the steps are visible at the altitude they belong to, named in the domain's vocabulary.**
 
 ### Dependencies between steps
 
-The dependency graph is what makes the steps a composition rather than a list. Some steps must complete before others can begin. Some steps can run in parallel. Some steps are conditional on the outcome of prior steps.
+**The dependency graph is what makes the steps a composition rather than a list.** Some steps must complete before others can begin. Some steps can run in parallel. Some steps are conditional on the outcome of prior steps.
 
 For *buy ticket*:
 
-- Validation must complete before any other step runs. An invalid request goes no further. The dependency is enforced structurally: validation produces a new type (`BuyTicket.ValidRequest`) only when the request is valid, and subsequent steps accept only this type. Invalid requests cannot reach later steps because no value of the required type can be constructed from them. This is the discipline [Alexis King named *parse, don't validate* in 2019](https://lexi-lambda.github.io/blog/2019/11/05/parse-don-t-validate/), applied at the use case's entry point — and the same pattern holds at every step boundary that follows: each step produces a new type whose existence is the precondition for the next.
+- Validation must complete before any other step runs. An invalid request goes no further. The dependency is enforced structurally: validation produces a new type (`BuyTicket.ValidRequest`) only when the request is valid, and subsequent steps accept only this type. Invalid requests cannot reach later steps because no value of the required type can be constructed from them. This is the discipline [Alexis King named *parse, don't validate* in 2019](https://lexi-lambda.github.io/blog/2019/11/05/parse-don-t-validate/), applied at the use case's entry point — and **the same pattern holds at every step boundary that follows: each step produces a new type whose existence is the precondition for the next.**
 - Event-selling check and customer-eligibility check are independent of each other; both depend only on validation. They can run in parallel.
 - Seat reservation depends on event-selling and customer-eligibility both succeeding.
 - Payment authorization depends on seat reservation succeeding. A reserved seat is the precondition for taking money.
@@ -150,7 +150,7 @@ The six properties are now stated. The use case is, in methodology terms, specif
 
 The six properties named types: `BuyTicket.Request`, `BuyTicket.Response`, `BuyTicket.Failure`, plus the shared value objects `CustomerId`, `EventId`, `SeatLocation`, `TicketId`, `ReceiptId`. Inventing these types is where the methodology's process-first commitment becomes visible.
 
-The commitment is small to state and consequential to apply: **types belong to processes, not to the domain.** A "customer" in *buy ticket* is a customer-buying-something, identified by `CustomerId` and needing nothing else from the customer concept at this use case's level. A "customer" in customer-registration is a customer-being-created, with a different set of fields. A "customer" in customer-profile-update is a customer-with-mutable-state, with a third set. The same noun, three uses, three types.
+The commitment is small to state and consequential to apply: **types belong to processes, not to the domain.** A "customer" in *buy ticket* is a customer-buying-something, identified by `CustomerId` and needing nothing else from the customer concept at this use case's level. A "customer" in customer-registration is a customer-being-created, with a different set of fields. A "customer" in customer-profile-update is a customer-with-mutable-state, with a third set. **The same noun, three uses, three types.**
 
 In the entity-first tradition this collapse is the default: there is one `Customer` class, used everywhere, with whatever union of fields the various callers have asked for over the years. The result is well-documented and structurally consistent across teams that have used the pattern long enough: god-objects that no individual use case actually wants, or anemic carriers whose behavior has been pushed out into services that operate on the carriers from outside.
 
@@ -195,7 +195,7 @@ Process-first declines the shared class. The three processes each get their own 
 
 ### What stays shared
 
-The reframe is sometimes mistaken for a position that nothing should be shared. That is not the position. Some types are genuinely shared because they genuinely mean the same thing everywhere they appear. Put precisely: a type is genuinely shared exactly when its change-driver set is independent of the process using it — it changes for the same reasons wherever it appears, so no one process's evolution pulls it out of step with another's.
+The reframe is sometimes mistaken for a position that nothing should be shared. That is not the position. Some types are genuinely shared because they genuinely mean the same thing everywhere they appear. Put precisely: **a type is genuinely shared exactly when its change-driver set is independent of the process using it — it changes for the same reasons wherever it appears, so no one process's evolution pulls it out of step with another's.**
 
 `CustomerId`, `EventId`, `SeatId`, `TicketId` — opaque identifiers, used the same way wherever they appear. A typed wrapper around a string or a UUID. They travel; the things they identify do not need to travel as full objects with them.
 
@@ -213,7 +213,7 @@ A type that carries domain meaning makes a claim. A `CustomerId` claims to be a 
 
 The methodology asks that construction enforce the claim. A `CustomerId` cannot exist as an empty string. A `Money` cannot exist with a negative amount or an unknown currency. A `SeatLocation` is constructed by lookup against the venue's seating plan, not by accepting arbitrary section, row, and number values. Construction is the choke point; invalid values do not survive it.
 
-*Parse, don't validate*, as the prior subsection cited. The construction site does the work once. Every caller that receives a constructed value can trust it. The use case's body is free of defensive checks because the types it operates on have already been validated at the boundary.
+*Parse, don't validate*, as the prior subsection cited. The construction site does the work once. Every caller that receives a constructed value can trust it. **The use case's body is free of defensive checks because the types it operates on have already been validated at the boundary.**
 
 Implementation choices vary across languages — some compilers enforce these invariants directly via refinement types; others enforce through factory-method discipline. The Foundations section named four enforcement levels. The methodology's structural commitment is the same across all four; the teeth differ. *Buy ticket* in Java with JBCT uses the factory-method pattern: the type has a non-public constructor and a public static factory that returns `Result<T>`. The factory performs validation; success wraps a valid instance, failure carries the named cause. Callers must address both branches — the type system insists. Invalid instances cannot exist as values of the type because no caller can construct one without the factory's `Result`. Same discipline as in languages with refinement-type support; the teeth here are structural through the factory's `Result` return rather than syntactic through the type signature itself.
 
@@ -230,7 +230,7 @@ The composition collects per-field failures rather than short-circuiting at the 
 
 ### Types evolve within the use case
 
-Per-process types are not static. Inside the use case body the types appear in sequence: each step accepts the prior step's typed output and produces a new typed value that the next step accepts. `BuyTicket.ValidRequest` is the entry condition; downstream steps produce a `Reservation`, then an `Authorization`, then a `ConfirmedSeat`, then a `Ticket`, then a `NotifiedTicket`. The sequence of types *is* the use case's spine. A reader scanning the steps' return types sees what each step contributes.
+Per-process types are not static. Inside the use case body the types appear in sequence: each step accepts the prior step's typed output and produces a new typed value that the next step accepts. `BuyTicket.ValidRequest` is the entry condition; downstream steps produce a `Reservation`, then an `Authorization`, then a `ConfirmedSeat`, then a `Ticket`, then a `NotifiedTicket`. **The sequence of types *is* the use case's spine.** A reader scanning the steps' return types sees what each step contributes.
 
 This pattern is canonical in JBCT under the name **growing context**: each pipeline stage receives the prior context, adds information, and passes an enriched context forward. The discipline is structural (every step's output type is the precondition for the next step's input), so the compiler enforces the order. Reordering the chain accidentally produces a type error at the first misaligned step, not a behavioral surprise at runtime. Per-process types are not just a between-processes commitment; they are the within-process record of growing knowledge.
 
@@ -240,11 +240,11 @@ The same discipline lets the Fork-Join at the front of the use case carry inform
 
 ## Composition: the six patterns at use-case altitude
 
-The methodology names six composition primitives: Leaf, Sequencer, Fork-Join, Condition, Iteration, Aspects. The claim from the Foundations section is that the same six apply at every altitude. At use-case altitude, some of them show up immediately; some are present but spare; some do not earn their place until later altitudes. Which appear and which do not is itself information about the use case.
+The methodology names six composition primitives: Leaf, Sequencer, Fork-Join, Condition, Iteration, Aspects. The claim from the Foundations section is that the same six apply at every altitude. At use-case altitude, some of them show up immediately; some are present but spare; some do not earn their place until later altitudes. **Which appear and which do not is itself information about the use case.**
 
 ### Sequencer
 
-A Sequencer is the most common pattern at use-case altitude. *Buy ticket*'s linear spine (reserve, then authorize, then confirm, then issue, then notify) is a Sequencer. Each step's output feeds the next; failure at any step short-circuits the rest.
+**A Sequencer is the most common pattern at use-case altitude.** *Buy ticket*'s linear spine (reserve, then authorize, then confirm, then issue, then notify) is a Sequencer. Each step's output feeds the next; failure at any step short-circuits the rest.
 
 The implementation reads as a chain of typed operations. Each step takes the prior step's output as input. Each step is a Leaf to an external resource (or composes other Leaves) and therefore returns `Promise<T>`. The chain composes through `flatMap`, which short-circuits at the first failure — the failure variant propagates to the use case's caller without further steps running.
 
@@ -291,7 +291,7 @@ A Leaf is the methodology's name for an atomic execution unit. It is the bottom 
 
 Each one is a Leaf. The use case's body composes them; the body itself is not a Leaf. The discipline at this altitude is that Leaves are named in domain terms (`ReservationStore.claim`, `PaymentProvider.authorize`) rather than technical terms (`Database.execute`, `Http.post`). The technical detail lives behind the domain-named interface. The use case body knows nothing about whether the reservation store is a Postgres table, a Redis key, a remote service, or a hybrid; it knows only that it can ask the reservation store to claim a seat.
 
-The cross-cutting distinction the Foundations section drew applies cleanly here. The use case's body operates in a quarantined zone where only domain concepts appear. Technical concerns live one step away, behind domain-named interfaces. The reader of the use case body sees business logic uninterrupted by framework or infrastructure concerns.
+The cross-cutting distinction the Foundations section drew applies cleanly here. **The use case's body operates in a quarantined zone where only domain concepts appear.** Technical concerns live one step away, behind domain-named interfaces. The reader of the use case body sees business logic uninterrupted by framework or infrastructure concerns.
 
 ### Fork-Join
 
@@ -327,7 +327,7 @@ Iteration also appears at higher altitudes, where the iteration is *over use cas
 
 Aspects are cross-cutting concerns: things that apply uniformly across many operations rather than belonging to any specific operation. Logging, retries, distributed tracing, correlation identifiers, idempotency-key handling, audit trail emission, circuit-breaking — these are all Aspects.
 
-At use-case altitude, Aspects are present but mostly handled by the runtime rather than written into the use case body. The Foundations section made the distinction between business cross-cutting and technical cross-cutting. *Buy ticket* itself does not log; the runtime around it does. *Buy ticket* itself does not trace request paths; the runtime injects tracing. *Buy ticket* itself does not handle retries against the payment provider; the payment provider's Leaf wrapper handles retries policy, and the use case body sees only the typed outcome.
+**At use-case altitude, Aspects are present but mostly handled by the runtime rather than written into the use case body.** The Foundations section made the distinction between business cross-cutting and technical cross-cutting. *Buy ticket* itself does not log; the runtime around it does. *Buy ticket* itself does not trace request paths; the runtime injects tracing. *Buy ticket* itself does not handle retries against the payment provider; the payment provider's Leaf wrapper handles retries policy, and the use case body sees only the typed outcome.
 
 When multiple Aspects wrap a single operation their composition order matters, but at use-case altitude the runtime supplies the order and the use case body sees only the typed outcome. The convention itself — which Aspect wraps which, and why — earns its place at workflow altitude, where Aspects become load-bearing, and is settled fully in the Architecture Synthesis module.
 
@@ -335,7 +335,7 @@ The use case body is therefore short. It contains domain logic and nothing else.
 
 Aspects earn more visibility at higher altitudes. At subsystem altitude, business cross-cutting (audit-as-data versus audit-as-Aspect, regulatory compliance hooks) becomes load-bearing and the methodology has to make explicit choices about where the cross-cutting lives. At use-case altitude, the choices are not yet forced.
 
-That deferral is not a reason to undervalue the separation; it is load-bearing. The composition skeleton — the Sequencer spine, the Fork-Join, the steps that compute rather than call out — is this use case's business logic in pure form, and it is testable as such, exercised against stand-in Leaves with no database, payment provider, or clock in sight. "Pure" here is meant in the business sense rather than the functional-programming one: the skeleton is a faithful account of how this use case processes, independent of the machinery that runs it.
+That deferral is not a reason to undervalue the separation; it is load-bearing. **The composition skeleton — the Sequencer spine, the Fork-Join, the steps that compute rather than call out — is this use case's business logic in pure form, and it is testable as such, exercised against stand-in Leaves with no database, payment provider, or clock in sight.** "Pure" here is meant in the business sense rather than the functional-programming one: the skeleton is a faithful account of how this use case processes, independent of the machinery that runs it.
 
 Because the skeleton is independent of its Leaves, the same skeleton attaches to different Leaf implementations to become a running application: real adapters in production, doubles under test. That attachment is also where technical instrumentation enters. Because every Leaf and every injected dependency crosses the same uniform seam, the runtime can wrap them with logging, tracing, and metrics automatically, and the use case body names none of it. This is the technical cross-cutting the runtime already owns; the skeleton-and-Leaf structure is what lets the wrapping be applied systematically rather than written by hand. The wiring itself is assembly-time work, taken up at system altitude.
 
@@ -345,13 +345,13 @@ Because the skeleton is independent of its Leaves, the same skeleton attaches to
 
 This is the distribution this use case earned. A different use case at the same altitude will have a different distribution. *Check seat availability* is mostly Leaf with a small Condition — read the seat's current state, branch on the variant. *Refund ticket* is mostly Sequencer plus Condition (full refund vs partial refund vs courtesy waiver) with one Leaf to the payment provider. *Buy multi-seat order* puts Iteration at the centre (reserve each seat in turn) alongside the same Sequencer spine. No use case at this altitude has every pattern at high frequency; the distribution carries information about the use case's shape and the business rules it embeds.
 
-The methodology does not prescribe which patterns appear. The methodology supplies the patterns and lets the use case earn which ones show up. The reader inspecting a use case body recognizes the patterns by their shape and can reason about the use case's structure by which patterns are present and which are absent.
+The methodology does not prescribe which patterns appear. **The methodology supplies the patterns and lets the use case earn which ones show up.** The reader inspecting a use case body recognizes the patterns by their shape and can reason about the use case's structure by which patterns are present and which are absent.
 
 ---
 
 ## The four shapes earn their place
 
-The Foundations section named four shapes that types carry: `T` (the value exists unconditionally), `Option<T>` (the value may or may not exist), `Result<T>` (the operation may or may not have produced the value), `Promise<T>` (the value arrives later). Each shape carries a domain modality. The shapes are not stylistic; they are how the type system represents what the domain says about a value.
+The Foundations section named four shapes that types carry: `T` (the value exists unconditionally), `Option<T>` (the value may or may not exist), `Result<T>` (the operation may or may not have produced the value), `Promise<T>` (the value arrives later). Each shape carries a domain modality. **The shapes are not stylistic; they are how the type system represents what the domain says about a value.**
 
 *Buy ticket* makes each shape concrete.
 
@@ -368,13 +368,13 @@ A `CustomerId` once constructed is a `CustomerId`. A `Money` once constructed is
 - A seat's current hold expires at some instant, *if* the seat is currently held. If the seat is not held, there is no hold expiration. The field is `Option<Instant>`, not `Instant`. A reader looking at the field knows the absence is a domain fact, not an error condition.
 - The customer's preferred notification channel might or might not be set. If unset, the use case uses a fallback. `Option<NotificationChannel>` carries the design fact.
 
-`Option` is used where the absence carries domain meaning. Where absence would indicate a programming error (a value the use case expects to always be there but might be missing because of a bug), the answer is not `Option`; the answer is type discipline that prevents the value from being missing. `Option` is a domain claim, not a defensive catch-all.
+`Option` is used where the absence carries domain meaning. Where absence would indicate a programming error (a value the use case expects to always be there but might be missing because of a bug), the answer is not `Option`; the answer is type discipline that prevents the value from being missing. **`Option` is a domain claim, not a defensive catch-all.**
 
 ### Result<T> — the synchronous failure modality
 
 `Result<T>` carries failure-as-typed-outcome for operations that complete synchronously and do not touch I/O. *Buy ticket* itself returns `Promise<BuyTicket.Response>` because it performs I/O at almost every step (covered next), but `Result<T>` still earns its place inside the use case wherever a step is purely computational: pre-validation of the request structure, derivation of intermediate values from already-loaded data, structural checks against the typed input. Those steps return `Result<T>`, and the surrounding `Promise<T>` composition lifts them into the async chain where the next step is an I/O Leaf.
 
-`Result<T>` and `Promise<T>` are not redundant. They name different modalities (synchronous-may-fail and asynchronous-may-fail), and the methodology asks the designer to be explicit about which the step is. A Sequencer of `Result<T>` operations stays synchronous; a Sequencer involving any `Promise<T>` propagates `Promise<T>` outward. The composition primitives handle the lifting uniformly, so the use case body composes both shapes without ceremony.
+**`Result<T>` and `Promise<T>` are not redundant. They name different modalities (synchronous-may-fail and asynchronous-may-fail), and the methodology asks the designer to be explicit about which the step is.** A Sequencer of `Result<T>` operations stays synchronous; a Sequencer involving any `Promise<T>` propagates `Promise<T>` outward. The composition primitives handle the lifting uniformly, so the use case body composes both shapes without ceremony.
 
 ### Promise<T> — the asynchronous shape that includes failure
 
@@ -407,7 +407,7 @@ Failure points in *buy ticket*:
 - **Ticket issuance fails after seat confirmation succeeds.** The seat is now committed and payment is authorized; the customer's ticket record does not exist. Reverse the confirmation; void the authorization; release any residual state. The inverses are still mostly mechanical, but the surface area grows with each successful step that has to be undone.
 - **Notification fails after ticket issuance succeeds.** The ticket has been issued. The customer does not need to be notified for the booking itself to be valid; the failure is logged for reconciliation and the use case returns success. FER could apply here, with degraded state being "ticket issued, notification queued for retry."
 
-The pattern is: failures early in the sequence cost nothing because nothing has happened. Failures late in the sequence cost the inverse of every successful step. The Sequencer makes this visible; the reader following the chain can identify exactly which inverses are needed at which failure points.
+**The pattern is: failures early in the sequence cost nothing because nothing has happened. Failures late in the sequence cost the inverse of every successful step.** The Sequencer makes this visible; the reader following the chain can identify exactly which inverses are needed at which failure points.
 
 ### Each inverse is mechanical at this altitude
 
@@ -425,7 +425,7 @@ The discipline this surfaces is **identifying compensation requirements at desig
 
 This design-out move means "two customers attempting to book the same seat at the same time" does not need BER. The reservation model prevents the conflict from producing two inconsistent confirmed bookings. One reservation succeeds; the other's reservation attempt fails immediately with `SeatUnavailable`. There is no compensation needed for the failed attempt because the failed attempt never made any state change beyond the failed reservation try, which the reservation store handles atomically.
 
-Design-out at use-case altitude tends to be exactly this kind of structural choice: pick a domain model where the conflicting case cannot arise. The methodology's discipline asks the designer to look for design-out opportunities before committing to compensation. If a domain model exists where the conflict is structurally impossible, that model is usually cheaper than the compensation logic that would otherwise be needed.
+**Design-out at use-case altitude tends to be exactly this kind of structural choice: pick a domain model where the conflicting case cannot arise.** The methodology's discipline asks the designer to look for design-out opportunities before committing to compensation. If a domain model exists where the conflict is structurally impossible, that model is usually cheaper than the compensation logic that would otherwise be needed.
 
 ### FER is not yet earned
 
@@ -442,7 +442,7 @@ The Foundations section named four selection axes: reversibility, forward-progre
 
 Domain shape (the third axis) determines which design-out moves are available, but at use-case altitude the design-out moves are typically built into the methodology's vocabulary (the reservation model is one such move). Coordination cost (the fourth axis) does not bite at use-case altitude because everything happens within one use case's scope.
 
-The full selection mechanism (with all four axes weighed against each other, with mixed strategies across a workflow) lives in the Architecture Synthesis module that follows the spiral. At use-case altitude, the selection is straightforward: BER for steps with mechanical inverses, design-out where the domain model can prevent the conflict, FER for downstream effects whose failure does not invalidate the use case's primary outcome.
+The full selection mechanism (with all four axes weighed against each other, with mixed strategies across a workflow) lives in the Architecture Synthesis module that follows the spiral. **At use-case altitude, the selection is straightforward: BER for steps with mechanical inverses, design-out where the domain model can prevent the conflict, FER for downstream effects whose failure does not invalidate the use case's primary outcome.**
 
 ---
 
@@ -454,7 +454,7 @@ Phase-5 architecture-vector selection operates across six axes (deployment topol
 
 The architecture decision that surfaces immediately at use-case altitude is the service-level objective (SLO) triple per use case: latency, throughput, availability. *Buy ticket* needs to respond to the customer in seconds, not minutes. It needs to handle the venue's peak booking rate, which for a popular event can be thousands of attempts per second in the first minutes of sale. It needs to remain available during exactly those peak periods.
 
-These SLOs do not appear out of nowhere. They come from the business's understanding of what the use case is for. They are inputs to architecture, not outputs. The Phase-4 elicitation that the Architecture Synthesis module fully treats begins here: what does *this* use case need to deliver in operational terms? Answer that, in the use case's own scope, and the answer constrains the architecture choices that follow.
+These SLOs do not appear out of nowhere. They come from the business's understanding of what the use case is for. **They are inputs to architecture, not outputs.** The Phase-4 elicitation that the Architecture Synthesis module fully treats begins here: what does *this* use case need to deliver in operational terms? Answer that, in the use case's own scope, and the answer constrains the architecture choices that follow.
 
 For *buy ticket*:
 
@@ -475,7 +475,7 @@ Several architecture questions do not surface at use-case altitude. They are rea
 - **Cross-process consistency.** When *buy ticket* writes the ticket and another use case reads it, what consistency is required? At one use case in isolation, the question is moot. Composition with other use cases — query the customer's tickets, list event attendees, calculate venue revenue — forces it.
 - **Composition substrate.** Are use cases composed directly, each calling the next and using its result, or through events that one publishes and another reacts to, or some hybrid? At one use case the trigger is fixed (synchronous HTTP); the composition question only appears when use cases call other use cases.
 
-These deferrals are not omissions. They are honest about what the altitude has earned. The Architecture Synthesis module fully treats each axis after the spiral has shown what each altitude surfaces. The deferral here means: the question exists, the answer comes when the methodology has enough multiplicity to drive it.
+These deferrals are not omissions. They are honest about what the altitude has earned. The Architecture Synthesis module fully treats each axis after the spiral has shown what each altitude surfaces. **The deferral here means: the question exists, the answer comes when the methodology has enough multiplicity to drive it.**
 
 ---
 
@@ -483,12 +483,12 @@ These deferrals are not omissions. They are honest about what the altitude has e
 
 This pass has shown one use case. The methodology applied to it produced a typed input, a typed output, an enumerable failure set, a small ordered sequence of steps with explicit dependencies, per-process types specific to this use case's needs, value objects where genuine sharing applies, the composition patterns that appear at this altitude (and the ones that do not), the four shapes earning their place, and a recovery class that applies cleanly to local failures.
 
-The methodology did not produce the design. A team designing *buy ticket* made choices. The methodology made those choices visible, named them, and kept the resulting code legible.
+The methodology did not produce the design. A team designing *buy ticket* made choices. **The methodology made those choices visible, named them, and kept the resulting code legible.**
 
 The next pass starts where this one ends. *Buy ticket* is one use case. The system that contains it is not just *buy ticket*. The customer who buys a ticket may want to cancel it. The customer may want a refund. The customer may want to change their seat. The customer may want to check seat availability without committing to a purchase. The customer may want to hold a seat temporarily while consulting friends. The venue operator may want to release blocked seats for last-minute sale. The pricing system may want to update tier prices based on demand. Each of these is a use case in its own right.
 
-The use cases share resources. Multiple use cases interact with the same seat. Multiple use cases interact with the same customer. Multiple use cases produce events that other use cases consume. The composition of these use cases is not just a list; it is structured. Workflows emerge from the structure.
+The use cases share resources. Multiple use cases interact with the same seat. Multiple use cases interact with the same customer. Multiple use cases produce events that other use cases consume. **The composition of these use cases is not just a list; it is structured. Workflows emerge from the structure.**
 
-At workflow altitude, the methodology applies again — and this is where the patterns that stayed quiet here come alive. Iteration and Aspects earn their first strong appearances, and recovery-class selection grows more interesting as the design space opens: compensation across use cases, time-as-decay as a first-class concern, saga as a recognizable composite rather than a primitive.
+**At workflow altitude, the methodology applies again — and this is where the patterns that stayed quiet here come alive.** Iteration and Aspects earn their first strong appearances, and recovery-class selection grows more interesting as the design space opens: compensation across use cases, time-as-decay as a first-class concern, saga as a recognizable composite rather than a primitive.
 
 The next pass walks through that.

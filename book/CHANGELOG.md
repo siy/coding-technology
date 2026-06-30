@@ -7,6 +7,15 @@ All notable changes to the JBCT book, newest first. Format:
 Earlier history (1.x–2.x) predates per-book changelogs and lives in the
 repository root `CHANGELOG.md`.
 
+## [4.2.1] - 2026-06-30
+
+### Added
+- **The `*State` naming rule** (*Design Methodology*): the sealed sum enumerating a state machine's lifecycle states is named with a `*State` suffix — `HoldState`, `BookingState`, `SeatState` — with variants kept bare (`Free`, `Held`, `Confirmed`, never `HeldState`). It names exactly the *state* axis of the four-way split, joins the suffix-by-role family (`*Request`, `*Response`, `Cause`), and is reserved for the lifecycle sum a guarded transition advances — not every mutable holder. Added to the glossary (a new *State / State Machine* entry) and cross-referenced from the companion *Process-First Design* glossary.
+- **Reads stay shared, writes go home** (*Design Methodology / Shared Code Is Exposed Coupling*): the shared-code rule refined by a read-vs-write split — a shared read or pure computation (a Leaf, a value object) couples nothing and is legitimate reuse, while the shared *write* is the coupling, of which process-first allows exactly one per resource (the guarded state transition); every other shared mutation goes home to the use case whose change driver owns it. An inherited mesh of endpoints calling shared methods resolves into the use-case hierarchy once classified this way.
+
+### Changed
+- **Shared-spine cross-reference** (*Glossary*): the glossary now points to *Process-First Design*'s glossary for the methodology vocabulary it owns (change driver, telescope, altitude, use case, workflow, data as residue), keeping this appendix to the Pragmatica-level and JBCT-specific terms — the JBCT half of the shared spine deferred from 4.2.0.
+
 ## [4.2.0] - 2026-06-28
 
 ### Added

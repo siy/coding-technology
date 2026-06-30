@@ -4,6 +4,14 @@
 > recorded in `book-pfd/CHANGELOG.md`. Manuscript em-dash style applies once moved into the book;
 > notes here are internal.
 
+**Status (2026-06-30):** Items 1, 6, 9 shipped in **PFD 1.6.0** (the *Edge Cases* chapter and its
+objections-answered close). Items 2–5 shipped earlier (1.3.0 / 1.4.0: glossary, change-driver
+tracking, ownership dynamics, the named principles). Item 8 shipped in **JBCT 4.2.0**; the JBCT-side
+`*State` rule and the shared-spine glossary cross-reference shipped in **JBCT 4.2.1**. **Still open:**
+item 7's single running example carried across all three books (PFD / JBCT / Aether) — the glossary
+spine half is done, the shared conference-booking worked example is not. The detailed register below
+is retained for reference.
+
 ---
 
 ## 1. New section — "Exploring edge cases" (work title)

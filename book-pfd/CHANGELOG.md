@@ -7,6 +7,15 @@ All notable changes to the PFD book, newest first. Format:
 `0.x` versions were preview editions; `1.0.0` marked the first edition released to
 readers, and `1.x` are its maintenance and expansion releases.
 
+## [1.6.0] - 2026-06-30
+
+### Added
+- **Edge Cases** (*new chapter, between Architecture Synthesis and Brownfield*): the methodology stress-tested against a sustained adversarial debate's worth of booking scenarios, each a worked *challenge → resolution → principle*. Buy-N-adjacent-seats (a new use case under an existing driver joins the unit; data grows at the invariant, not before); premium auto-buy (one "feature" splitting across two drivers, composed by a boundary event, with the named multi-driver edge); conference parallel tracks with mid-event change-seat (the *change seat* Sequencer, the timetable as reference data, the earned-record honest edge); the three-feature interaction meeting at exactly one field — the seat-status state machine; cancellation residue (derived availability + an owned guarded cancel transition + cancelled rows as owned residue, not orphans); the time-shared seat (presence intervals, trim-as-free, a Postgres range-exclusion constraint); and the central change-locality-versus-the-aggregate objection (a value object insulates representation in process-first too, so a representation change is a tie while policy change — the axis that actually churns — isolates to one use case). Opens with the reframe that there are altitudes, not predrawn modules, and a unit appears where one driver's cohesion closes.
+- **Objections answered** (*Edge Cases, closing section*): three recurring high-level objections refuted — the inner-saga diagnostic (no Rosetta table; a saga inside one context is the tell of a noun-cut boundary, re-cut by transaction); "process-first is bottom-up, so it has no vision" (the method declares no direction, the helicopter view is its precondition and a deliverable, and vision-on-top / construction-from-below is the pyramid's actual shape); and "domain-driven design already handles the enterprise level" (a different altitude the tactical method consumes rather than contests).
+
+### Changed
+- **Glossary: the `*State` naming clause** (*State machine entry*): the state-machine type is named with a `*State` suffix, variants bare — a forward reference to the rule the companion *Java Backend Coding Technology* now makes explicit, part of the shared-spine alignment.
+
 ## [1.5.0] - 2026-06-30
 
 ### Added

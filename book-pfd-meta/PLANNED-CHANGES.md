@@ -347,6 +347,33 @@ The Java realization of the above, referencing PFD principles (not restating the
 
 ---
 
+## 9. Objections answered (positioning register)
+
+Reusable rebuttals to recurring high-level objections (distinct from the technical edge cases in item 1).
+Each is channel-tested; the book can preempt them in Closing/Brownfield or a short "Objections" appendix.
+
+- **"Process-first is bottom-up, so it has no vision / helicopter view"** (Dmytro Buhay, 2026-06-30; the
+  pyramid allegory). Rebuttal, in order of force: (1) *PFD declares no direction* — bottom-up is the
+  critic's imposition; fixing a single direction would be self-limiting, so you may start from the vision
+  and descend, from a use case, or from both ends. (2) *The puzzle metaphor requires the helicopter view*:
+  seeing assembled-vs-sorted-vs-in-the-box at every step is only possible from above, so the global view
+  is the method's precondition and a deliverable (the change-driver catalogue), not something reached only
+  at the end. (3) *Vision != method*: a pyramid's vision says nothing about cutting a stone, and a pyramid
+  is *built bottom-up* from the base — so even the allegory is vision-on-top, construction-from-below,
+  which is PFD's shape; DDD's error is mistaking "draw the capstone" (the finished model) for "start
+  building." (4) *Top-down-from-vision has its own failure*: the vision underdetermines structure, so
+  descending into a model is Big Design Up Front — a vision-derived model the real processes don't fit.
+  (5) *Synergy / added value is not lost* — it **is** change-driver cohesion; the grand strategic vision is
+  the enterprise altitude, which PFD honestly takes as an input rather than faking as a model. One-liner:
+  *vision top-down, construction bottom-up — that's how every pyramid was actually built.*
+
+Related positioning threads already captured: the **change-locality / four-way-split** consensus (item 6)
+and the **enterprise-bound** reframe (shipped in Closing). The DDD-enterprise "strategic level handles the
+socio-technical" exchange — interlocutor excluded every concrete item, then conceded the level has limits —
+is worth a short paragraph in the same appendix.
+
+---
+
 ## Release scope & versions
 
 Target: **PFD 1.2.0 → 1.3.0**, **JBCT 4.1.2 → 4.2.0** (minor — feature additions, single-sourced from each

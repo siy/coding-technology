@@ -8,7 +8,7 @@
 
 The previous chapter raised the decisions every use case forces and claimed they have simple, consistent answers. This chapter names the pieces those answers are built from. It defines; it does not demonstrate. Demonstration is the spiral's job — four passes that take this vocabulary and apply it at use-case, workflow, subsystem, and system altitude — the four scales of the telescope, defined under *The telescope* below. Read this once and refer back to it; nothing here needs to be memorized, because the spiral will use every piece often enough to make it stick.
 
-**The vocabulary is deliberately small.** Four shapes, six patterns, six properties, three recovery classes, two axes of cohesion, one organizing structure. That smallness is the point Spiral 0 made: a vocabulary you can hold in your head is one you apply from memory, the same way every time. The list below is the whole of it. The reason the book can be read in one sitting is that the list does not grow as the altitudes climb.
+**The vocabulary is deliberately small.** Four shapes, six patterns, six properties, three recovery classes, two axes of cohesion, one organizing structure. That smallness is the point Spiral 0 made: a vocabulary you can hold in your head is one you apply from memory, the same way every time. The list below is the whole of it. The reason the book stays legible across a continuous read is that the list does not grow as the altitudes climb.
 
 ---
 

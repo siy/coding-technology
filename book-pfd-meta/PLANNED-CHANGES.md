@@ -14,6 +14,24 @@ is retained for reference.
 
 ---
 
+## 10. Poltorak full-read review (2026-07-01) — deferred items
+
+He read the whole book. Landed edits shipped in **1.8.0** (variation-without-branching worked example;
+scope-band definition; tiers overclaim; single-sitting-read correction). Still open:
+
+- **The numbers clog the terminology.** His sharpest pedagogical note: readers retain "six patterns / four
+  shapes / six properties" as *counts* and forget *which*. The spine layer partly cures it (it resurfaces the
+  content), but the deeper fix is a pass that leads with the names and what they *do* and stops branding the
+  numerals. A real editorial pass, not a quick edit.
+- **Condensed edition as the free "Lite".** He independently proposed splitting into a ~40-page open-source
+  overview + a paid detailed version (the C++ FAQ / FAQ Lite model) — exactly the condensed edition built in
+  1.7.0. Reconsider distribution: the spine harvest could be the free on-ramp rather than a local give-away.
+  Deferred; currently local-only.
+- **Testimonial.** He offered a Leanpub testimonial; accept it. Also offered coupon distribution to Ukrainian
+  IT chats and an r/softwarearchitecture post — low-cost, his call.
+
+---
+
 ## 1. New section — "Exploring edge cases" (work title)
 
 A dedicated section that collects reader/critic edge-case challenges and their resolutions. Each entry

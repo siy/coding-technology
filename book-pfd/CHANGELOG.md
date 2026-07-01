@@ -7,6 +7,18 @@ All notable changes to the PFD book, newest first. Format:
 `0.x` versions were preview editions; `1.0.0` marked the first edition released to
 readers, and `1.x` are its maintenance and expansion releases.
 
+## [1.8.0] - 2026-07-02
+
+### Added
+- **Variation without branching** (*Edge Cases*): the deepest form of the "process-first explodes" objection answered — the multi-dimensional booking mesh (seat selection × numbering × track model). The objection assumes process-first cannot *dispatch*; it can, spelled as data rather than inheritance — a varying *how* is a bound policy value (the policy axis of the four-way split), not a branch, so the use case stays a linear Sequencer for the same reason a polymorphic object-oriented one does. Maps the object-oriented toolbox (Strategy → a function-typed step or value-object policy; polymorphic dispatch → a sum-type match at the boundary; Template Method → a higher-order Sequencer) and names the honest limit: dispatch is not free, and a strategy-dense domain carries a real policy table either way — process-first just keeps it out of the use-case body and off any shared object. Origin: Denys Poltorak's combinatorial-explosion / "diamonds" challenge, whose force turned out to rest entirely on the unstated premise that process-first has no dispatch.
+
+### Changed
+- **The scope band, defined** (*Closing / Honest scope*): replaced the undefined "enterprise" with an explicit band — large, long-lived, multi-team backend — bounded by a floor (below which coupling cost never pays for the discipline) and a ceiling (true mega-enterprise: dozens of departments sharing no common model, which is organizational / bounded-context territory above the system altitude the book stops below). The methodology's argument lives in between, where a single shared model is still *attempted* and its coupling cost still bites; the concrete anchor sits in the lower-to-middle of the band, not at the ceiling, and the anchor is no longer labelled "enterprise."
+- **Technical tiers** (*Brownfield*): corrected an overclaim — the tiers do not become "a presentation detail"; they persist as real language, technology, security-posture, and staffing boundaries, but stop being the axis the code is decomposed along.
+
+### Fixed
+- **The single-sitting-read claim** (*Introduction, Foundations, Closing*): the full text is fact-dense and reads across several sittings for most readers, not the single sitting an earlier draft claimed as achieved. The one-sitting promise is re-homed to the *condensed edition* (the bolded spine on its own), which is where it holds.
+
 ## [1.7.0] - 2026-07-01
 
 ### Added

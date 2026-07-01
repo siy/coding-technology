@@ -78,7 +78,7 @@ One domain is carried this way on purpose, and one chapter just as deliberately 
 
 ## How to read this book
 
-**The book is built to be read in one sitting — start to finish in an afternoon, not a chapter a week.** That target is not a courtesy; methodology read in fragments loses its connective tissue, and a reader who cannot hold the whole vocabulary in working memory cannot see the through-line. The structure serves that reading:
+**The book rewards a continuous read — start to finish, not a chapter a week.** That is not a courtesy; methodology read in fragments loses its connective tissue, and a reader who cannot hold the whole vocabulary in working memory cannot see the through-line. The full text is dense, though — fact after fact, little filler to skim — so a continuous read runs to more than one afternoon for most, and the true single-sitting pass is the condensed edition, the bolded spine on its own. The structure serves both readings:
 
 - **Spiral 0** comes before any methodology: the decisions a single use case forces, and why you are already answering them. It is the problem the rest of the book solves.
 - **Foundations** names the vocabulary — four shapes, six patterns, six properties, the telescope, three recovery classes, two axes of cohesion. Read it once; refer back as needed.

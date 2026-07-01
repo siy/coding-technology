@@ -52,6 +52,22 @@ The tie is the concession that sets up the real point. **Representation churn is
 
 ---
 
+## Variation without branching
+
+The sharpest form of the "process-first explodes" objection is dimensional. Give the booking example three independent axes at once: how seats are *selected* (one, several, several adjacent), how they are *numbered* (assigned seats, or a standing section with none), and how *tracks* work (a single hall, or parallel tracks an attendee moves between). They combine freely — auto-buy five adjacent seats that must be free across different tracks in different windows; change a seat between tracks in a standing hall. The objection: process-first must either write a use case per combination (a combinatorial explosion), or one use case that branches on every axis (a diamond-riddled procedure), or a dispatch layer that just reinvents the entity hierarchy it claims to have dropped.
+
+The objection rests on one buried premise: that process-first cannot *dispatch* — that a use case is a concrete procedure, so varying its behavior means multiplying it or branching it. Object-oriented design answers dimensional variation with polymorphism: the use case calls a Strategy interface, the vtable selects the concrete strategy, and the body stays linear because the choice is hidden in the dispatch. That instinct is correct, and the mechanism is real. **Process-first has the same mechanism; it spells it as data rather than inheritance.**
+
+**A varying *how* is a bound policy, not a branch.** Seat selection is a function value chosen at the boundary and passed in — `pickOne`, `pickN`, `pickAdjacent(n)`. The buy use case calls `select(request)` and never learns which was bound; adding "adjacent" adds a function, not a use case and not an `if`. Numbering is a policy on the Section value object: a numbered section derives availability per seat, a standing one by capacity, and the use case calls `section.hold(request)` uniformly, the section's type deciding how. Track structure is the presence-interval residue of the time-shared-seat case, change-track its guarded trim-and-add. The use-case body is a straight Sequencer — validate, select, hold, pay, confirm — with no decision diamond in it, for the exact reason the object-oriented version has none: the variation was resolved into a bound value before the body ran, not branched inside it.
+
+This is the policy axis of the four-way split, pointed at variation. The aggregate fuses representation and policy, so a new variant edits the shared object; process-first keeps policy its own value, so a new variant is bound where it is needed and nowhere else. The "two-level structure" the objection concedes would be needed is neither absent nor a smuggled aggregate — it is the use case plus the policies it composes, already in the book twice: as the four-way split, and as absorption, the parent that owns a spanning invariant when two axes genuinely couple while the parts keep their own logic. Nothing fuses data with behavior; nothing multiplies; nothing branches.
+
+Map the toolbox and nothing is lost: a Strategy interface with its subclasses is a function-typed step or a policy method on a value object; polymorphic dispatch is a sum-type match resolved once at the boundary; a Template Method is a Sequencer with steps passed in. **Where object-oriented design reaches for Strategy, Template Method, or polymorphism to keep a procedure linear across a dimension, process-first binds a policy value to the same end.** The dispatch is the same dispatch; only the spelling differs, data for inheritance.
+
+**The honest limit is narrow.** Dispatch is not free in either discipline — the policies are real code, and a strategy-dense domain carries a real table of them whichever way it is built. Process-first does not abolish that table; it keeps it out of the use-case body and off any shared object, so a new strategy lands in one bound value instead of a subclass every caller inherits. And where two axes are coupled by an invariant that spans them, the coupling earns an owner by absorption, at the one place the invariant lives — a cost named and located, not a branch smeared through every use case.
+
+---
+
 ## Objections answered
 
 The edge cases are technical. The objections that recur in argument are not; they are about what kind of thing the methodology is. Three are worth answering directly, because each rests on a misreading the worked cases above already refute.

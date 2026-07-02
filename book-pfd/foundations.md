@@ -8,7 +8,7 @@
 
 The previous chapter raised the decisions every use case forces and claimed they have simple, consistent answers. This chapter names the pieces those answers are built from. It defines; it does not demonstrate. Demonstration is the spiral's job — four passes that take this vocabulary and apply it at use-case, workflow, subsystem, and system altitude — the four scales of the telescope, defined under *The telescope* below. Read this once and refer back to it; nothing here needs to be memorized, because the spiral will use every piece often enough to make it stick.
 
-**The vocabulary is deliberately small.** Four shapes, six patterns, six properties, three recovery classes, two axes of cohesion, one organizing structure. That smallness is the point Spiral 0 made: a vocabulary you can hold in your head is one you apply from memory, the same way every time. The list below is the whole of it. The reason the vocabulary never outgrows what you can hold as you read is that the list does not grow as the altitudes climb.
+**The vocabulary is deliberately small, and closed:** the shapes a value takes, the patterns that compose them, the properties that specify a process, three recovery classes, two axes of cohesion, and one organizing structure over them all — a handful of short, fixed lists in total. That smallness is the point Spiral 0 made: a vocabulary you can hold in your head is one you apply from memory, the same way every time. The list below is the whole of it. The reason the vocabulary never outgrows what you can hold as you read is that the list does not grow as the altitudes climb.
 
 ---
 
@@ -24,9 +24,9 @@ The stance the whole methodology rests on, stated plainly: **the unit of design 
 
 ---
 
-## The six properties of a process
+## The properties of a process
 
-**A process has six properties, and they are the same six at every altitude — that is what makes the telescope below possible.** Their granularity changes as you climb; the list does not.
+**A process has six properties, and they are the same set at every altitude — that is what makes the telescope below possible.** Their granularity changes as you climb; the list does not.
 
 - **Trigger** — what makes the process run: an incoming request, a scheduled tick, an event, a human approval resolving. The trigger is not the transport that carries it; HTTP versus a queue is not a different trigger. A process needs at least one trigger and may have several (a fulfilment process can begin from a purchase or from a restock), but its *outcome* is what defines it: the same outcome reached through different triggers is one process, while the same steps performed for a different outcome are different processes.
 - **Typed input** — what the process needs to begin, as a precise type carrying exactly that and no more.
@@ -35,7 +35,7 @@ The stance the whole methodology rests on, stated plainly: **the unit of design 
 - **Steps** — its internal sequence of operations, named in domain terms and visible at the altitude they belong to.
 - **Dependencies** — the graph between the steps: what must precede what, what can run in parallel, what is conditional.
 
-Name these six for any process and it is, in the methodology's terms, specified. The spiral walks the same six at each altitude, with the steps becoming use cases, then workflows, then subsystems as it climbs.
+Name these for any process and it is, in the methodology's terms, specified. The spiral walks the same set at each altitude, with the steps becoming use cases, then workflows, then subsystems as it climbs.
 
 **Naming the six is already a verification step, not only a specification one.** To fill in the typed failures you must enumerate every way the process can end badly; to fill in the dependencies you must say what genuinely must precede what; to fill in the typed input you must state the least the trigger can carry. A flaw in the design shows up as a property you cannot complete — an outcome with no failure named for it, a step that needs a fact no earlier step produces — and it shows up *now*, at design time, on one page, before a line is written. Entity-first defers this: an entity declares its fields and says nothing about which operations touch it, how they fail, or in what order, so the failure modes and the ordering surface later, in implementation or in production. Process-first front-loads the discovery of flaws, because specifying a process *is* walking its outcomes.
 
@@ -43,7 +43,7 @@ Name these six for any process and it is, in the methodology's terms, specified.
 
 ## A process gathers knowledge
 
-**Underneath the six properties is a simpler way to see what a process is: an act of knowledge gathering.** A process begins knowing only its trigger and its input, and each step acquires one more piece of what it needs — *buy ticket* learns that the request is well-formed, then that the event is selling, then that the seat is held, then that the payment cleared. The process ends, success or failure, the moment it knows enough to answer. A declined payment is not a missing outcome but knowledge in its own right, enough to answer *the ticket cannot be sold*, so the process stops there rather than gather what it no longer needs. Typed failures and short-circuiting are not machinery bolted on; they are the process recognizing it is done.
+**Underneath these properties is a simpler way to see what a process is: an act of knowledge gathering.** A process begins knowing only its trigger and its input, and each step acquires one more piece of what it needs — *buy ticket* learns that the request is well-formed, then that the event is selling, then that the seat is held, then that the payment cleared. The process ends, success or failure, the moment it knows enough to answer. A declined payment is not a missing outcome but knowledge in its own right, enough to answer *the ticket cannot be sold*, so the process stops there rather than gather what it no longer needs. Typed failures and short-circuiting are not machinery bolted on; they are the process recognizing it is done.
 
 **This is also why the types belong to the process.** Ask of a domain "what data exists?" and the answer is entities: one `Customer`, one `Order`, one shared shape every process must accept. Ask instead "what does *this* process need to know?" and the answer is the per-process types the methodology produces — the smallest input the trigger carries, the typed knowledge each step adds, the closed set of facts, failures included, that let the process answer. Process-first is what falls out when you model around the knowledge a process gathers rather than the data a system stores.
 
@@ -105,9 +105,9 @@ There are four moments. A datum is *minted* when an operation first needs an ide
 
 ---
 
-## The four shapes
+## The shapes
 
-**Every value a process handles has one of four shapes, and the shape is a domain statement, not a stylistic choice.** They are type-honest: the type says what the domain knows about the value. A type's capacity to carry a business statement rather than merely a layout is its *semantic potential* — the term is William Jackson's — and the four shapes are the first place the methodology spends it.
+**Every value a process handles has one of four shapes, and the shape is a domain statement, not a stylistic choice.** They are type-honest: the type says what the domain knows about the value. A type's capacity to carry a business statement rather than merely a layout is its *semantic potential* — the term is William Jackson's — and these shapes are the first place the methodology spends it.
 
 - **`T`** — the value exists, unconditionally. No absence, no failure, no waiting.
 - **`Option<T>`** — the value may or may not exist, and its absence is a domain fact, not an error.
@@ -127,9 +127,9 @@ The shape and the enforcement together are why a process body is free of defensi
 
 ---
 
-## The six patterns
+## The patterns
 
-**Composition has six primitives, and the same six compose a process at every altitude.** Each maps to a recognizable shape of work; together they are sufficient, and the methodology adds no others.
+**Composition has six primitives, and the same set composes a process at every altitude.** Each maps to a recognizable shape of work; together they are sufficient, and the methodology adds no others.
 
 - **Leaf** — an atomic unit: a boundary crossing (I/O, an external call) or a pure computation. The bottom of composition; everything else composes Leaves.
 - **Sequencer** — steps in order, each feeding the next, short-circuiting on the first failure.
@@ -154,7 +154,7 @@ That one trigger need not be an external actor. A use case fires from one of thr
 
 Two operations recur at every altitude, and keeping them distinct is essential:
 
-- **Within-altitude composition** — how the units *at* an altitude compose into one unit — is the six patterns. It happens at every altitude, including the use case (its steps compose via Sequencer, Leaf, Fork-Join).
+- **Within-altitude composition** — how the units *at* an altitude compose into one unit — is the patterns. It happens at every altitude, including the use case (its steps compose via Sequencer, Leaf, Fork-Join).
 - **Cross-altitude grouping** — how units of the level below *cohere to form* a unit at this level — happens only where a level is formed from a lower one. It is **change-driver cohesion**: units cohere when a single business force governs them, when one change would force them all to change together.
 
 The recognition test for grouping is one question, asked at each transition: *what business change would force all of these to change together?* If a single force rewrites them all, they cohere. The mechanism is identical at every transition; the *kind* of driver differs by altitude:
@@ -215,7 +215,7 @@ That economy is the whole discipline, and it is what separates this from the two
 
 Ask enough of those questions and something happens to the register worth watching for, because it is where this section's title is answered. The use cases that share a driver are already a group; give the group a name and it is a workflow. The workflows that share a concern are already a cluster; name it and it is a subsystem. You did not sit down and design a hierarchy. You asked the business what varies, wrote the answers in a list, and the list sorted itself into the telescope. **The structure precipitates from the register the way data precipitates from process** — one level up, by the same mechanism. *Where data comes from* and *where the structure comes from* are the same answer, given twice.
 
-Follow a single bite all the way down and the descent has a floor you can see. A use case decomposes into steps; the steps compose by the six patterns; a step that is a boundary crossing or a pure computation is a Leaf, and a Leaf cannot be split — it is one thing. You split until you hit atoms, and then you stop, and you can *see* that you have stopped, because there is nothing left inside a Leaf to divide. The companion volume walks this in Java, step by step, down to the last leaf; here the point is only that **the decomposition is not open-ended — it bottoms out in code so simple it cannot be argued with.**
+Follow a single bite all the way down and the descent has a floor you can see. A use case decomposes into steps; the steps compose by the patterns; a step that is a boundary crossing or a pure computation is a Leaf, and a Leaf cannot be split — it is one thing. You split until you hit atoms, and then you stop, and you can *see* that you have stopped, because there is nothing left inside a Leaf to divide. The companion volume walks this in Java, step by step, down to the last leaf; here the point is only that **the decomposition is not open-ended — it bottoms out in code so simple it cannot be argued with.**
 
 This is also where the fear of the branchy, ballooning use case is put to rest. Where an operation varies — a seat that may be one seat or a set of reservations, a section that may be numbered or standing — the variation is resolved into a bound value before the body runs, so the body stays a straight sequence of steps with no fork inside it. The use case does not swell to cover the cases; it calls a step whose implementation was chosen at the edge. And because each use case is this simple and this self-contained, **a thousand of them is a thousand independent descents to Leaves, not one thousand-way tangle** — which is the real reason a vision comes apart into use cases naturally. Scale here is repetition of something small, not accumulation of something large.
 

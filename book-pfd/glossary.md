@@ -12,7 +12,7 @@ The methodology's vocabulary, defined once. These terms are the shared spine the
 
 **Altitude.** A level of the telescope: use case, workflow, subsystem, or system. Altitudes are not imposed; they emerge as units at one level cohere into a unit at the next. (The telescope.)
 
-**Aspects.** The pattern for cross-cutting concerns that wrap operations uniformly — business cross-cutting (audit, compliance) is part of the design; technical cross-cutting (logging, tracing, retries) is supplied by the runtime. (The six patterns.)
+**Aspects.** The pattern for cross-cutting concerns that wrap operations uniformly — business cross-cutting (audit, compliance) is part of the design; technical cross-cutting (logging, tracing, retries) is supplied by the runtime. (The patterns.)
 
 ## B
 
@@ -28,7 +28,7 @@ The methodology's vocabulary, defined once. These terms are the shared spine the
 
 **Completeness.** One axis of the cohesion test: is every unit a driver governs inside the group, or are some scattered elsewhere so one change must chase them across modules — the smell of shotgun surgery? (The telescope.)
 
-**Condition.** The pattern that branches on a business fact, routing between legitimate alternatives; typed, never a bare boolean where the fact carries meaning. (The six patterns.)
+**Condition.** The pattern that branches on a business fact, routing between legitimate alternatives; typed, never a bare boolean where the fact carries meaning. (The patterns.)
 
 ## D
 
@@ -50,9 +50,9 @@ The methodology's vocabulary, defined once. These terms are the shared spine the
 
 **FER (Forward Error Recovery).** The second member of the recovery triple: continue with degraded state rather than undoing — a notification queued for retry while the booking stands, a value allowed to decay through fresh → stale → expired. (The recovery triple.)
 
-**Fork-Join.** The pattern for independent steps run in parallel and joined. (The six patterns.)
+**Fork-Join.** The pattern for independent steps run in parallel and joined. (The patterns.)
 
-**The four shapes.** The four type-honest shapes a value can have: `T` (exists unconditionally), `Option<T>` (may be absent, as a domain fact), `Result<T>` (may have failed, synchronously), `Promise<T>` (arrives later and may fail). (Foundations.)
+**The shapes.** The four type-honest shapes a value can have: `T` (exists unconditionally), `Option<T>` (may be absent, as a domain fact), `Result<T>` (may have failed, synchronously), `Promise<T>` (arrives later and may fail). (Foundations.)
 
 **The four-way split.** That an entity-first aggregate fuses identity, lifecycle state, representation, and policy, while process-first keeps them apart — id, state machine, value object, and use cases — so each varies independently. (Where data comes from.)
 
@@ -68,11 +68,11 @@ The methodology's vocabulary, defined once. These terms are the shared spine the
 
 **Information hiding.** Parnas's criterion: decompose by hiding the design decisions most likely to change, so the module list follows the change list rather than the flowchart. (Finding the change driver.)
 
-**Iteration.** The pattern for a step applied across a collection. (The six patterns.)
+**Iteration.** The pattern for a step applied across a collection. (The patterns.)
 
 ## L
 
-**Leaf.** The atomic unit of composition: a boundary crossing (I/O, an external call) or a pure computation. Everything else composes Leaves. (The six patterns.)
+**Leaf.** The atomic unit of composition: a boundary crossing (I/O, an external call) or a pure computation. Everything else composes Leaves. (The patterns.)
 
 ## O
 
@@ -92,13 +92,13 @@ The methodology's vocabulary, defined once. These terms are the shared spine the
 
 ## S
 
-**Semantic potential.** William Jackson's term for a type's capacity to carry a business statement rather than merely a layout; the four shapes are the first place the methodology spends it. (Foundations.)
+**Semantic potential.** William Jackson's term for a type's capacity to carry a business statement rather than merely a layout; the shapes are the first place the methodology spends it. (Foundations.)
 
-**Sequencer.** The pattern for steps in order, each feeding the next, short-circuiting on the first failure. (The six patterns.)
+**Sequencer.** The pattern for steps in order, each feeding the next, short-circuiting on the first failure. (The patterns.)
 
 **Shared primitive.** What actually couples two processes — an id, a state enum, the value type of a field they both touch — each of which is a word the business actually says. Two processes writing different fields of one row are not coupled by co-location. (Where data comes from.)
 
-**The six patterns.** The sufficient set of composition primitives, the same six at every altitude: Leaf, Sequencer, Fork-Join, Condition, Iteration, Aspects. (Foundations.)
+**The patterns.** The sufficient set of composition primitives, the same six at every altitude: Leaf, Sequencer, Fork-Join, Condition, Iteration, Aspects. (Foundations.)
 
 **State machine.** The single field several processes write — the workflow's state (free, held, confirmed, cancelled) — written only as a typed transition, never an overwrite, so the one point needing coordination is the transition. Its type is named with a `*State` suffix, variants bare — a rule the companion *Java Backend Coding Technology* makes explicit. (Where data comes from; Designing out contention.)
 
@@ -114,7 +114,7 @@ The methodology's vocabulary, defined once. These terms are the shared spine the
 
 ## U
 
-**Use case.** One business operation — one trigger, one outcome — and the floor of the telescope, composed internally from the six patterns. (The telescope.)
+**Use case.** One business operation — one trigger, one outcome — and the floor of the telescope, composed internally from the patterns. (The telescope.)
 
 ## V
 
@@ -122,6 +122,6 @@ The methodology's vocabulary, defined once. These terms are the shared spine the
 
 ## W
 
-**Within-altitude composition / cross-altitude grouping.** The two operations that recur at every altitude: composition (how units at an altitude compose into one, via the six patterns) and grouping (how units of the level below cohere to form one, via change-driver cohesion). (The telescope.)
+**Within-altitude composition / cross-altitude grouping.** The two operations that recur at every altitude: composition (how units at an altitude compose into one, via the patterns) and grouping (how units of the level below cohere to form one, via change-driver cohesion). (The telescope.)
 
 **Workflow.** A composition of use cases for one business outcome, cohering under one business policy; a Leaf to its subsystem. (The telescope.)

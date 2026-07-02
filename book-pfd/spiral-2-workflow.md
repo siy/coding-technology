@@ -12,7 +12,7 @@ The use cases interact. Multiple use cases write to the same seat, the same cust
 
 This pass walks workflow altitude through a single domain. The running example holds: event ticketing. The use cases have multiplied. *Buy ticket* from Pass 1 is one of them, kept intact at its own altitude; the customer can also *cancel ticket*, *refund ticket*, *hold seat*, *check availability*; the venue's operations fire scheduled work like *release expired holds*. These are genuinely distinct use cases with their own external triggers, and they cohere into workflows around shared change drivers.
 
-By the time the pass closes, the reader has seen the six patterns reappear with a different distribution. Iteration earns its first strong appearance. Aspects surface as load-bearing rather than runtime-handled. Sequencer composes use cases rather than steps inside one use case. Compensation becomes load-bearing because failures cross use-case boundaries. Time stops being a fixed point in some workflows and becomes a category (fresh, stale, expired) that the system reasons about. The cancellation-and-refund workflow decomposes into the structure the industry calls a saga, with the methodology naming it as a composite of patterns it already has.
+By the time the pass closes, the reader has seen the patterns reappear with a different distribution. Iteration earns its first strong appearance. Aspects surface as load-bearing rather than runtime-handled. Sequencer composes use cases rather than steps inside one use case. Compensation becomes load-bearing because failures cross use-case boundaries. Time stops being a fixed point in some workflows and becomes a category (fresh, stale, expired) that the system reasons about. The cancellation-and-refund workflow decomposes into the structure the industry calls a saga, with the methodology naming it as a composite of patterns it already has.
 
 The pass closes by naming what does not appear at this altitude either. Subsystem boundaries are still implicit. Cross-subsystem coordination is still hidden in the assumption that all workflows share a substrate. Persistence topology is still a question to be deferred. The multiplicity that earns the next altitude is not yet here, but it is coming.
 
@@ -47,7 +47,7 @@ Making it explicit does not add coupling; it relocates coupling the domain alrea
 
 A workflow is named after the business outcome it composes. Booking-and-payment is the lifecycle from "customer asks to buy" through "customer has a confirmed ticket and the venue has the money." Cancellation-and-refund is the lifecycle from "customer asks to cancel" through "the seat is back in inventory and the customer has their money back." Temporary-hold is the lifecycle from "customer puts a seat on hold" through "the hold is either consumed by a confirmed booking or released because expiry passed." Each name carries a complete business arc; each arc decomposes into several use cases.
 
-**A workflow has the same six properties as a use case.** Trigger, typed inputs, typed outputs, typed failures, steps, dependencies. The granularity differs: the trigger fires the workflow rather than a single use case; the steps are use cases rather than atomic operations; the dependencies are between use cases rather than between operations inside one use case. The failures are workflow-level — some bubble up from constituent use cases, some are workflow-specific (the workflow as a whole timed out before any individual use case did).
+**A workflow has the same properties as a use case.** Trigger, typed inputs, typed outputs, typed failures, steps, dependencies. The granularity differs: the trigger fires the workflow rather than a single use case; the steps are use cases rather than atomic operations; the dependencies are between use cases rather than between operations inside one use case. The failures are workflow-level — some bubble up from constituent use cases, some are workflow-specific (the workflow as a whole timed out before any individual use case did).
 
 The workflow's types are mostly composed from its use cases, not invented for it. Internally, the workflow threads the use cases' own types forward as growing context — each step's output is the next step's input — rather than wrapping them in workflow-specific equivalents.
 
@@ -63,7 +63,7 @@ What changes at this altitude is not the methodology. What changes is what the m
 
 The cancellation-and-refund workflow lives in event ticketing because the customer who bought a ticket sometimes wants to cancel. The trigger is a customer's request to cancel a specific booking, surfaced through the customer-facing channel. The work the workflow has to do — reverse the reservation, initiate the refund, invalidate the ticket, send the customer a confirmation — composes use cases that are each invokable on their own at use-case altitude. An administrator can manually cancel a reservation. The payment provider can initiate a refund from an out-of-band trigger. An operator can invalidate a ticket directly. They cohere into one workflow because the cancellation policy governs all of them: change what cancellation means in the business (the cancellation window, who is eligible, what the refund policy is, how refunds are processed) and the four use cases change together. That cohesion is the workflow.
 
-The workflow is *cancel booking*, and it has the six properties at workflow granularity. Its trigger is the customer's intent to cancel, a customer-facing request distinct from any internal step's trigger. Internally it threads its use cases' types forward as growing context: `LoadBooking` produces a `Booking`, `VerifyCancellationEligibility` consumes it and produces an `EligibleBooking`, and so on. What it owns at its boundary is three types: `CancelBooking.Request` (what the trigger carries), `CancelBooking.Response` (shaped from the terminal steps), and `CancelBooking.Failure` (the constituent failures that reach the caller plus the ones only the orchestration can hit).
+The workflow is *cancel booking*, and it has the properties at workflow granularity. Its trigger is the customer's intent to cancel, a customer-facing request distinct from any internal step's trigger. Internally it threads its use cases' types forward as growing context: `LoadBooking` produces a `Booking`, `VerifyCancellationEligibility` consumes it and produces an `EligibleBooking`, and so on. What it owns at its boundary is three types: `CancelBooking.Request` (what the trigger carries), `CancelBooking.Response` (shaped from the terminal steps), and `CancelBooking.Failure` (the constituent failures that reach the caller plus the ones only the orchestration can hit).
 
 ```
 CancelBooking.Request:
@@ -286,7 +286,7 @@ The race is then lost structurally, not detected after the fact, and no lock is 
 
 ---
 
-## The six patterns at workflow altitude
+## The patterns at workflow altitude
 
 The distribution differs from use-case altitude. Some patterns that were absent or rare now earn strong appearances; some that were strongly present appear less centrally because the work has shifted up a level.
 

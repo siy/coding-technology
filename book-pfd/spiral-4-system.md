@@ -32,7 +32,7 @@ One axis at this altitude is genuinely new and easy to confuse with grouping: **
 
 The methodology has carried a distinction quietly since Pass 1, and system altitude is where it has to be named. **Building a system is two jobs, not one.**
 
-**Assembly** is wiring the system's internal composition: which use cases compose into which workflows, which workflows into which subsystems, which subsystems into the system. It is the composition graph, built from the six patterns. Assembly is internal and deterministic — it is the design, expressed in code.
+**Assembly** is wiring the system's internal composition: which use cases compose into which workflows, which workflows into which subsystems, which subsystems into the system. It is the composition graph, built from the patterns. Assembly is internal and deterministic — it is the design, expressed in code.
 
 **Provisioning** is delivering the external resources the system runs on: the stores its data lives in, the message bus its subsystems exchange facts over, the scheduler its sweeps fire from, the identity service it authenticates against, the payment gateway its Leaves call. These are environmental. Each is a typed resource the system needs from outside itself, invoked through a Leaf — the same "resources as substrate" idea the methodology applied to triggers, now applied to everything the system depends on.
 
@@ -69,13 +69,13 @@ The instance dimension is what makes the uniformity matter. **The same operation
 
 ---
 
-## The six patterns at system altitude
+## The patterns at system altitude
 
-**All six patterns appear at system altitude, and several appear strongly — the fractal property, complete.**
+**All patterns appear at system altitude, and several appear strongly — the fractal property, complete.**
 
 **Sequencer** composes subsystems: a platform operation that runs across booking, pricing, and event-management in order is a Sequencer whose steps are whole subsystems. **Fork-Join** runs subsystems or instances in parallel — fan out across venues, join the results. **Condition** routes on system-level facts: which tenant tier, which region's compliance regime, which deployment cohort. **Iteration** is common at this altitude in a way it was not lower down — the platform processes *all* venues' end-of-day data, *all* tenants' billing runs, the same operation applied across the instance dimension. **Aspects** are pervasive: the technical cross-cutting of the previous section is Aspects supplied uniformly by the runtime across the whole platform.
 
-**Leaf** completes the telescope. From the system's vantage, a subsystem is a Leaf — atomic, invoked, returning a typed outcome, its internals not the system's concern. The booking subsystem, which was a composition of workflows at subsystem altitude, is a single unit from system altitude, exactly as a workflow was a unit to its subsystem, a use case a unit to its workflow, and a boundary call a Leaf to its use case. **Four altitudes, and at each one the composition below is the atom above.** The reader has now seen the same six patterns at every level; the claim that they recur is no longer a claim but a walked demonstration.
+**Leaf** completes the telescope. From the system's vantage, a subsystem is a Leaf — atomic, invoked, returning a typed outcome, its internals not the system's concern. The booking subsystem, which was a composition of workflows at subsystem altitude, is a single unit from system altitude, exactly as a workflow was a unit to its subsystem, a use case a unit to its workflow, and a boundary call a Leaf to its use case. **Four altitudes, and at each one the composition below is the atom above.** The reader has now seen the same patterns at every level; the claim that they recur is no longer a claim but a walked demonstration.
 
 The distribution this altitude earned: Iteration and Aspects strongly present (the instance dimension and pervasive technical cross-cutting), Sequencer and Fork-Join composing subsystems, Condition routing on platform facts, Leaf at subsystem granularity. The shift from subsystem altitude is the rise of Iteration (now over instances) and the saturation of Aspects (now the platform's uniform instrumentation).
 
@@ -103,9 +103,9 @@ These are exactly the Phase-5 axes, and system altitude surfaces all of them tog
 
 ## Closing — the spiral is walked; synthesis is next
 
-This pass has shown the system: subsystems composed into one platform, assembly separated from provisioning, technical cross-cutting supplied uniformly by the runtime, recovery as a coherent hybrid across subsystems, and the six patterns completing the fractal at the fourth altitude. A subsystem became a Leaf; the telescope closed.
+This pass has shown the system: subsystems composed into one platform, assembly separated from provisioning, technical cross-cutting supplied uniformly by the runtime, recovery as a coherent hybrid across subsystems, and the patterns completing the fractal at the fourth altitude. A subsystem became a Leaf; the telescope closed.
 
-The spiral is now walked end to end. The methodology has been applied at four altitudes — use case, workflow, subsystem, system — with one running example and one vocabulary. The same six properties described a process at every scale. The same six patterns composed it. The same four shapes carried its values. The same recovery triple handled its failures. **The reader who started with a single use case buying a single ticket has climbed to a multi-tenant platform without learning a second vocabulary, because there was never a second vocabulary to learn.** That is the telescope, and the reader has now lived it rather than been told it.
+The spiral is now walked end to end. The methodology has been applied at four altitudes — use case, workflow, subsystem, system — with one running example and one vocabulary. The same properties described a process at every scale. The same patterns composed it. The same shapes carried its values. The same recovery triple handled its failures. **The reader who started with a single use case buying a single ticket has climbed to a multi-tenant platform without learning a second vocabulary, because there was never a second vocabulary to learn.** That is the telescope, and the reader has now lived it rather than been told it.
 
 At each altitude, architecture decisions surfaced. They were named and deferred: per-use-case SLOs, recovery-class selection, persistence topology, composition substrate, deployment topology, the elicitation that drives all of them. The spiral surfaced them honestly and resolved them partially, because each altitude could only show what its multiplicity made visible. There is no altitude left above the system to defer to. The deferred decisions have accumulated into an inventory, and that inventory is the next module's agenda.
 

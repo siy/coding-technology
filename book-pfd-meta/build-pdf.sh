@@ -192,9 +192,19 @@ EOF
   echo "Done: $out (${pages:-?} pages, $(du -h "$out" | cut -f1))"
 }
 
+# --- de-spine: the spine (bold sentences) is internal markup that drives the
+# condensed edition (extract-spine.py); the full book renders it as plain prose
+# so the deep read stays clean. Strip spine bold from build-time copies, leaving
+# list labels intact. Source files are never touched. ---
+DESPINE_DIR="$BUILD/despined"
+mkdir -p "$DESPINE_DIR"
+for f in "${CHAPTERS[@]}"; do
+  python3 "$SCRIPT_DIR/despine.py" "$MANUSCRIPT_DIR/$f" > "$DESPINE_DIR/$f"
+done
+
 # --- full book ---
 FULL_INPUTS=()
-for f in "${CHAPTERS[@]}"; do FULL_INPUTS+=("$MANUSCRIPT_DIR/$f"); done
+for f in "${CHAPTERS[@]}"; do FULL_INPUTS+=("$DESPINE_DIR/$f"); done
 [[ -f "$REVISION_MD" ]] && FULL_INPUTS+=("$REVISION_MD")
 OUTPUT="$SCRIPT_DIR/${BASENAME}${SUFFIX}.pdf"
 echo "Building $MODE full PDF -> $OUTPUT"
@@ -202,7 +212,7 @@ build_book "$OUTPUT" "${FULL_INPUTS[@]}"
 
 # --- sample excerpt ---
 SAMPLE_INPUTS=()
-for f in "${SAMPLE_CHAPTERS[@]}"; do SAMPLE_INPUTS+=("$MANUSCRIPT_DIR/$f"); done
+for f in "${SAMPLE_CHAPTERS[@]}"; do SAMPLE_INPUTS+=("$DESPINE_DIR/$f"); done
 SAMPLE_OUTPUT="$SCRIPT_DIR/${BASENAME}-sample${SUFFIX}.pdf"
 echo "Building $MODE sample PDF -> $SAMPLE_OUTPUT"
 build_book "$SAMPLE_OUTPUT" "${SAMPLE_INPUTS[@]}"

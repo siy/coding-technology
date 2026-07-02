@@ -82,8 +82,7 @@ Claude Code navigates to specific files as needed, optimizing context usage.
 
 ## Related Resources
 
-- **[CODING_GUIDE.md](../../CODING_GUIDE.md)** - Complete technical reference (100+ pages)
-- **[series/](../../series/)** - 6-part progressive learning path
+- **[JBCT book](../../book/index.md)** - Complete technical reference
 - **[jbct-coder.md](../../jbct-coder.md)** - Code generation subagent
 - **[jbct-reviewer.md](../../jbct-reviewer.md)** - Code review subagent
 

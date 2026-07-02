@@ -39,8 +39,11 @@ CHAPTERS=(
   spiral-3-subsystem.md
   spiral-4-system.md
   architecture-synthesis.md
+  edge-cases.md
   brownfield.md
   closing.md
+  afterword.md
+  glossary.md
   references.md
 )
 for f in "${CHAPTERS[@]}"; do
@@ -106,7 +109,10 @@ cat > "$BUILD/header.tex" <<'HDR'
   breaklines=true,breakatwhitespace=false,
   columns=fullflexible,keepspaces=true,showstringspaces=false,
   literate={—}{{-}}1 {–}{{-}}1 {→}{{$\rightarrow$}}1}
-% Headings: make subsection/subsubsection visibly larger than inline bold text.
+% Headings: a clear size ladder - section (chapter) > subsection > subsubsection > inline bold.
+% (Without an explicit \section format, the article default \Large collides with \subsection below.)
+\titleformat{\section}{\huge\bfseries}{}{0pt}{}
+\titlespacing*{\section}{0pt}{0pt}{1.2em}
 \titleformat{\subsection}{\Large\bfseries}{}{0pt}{}
 \titlespacing*{\subsection}{0pt}{1.6ex plus .2ex}{0.8em}
 \titleformat{\subsubsection}{\large\bfseries}{}{0pt}{}
@@ -153,24 +159,30 @@ build_book() {
     "${inputs[@]}"
 
   if [[ -n "$COVER" ]]; then
-    cat > "$BUILD/combine.tex" <<EOF
-\documentclass[letterpaper]{article}
+    # Cover -> standalone single full-bleed page, sized to match the content PDF
+    # exactly (pdfunite concatenates pages as-is, with no scaling).
+    local cpsize cw ch
+    cpsize=$(pdfinfo "$BUILD/content.pdf" 2>/dev/null | awk '/Page size/{print $3, $5}')
+    cw=$(printf '%s' "$cpsize" | cut -d' ' -f1); ch=$(printf '%s' "$cpsize" | cut -d' ' -f2)
+    cw=${cw:-612}; ch=${ch:-792}
+    cat > "$BUILD/cover.tex" <<EOF
+\documentclass{article}
 \usepackage{graphicx}
-\usepackage{pdfpages}
-\usepackage[margin=0pt]{geometry}
+\usepackage[margin=0pt,paperwidth=${cw}bp,paperheight=${ch}bp]{geometry}
 \pagestyle{empty}
 \begin{document}
 \AddToShipoutPictureBG*{\includegraphics[width=\paperwidth,height=\paperheight]{$COVER}}
-\null\newpage
-\includepdf[pages=-]{$BUILD/content.pdf}
+\null
 \end{document}
 EOF
-    ( cd "$BUILD" && xelatex -interaction=batchmode combine.tex >/dev/null 2>&1; \
-      xelatex -interaction=batchmode combine.tex >/dev/null 2>&1 )
-    if [[ -f "$BUILD/combine.pdf" ]]; then
-      cp "$BUILD/combine.pdf" "$out"
+    ( cd "$BUILD" && xelatex -interaction=batchmode cover.tex >/dev/null 2>&1 ) || true
+    # pdfunite PRESERVES the content PDF's hyperlink annotations; \includepdf (pdfpages)
+    # strips them, which is what left the blue URLs un-clickable.
+    if [[ -f "$BUILD/cover.pdf" ]] && command -v pdfunite >/dev/null 2>&1 \
+         && pdfunite "$BUILD/cover.pdf" "$BUILD/content.pdf" "$out" 2>/dev/null; then
+      :
     else
-      echo "  Warning: cover merge failed; using content-only PDF"
+      echo "  Warning: cover merge failed; using content-only PDF (links preserved)"
       cp "$BUILD/content.pdf" "$out"
     fi
   else
@@ -181,9 +193,19 @@ EOF
   echo "Done: $out (${pages:-?} pages, $(du -h "$out" | cut -f1))"
 }
 
+# --- de-spine: the spine (bold sentences) is internal markup that drives the
+# condensed edition (extract-spine.py); the full book renders it as plain prose
+# so the deep read stays clean. Strip spine bold from build-time copies, leaving
+# list labels intact. Source files are never touched. ---
+DESPINE_DIR="$BUILD/despined"
+mkdir -p "$DESPINE_DIR"
+for f in "${CHAPTERS[@]}"; do
+  python3 "$SCRIPT_DIR/despine.py" "$MANUSCRIPT_DIR/$f" > "$DESPINE_DIR/$f"
+done
+
 # --- full book ---
 FULL_INPUTS=()
-for f in "${CHAPTERS[@]}"; do FULL_INPUTS+=("$MANUSCRIPT_DIR/$f"); done
+for f in "${CHAPTERS[@]}"; do FULL_INPUTS+=("$DESPINE_DIR/$f"); done
 [[ -f "$REVISION_MD" ]] && FULL_INPUTS+=("$REVISION_MD")
 OUTPUT="$SCRIPT_DIR/${BASENAME}${SUFFIX}.pdf"
 echo "Building $MODE full PDF -> $OUTPUT"
@@ -191,7 +213,7 @@ build_book "$OUTPUT" "${FULL_INPUTS[@]}"
 
 # --- sample excerpt ---
 SAMPLE_INPUTS=()
-for f in "${SAMPLE_CHAPTERS[@]}"; do SAMPLE_INPUTS+=("$MANUSCRIPT_DIR/$f"); done
+for f in "${SAMPLE_CHAPTERS[@]}"; do SAMPLE_INPUTS+=("$DESPINE_DIR/$f"); done
 SAMPLE_OUTPUT="$SCRIPT_DIR/${BASENAME}-sample${SUFFIX}.pdf"
 echo "Building $MODE sample PDF -> $SAMPLE_OUTPUT"
 build_book "$SAMPLE_OUTPUT" "${SAMPLE_INPUTS[@]}"

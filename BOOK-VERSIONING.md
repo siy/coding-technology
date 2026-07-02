@@ -16,7 +16,7 @@ renders the whole file as the book's **Revision History** appendix. The version 
 book builds as cannot drift from its history, because both come from one file.
 
 The repository-wide root `CHANGELOG.md` covers tooling and shared assets (skills,
-`CODING_GUIDE.md`, build scripts, Pragmatica Core version bumps), not book content.
+build scripts, Pragmatica Core version bumps), not book content.
 
 ## What the numbers mean
 
@@ -38,8 +38,8 @@ Current state:
 
 | Book | Version | Status |
 |------|---------|--------|
-| JBCT | 3.2.0 | released; continues its existing history |
-| PFD  | 0.9.0 | draft; `1.0.0` at first publication |
+| JBCT | 4.1.0 | released; continues its existing history |
+| PFD  | 1.0.0 | released |
 | Aether | 0.1.0 | once the manuscript begins |
 
 > The books use plain SemVer, not an `rc` suffix. The `1.0.0-rc1` in the text

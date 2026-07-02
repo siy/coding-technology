@@ -25,7 +25,6 @@ const STYLES_DIR = path.join(__dirname, 'styles');
 // Files to convert
 const MARKDOWN_FILES = [
   'README.md',
-  'CODING_GUIDE.md',
   'MANAGEMENT_PERSPECTIVE.md',
   'CHANGELOG.md',
   'TECHNOLOGY.md',
@@ -38,19 +37,34 @@ const MARKDOWN_FILES = [
   'CONTACT.md'
 ];
 
-// Series files
-const SERIES_FILES = [
-  'INDEX.md',
-  'part-01-foundations.md',
-  'part-02-four-return-types.md',
-  'part-03-parse-dont-validate.md',
-  'part-04-error-handling.md',
-  'part-05-basic-patterns.md',
-  'part-06-advanced-patterns.md',
-  'part-07-testing-philosophy.md',
-  'part-08-testing-practice.md',
-  'part-09-production-systems.md',
-  'part-10-systematic-application.md'
+// Book chapters
+const BOOK_CHAPTERS = [
+  'ch01-introduction.md',
+  'ch02-design-methodology.md',
+  'ch02-four-return-types.md',
+  'ch03-pragmatica-lite-essentials.md',
+  'ch04-parse-dont-validate.md',
+  'ch05-error-handling.md',
+  'ch06-null-policy-recovery.md',
+  'ch07-basic-patterns.md',
+  'ch08-advanced-patterns.md',
+  'ch08b-knowledge-gathering-pipelines.md',
+  'ch09-thread-safety.md',
+  'ch10-testing-philosophy.md',
+  'ch11-testing-practice.md',
+  'ch12-registeruser-example.md',
+  'ch13-placeorder-example.md',
+  'ch14a-publisharticle-example.md',
+  'ch14b-transferfunds-example.md',
+  'ch15-project-structure.md',
+  'ch16-systematic-application.md',
+  'ch17-migration-strategies.md',
+  'ch18-comparison.md',
+  'ch19-troubleshooting-faq.md',
+  'appendix-a-api-reference.md',
+  'appendix-b-exercises.md',
+  'appendix-c-glossary.md',
+  'CHANGELOG.md'
 ];
 
 // Helper functions
@@ -76,7 +90,7 @@ function getTitle(content, filename) {
   return filename.replace(/\.md$/, '').replace(/-/g, ' ');
 }
 
-function convertMarkdownToHtml(markdownContent, filename, isSeriesPage = false) {
+function convertMarkdownToHtml(markdownContent, filename, isSubPage = false) {
   // Parse front matter if exists
   let content = markdownContent;
   let metadata = {};
@@ -102,7 +116,7 @@ function convertMarkdownToHtml(markdownContent, filename, isSeriesPage = false) 
   const template = readTemplate('page');
 
   // Determine navigation context
-  const navContext = isSeriesPage ? '../' : '';
+  const navContext = isSubPage ? '../' : '';
 
   // Replace placeholders
   let html = template
@@ -113,11 +127,11 @@ function convertMarkdownToHtml(markdownContent, filename, isSeriesPage = false) 
   return html;
 }
 
-function buildPage(sourceFile, outputFile, isSeriesPage = false) {
+function buildPage(sourceFile, outputFile, isSubPage = false) {
   console.log(`Building: ${sourceFile} -> ${outputFile}`);
 
   const markdown = fs.readFileSync(sourceFile, 'utf-8');
-  const html = convertMarkdownToHtml(markdown, path.basename(sourceFile), isSeriesPage);
+  const html = convertMarkdownToHtml(markdown, path.basename(sourceFile), isSubPage);
 
   ensureDir(path.dirname(outputFile));
   fs.writeFileSync(outputFile, html);
@@ -176,30 +190,32 @@ function buildMainPages() {
   });
 }
 
-function buildSeriesPages() {
-  console.log('Building series pages...');
+function buildBookPages() {
+  console.log('Building book pages...');
 
-  const seriesDir = path.join(ROOT_DIR, 'series');
-  const seriesDistDir = path.join(DIST_DIR, 'series');
+  const bookDir = path.join(ROOT_DIR, 'book');
+  const bookDistDir = path.join(DIST_DIR, 'book');
 
-  ensureDir(seriesDistDir);
+  ensureDir(bookDistDir);
 
-  SERIES_FILES.forEach(file => {
-    const sourcePath = path.join(seriesDir, file);
+  // Build index
+  const indexSource = path.join(bookDir, 'index.md');
+  if (fs.existsSync(indexSource)) {
+    buildPage(indexSource, path.join(bookDistDir, 'index.html'), true);
+  } else {
+    console.warn('Warning: book/index.md not found, skipping');
+  }
+
+  BOOK_CHAPTERS.forEach(file => {
+    const sourcePath = path.join(bookDir, file);
 
     if (!fs.existsSync(sourcePath)) {
-      console.warn(`Warning: series/${file} not found, skipping`);
+      console.warn(`Warning: book/${file} not found, skipping`);
       return;
     }
 
-    let outputName = file.replace('.md', '.html');
-
-    // Special case: INDEX.md -> index.html
-    if (file === 'INDEX.md') {
-      outputName = 'index.html';
-    }
-
-    const outputPath = path.join(seriesDistDir, outputName);
+    const outputName = file.replace('.md', '.html');
+    const outputPath = path.join(bookDistDir, outputName);
     buildPage(sourcePath, outputPath, true);
   });
 }
@@ -219,13 +235,11 @@ function generateSitemap() {
     pages.push(`${baseUrl}/${url}`);
   });
 
-  // Add series pages
-  SERIES_FILES.forEach(file => {
-    let url = file.replace('.md', '.html');
-    if (file === 'INDEX.md') {
-      url = 'index.html';
-    }
-    pages.push(`${baseUrl}/series/${url}`);
+  // Add book pages
+  pages.push(`${baseUrl}/book/index.html`);
+  BOOK_CHAPTERS.forEach(file => {
+    const url = file.replace('.md', '.html');
+    pages.push(`${baseUrl}/book/${url}`);
   });
 
   const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
@@ -248,7 +262,7 @@ function build() {
 
   // Build pages
   buildMainPages();
-  buildSeriesPages();
+  buildBookPages();
 
   // Copy assets
   copyStyles();

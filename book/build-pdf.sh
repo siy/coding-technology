@@ -127,45 +127,36 @@ add_cover() {
 
     echo "  Adding cover page..."
 
-    cat > /tmp/combine-cover.tex << 'LATEX'
-\documentclass[letterpaper]{article}
+    # Cover -> standalone single full-bleed page, sized to match the content PDF
+    # exactly (pdfunite concatenates pages as-is, with no scaling).
+    local cpsize cw ch
+    cpsize=$(pdfinfo "$content_pdf" 2>/dev/null | awk '/Page size/{print $3, $5}')
+    cw=$(printf '%s' "$cpsize" | cut -d' ' -f1); ch=$(printf '%s' "$cpsize" | cut -d' ' -f2)
+    cw=${cw:-612}; ch=${ch:-792}
+
+    cat > /tmp/cover-page.tex << LATEX
+\documentclass{article}
 \usepackage{graphicx}
-\usepackage{pdfpages}
-\usepackage[margin=0pt]{geometry}
+\usepackage[margin=0pt,paperwidth=${cw}bp,paperheight=${ch}bp]{geometry}
 \usepackage{eso-pic}
 \pagestyle{empty}
 \begin{document}
-% Cover page - full page image with no margins
-\AddToShipoutPictureBG*{\includegraphics[width=\paperwidth,height=\paperheight]{COVER_IMAGE}}
-\null\newpage
-% Include all pages from content PDF
-\includepdf[pages=-]{CONTENT_PDF}
+\AddToShipoutPictureBG*{\includegraphics[width=\paperwidth,height=\paperheight]{$SCRIPT_DIR/$COVER_IMAGE}}
+\null
 \end{document}
 LATEX
 
-    if [[ "$OSTYPE" == "darwin"* ]]; then
-        sed -i '' "s|COVER_IMAGE|$SCRIPT_DIR/$COVER_IMAGE|g" /tmp/combine-cover.tex
-        sed -i '' "s|CONTENT_PDF|$SCRIPT_DIR/$content_pdf|g" /tmp/combine-cover.tex
-    else
-        sed -i "s|COVER_IMAGE|$SCRIPT_DIR/$COVER_IMAGE|g" /tmp/combine-cover.tex
-        sed -i "s|CONTENT_PDF|$SCRIPT_DIR/$content_pdf|g" /tmp/combine-cover.tex
-    fi
+    ( cd /tmp && xelatex -interaction=batchmode cover-page.tex >/dev/null 2>&1 ) || true
 
-    cd /tmp
-    xelatex -interaction=batchmode combine-cover.tex >/dev/null 2>&1 || {
-        echo "  First pass..."
-        xelatex -interaction=batchmode combine-cover.tex 2>&1 | tail -5
-    }
-
-    if [[ -f "combine-cover.pdf" ]]; then
-        mv combine-cover.pdf "$SCRIPT_DIR/$output_file"
-        rm -f combine-cover.aux combine-cover.log combine-cover.tex
-        cd "$SCRIPT_DIR"
+    # pdfunite PRESERVES the content PDF's hyperlink annotations; \includepdf (pdfpages)
+    # strips them, which is what left the blue URLs un-clickable.
+    if [[ -f /tmp/cover-page.pdf ]] && command -v pdfunite >/dev/null 2>&1 \
+         && pdfunite /tmp/cover-page.pdf "$content_pdf" "$SCRIPT_DIR/$output_file" 2>/dev/null; then
+        rm -f /tmp/cover-page.aux /tmp/cover-page.log /tmp/cover-page.tex /tmp/cover-page.pdf
         rm -f "$content_pdf"
     else
-        echo "  Error: Failed to add cover, using content-only PDF"
-        cd "$SCRIPT_DIR"
-        mv "$content_pdf" "$output_file"
+        echo "  Error: Failed to add cover, using content-only PDF (links preserved)"
+        mv "$content_pdf" "$SCRIPT_DIR/$output_file"
     fi
 }
 

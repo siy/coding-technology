@@ -22,6 +22,20 @@ These rules mean you can use mutable local variables in sequential code, but any
 
 ---
 
+## Designing Out Contention
+
+Thread confinement protects state *inside* one execution. It says nothing about two executions — two requests, or two nodes — reaching for the same row at once. That contention is real, and the JBCT answer is not a lock around the section but a design that makes the conflicting state impossible to write: move the contention to one named point, and make the bad combination unconstructible.
+
+- **Derive, don't store.** A value you can recompute is not a stored field that can fall out of step. A seat is free when no active reservation covers it (a query against the reservations), never a `free` boolean two requests can both read as `true`.
+- **Single-writer fields.** A field with exactly one owning operation needs no coordination — nothing else can race it. Most fields are this, and the model should keep them this way.
+- **The guarded transition.** The one field several operations write is the workflow's state. It changes only as a guarded atomic write, where the guard is part of the write rather than a check before it, so of two racing transitions exactly one commits.
+- **Database constraints.** Push the impossibility into the store. A unique or exclusion constraint makes a second active reservation on one seat a write the database refuses, so the race is lost by construction rather than caught by application code.
+- **Serialized intake.** Where ordering itself is the hazard, a per-entity queue makes a new event meet only a fully-processed prior one, never a half-applied one.
+
+`Promise` composition keeps these honest: the I/O that performs the guarded write is a leaf, the chain is non-blocking, and no lock is held across it. The contention that remains is the irreducible business fact — two people want one seat — funneled to the single transition where it is decided. The methodology states this design-out principle in general; this is the Java and SQL it becomes.
+
+---
+
 ## Pattern-by-Pattern Safety Guarantees
 
 ### Leaf (Sequential)
@@ -247,14 +261,28 @@ Tests are sequential, so mutable fixtures don't create races.
 
 ## Quick Reference Table
 
-| Pattern | Execution | Local Mutable State | Input Requirements |
-|---------|-----------|--------------------|--------------------|
-| Leaf | Sequential | Safe | Read-only |
-| Sequencer | Sequential | Safe | Immutable between steps |
-| Fork-Join | Parallel | Safe (confined) | Strictly immutable |
-| Condition | Sequential | Safe | Read-only |
-| Iteration | Sequential | Safe | Read-only |
-| Aspects | Inherits | Inherits | Inherits |
+| Pattern                    | Thread Safety Model                               | Local Mutable State                     | Input Data              | Result Data         |
+|----------------------------|---------------------------------------------------|-----------------------------------------|-------------------------|---------------------|
+| **Leaf**                   | Thread confinement (single invocation)            | Safe - confined to function scope       | Must be read-only       | Must be immutable |
+| **Sequencer**              | Sequential execution (steps don't overlap)        | Safe - confined to each step            | Must be read-only       | Must be immutable |
+| **Fork-Join**              | Parallel execution (no synchronization)           | Safe - confined within each branch      | **MUST be immutable**   | Must be immutable |
+| **Iteration (Sequential)** | Single-threaded (operations execute sequentially) | Safe - accumulators OK                  | Must be read-only       | Must be immutable |
+| **Iteration (Parallel)**   | Parallel execution (no synchronization)           | Safe - confined within each operation   | **MUST be immutable**   | Must be immutable |
+| **Condition**              | Depends on branch pattern                         | Follow pattern rules for each branch    | Must be read-only       | Must be immutable |
+| **Aspects**                | Inherits the wrapped operation's model            | Inherits                                | Inherits                | Inherits          |
+
+**Key Principles:**
+- Input data is always read-only - never mutate parameters
+- Results are always immutable - data crossing boundaries must be thread-safe
+- Local mutable state is safe when confined to single operation (thread confinement)
+- Parallel patterns require immutable inputs - Fork-Join and parallel iteration have no synchronization
+
+**Common Mistakes:**
+- Sharing mutable state between parallel branches
+- Mutating input parameters (even in sequential patterns)
+- Returning mutable collections or objects
+- Using local mutable builders/accumulators within a single operation is safe
+- Create new immutable instances instead of modifying inputs
 
 ---
 

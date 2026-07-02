@@ -27,6 +27,14 @@ UpdateProfileTest: 28 tests
 
 But we need organization to stay sane.
 
+### Why the Counts Stay Isolated
+
+The reason the counts stay manageable is structural, not just organizational. Each use case answers to one change driver, so its tests exercise one process and stub its steps; they do not reach into any shared object, because there is none. Two consequences follow.
+
+Adding behavior **adds** a test class without touching the existing ones. A new use case is a new file with its own stubs and its own nested scenarios; the tests already written do not depend on it or break when it lands. New work is additive, and so is its test surface.
+
+The contrast is the entity-first god-object. When one `User` or `Order` class carries the logic of every operation, its test suite accumulates the scenarios of every driver at once — login, registration, profile update, deactivation all piling onto the same fixture — and a change made for one of them can redden tests for the others. The use-case structure pays the same total number of tests (the scenarios are real either way), but it pays them in isolated files that fail independently, where the god-object pays them in one suite that fails together.
+
 ### Strategy 1: Nested Test Classes
 
 **Group tests by scenario type:**

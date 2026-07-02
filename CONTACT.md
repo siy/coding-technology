@@ -72,19 +72,6 @@ Get expert guidance from the creator of JBCT — 40 years of software engineerin
 
 ---
 
-## Specialized Expertise
-
-| Domain | Experience |
-|--------|------------|
-| **Trading / FIX Protocol** | Production systems, low-latency, compliance |
-| **Fintech** | Payment processing, risk systems |
-| **Distributed Systems** | Consensus algorithms, fault tolerance |
-| **AI Integration** | Claude Code, Copilot, prompting strategies for consistent output |
-
-*Trading and fintech engagements command premium rates due to specialized domain knowledge.*
-
----
-
 ## Book a Consultation
 
 <a name="inquiry"></a>
@@ -164,8 +151,7 @@ Tell us about your situation. Free 30-minute discovery call for qualified inquir
 
 Not ready for consulting? Start here:
 
-- **[9-Part Learning Series](series/INDEX.md)** - Complete self-paced curriculum
-- **[CODING_GUIDE.md](CODING_GUIDE.md)** - Comprehensive technical reference
+- **[JBCT book](book/index.md)** - Complete self-paced guide from foundations to production
 - **[Get the Book](https://leanpub.com/jbct-book)** - $25 on Leanpub
 
 ---

@@ -38,9 +38,9 @@ The coarser the change driver, the higher the altitude. A fine driver (reservati
 
 The booking subsystem owns the customer-facing transaction lifecycle. Its work is what Pass 2 walked: the *buy ticket* use case, the cancellation-and-refund and temporary-hold workflows, and the variants that cluster with them (group-booking, gift-purchase). They cohere because the reservation domain governs them all: change what a reservation is and every one of them changes.
 
-### The subsystem's six properties
+### The subsystem's properties
 
-A subsystem has the same six properties as a workflow and a use case, at its own granularity. Its **trigger surface** is the set of ways the outside world and other subsystems engage it — customer-facing requests, events from event-management (an event opened, a seat blocked), scheduled sweeps. Its **inputs and outputs** are what cross its boundary, and they are deliberately small. Its **failures** are the ones it surfaces to callers and to other subsystems, not the internal failures its workflows handle on their own. Its **steps** are whole workflows. Its **dependencies** are between those workflows and across to other subsystems (booking depends on pricing for a quote, on event-management for sale status).
+A subsystem has the same properties as a workflow and a use case, at its own granularity. Its **trigger surface** is the set of ways the outside world and other subsystems engage it — customer-facing requests, events from event-management (an event opened, a seat blocked), scheduled sweeps. Its **inputs and outputs** are what cross its boundary, and they are deliberately small. Its **failures** are the ones it surfaces to callers and to other subsystems, not the internal failures its workflows handle on their own. Its **steps** are whole workflows. Its **dependencies** are between those workflows and across to other subsystems (booking depends on pricing for a quote, on event-management for sale status).
 
 The subsystem is named for its concern, as the workflows were named for their outcomes and the use cases for their operations. "Booking" is the concern; the workflows are how the concern is discharged.
 
@@ -171,9 +171,9 @@ Business cross-cutting also surfaces as Condition at subsystem altitude — bran
 
 ---
 
-## The six patterns at subsystem altitude
+## The patterns at subsystem altitude
 
-Five of the six patterns are the lower-altitude primitives one granularity up; the table is the whole of it:
+Five of the patterns are the lower-altitude primitives one granularity up; the table is the whole of it:
 
 | Pattern | At subsystem altitude |
 |---|---|

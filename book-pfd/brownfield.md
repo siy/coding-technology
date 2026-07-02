@@ -137,7 +137,7 @@ The conversation looks the same shape every time the methodology has produced a 
 
 ## Brownfield-specific failure modes
 
-Greenfield can fail in five ways, named in the previous module: Phase-4 contradictions, vector infeasibility, trapped state, knowledge gap, unexplored territory. **Brownfield inherits those and adds four shapes of its own — patterns in inherited systems so common that any methodology worth its keep has to name them and produce a next correct step for each.** The four are not exhaustive, but they account for most of the work an inheriting team will do in its first year.
+Greenfield can fail in five ways, named in the previous module: Phase-4 contradictions, vector infeasibility, trapped state, knowledge gap, unexplored territory. **Brownfield inherits those and adds four of its own — patterns in inherited systems so common that any methodology worth its keep has to name them and produce a next correct step for each.** The four are not exhaustive, but they account for most of the work an inheriting team will do in its first year.
 
 ### Legacy persistence that swallowed the domain
 

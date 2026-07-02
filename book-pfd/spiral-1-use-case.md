@@ -1,12 +1,12 @@
 # Spiral Pass 1 — Use Case Altitude
 
-*A customer wants a seat. The system has eight steps to give them one. The methodology has six patterns, four shapes, and one recovery class to spend on the work — and one of those patterns won't show up at all.*
+*A customer wants a seat. The system has eight steps to give them one. The methodology has patterns, shapes, and one recovery class to spend on the work — and one of those patterns won't show up at all.*
 
 ---
 
 ## What this pass does
 
-Foundations named the pieces. This pass walks them through one use case, *buy a ticket for a specific seat at a specific event*: one trigger, one outcome, eight steps. By the end the six properties will have applied at the altitude where they are concrete and immediate, the per-process types will have been invented, the patterns that show up at this altitude will have, and the patterns that do not — compensation, time-as-decay, Aspects beyond runtime ones — will be visible as absences, clues to what the next altitude will earn. **The methodology is not the pieces; it is what the pieces do when a team uses them on real work.** This pass shows that.
+Foundations named the pieces. This pass walks them through one use case, *buy a ticket for a specific seat at a specific event*: one trigger, one outcome, eight steps. By the end the properties will have applied at the altitude where they are concrete and immediate, the per-process types will have been invented, the patterns that show up at this altitude will have, and the patterns that do not — compensation, time-as-decay, Aspects beyond runtime ones — will be visible as absences, clues to what the next altitude will earn. **The methodology is not the pieces; it is what the pieces do when a team uses them on real work.** This pass shows that.
 
 ---
 
@@ -142,13 +142,13 @@ For *buy ticket*:
 
 That is the graph. It has two parallel branches early (event-selling and customer-eligibility), then a linear sequence. The graph is small enough to hold in the reader's head. It is also small enough that the implementation can be read and the graph can be reconstructed without external documentation.
 
-The six properties are now stated. The use case is, in methodology terms, specified. Implementation follows.
+The properties are now stated. The use case is, in methodology terms, specified. Implementation follows.
 
 ---
 
 ## Per-process types: where the methodology earns its first concrete commitment
 
-The six properties named types: `BuyTicket.Request`, `BuyTicket.Response`, `BuyTicket.Failure`, plus the shared value objects `CustomerId`, `EventId`, `SeatLocation`, `TicketId`, `ReceiptId`. Inventing these types is where the methodology's process-first commitment becomes visible.
+The properties named types: `BuyTicket.Request`, `BuyTicket.Response`, `BuyTicket.Failure`, plus the shared value objects `CustomerId`, `EventId`, `SeatLocation`, `TicketId`, `ReceiptId`. Inventing these types is where the methodology's process-first commitment becomes visible.
 
 The commitment is small to state and consequential to apply: **types belong to processes, not to the domain.** A "customer" in *buy ticket* is a customer-buying-something, identified by `CustomerId` and needing nothing else from the customer concept at this use case's level. A "customer" in customer-registration is a customer-being-created, with a different set of fields. A "customer" in customer-profile-update is a customer-with-mutable-state, with a third set. **The same noun, three uses, three types.**
 
@@ -238,9 +238,9 @@ The same discipline lets the Fork-Join at the front of the use case carry inform
 
 ---
 
-## Composition: the six patterns at use-case altitude
+## Composition: the patterns at use-case altitude
 
-The methodology names six composition primitives: Leaf, Sequencer, Fork-Join, Condition, Iteration, Aspects. The claim from the Foundations section is that the same six apply at every altitude. At use-case altitude, some of them show up immediately; some are present but spare; some do not earn their place until later altitudes. **Which appear and which do not is itself information about the use case.**
+The methodology names six composition primitives: Leaf, Sequencer, Fork-Join, Condition, Iteration, Aspects. The claim from the Foundations section is that the same set applies at every altitude. At use-case altitude, some of them show up immediately; some are present but spare; some do not earn their place until later altitudes. **Which appear and which do not is itself information about the use case.**
 
 ### Sequencer
 
@@ -349,9 +349,9 @@ The methodology does not prescribe which patterns appear. **The methodology supp
 
 ---
 
-## The four shapes earn their place
+## The shapes earn their place
 
-The Foundations section named four shapes that types carry: `T` (the value exists unconditionally), `Option<T>` (the value may or may not exist), `Result<T>` (the operation may or may not have produced the value), `Promise<T>` (the value arrives later). Each shape carries a domain modality. **The shapes are not stylistic; they are how the type system represents what the domain says about a value.**
+The Foundations section named shapes that types carry: `T` (the value exists unconditionally), `Option<T>` (the value may or may not exist), `Result<T>` (the operation may or may not have produced the value), `Promise<T>` (the value arrives later). Each shape carries a domain modality. **The shapes are not stylistic; they are how the type system represents what the domain says about a value.**
 
 *Buy ticket* makes each shape concrete.
 
@@ -386,7 +386,7 @@ The implementation depends on what the host language calls async (futures, promi
 
 ### Why these four
 
-Four shapes cover the design space use-case-altitude operations care about: the value exists or it does not (T or Option), the operation succeeded or failed (T or Result), the value arrives now or later (T or Promise). Other traditions add more — list types, stream types, effect-tracking types — but the methodology declines them: four shapes are sufficient, and each additional shape is a cost the reader pays at every signature. The payoff is a signature that reads directly as domain modality. `Result<TicketId>` is a synchronous operation producing a ticket identifier or one of the named failures; `Promise<TicketId>` is the same operation asynchronously, with failure already folded in.
+Shapes cover the design space use-case-altitude operations care about: the value exists or it does not (T or Option), the operation succeeded or failed (T or Result), the value arrives now or later (T or Promise). Other traditions add more — list types, stream types, effect-tracking types — but the methodology declines them: shapes are sufficient, and each additional shape is a cost the reader pays at every signature. The payoff is a signature that reads directly as domain modality. `Result<TicketId>` is a synchronous operation producing a ticket identifier or one of the named failures; `Promise<TicketId>` is the same operation asynchronously, with failure already folded in.
 
 ---
 
@@ -481,7 +481,7 @@ These deferrals are not omissions. They are honest about what the altitude has e
 
 ## Closing — multiplicity is coming
 
-This pass has shown one use case. The methodology applied to it produced a typed input, a typed output, an enumerable failure set, a small ordered sequence of steps with explicit dependencies, per-process types specific to this use case's needs, value objects where genuine sharing applies, the composition patterns that appear at this altitude (and the ones that do not), the four shapes earning their place, and a recovery class that applies cleanly to local failures.
+This pass has shown one use case. The methodology applied to it produced a typed input, a typed output, an enumerable failure set, a small ordered sequence of steps with explicit dependencies, per-process types specific to this use case's needs, value objects where genuine sharing applies, the composition patterns that appear at this altitude (and the ones that do not), the shapes earning their place, and a recovery class that applies cleanly to local failures.
 
 The methodology did not produce the design. A team designing *buy ticket* made choices. **The methodology made those choices visible, named them, and kept the resulting code legible.**
 

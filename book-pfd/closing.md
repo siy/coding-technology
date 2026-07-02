@@ -21,7 +21,7 @@ The reason the book reads continuously rather than as a collection is the same r
 > *And who cleans up after him? How do you tell him he made a mess?*\
 > *Make backups.*
 >
-> — Denys Poltorak
+> — from a debate with Denys Poltorak
 
 **The methodology is bounded.** The domain it claims is large, long-lived, multi-team backend software — systems big enough and old enough for the coupling cost of shared models to dominate, where teams compose work over years against changing Phase-4 inputs, and where the gap between use-case altitude and system altitude is wide enough that the telescope earns its keep. *Enterprise* is the usual shorthand, but the word is elastic, so the band is worth pinning down.
 

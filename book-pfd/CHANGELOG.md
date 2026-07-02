@@ -7,6 +7,14 @@ All notable changes to the PFD book, newest first. Format:
 `0.x` versions were preview editions; `1.0.0` marked the first edition released to
 readers, and `1.x` are its maintenance and expansion releases.
 
+## [1.9.0] - 2026-07-02
+
+### Added
+- **Where the structure comes from** (*Foundations*, after *Finding the change driver*): a new section that *shows* the decomposition the book had only asserted. You never cut the whole vision at once — you eat it one operation at a time, and each bite is a *question put to the business* (the change-driver test is an interview question), so decomposition is a structured conversation whose rule is *nothing about the business without the business*, with the telescope and the cohesion test bounding it to only the necessary questions. The register is the transcript; it crystallizes into the telescope the way data precipitates from process (*where data comes from* and *where the structure comes from* are one answer given twice). Each bite drills to Leaves — the descent bottoms out in code so simple it cannot be argued with, so a thousand use cases is a thousand independent descents, not a thousand-way tangle. Names the local-vs-independent step decision: a step goes independent the moment the register shows it varies — not premature abstraction but a change driver made physical, a business fact recorded in the shape of the code, because the business *told you* it varies (knowledge, not speculation). Closes on the inversion — you understand the business *by* building it, so the method produces a precise, derived, always-current model of the business as a byproduct: nobody knows the whole business, and nobody has to. Answers the decomposition, scale, "no business understanding," and enterprise objections from the design debate in one place.
+
+### Changed
+- **The one-sitting-read claim, removed** (*Introduction, Foundations, Closing*): the full book no longer claims to be an afternoon read — it is a dense, multi-session text, and pretending otherwise did not survive contact with real readers. The twenty-minute pass is the *condensed edition*; the full text is read at whatever pace the material asks.
+
 ## [1.8.0] - 2026-07-02
 
 ### Added

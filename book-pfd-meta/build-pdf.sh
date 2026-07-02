@@ -42,6 +42,7 @@ CHAPTERS=(
   edge-cases.md
   brownfield.md
   closing.md
+  afterword.md
   glossary.md
   references.md
 )

@@ -16,7 +16,7 @@ website/
 ├── dist/                # Generated site (git-ignored)
 │   ├── index.html
 │   ├── *.html
-│   ├── series/
+│   ├── book/
 │   └── style.css
 ├── DEPLOYMENT.md        # Deployment instructions
 └── README.md           # This file
@@ -62,10 +62,10 @@ npm run clean
 
 The `build.js` script:
 
-1. **Reads markdown files** from project root and `series/` directory
+1. **Reads markdown files** from project root and `book/` directory
 2. **Converts markdown to HTML** using markdown-it
 3. **Applies HTML template** (`templates/page.html`) to each page
-4. **Adjusts navigation links** for series pages (adds `../` prefix)
+4. **Adjusts navigation links** for book pages (adds `../` prefix)
 5. **Copies stylesheets** to `dist/`
 6. **Generates sitemap.xml** for SEO
 
@@ -75,13 +75,13 @@ The HTML template uses these placeholders:
 
 - `{{TITLE}}` - Page title (extracted from first `#` heading or filename)
 - `{{CONTENT}}` - Converted HTML content from markdown
-- `{{NAV_CONTEXT}}` - Navigation prefix (`''` for root pages, `'../'` for series pages)
+- `{{NAV_CONTEXT}}` - Navigation prefix (`''` for root pages, `'../'` for book pages)
 
 ### Markdown Processing
 
 - All `.md` links are converted to `.html` links
 - `README.md` → `index.html`
-- `series/INDEX.md` → `series/index.html`
+- `book/index.md` → `book/index.html`
 - GitHub-flavored markdown is supported
 - Automatic heading anchors for table of contents
 
@@ -90,25 +90,16 @@ The HTML template uses these placeholders:
 ### Root Pages
 
 - `README.md` → `index.html`
-- `CODING_GUIDE.md` → `CODING_GUIDE.html`
 - `MANAGEMENT_PERSPECTIVE.md` → `MANAGEMENT_PERSPECTIVE.html`
 - `CHANGELOG.md` → `CHANGELOG.html`
 - `TECHNOLOGY.md` → `TECHNOLOGY.html`
 - `PL_IMPROVEMENTS.md` → `PL_IMPROVEMENTS.html`
 - `jbct-coder.md` → `jbct-coder.html`
 
-### Series Pages
+### Book Pages
 
-- `series/INDEX.md` → `series/index.html`
-- `series/part-01-foundations.md` → `series/part-01-foundations.html`
-- `series/part-02-four-return-types.md` → `series/part-02-four-return-types.html`
-- `series/part-03-parse-dont-validate.md` → `series/part-03-parse-dont-validate.html`
-- `series/part-04-error-handling.md` → `series/part-04-error-handling.html`
-- `series/part-05-basic-patterns.md` → `series/part-05-basic-patterns.html`
-- `series/part-06-advanced-patterns.md` → `series/part-06-advanced-patterns.html`
-- `series/part-07-testing-philosophy.md` → `series/part-07-testing-philosophy.html`
-- `series/part-08-testing-practice.md` → `series/part-08-testing-practice.html`
-- `series/part-09-production-systems.md` → `series/part-09-production-systems.html`
+- `book/index.md` → `book/index.html`
+- `book/ch*.md` → `book/ch*.html`
 
 ## Development
 
@@ -116,8 +107,8 @@ The HTML template uses these placeholders:
 
 To add a new page:
 
-1. Create markdown file in project root or `series/` directory
-2. Add filename to `MARKDOWN_FILES` or `SERIES_FILES` array in `build.js`
+1. Create markdown file in project root or `book/` directory
+2. Add filename to `MARKDOWN_FILES` or `BOOK_FILES` array in `build.js`
 3. Run `npm run build` to generate HTML
 
 ### Updating Styles

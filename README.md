@@ -1,6 +1,6 @@
 # Java Backend Coding Technology
 
-> **Version 3.0.0** | [Full Changelog](CHANGELOG.md)
+> **Version 4.1.1** | [Full Changelog](book/CHANGELOG.md)
 
 Executable business process specifications. Code that reads like a business process, because it is one. A framework-agnostic methodology for writing predictable, testable Java backend code optimized for human-AI collaboration.
 
@@ -78,20 +78,11 @@ Traditional software development relies on "best practices." These are subjectiv
 
 ## 🚀 Quick Start
 
-**New to this technology?** Start with the learning series:
+**New to this technology?** Start with the JBCT book — a progressive guide from first principles through production systems:
 
-1. **[Series Index](series/INDEX.md)** - Overview and navigation for the 9-part learning series
-2. **[Part 1: Foundations](series/part-01-foundations.md)** - Mental model and core ideas
-3. **[Part 2: The Four Return Types](series/part-02-four-return-types.md)** - T, Option, Result, Promise
-4. **[Part 3: Parse, Don't Validate](series/part-03-parse-dont-validate.md)** - Making invalid states unrepresentable
-5. **[Part 4: Error Handling & Composition](series/part-04-error-handling.md)** - Errors as values, null policy, monadic rules
-6. **[Part 5: Basic Patterns](series/part-05-basic-patterns.md)** - Leaf, Condition, Iteration
-7. **[Part 6: Advanced Patterns](series/part-06-advanced-patterns.md)** - Sequencer, Fork-Join, Aspects
-8. **[Part 7: Testing Philosophy](series/part-07-testing-philosophy.md)** - Integration-first, evolutionary testing
-9. **[Part 8: Testing in Practice](series/part-08-testing-practice.md)** - Organization, examples, migration
-10. **[Part 9: Production Systems](series/part-09-production-systems.md)** - Complete walkthrough, project structure, frameworks
+**[Read the JBCT book](book/index.md)**
 
-**Need the complete reference?** See **[CODING_GUIDE.md](CODING_GUIDE.md)** - comprehensive technical documentation with all patterns, principles, and examples.
+The book covers mental model, four return kinds, parse-don't-validate, error handling, all six structural patterns, testing strategy, and a complete production walkthrough.
 
 ## ⚡ Quick Wins: Start Small
 
@@ -218,19 +209,13 @@ void username_acceptsValidInput() {
 
 ### For Developers
 
-- **[CODING_GUIDE.md](CODING_GUIDE.md)** - Complete technical reference (100+ pages)
+- **[JBCT book](book/index.md)** - Complete technical reference
   - Core concepts: Four Return Kinds, Parse-Don't-Validate, No Business Exceptions
   - Pattern catalog: Leaf, Sequencer, Fork-Join, Condition, Iteration, Aspects
   - Evaluation framework: Five objective criteria for code decisions
   - Naming conventions, testing patterns, project structure
   - Complete use case walkthrough with Spring Boot and JOOQ integration
-
-- **[series/](series/)** - Progressive learning path (9 parts)
-  - Parts 2-4 cover core principles (split for digestibility)
-  - Parts 7-8 cover comprehensive testing strategy
-  - Designed for sequential reading
-  - Builds concepts incrementally
-  - Ideal for onboarding and teaching
+  - Progressive learning path from first principles to production
 
 ### For Managers & Decision Makers
 
@@ -242,10 +227,10 @@ void username_acceptsValidInput() {
 
 ### Changelog & Versioning
 
-- **[CHANGELOG.md](CHANGELOG.md)** - Version history following [Keep a Changelog](https://keepachangelog.com/)
-  - Current version: 3.0.0 (2026-04-12)
-  - Golden formatting patterns, Pragmatica Core 1.0.0-rc1, 37 lint rules
-  - Semantic versioning for documentation releases
+- **[Book changelog](book/CHANGELOG.md)** - Version history following [Keep a Changelog](https://keepachangelog.com/)
+  - Current version: 4.1.1 (2026-06-25)
+  - Self-contained design-to-code methodology on Pragmatica Core 1.0.0-rc1
+  - Per-book semantic versioning across the JBCT and PFD books
 
 ## 🔧 Tools
 
@@ -304,18 +289,10 @@ curl -fsSL https://raw.githubusercontent.com/siy/jbct-cli/main/install.sh | sh
 
 ```
 coding-technology/
-├── CODING_GUIDE.md              # Complete technical reference
-├── series/                       # 9-part learning series
-│   ├── INDEX.md                 # Series overview and navigation
-│   ├── part-01-foundations.md
-│   ├── part-02-four-return-types.md
-│   ├── part-03-parse-dont-validate.md
-│   ├── part-04-error-handling.md
-│   ├── part-05-basic-patterns.md
-│   ├── part-06-advanced-patterns.md
-│   ├── part-07-testing-philosophy.md
-│   ├── part-08-testing-practice.md
-│   └── part-09-production-systems.md
+├── book/                        # JBCT book (web edition + source)
+│   ├── index.md                 # Table of contents
+│   ├── ch01-*.md ... ch11-*.md  # Book chapters
+│   └── CHANGELOG.md             # Book version history
 ├── MANAGEMENT_PERSPECTIVE.md    # Business case and ROI
 ├── CHANGELOG.md                 # Version history
 ├── AI-TOOLING.md                # AI tools documentation
@@ -409,6 +386,6 @@ If you find this useful, consider [sponsoring](https://github.com/sponsors/siy).
 
 ---
 
-**Version:** 3.0.0 | **Last Updated:** 2026-04-12 | **[Full Changelog](CHANGELOG.md)**
+**Version:** 4.1.1 | **Last Updated:** 2026-06-25 | **[Full Changelog](book/CHANGELOG.md)**
 
 **Copyright © 2025 Sergiy Yevtushenko. Released under the [MIT License](LICENSE).**

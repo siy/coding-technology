@@ -2,6 +2,8 @@
 
 This glossary defines key terms used throughout the book.
 
+For the methodology vocabulary — *change driver*, *telescope*, *altitude*, *use case*, *workflow*, *data as residue*, and the rest — see the glossary in the companion *Process-First Design*, which owns those conceptual terms. This appendix covers the Pragmatica-level and JBCT-specific terms that book does not.
+
 ---
 
 ## A
@@ -197,6 +199,9 @@ A structural pattern for linear chains of dependent operations. Each step depend
 
 **Short-Circuit**
 Stopping execution at the first failure. `flatMap()` chains short-circuit. `Result.all()` does not short-circuit.
+
+**State (`*State`) and the State Machine**
+The lifecycle states a workflow advances through, modeled as a sealed sum type named with a `*State` suffix — `HoldState`, `BookingState`, `SeatState` — with bare variants (`Free`, `Held`, `Confirmed`, `Cancelled`). It is the single field several use cases write, changed only through a guarded transition, never an overwrite, so the one point needing coordination is the transition. The suffix is reserved for this lifecycle sum, not every mutable holder. See *Process-First Design*'s glossary for the methodology-level definition.
 
 **Step Interface**
 A functional interface defining one operation in a use case. Declared inside the use case interface. Implemented by adapters.

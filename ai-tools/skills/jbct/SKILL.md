@@ -20,6 +20,41 @@ Activate this skill when:
 **For code review:** Use `jbct-reviewer` subagent (Task tool with `subagent_type: "jbct-reviewer"`)
 **For automated checking:** Use `jbct` CLI tool (format, lint, check commands)
 
+## Source-Anchored Chapters (read this first)
+
+Parts of this skill live in the **class-level header comments of Pragmatica Core source files** —
+the single source of truth that cannot drift from the API. When a task touches one of these
+areas, READ THE SOURCE HEADER before writing code:
+
+| Chapter | Source of truth |
+|---------|----------------|
+| Core monads: combinator maps, construction, aggregation, conversions | `org/pragmatica/lang/Result.java`, `Option.java`, `Promise.java` headers |
+| Validation: `ensure` families, full `Is` predicate catalog, `ensureOption`, `combine` | `org/pragmatica/lang/Verify.java` header |
+| Intent annotations: when void/blocking/null is legitimate, decision procedures | `org/pragmatica/lang/Contract.java`, `TerminalOperation.java`, `NullReturn.java` headers |
+| Built-in value objects: catalog, factories, validation rules | `org/pragmatica/lang/vo/package-info.java` (+ per-class headers) |
+| Exception-safe parsing: wrapper catalog | `org/pragmatica/lang/parse/package-info.java` |
+| Utilities: failure vocabulary, resilience (Retry/CircuitBreaker/RateLimiter/Idempotency), memoization, scheduling | `org/pragmatica/lang/utils/package-info.java` |
+
+**Resolution order** (first that succeeds):
+0. **`jbct doc <ClassOrPackage>`** — if the jbct CLI is available (`jbct --version`), this is the
+   preferred shortcut: `jbct doc Verify`, `jbct doc org.pragmatica.lang.vo`, `jbct doc Result --api`.
+   It applies the local-then-download resolution below automatically.
+1. **Local checkout (preferred if present)** — if a local pragmatica checkout exists, read
+   `<checkout>/core/src/main/java/<path>` directly. In sibling layouts (e.g. working inside
+   `coding-technology/`) this is **`../pragmatica/core/src/main/java/<path>`**; inside the pragmatica
+   repo itself it is `core/src/main/java/<path>`.
+2. **Download if no local checkout** — fetch the Pragmatica Core sources for the project's declared
+   core version, then read the header:
+   - Maven Central sources jar:
+     `mvn dependency:get -Dartifact=org.pragmatica-lite:core:<version>:jar:sources` then
+     `unzip -p ~/.m2/repository/org/pragmatica-lite/core/<version>/core-<version>-sources.jar org/pragmatica/lang/Verify.java | head -120`
+   - or GitHub release / raw:
+     `https://raw.githubusercontent.com/pragmaticalabs/pragmatica/main/core/src/main/java/<path>`
+3. **Degrade gracefully** — proceed with this file's summaries plus imitation of neighboring code,
+   and say in your report that source chapters were unreachable.
+
+Read only the class header (first ~120 lines), not whole implementation files.
+
 ## JBCT CLI Tool
 
 JBCT CLI provides automated formatting and compliance checking with 37 lint rules.
@@ -173,16 +208,14 @@ public record Email(String value) {
 
 ### Pragmatica Core Validation Utilities
 
-**Verify.Is Predicates** - Use instead of custom lambdas:
+**Verify first, lambdas last.** Before writing any predicate lambda in a validation chain, check
+the `Verify.Is` catalog — **full catalog and `ensure` overload families: see the `Verify.java`
+source header** (Source-Anchored Chapters above). Hand-rolling a check that duplicates a catalog
+predicate is a JBCT violation. Hottest entries:
 ```java
-Verify.Is::notNull          // null check
-Verify.Is::present          // not null and not blank (CharSequence)
-Verify.Is::notBlank         // non-empty, non-whitespace
-Verify.Is::lenBetween       // length in range
-Verify.Is::matches          // regex (String or Pattern)
-Verify.Is::positive         // > 0
-Verify.Is::between          // >= min && <= max
-Verify.Is::greaterThan      // > boundary
+Verify.Is::present          // not null and not blank — the "required string" check
+Verify.ensure(v, Is::lenBetween, 3, 50)   // parameterized predicates need no capturing lambda
+Verify.ensureOption(opt, predicate)       // Result<Option<T>> contract for optional values
 ```
 
 **Parse Subpackage** - Exception-safe JDK wrappers:
@@ -282,7 +315,7 @@ Promise.all(applyBogo(cart, context),     // mutates context
         .map(this::merge);
 ```
 
-**See CODING_GUIDE.md** for comprehensive thread safety coverage, including detailed examples and common mistakes.
+**See [ch09-thread-safety.md](../../book/ch09-thread-safety.md)** for comprehensive thread safety coverage, including detailed examples and common mistakes.
 
 ## Lambda Composition Guidelines
 
@@ -600,7 +633,7 @@ return ValidRequest.validRequest(request)
                    .flatMap(this::sendConfirmation);
 ```
 
-**For complete zone verb vocabulary**, see **CODING_GUIDE.md: Zone-Based Naming Vocabulary**.
+**For complete zone verb vocabulary**, see **[ch07-basic-patterns.md](../../book/ch07-basic-patterns.md)**.
 
 ## Project Structure (Vertical Slicing)
 
@@ -706,17 +739,14 @@ Library documentation: https://central.sonatype.com/artifact/org.pragmatica-lite
 
 ### Library Value Objects
 
-Pragmatica Core provides production-ready value objects in `org.pragmatica.lang.vo`:
+**Check `org.pragmatica.lang.vo` BEFORE writing any value object** — hand-rolling a VO that
+duplicates a built-in (`Email`, `Url`, `Uuid`, `NonBlankString`, `IsoDateTime`) is a JBCT
+violation. **Catalog with factories and validation rules: see the `vo/package-info.java` source
+header** (Source-Anchored Chapters above). Build custom VOs only for domain-specific types
+(`OrderId`, `Username`, `ReferralCode`).
 
-| Value Object | Factory Method | Description |
-|-------------|----------------|-------------|
-| `Email` | `Email.email(String)` | RFC 5321 compliant, splits localPart/domain |
-| `Url` | `Url.url(String)` | Validates scheme + host |
-| `Uuid` | `Uuid.uuid(String)`, `Uuid.randomUuid()` | UUID with parse + generate |
-| `NonBlankString` | `NonBlankString.nonBlankString(String)` | Trimmed, guaranteed non-empty |
-| `IsoDateTime` | `IsoDateTime.isoDateTime(String)`, `IsoDateTime.now()` | ISO 8601 datetime |
-
-Use these for common types. Build custom VOs for domain-specific types (`OrderId`, `Username`, `ReferralCode`).
+Note: `Email` appears throughout this skill as a *teaching example* for writing validation
+chains — in production code, use `org.pragmatica.lang.vo.Email`.
 
 ### Static Imports (Encouraged)
 
@@ -726,8 +756,8 @@ Static imports reduce code verbosity:
 // Recommended static imports
 import static org.pragmatica.lang.Result.all;
 import static org.pragmatica.lang.Result.success;
-import static com.example.domain.Email.email;
-import static com.example.domain.Password.password;
+import static org.pragmatica.lang.vo.Email.email;      // built-in VO
+import static com.example.domain.Password.password;    // domain-specific VO
 
 // Concise code
 return all(email(raw), password(raw)).flatMap(ValidRequest::validRequest);
@@ -861,6 +891,7 @@ This skill contains comprehensive guidance organized by topic:
 ### Patterns
 - [patterns/leaf.md](patterns/leaf.md) - Atomic operations
 - [patterns/sequencer.md](patterns/sequencer.md) - Sequential composition
+- [patterns/knowledge-gathering.md](patterns/knowledge-gathering.md) - Context-preserving stages (mapWith/flatMapWith/ensureWith, stage-accretion records)
 - [patterns/fork-join.md](patterns/fork-join.md) - Parallel operations
 - [patterns/condition.md](patterns/condition.md) - Branching logic
 - [patterns/iteration.md](patterns/iteration.md) - Collection processing
@@ -885,8 +916,7 @@ This skill contains comprehensive guidance organized by topic:
   - Detailed violation reports with fixes
 
 ### Documentation
-- **../../CODING_GUIDE.md** - Complete technical reference (100+ pages)
-- **../../series/** - 6-part progressive learning series
+- **[../../book/index.md](../../book/index.md)** - Complete technical reference (JBCT book)
 - **../../TECHNOLOGY.md** - High-level pattern catalog
 - **../../CHANGELOG.md** - Version history and changes
 

@@ -18,8 +18,11 @@ In-progress draft. Read top-to-bottom; each piece is written to land naturally f
 
 ## Synthesis and application
 - [Architecture Synthesis](architecture-synthesis.md) — Phase 4 elicitation, the six-axis Phase-5 vector, recovery selection, Phase 5/6 boundary, continuous-transformation framework, three-profile ticketing walkthrough.
+- [Edge Cases](edge-cases.md) — the methodology stress-tested against adversarial booking scenarios (group atomicity, premium auto-buy, conference schedules, cancellation residue, time-shared seats, change-locality vs the aggregate) and the recurring high-level objections answered.
 - [Brownfield](brownfield.md) — the methodology applied in reverse to an inherited **payroll/HR** system (a second domain, deliberately not ticketing); four common failure modes; the distributed-monolith walkthrough; methodology informs, business decides.
 
 ## Back matter
 - [Closing](closing.md) — the reflexive taper-proof, honest scope, the falsifiable bet, numbered predictions, the invitation.
+- [Afterword](afterword.md) — the author's note: the density was the method leaking, unnoticed, into the prose.
+- [Glossary](glossary.md) — the methodology's vocabulary defined once; the shared spine the companion volumes build on.
 - [References](references.md) — works cited, alphabetical: King, Loth, Poltorak, Yevtushenko.

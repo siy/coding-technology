@@ -2,6 +2,16 @@
 
 Claude Code integration for Java Backend Coding Technology - skills, agents, and commands for AI-assisted development.
 
+## The JBCT Toolchain
+
+JBCT ships three complementary tool families. This page covers the **AI tools**; the other two have their own pages:
+
+- **AI tools** (this page) - Claude Code skills and subagents: learning the patterns, generating JBCT code, and reviewing for compliance.
+- **JBCT CLI** (`jbct`) - a fast command-line **formatter and linter** that enforces JBCT structure deterministically; ideal for pre-commit hooks and CI/CD. See [CLI Tools](../CLI-TOOLING.md).
+- **Maven plugin** - the same formatting and lint checks wired into the build, so they run as part of `mvn verify`. See [Maven Plugin](../MAVEN-PLUGIN.md).
+
+The CLI and Maven plugin keep structure mechanically correct on every build; the AI tools add context-aware generation and review on top. Together they cover authoring, verification, and review.
+
 ## Overview
 
 JBCT provides four AI tools for Claude Code:
@@ -308,7 +318,7 @@ jbct check src/main/java
 ```
 
 The AI tools complement the CLI:
-- **CLI**: Automated, fast, 37 lint rules, CI/CD integration
+- **CLI**: Automated, fast, lint + format checks, CI/CD integration
 - **AI tools**: Context-aware, deeper analysis, explanations, code generation
 
 ---
@@ -331,7 +341,7 @@ Library documentation: https://central.sonatype.com/artifact/org.pragmatica-lite
 
 ## Resources
 
-- [JBCT Coding Guide](../CODING_GUIDE.md) - Complete technical reference
+- [JBCT book](../book/index.md) - Complete technical reference
 - [CLI Tools](../CLI-TOOLING.md) - Command-line formatting and linting
 - [Maven Plugin](../MAVEN-PLUGIN.md) - Build integration
 - [GitHub Repository](https://github.com/siy/coding-technology)

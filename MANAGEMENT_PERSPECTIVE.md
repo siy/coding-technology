@@ -473,7 +473,7 @@ The choice is: make structural decisions mechanical now, or pay compounding cost
 ## Next Steps
 
 **For engineering leadership**:
-- Review the [JBCT technical guide](CODING_GUIDE.md) with your senior engineers
+- Review the [JBCT book](book/index.md) with your senior engineers
 - Identify one team and one use case for a pilot
 - Define success metrics for your context
 - Schedule a retrospective after 12 weeks
@@ -499,4 +499,4 @@ Start small. Measure rigorously. Scale deliberately.
 
 **Document Version**: 2.0.0 (2026-02-13)
 **Author**: [Pragmatica Labs](https://pragmaticalabs.io) -- Pragmatic Solutions for Java Teams
-**Technical Reference**: [CODING_GUIDE.md](CODING_GUIDE.md)
+**Technical Reference**: [JBCT book](book/index.md)

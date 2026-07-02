@@ -7,6 +7,17 @@ All notable changes to the PFD book, newest first. Format:
 `0.x` versions were preview editions; `1.0.0` marked the first edition released to
 readers, and `1.x` are its maintenance and expansion releases.
 
+## [2.0.0] - 2026-07-02
+
+Second edition — the book reworked after its first serious external review (Denys Poltorak's full read and the Fractal Platform community). It consolidates 1.7.0–1.9.0 (the two-layer spine and the free condensed edition, the *Where the structure comes from* section, the *Variation without branching* answer, and the scope / tiers / single-sitting corrections) and adds the finishing pass below.
+
+### Added
+- **Afterword** — the author's note: the density was the method leaking, unnoticed, into the prose. Deliberately kept out of the condensed edition; the one page where the prose is allowed to relax.
+
+### Changed
+- **Vocabulary de-branded across the book.** The sets are named, not counted — "the patterns," "the shapes," "the properties" replace "the six patterns," "the four shapes," "the six properties" throughout — with each count stated once where its members are actually listed, and the counts that carry an argument (the recovery triple, the two axes of cohesion, the one organizing structure) kept. Readers were retaining the number and losing the content it stood for.
+- **Loth / Independent Variation Principle, reframed** (*Foundations / The telescope*): from a defended priority ("corroboration, not foundation") to plain gratitude — the book holds a working scheme drawn from practice, Loth built the formal foundation beneath it, and the credit for the rigor is his.
+
 ## [1.9.0] - 2026-07-02
 
 ### Added

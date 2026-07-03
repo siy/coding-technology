@@ -146,9 +146,9 @@ The cancellation-and-refund workflow is the methodology's natural place to surfa
 
 **The methodology distinguishes two compensation shapes by where the inverse lives.**
 
-**Domain-internal compensation** is the inverse whose entire effect stays inside the original action's domain. *Cancel reservation* inverts *confirm reservation*: both operations live in the reservation store; the inverse is a state transition on the same record. Releasing a hold inverts acquiring a hold. Voiding an authorization inverts placing an authorization. Reversing a posted ledger entry inverts the post. The inverse is mechanical: it is an operation on the same domain interface, and the methodology's discipline asks the designer to confirm at design time that the operation exists.
+**Domain-internal compensation is the inverse whose entire effect stays inside the original action's domain.** *Cancel reservation* inverts *confirm reservation*: both operations live in the reservation store; the inverse is a state transition on the same record. Releasing a hold inverts acquiring a hold. Voiding an authorization inverts placing an authorization. Reversing a posted ledger entry inverts the post. The inverse is mechanical: it is an operation on the same domain interface, and the methodology's discipline asks the designer to confirm at design time that the operation exists.
 
-**Domain-escaping compensation** is the inverse whose effect leaves the original action's domain. *Initiate refund* inverts *authorize-and-capture payment*, but the refund's effect does not stay inside the payment store. It propagates outward into the payment provider, the customer's bank, the customer's account statement, and eventually the customer's psychological state about the transaction. The inverse is not a single operation; it is itself a workflow, with its own steps, its own timing, its own failure modes, and its own potential need for compensation if the refund flow itself fails.
+**Domain-escaping compensation is the inverse whose effect leaves the original action's domain.** *Initiate refund* inverts *authorize-and-capture payment*, but the refund's effect does not stay inside the payment store. It propagates outward into the payment provider, the customer's bank, the customer's account statement, and eventually the customer's psychological state about the transaction. The inverse is not a single operation; it is itself a workflow, with its own steps, its own timing, its own failure modes, and its own potential need for compensation if the refund flow itself fails.
 
 The classification is not a hierarchy. Both shapes are legitimate. The distinction governs what the workflow has to budget for:
 
@@ -235,11 +235,11 @@ The temporary-hold workflow has a different shape than the prior two. There is n
 
 **Time appears in three distinct shapes across the methodology, and the temporary-hold workflow is where the methodology earns the distinction.**
 
-**Time-as-trigger** is a scheduler firing a use case at a wall-clock instant. The *release expired holds* use case has a scheduled trigger: every minute, the use case fires, queries holds whose expiry has passed, and releases them. The use case's trigger is time; its action is the inverse of the original hold acquisition. This is a use-case-altitude pattern; the workflow surrounding it is the periodic cleanup workflow, not the temporary-hold workflow.
+**Time-as-trigger is a scheduler firing a use case at a wall-clock instant.** The *release expired holds* use case has a scheduled trigger: every minute, the use case fires, queries holds whose expiry has passed, and releases them. The use case's trigger is time; its action is the inverse of the original hold acquisition. This is a use-case-altitude pattern; the workflow surrounding it is the periodic cleanup workflow, not the temporary-hold workflow.
 
-**Time-as-condition** is a boundary check at any point during a request. When *buy ticket* fires after a customer has been holding a seat, the workflow checks: is the hold still within its expiry window? If yes, the buy proceeds against the held seat. If no, the buy proceeds against the seat as if no hold existed (subject to availability). The check uses time as a Boolean condition: the hold either is in-window or is out-of-window.
+**Time-as-condition is a boundary check at any point during a request.** When *buy ticket* fires after a customer has been holding a seat, the workflow checks: is the hold still within its expiry window? If yes, the buy proceeds against the held seat. If no, the buy proceeds against the seat as if no hold existed (subject to availability). The check uses time as a Boolean condition: the hold either is in-window or is out-of-window.
 
-**Time-as-decay** is the methodology's third shape, and the temporary-hold workflow surfaces it. Time-as-decay treats the hold's state as continuously degrading: `fresh → stale → expired`. The workflow does not check "is the hold expired?" as a Boolean; it queries "what state is the hold in?" as a typed answer. A `fresh` hold (under 30 seconds old, say) is a hold the customer can rely on. A `stale` hold (between 30 seconds and the configured expiry) is a hold the customer can still rely on but the system has flagged for possible refresh. An `expired` hold is a hold the system has released. The workflow operates on the typed state, not on raw time arithmetic at every use site.
+**Time-as-decay is the methodology's third shape, and the temporary-hold workflow surfaces it. Time-as-decay treats the hold's state as continuously degrading: `fresh → stale → expired`.** The workflow does not check "is the hold expired?" as a Boolean; it queries "what state is the hold in?" as a typed answer. A `fresh` hold (under 30 seconds old, say) is a hold the customer can rely on. A `stale` hold (between 30 seconds and the configured expiry) is a hold the customer can still rely on but the system has flagged for possible refresh. An `expired` hold is a hold the system has released. The workflow operates on the typed state, not on raw time arithmetic at every use site.
 
 ```
 HoldState:
@@ -387,7 +387,7 @@ The architecture decisions that surface at workflow altitude expand on the use-c
 
 ### Workflow-level SLOs
 
-**A workflow has its own SLO triple, distinct from any constituent use case's triple.** The cancellation-and-refund workflow's latency target is the cumulative latency of its forward chain, including the longest plausible compensation if a downstream step fails. The throughput target is the rate at which cancellations flow through. The availability target is the workflow's terminal-state availability, which differs from the per-use-case availability because the workflow can succeed in a degraded mode — the cancellation committed and the refund initiated even when the confirmation message has not yet been sent — where a constituent use case failed.
+**A workflow has its own SLO triple — latency, throughput, availability — distinct from any constituent use case's triple.** The cancellation-and-refund workflow's latency target is the cumulative latency of its forward chain, including the longest plausible compensation if a downstream step fails. The throughput target is the rate at which cancellations flow through. The availability target is the workflow's terminal-state availability, which differs from the per-use-case availability because the workflow can succeed in a degraded mode — the cancellation committed and the refund initiated even when the confirmation message has not yet been sent — where a constituent use case failed.
 
 For the cancellation-and-refund workflow (the numbers below are illustrative; in practice they derive from the Phase-4 elicitation treated in the Architecture Synthesis module):
 
@@ -432,7 +432,7 @@ At workflow altitude, the methodology names the coordination question but defers
 The questions Pass 2 does not yet have force to decide:
 
 - **Subsystem boundaries.** Workflows cluster into subsystems; the clustering is the next altitude. At workflow altitude, all workflows are treated as if they share a substrate.
-- **Persistence topology for cross-workflow data.** Where does the reservation store live? One database for all workflows? Separate stores per workflow with replication? The question has weight only when subsystem boundaries are explicit.
+- Persistence topology for cross-workflow data. Where does the reservation store live? One database for all workflows? Separate stores per workflow with replication? The question has weight only when subsystem boundaries are explicit.
 - **Composition substrate.** Direct vs event-based vs hybrid for cross-workflow coordination. Same deferral: substrate decisions belong to Architecture Synthesis.
 - **Deployment topology.** Workflows-as-services, workflows-as-functions, workflows-in-a-monolith — the choice belongs to subsystem-altitude and architecture-synthesis considerations.
 

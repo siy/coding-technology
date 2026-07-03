@@ -8,7 +8,7 @@
 
 This is a warm-up, not a pass. The spiral that follows walks a real methodology through four altitudes; before it starts, it is worth seeing the problem the methodology exists to solve — not as an argument, but as a list of decisions you already make.
 
-Take the smallest unit of real work: a customer buys a ticket for a specific seat at a specific event. One trigger, one outcome. It looks trivial. It is not, and the reason it is not has nothing to do with difficulty. The work is easy. What is hard is that the use case quietly forces a series of decisions, each one has several defensible answers, and without a shared method you answer them by instinct — differently on Tuesday than you did on Monday, differently from the developer at the next desk, differently in this use case than in the one beside it.
+**Take the smallest unit of real work: a customer buys a ticket for a specific seat at a specific event.** One trigger, one outcome. It looks trivial. It is not, and the reason it is not has nothing to do with difficulty. The work is easy. **What is hard is that the use case quietly forces a series of decisions, each one has several defensible answers, and without a shared method you answer them by instinct — differently on Tuesday than you did on Monday, differently from the developer at the next desk, differently in this use case than in the one beside it.**
 
 The chapter walks those decisions. It does not show code, because the point is not that someone wrote bad code; competent people write defensible code for every one of these. **The point is that the decisions are unavoidable and the consistency is not automatic.** That gap is what the methodology closes.
 
@@ -42,9 +42,9 @@ This is why architectural arguments feel endless. They are often these decisions
 
 ## Why the answers can be simple
 
-Here is the part that is easy to disbelieve: the methodology that follows answers every one of these decisions, and the answers are as simple as the questions.
+**Here is the part that is easy to disbelieve: the methodology that follows answers every one of these decisions, and the answers are as simple as the questions.**
 
-Failures live in the return type, as a closed set of named outcomes the caller must address. "Customer" is a small shared value object where it means the same thing everywhere, plus a shape local to each use case where it does not. The held seat's fate is a named compensation, decided when the use case is designed rather than when it is debugged. The trigger is one of the use case's properties, named separately from the business so a second trigger costs nothing. Logging, retries, and audit are quarantined — business code stays clean, the runtime supplies them uniformly. Each answer fits in a sentence.
+**Failures live in the return type, as a closed set of named outcomes the caller must address. "Customer" is a small shared value object where it means the same thing everywhere, plus a shape local to each use case where it does not. The held seat's fate is a named compensation, decided when the use case is designed rather than when it is debugged. The trigger is one of the use case's properties, named separately from the business so a second trigger costs nothing. Logging, retries, and audit are quarantined — business code stays clean, the runtime supplies them uniformly.** Each answer fits in a sentence.
 
 **The simplicity is not a happy accident; it is the mechanism.** A methodology you can apply from memory is one you actually apply — every use case, the same way, without opening a manual. A methodology you have to look things up to follow gets applied unevenly, or abandoned under deadline. The power is not despite the simplicity; it is *because* of it. **Simple decisions, answered the same way every time, are the only kind that get answered consistently across a team and a codebase and a year — and consistency, not cleverness, is what makes a large system stay legible.** The decisions in this chapter are trivial. That is exactly why a small, fixed set of answers can dissolve them.
 

@@ -7,6 +7,14 @@ All notable changes to the PFD book, newest first. Format:
 `0.x` versions were preview editions; `1.0.0` marked the first edition released to
 readers, and `1.x` are its maintenance and expansion releases.
 
+## [2.0.1] - 2026-07-03
+
+Coherence pass on the condensed edition: the spine now reads end-to-end as a self-sufficient argument. Nearly all changes are re-selection of which sentences carry the spine (`**` placement); the full book's rendered text is unchanged except one clarification noted below.
+
+### Changed
+- **Spine re-selected for self-sufficiency (condensed edition).** Every counted set now carries its members: the six process properties, the four shapes, the six composition primitives, the recovery triple (BER / FER / design-out, with definitions), the four selection axes, the two cohesion axes (completeness / purity), the four altitudes, the three time shapes, the two compensation shapes, the six cost-and-risk indicators, the six architecture axes, the five general and four brownfield failure modes, and the five book principles. The reviewer is introduced before he is cited; V₀/V₁ are defined before use; the representation-change objection is stated before it is refuted; "the other three failure modes named above" now follows the naming. Orphan fragments and content-free repeats dropped; dangling antecedents given their referents.
+- **Workflow SLO triple named inline** (*Spiral Pass 2*): "its own SLO triple — latency, throughput, availability —". The only prose change in this release; everything else is spine markup.
+
 ## [2.0.0] - 2026-07-02
 
 Second edition — the book reworked after its first serious external review (Denys Poltorak's full read and the Fractal Platform community). It consolidates 1.7.0–1.9.0 (the two-layer spine and the free condensed edition, the *Where the structure comes from* section, the *Variation without branching* answer, and the scope / tiers / single-sitting corrections) and adds the finishing pass below.

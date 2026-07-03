@@ -1,6 +1,6 @@
 # Java Backend Coding Technology
 
-> **Version 4.1.1** | [Full Changelog](book/CHANGELOG.md)
+> **Version 4.2.1** | [Full Changelog](book/CHANGELOG.md)
 
 Executable business process specifications. Code that reads like a business process, because it is one. A framework-agnostic methodology for writing predictable, testable Java backend code optimized for human-AI collaboration.
 
@@ -217,7 +217,7 @@ void username_acceptsValidInput() {
 ### Changelog & Versioning
 
 - **[Book changelog](book/CHANGELOG.md)** - Version history following [Keep a Changelog](https://keepachangelog.com/)
-  - Current version: 4.1.1 (2026-06-25)
+  - Current version: 4.2.1 (2026-06-30)
   - Self-contained design-to-code methodology on Pragmatica Core 1.0.0-rc1
   - Per-book semantic versioning across the JBCT and PFD books
 
@@ -280,19 +280,18 @@ curl -fsSL https://raw.githubusercontent.com/siy/jbct-cli/main/install.sh | sh
 coding-technology/
 ├── book/                        # JBCT book (web edition + source)
 │   ├── index.md                 # Table of contents
-│   ├── ch01-*.md ... ch11-*.md  # Book chapters
+│   ├── ch01-*.md ... ch19-*.md  # Book chapters
+│   ├── appendix-*.md            # Appendices (API reference, exercises, glossary)
 │   └── CHANGELOG.md             # Book version history
 ├── MANAGEMENT_PERSPECTIVE.md    # Business case and ROI
 ├── CHANGELOG.md                 # Version history
 ├── AI-TOOLING.md                # AI tools documentation
 ├── CLI-TOOLING.md               # CLI tools documentation
 ├── MAVEN-PLUGIN.md              # Maven plugin documentation
-├── skills/                      # Claude Code skills
-│   ├── jbct/                    # JBCT main skill
-│   │   ├── SKILL.md             # Skill definition
-│   │   └── README.md            # Installation instructions
-│   └── jbct-review/             # Parallel review skill
-│       └── SKILL.md             # /jbct-review command
+├── ai-tools/                    # Claude Code skills and agents
+│   ├── skills/jbct/             # JBCT main skill
+│   ├── skills/jbct-review/      # Parallel review skill (/jbct-review)
+│   └── agents/                  # Subagent definitions
 ├── jbct-coder.md                # Claude Code subagent: code generation
 ├── jbct-reviewer.md             # Claude Code subagent: code review
 ├── examples/                    # Java code examples
@@ -375,6 +374,6 @@ If you find this useful, consider [sponsoring](https://github.com/sponsors/siy).
 
 ---
 
-**Version:** 4.1.1 | **Last Updated:** 2026-06-25 | **[Full Changelog](book/CHANGELOG.md)**
+**Version:** 4.2.1 | **Last Updated:** 2026-06-30 | **[Full Changelog](book/CHANGELOG.md)**
 
-**Copyright © 2025 Sergiy Yevtushenko. Released under the [MIT License](LICENSE).**
+**Copyright © 2025-2026 Sergiy Yevtushenko. Released under the [MIT License](LICENSE).**

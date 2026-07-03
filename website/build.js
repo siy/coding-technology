@@ -20,6 +20,7 @@ const ROOT_DIR = path.join(__dirname, '..');
 const DIST_DIR = path.join(__dirname, 'dist');
 const TEMPLATES_DIR = path.join(__dirname, 'templates');
 const STYLES_DIR = path.join(__dirname, 'styles');
+const SITE_URL = 'https://pragmatica.dev';
 
 // Files to convert
 const MARKDOWN_FILES = [
@@ -41,6 +42,23 @@ const NAV_KEYS = {
   'AI-TOOLING.html': 'tools',
   'MANAGEMENT_PERSPECTIVE.html': 'management',
   'CONTACT.html': 'services'
+};
+
+// Per-page meta description, keyed by dist-relative output path.
+// Book chapters not listed here get a generated fallback from their title.
+const DESCRIPTIONS = {
+  'index.html': 'Java Backend Coding Technology: executable business process specifications — code that reads like a business process, because it is one. Free book, tooling, and adoption guidance.',
+  'MANAGEMENT_PERSPECTIVE.html': 'The business case for structural standardization: onboarding speed, maintenance cost, and AI-assisted development ROI for engineering leaders.',
+  'CHANGELOG.html': 'Changelog for the JBCT repository and shared assets: tooling, AI skills, and build scripts.',
+  'PL_IMPROVEMENTS.html': 'Language-level improvements that would make functional Java backends simpler — observations from applying JBCT in practice.',
+  'AI-TOOLING.html': 'Claude Code skills, subagents, and review commands for JBCT — the toolchain for AI-assisted Java backend development.',
+  'CLI-TOOLING.html': 'The jbct CLI: lint and scaffold JBCT-style Java backend code from the command line.',
+  'MAVEN-PLUGIN.html': 'The JBCT Maven plugin: build-time enforcement of JBCT structural rules.',
+  'jbct-coder.html': 'The jbct-coder subagent: JBCT-compliant Java code generation with Claude Code.',
+  'jbct-reviewer.html': 'The jbct-reviewer subagent: JBCT compliance review for Java backend code.',
+  'CONTACT.html': 'Work with Pragmatica Labs: JBCT assessment, team training, architecture review, and adoption sprints.',
+  'book/index.html': 'Java Backend Coding Technology — the complete book, free web edition. Design methodology, patterns, testing, and worked examples.',
+  'book/CHANGELOG.html': 'Version history of the Java Backend Coding Technology book.'
 };
 
 // Book chapters
@@ -100,6 +118,11 @@ function escapeHtml(s) {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
+// For HTML attribute values (title/description in meta tags)
+function escapeAttr(s) {
+  return escapeHtml(s).replace(/"/g, '&quot;');
+}
+
 // Robustly strip a leading `---` front-matter block and pull out top-level
 // scalar keys. Tolerant of values that contain colons (e.g. dates, URLs),
 // which a strict YAML parser rejects and would otherwise leak into the page.
@@ -131,7 +154,7 @@ function buildChapterNav(prev, next) {
   return `<nav class="chapter-nav {{POS}}">${prevLink}${contents}${nextLink}</nav>\n`;
 }
 
-function convertMarkdownToHtml(markdownContent, filename, isSubPage = false, navKey = '', chapterNav = '') {
+function convertMarkdownToHtml(markdownContent, filename, isSubPage = false, navKey = '', chapterNav = '', pageMeta = {}) {
   // Strip front matter (tolerant of colon-bearing values)
   const { body, attributes: metadata } = stripFrontMatter(markdownContent);
   let content = body;
@@ -162,10 +185,17 @@ function convertMarkdownToHtml(markdownContent, filename, isSubPage = false, nav
   // Determine navigation context
   const navContext = isSubPage ? '../' : '';
 
+  // Per-page meta: description falls back to a title-derived line (book chapters)
+  const description = pageMeta.description
+    || `${title} — Java Backend Coding Technology, free web edition.`;
+
   // Replace placeholders
   let html = template
-    .replace('{{TITLE}}', title)
-    .replace('{{CONTENT}}', htmlContent)
+    .replace(/{{TITLE}}/g, escapeAttr(title))
+    .replace(/{{DESCRIPTION}}/g, escapeAttr(description))
+    .replace(/{{CANONICAL_URL}}/g, pageMeta.canonicalUrl || SITE_URL + '/')
+    .replace(/{{OG_TYPE}}/g, pageMeta.ogType || 'website')
+    .replace('{{CONTENT}}', () => htmlContent)
     .replace(/{{NAV_CONTEXT}}/g, navContext);
 
   // Highlight the active top-nav item
@@ -179,8 +209,16 @@ function convertMarkdownToHtml(markdownContent, filename, isSubPage = false, nav
 function buildPage(sourceFile, outputFile, isSubPage = false, navKey = '', chapterNav = '') {
   console.log(`Building: ${sourceFile} -> ${outputFile}`);
 
+  // Dist-relative path drives canonical URL, description lookup, and og:type
+  const relPath = path.relative(DIST_DIR, outputFile).split(path.sep).join('/');
+  const pageMeta = {
+    canonicalUrl: relPath === 'index.html' ? SITE_URL + '/' : `${SITE_URL}/${relPath}`,
+    description: DESCRIPTIONS[relPath],
+    ogType: relPath.startsWith('book/') ? 'article' : 'website'
+  };
+
   const markdown = fs.readFileSync(sourceFile, 'utf-8');
-  const html = convertMarkdownToHtml(markdown, path.basename(sourceFile), isSubPage, navKey, chapterNav);
+  const html = convertMarkdownToHtml(markdown, path.basename(sourceFile), isSubPage, navKey, chapterNav, pageMeta);
 
   ensureDir(path.dirname(outputFile));
   fs.writeFileSync(outputFile, html);
@@ -297,7 +335,8 @@ function generateSitemap() {
   MARKDOWN_FILES.forEach(file => {
     let url = file.replace('.md', '.html');
     if (file === 'README.md') {
-      url = 'index.html';
+      pages.push(`${baseUrl}/`);
+      return;
     }
     pages.push(`${baseUrl}/${url}`);
   });

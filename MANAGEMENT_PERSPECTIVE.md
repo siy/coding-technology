@@ -1,6 +1,6 @@
 # The Engineering Scalability Crisis: Why Standard Code Structures Matter More Than Ever
 
-**Version:** 2.0.0 | **For:** CTOs, VPs of Engineering, CEOs | **By:** [Pragmatica Labs](https://pragmaticalabs.io)
+**Version:** 2.0.1 | **For:** CTOs, VPs of Engineering, CEOs | **By:** [Pragmatica Labs](https://pragmaticalabs.io)
 
 ## The $3 Million Question
 
@@ -289,7 +289,7 @@ JBCT solves how code gets written. But standardized code unlocks something bigge
 
 Every Java microservice today bundles a heavy coat of infrastructure -- web servers, serialization frameworks, service discovery clients, configuration management, health checks, metrics libraries, retry logic, circuit breakers. Your `pom.xml` doesn't distinguish business dependencies from infrastructure dependencies. They compile together, deploy together, and break together.
 
-[Pragmatica Aether](https://pragmaticalabs.io/aether.html) is a distributed Java runtime that separates these layers. When your code follows JBCT patterns, the step to distributed deployment is mechanical:
+[Pragmatica Aether](https://pragmaticalabs.io/aether.html) is a distributed Java runtime, currently in pre-release development, that separates these layers. When your code follows JBCT patterns, the step to distributed deployment is mechanical:
 
 ```java
 @Slice
@@ -313,7 +313,7 @@ An interface annotated with `@Slice`, plus business logic. No HTTP clients, no s
 Promise.lift(() -> legacyService.generate(request));
 ```
 
-Start in Aether Ember -- a single-process runtime that runs alongside your existing application in the same JVM. No risk added. From there, the strangler fig pattern: extract a hot path, deploy as a slice, route traffic, repeat. One sprint to first slice in production.
+The adoption path is designed to be low-risk: start in Aether Ember -- a single-process runtime that runs alongside your existing application in the same JVM. No risk added. From there, the strangler fig pattern: extract a hot path, deploy as a slice, route traffic, repeat. The target: one sprint to first slice in production.
 
 **The economic impact compounds what JBCT delivers**:
 
@@ -497,6 +497,6 @@ Start small. Measure rigorously. Scale deliberately.
 
 ---
 
-**Document Version**: 2.0.0 (2026-02-13)
+**Document Version**: 2.0.1 (2026-07-03)
 **Author**: [Pragmatica Labs](https://pragmaticalabs.io) -- Pragmatic Solutions for Java Teams
 **Technical Reference**: [JBCT book](book/index.md)

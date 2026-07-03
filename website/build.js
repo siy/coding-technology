@@ -22,23 +22,25 @@ const TEMPLATES_DIR = path.join(__dirname, 'templates');
 const STYLES_DIR = path.join(__dirname, 'styles');
 const SITE_URL = 'https://pragmatica.dev';
 
-// Files to convert
-const MARKDOWN_FILES = [
-  'README.md',
-  'MANAGEMENT_PERSPECTIVE.md',
-  'CHANGELOG.md',
-  'PL_IMPROVEMENTS.md',
-  'AI-TOOLING.md',
-  'CLI-TOOLING.md',
-  'MAVEN-PLUGIN.md',
-  'jbct-coder.md',
-  'jbct-reviewer.md',
-  'CONTACT.md'
+// Pages to build: repo-relative source -> dist-relative output
+const PAGES = [
+  { src: 'README.md', out: 'index.html' },
+  { src: 'website/content/books.md', out: 'books.html' },
+  { src: 'MANAGEMENT_PERSPECTIVE.md', out: 'MANAGEMENT_PERSPECTIVE.html' },
+  { src: 'CHANGELOG.md', out: 'CHANGELOG.html' },
+  { src: 'PL_IMPROVEMENTS.md', out: 'PL_IMPROVEMENTS.html' },
+  { src: 'AI-TOOLING.md', out: 'AI-TOOLING.html' },
+  { src: 'CLI-TOOLING.md', out: 'CLI-TOOLING.html' },
+  { src: 'MAVEN-PLUGIN.md', out: 'MAVEN-PLUGIN.html' },
+  { src: 'jbct-coder.md', out: 'jbct-coder.html' },
+  { src: 'jbct-reviewer.md', out: 'jbct-reviewer.html' },
+  { src: 'CONTACT.md', out: 'CONTACT.html' }
 ];
 
 // Nav highlight key per output page (book subpages handled separately)
 const NAV_KEYS = {
   'index.html': 'home',
+  'books.html': 'books',
   'AI-TOOLING.html': 'tools',
   'MANAGEMENT_PERSPECTIVE.html': 'management',
   'CONTACT.html': 'services'
@@ -48,6 +50,7 @@ const NAV_KEYS = {
 // Book chapters not listed here get a generated fallback from their title.
 const DESCRIPTIONS = {
   'index.html': 'Java Backend Coding Technology: executable business process specifications — code that reads like a business process, because it is one. Free book, tooling, and adoption guidance.',
+  'books.html': 'Two books, one discipline: Process-First Design (the design methodology, free condensed edition) and Java Backend Coding Technology (the Java realization, free web edition).',
   'MANAGEMENT_PERSPECTIVE.html': 'The business case for structural standardization: onboarding speed, maintenance cost, and AI-assisted development ROI for engineering leaders.',
   'CHANGELOG.html': 'Changelog for the JBCT repository and shared assets: tooling, AI skills, and build scripts.',
   'PL_IMPROVEMENTS.html': 'Language-level improvements that would make functional Java backends simpler — observations from applying JBCT in practice.',
@@ -257,23 +260,16 @@ function copyImages() {
 function buildMainPages() {
   console.log('Building main pages...');
 
-  MARKDOWN_FILES.forEach(file => {
-    const sourcePath = path.join(ROOT_DIR, file);
+  PAGES.forEach(page => {
+    const sourcePath = path.join(ROOT_DIR, page.src);
 
     if (!fs.existsSync(sourcePath)) {
-      console.warn(`Warning: ${file} not found, skipping`);
+      console.warn(`Warning: ${page.src} not found, skipping`);
       return;
     }
 
-    let outputName = file.replace('.md', '.html');
-
-    // Special case: README.md -> index.html
-    if (file === 'README.md') {
-      outputName = 'index.html';
-    }
-
-    const outputPath = path.join(DIST_DIR, outputName);
-    const navKey = NAV_KEYS[outputName] || '';
+    const outputPath = path.join(DIST_DIR, page.out);
+    const navKey = NAV_KEYS[page.out] || '';
     buildPage(sourcePath, outputPath, false, navKey);
   });
 }
@@ -289,7 +285,7 @@ function buildBookPages() {
   // Build index (no chapter nav)
   const indexSource = path.join(bookDir, 'index.md');
   if (fs.existsSync(indexSource)) {
-    buildPage(indexSource, path.join(bookDistDir, 'index.html'), true, 'book');
+    buildPage(indexSource, path.join(bookDistDir, 'index.html'), true, 'books');
   } else {
     console.warn('Warning: book/index.md not found, skipping');
   }
@@ -315,13 +311,13 @@ function buildBookPages() {
   // Build each reading-sequence page with prev / Contents / next navigation
   sequence.forEach((chapter, i) => {
     const chapterNav = buildChapterNav(sequence[i - 1], sequence[i + 1]);
-    buildPage(chapter.sourcePath, path.join(bookDistDir, chapter.htmlName), true, 'book', chapterNav);
+    buildPage(chapter.sourcePath, path.join(bookDistDir, chapter.htmlName), true, 'books', chapterNav);
   });
 
   // CHANGELOG: Contents link only, no prev/next
   const changelogSource = path.join(bookDir, 'CHANGELOG.md');
   if (fs.existsSync(changelogSource)) {
-    buildPage(changelogSource, path.join(bookDistDir, 'CHANGELOG.html'), true, 'book', buildChapterNav(null, null));
+    buildPage(changelogSource, path.join(bookDistDir, 'CHANGELOG.html'), true, 'books', buildChapterNav(null, null));
   }
 }
 
@@ -332,13 +328,8 @@ function generateSitemap() {
   const pages = [];
 
   // Add main pages
-  MARKDOWN_FILES.forEach(file => {
-    let url = file.replace('.md', '.html');
-    if (file === 'README.md') {
-      pages.push(`${baseUrl}/`);
-      return;
-    }
-    pages.push(`${baseUrl}/${url}`);
+  PAGES.forEach(page => {
+    pages.push(page.out === 'index.html' ? `${baseUrl}/` : `${baseUrl}/${page.out}`);
   });
 
   // Add book pages

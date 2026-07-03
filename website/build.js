@@ -24,7 +24,7 @@ const SITE_URL = 'https://pragmatica.dev';
 
 // Pages to build: repo-relative source -> dist-relative output
 const PAGES = [
-  { src: 'README.md', out: 'index.html' },
+  { src: 'website/content/index.md', out: 'index.html' },
   { src: 'website/content/books.md', out: 'books.html' },
   { src: 'MANAGEMENT_PERSPECTIVE.md', out: 'MANAGEMENT_PERSPECTIVE.html' },
   { src: 'CHANGELOG.md', out: 'CHANGELOG.html' },
@@ -162,6 +162,21 @@ function convertMarkdownToHtml(markdownContent, filename, isSubPage = false, nav
   const { body, attributes: metadata } = stripFrontMatter(markdownContent);
   let content = body;
 
+  // Re-target relative .md links: resolve against the source file's real
+  // directory, then re-relativize to the output page's directory. Sources that
+  // live elsewhere than their output (symlinked pages like AI-TOOLING.md ->
+  // ai-tools/README.md) keep working links both on GitHub and on the site.
+  if (pageMeta.srcDir !== undefined && pageMeta.outDir !== undefined) {
+    content = content.replace(/\]\(([^)#:\s]+\.md)((?:#[^)]*)?)\)/g, (match, target, anchor) => {
+      if (target.startsWith('/')) {
+        return match;
+      }
+      const resolved = path.posix.normalize(path.posix.join(pageMeta.srcDir, target));
+      const relinked = path.posix.relative(pageMeta.outDir, resolved) || resolved;
+      return `](${relinked}${anchor})`;
+    });
+  }
+
   // Convert markdown links to HTML links
   content = content.replace(/\.md(#[^)]*)?(\))/g, '.html$1$2');
 
@@ -217,7 +232,10 @@ function buildPage(sourceFile, outputFile, isSubPage = false, navKey = '', chapt
   const pageMeta = {
     canonicalUrl: relPath === 'index.html' ? SITE_URL + '/' : `${SITE_URL}/${relPath}`,
     description: DESCRIPTIONS[relPath],
-    ogType: relPath.startsWith('book/') ? 'article' : 'website'
+    ogType: relPath.startsWith('book/') ? 'article' : 'website',
+    // Real source dir (resolves symlinked pages) and output dir, both POSIX-relative
+    srcDir: path.relative(ROOT_DIR, path.dirname(fs.realpathSync(sourceFile))).split(path.sep).join('/'),
+    outDir: path.dirname(relPath) === '.' ? '' : path.dirname(relPath)
   };
 
   const markdown = fs.readFileSync(sourceFile, 'utf-8');

@@ -195,6 +195,39 @@ main {
     white-space: nowrap;
 }
 
+/* Hero CTA row (landing page) */
+.cta-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin: 2rem 0;
+}
+
+a.cta {
+    display: inline-block;
+    padding: 0.6rem 1.4rem;
+    border: 1px solid var(--primary-color);
+    border-radius: 6px;
+    color: var(--primary-color);
+    font-weight: 600;
+    text-decoration: none;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+a.cta:hover {
+    background-color: var(--primary-color);
+    color: #fff;
+}
+
+a.cta-primary {
+    background-color: var(--primary-color);
+    color: #fff;
+}
+
+a.cta-primary:hover {
+    opacity: 0.9;
+}
+
 /* Book cards (Books page) */
 .book-card {
     display: flex;

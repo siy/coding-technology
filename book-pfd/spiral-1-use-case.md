@@ -61,7 +61,7 @@ This output type is also process-local. The "ticket" referenced here is the cust
 
 ### Typed failures
 
-The use case can fail in specific, enumerable ways. **They are not exceptions to be raised somewhere; they are part of the use case's specification.**
+**The use case can fail in specific, enumerable ways. They are not exceptions to be raised somewhere; they are part of the use case's specification.**
 
 For *buy ticket*:
 
@@ -180,7 +180,7 @@ SeatAvailability:
 
 A hold may or may not be present; both cases are legitimate from the business perspective. The `Option<Instant>` expresses that fact explicitly: a seat for sale carries no hold expiration, a held seat does, and the type makes the difference unmissable rather than encoding it as a null or a sentinel instant.
 
-**Quote a price for a seat** is a third process. Before the customer commits to a purchase, they ask: what does this specific seat at this specific event cost? The seat in this process is a price tier — premium, standard, economy, accessible, restricted-view — paired with the pricing rules for this event's tier schedule. The information needed is the seat's price tier and the event's pricing rules; the physical location of the seat is irrelevant to pricing. Pricing is a per-tier concern, not a per-seat-location concern.
+**Quote a price for a seat is a third process.** Before the customer commits to a purchase, they ask: what does this specific seat at this specific event cost? The seat in this process is a price tier — premium, standard, economy, accessible, restricted-view — paired with the pricing rules for this event's tier schedule. The information needed is the seat's price tier and the event's pricing rules; the physical location of the seat is irrelevant to pricing. Pricing is a per-tier concern, not a per-seat-location concern.
 
 ```
 SeatPricing:
@@ -417,7 +417,7 @@ Voiding a payment authorization is similar. The payment provider supports an inv
 
 Reversing a seat confirmation (turning a confirmed assignment back into an unclaimed state) is again domain-internal. The reservation store supports this transition explicitly because the methodology asked the designer to think about it.
 
-The discipline this surfaces is **identifying compensation requirements at design time**. When the use case is being specified, the question "what is the inverse of this step?" is asked for every step that produces state. Steps without inverses are flagged. If a step's effect cannot be undone (sending an email, charging a card without a reverse path, dispatching a physical item), the methodology surfaces that fact and the team decides whether the step belongs in this use case or whether the use case's structure needs to change.
+**The discipline this surfaces is identifying compensation requirements at design time.** When the use case is being specified, the question "what is the inverse of this step?" is asked for every step that produces state. Steps without inverses are flagged. If a step's effect cannot be undone (sending an email, charging a card without a reverse path, dispatching a physical item), the methodology surfaces that fact and the team decides whether the step belongs in this use case or whether the use case's structure needs to change.
 
 ### Design-out is already in play
 

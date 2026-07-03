@@ -2,6 +2,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 const MarkdownIt = require('markdown-it');
 const markdownItAnchor = require('markdown-it-anchor');
 
@@ -21,6 +22,13 @@ const DIST_DIR = path.join(__dirname, 'dist');
 const TEMPLATES_DIR = path.join(__dirname, 'templates');
 const STYLES_DIR = path.join(__dirname, 'styles');
 const SITE_URL = 'https://pragmatica.dev';
+
+// Content hash for the stylesheet URL: the CDN caches /*.css as immutable
+// for a year (netlify.toml), so every CSS change must change the URL.
+const STYLE_HASH = crypto.createHash('md5')
+                         .update(fs.readFileSync(path.join(STYLES_DIR, 'style.css')))
+                         .digest('hex')
+                         .slice(0, 10);
 
 // Pages to build: repo-relative source -> dist-relative output
 const PAGES = [
@@ -229,6 +237,7 @@ function convertMarkdownToHtml(markdownContent, filename, isSubPage = false, nav
     .replace(/{{DESCRIPTION}}/g, escapeAttr(description))
     .replace(/{{CANONICAL_URL}}/g, pageMeta.canonicalUrl || SITE_URL + '/')
     .replace(/{{OG_TYPE}}/g, pageMeta.ogType || 'website')
+    .replace(/{{STYLE_HASH}}/g, STYLE_HASH)
     .replace('{{CONTENT}}', () => htmlContent)
     .replace(/{{NAV_CONTEXT}}/g, navContext);
 

@@ -100,13 +100,10 @@ public class CreateUserRequest {
 ```java
 // Domain-specific value object
 public record Username(String value) {
-    private static final Cause BLANK = Causes.cause("Username is required");
-    private static final Cause TOO_SHORT = Causes.cause("Username must be at least 3 characters");
-
     public static Result<Username> username(String raw) {
-        return Verify.ensure(raw, Verify.Is::present, BLANK)
+        return Verify.ensure(raw, Verify.Is::present)
                      .map(String::trim)
-                     .filter(TOO_SHORT, v -> v.length() >= 3)
+                     .flatMap(v -> Verify.ensure(v, Verify.Is::lenBetween, 3, 50))
                      .map(Username::new);
     }
 }

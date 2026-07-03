@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1200" height="630" viewBox="0 0 1200 630">
+  <!-- Social-preview card source. Rasterize with:
+       rsvg-convert -w 1200 -h 630 og-card.svg -o og-default.png
+       (run from website/image/; the PNG is committed — Netlify never builds this) -->
+  <rect width="1200" height="630" fill="#111827"/>
+  <rect x="0" y="0" width="1200" height="8" fill="#3b82f6"/>
+  <image x="80" y="96" width="150" height="150" xlink:href="pragmatica.png"/>
+  <text x="270" y="200" font-family="Helvetica, Arial, sans-serif" font-size="88" font-weight="700" fill="#f9fafb">Pragmatica</text>
+  <text x="82" y="360" font-family="Helvetica, Arial, sans-serif" font-size="44" fill="#93c5fd">Code that reads like a business process,</text>
+  <text x="82" y="416" font-family="Helvetica, Arial, sans-serif" font-size="44" fill="#93c5fd">because it is one.</text>
+  <text x="82" y="530" font-family="Helvetica, Arial, sans-serif" font-size="30" fill="#9ca3af">pragmatica.dev — Java Backend Coding Technology</text>
+</svg>

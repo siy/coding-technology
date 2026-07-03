@@ -128,6 +128,12 @@ header {
     color: var(--primary-color);
 }
 
+.main-nav a.active {
+    color: var(--primary-color);
+    border-bottom: 2px solid var(--primary-color);
+    padding-bottom: 2px;
+}
+
 /* Main Content */
 main {
     min-height: calc(100vh - 200px);
@@ -137,6 +143,56 @@ main {
 .content {
     max-width: 900px;
     margin: 0 auto;
+}
+
+/* Chapter navigation (book reading sequence) */
+.chapter-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.chapter-nav.top {
+    margin-bottom: 2.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.chapter-nav.bottom {
+    margin-top: 3rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.chapter-nav a {
+    color: var(--link-color);
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.2s;
+}
+
+.chapter-nav a:hover {
+    border-bottom-color: var(--link-hover);
+}
+
+.chapter-nav .nav-prev,
+.chapter-nav .nav-next {
+    max-width: 42%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.chapter-nav .nav-next {
+    text-align: right;
+}
+
+.chapter-nav .nav-contents {
+    color: var(--text-secondary);
+    white-space: nowrap;
 }
 
 /* Typography */
@@ -397,6 +453,16 @@ footer {
 
     .footer-content {
         grid-template-columns: 1fr;
+    }
+
+    .chapter-nav {
+        font-size: 0.8rem;
+        gap: 0.5rem;
+    }
+
+    .chapter-nav .nav-prev,
+    .chapter-nav .nav-next {
+        max-width: 40%;
     }
 }
 

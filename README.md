@@ -6,13 +6,7 @@ Executable business process specifications. Code that reads like a business proc
 
 ## Here's What Changes
 
-<table>
-<tr>
-<th>Without JBCT</th>
-<th>With JBCT</th>
-</tr>
-<tr>
-<td>
+**Without JBCT**
 
 ```java
 // Hidden failure modes, unclear control flow
@@ -35,13 +29,12 @@ public User findUser(String userId) throws NotFoundException {
 }
 ```
 
-</td>
-<td>
+**With JBCT**
 
 ```java
 // Parse don't validate - invalid states unrepresentable
 public record UserId(long value) {
-    // private UserId {}  // Not yet supported in Java
+    // Records can't hide the canonical constructor; userId() is the construction path
 
     public static Result<UserId> userId(String raw) {
         return Number.parseLong(raw)
@@ -61,10 +54,6 @@ UserId.userId(userIdStr)
       // Not found errors: Promise<User>
       // All failures typed, compiler enforces handling
 ```
-
-</td>
-</tr>
-</table>
 
 **Result:** Parse-don't-validate makes invalid states impossible. Typed errors eliminate hidden exceptions. Type signatures document failure modes.
 

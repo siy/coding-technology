@@ -157,7 +157,20 @@ function buildChapterNav(prev, next) {
   return `<nav class="chapter-nav {{POS}}">${prevLink}${contents}${nextLink}</nav>\n`;
 }
 
-function convertMarkdownToHtml(markdownContent, filename, isSubPage = false, navKey = '', chapterNav = '', pageMeta = {}) {
+// Shown once, after the bottom nav of the final reading-sequence page.
+// Injected at build time so the book sources stay clean for PDF/EPUB builds.
+const WHATS_NEXT_HTML = `
+<aside class="whats-next">
+  <h2>You've finished the web edition — what's next?</h2>
+  <ul>
+    <li><a href="https://leanpub.com/jbct-book" target="_blank" rel="noopener">Take it with you</a> — the book as PDF/EPUB on Leanpub.</li>
+    <li><a href="https://leanpub.com/process-first-design" target="_blank" rel="noopener">Read the methodology upstream</a> — Process-First Design; the condensed edition is free.</li>
+    <li><a href="{{NAV_CONTEXT}}CONTACT.html">Bring it to your team</a> — assessment, training, and adoption sprints.</li>
+  </ul>
+</aside>
+`;
+
+function convertMarkdownToHtml(markdownContent, filename, isSubPage = false, navKey = '', chapterNav = '', pageMeta = {}, afterContent = '') {
   // Strip front matter (tolerant of colon-bearing values)
   const { body, attributes: metadata } = stripFrontMatter(markdownContent);
   let content = body;
@@ -196,6 +209,9 @@ function convertMarkdownToHtml(markdownContent, filename, isSubPage = false, nav
   if (chapterNav) {
     htmlContent = chapterNav.replace('{{POS}}', 'top') + htmlContent + chapterNav.replace('{{POS}}', 'bottom');
   }
+  if (afterContent) {
+    htmlContent += afterContent;
+  }
 
   // Load template
   const template = readTemplate('page');
@@ -224,7 +240,7 @@ function convertMarkdownToHtml(markdownContent, filename, isSubPage = false, nav
   return html;
 }
 
-function buildPage(sourceFile, outputFile, isSubPage = false, navKey = '', chapterNav = '') {
+function buildPage(sourceFile, outputFile, isSubPage = false, navKey = '', chapterNav = '', afterContent = '') {
   console.log(`Building: ${sourceFile} -> ${outputFile}`);
 
   // Dist-relative path drives canonical URL, description lookup, and og:type
@@ -239,7 +255,7 @@ function buildPage(sourceFile, outputFile, isSubPage = false, navKey = '', chapt
   };
 
   const markdown = fs.readFileSync(sourceFile, 'utf-8');
-  const html = convertMarkdownToHtml(markdown, path.basename(sourceFile), isSubPage, navKey, chapterNav, pageMeta);
+  const html = convertMarkdownToHtml(markdown, path.basename(sourceFile), isSubPage, navKey, chapterNav, pageMeta, afterContent);
 
   ensureDir(path.dirname(outputFile));
   fs.writeFileSync(outputFile, html);
@@ -326,10 +342,12 @@ function buildBookPages() {
     })
     .filter(Boolean);
 
-  // Build each reading-sequence page with prev / Contents / next navigation
+  // Build each reading-sequence page with prev / Contents / next navigation;
+  // the final page additionally gets the what's-next block.
   sequence.forEach((chapter, i) => {
     const chapterNav = buildChapterNav(sequence[i - 1], sequence[i + 1]);
-    buildPage(chapter.sourcePath, path.join(bookDistDir, chapter.htmlName), true, 'books', chapterNav);
+    const afterContent = i === sequence.length - 1 ? WHATS_NEXT_HTML : '';
+    buildPage(chapter.sourcePath, path.join(bookDistDir, chapter.htmlName), true, 'books', chapterNav, afterContent);
   });
 
   // CHANGELOG: Contents link only, no prev/next

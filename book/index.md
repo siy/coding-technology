@@ -75,3 +75,11 @@
 | [Appendix A: Pragmatica Core API Reference](appendix-a-api-reference.md) | Complete API reference for Result, Option, Promise, and utility types. |
 | [Appendix B: Exercises and Solutions](appendix-b-exercises.md) | Practice exercises for each major topic with worked solutions. |
 | [Appendix C: Glossary](appendix-c-glossary.md) | Definitions for every term used throughout the book. |
+
+---
+
+## Beyond the web edition
+
+- Prefer a file? [PDF/EPUB on Leanpub](https://leanpub.com/jbct-book) — $25, updates included.
+- The design methodology upstream of JBCT: [Process-First Design](../books.html) — the condensed edition is free.
+- Adopting with a team? [Work with us](../CONTACT.html) — assessment, training, adoption sprints.

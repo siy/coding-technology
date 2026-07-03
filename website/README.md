@@ -92,7 +92,6 @@ The HTML template uses these placeholders:
 - `README.md` → `index.html`
 - `MANAGEMENT_PERSPECTIVE.md` → `MANAGEMENT_PERSPECTIVE.html`
 - `CHANGELOG.md` → `CHANGELOG.html`
-- `TECHNOLOGY.md` → `TECHNOLOGY.html`
 - `PL_IMPROVEMENTS.md` → `PL_IMPROVEMENTS.html`
 - `jbct-coder.md` → `jbct-coder.html`
 

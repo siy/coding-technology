@@ -195,6 +195,53 @@ main {
     white-space: nowrap;
 }
 
+/* Book cards (Books page) */
+.book-card {
+    display: flex;
+    gap: 2rem;
+    align-items: flex-start;
+    margin: 2.5rem 0;
+    padding: 1.5rem;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+}
+
+.book-card .book-cover {
+    width: 180px;
+    max-width: 30%;
+    height: auto;
+    flex-shrink: 0;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+}
+
+.book-card h2 {
+    margin-top: 0;
+}
+
+.book-card .book-tagline {
+    color: var(--text-secondary);
+    font-style: italic;
+    margin-top: -0.5rem;
+}
+
+.book-card .book-links {
+    margin-bottom: 0;
+    line-height: 2;
+}
+
+@media (max-width: 640px) {
+    .book-card {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+
+    .book-card .book-cover {
+        max-width: 60%;
+    }
+}
+
 /* Typography */
 .content h1 {
     font-size: 2.5rem;

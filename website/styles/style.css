@@ -195,7 +195,9 @@ main {
     white-space: nowrap;
 }
 
-/* Hero CTA row (landing page) */
+/* Hero CTA row (landing page). Scoped under .content so these rules outrank
+   the general .content a link styling that would otherwise repaint the button
+   text in link color (= primary color = the button background). */
 .cta-row {
     display: flex;
     flex-wrap: wrap;
@@ -203,7 +205,7 @@ main {
     margin: 2rem 0;
 }
 
-a.cta {
+.content a.cta {
     display: inline-block;
     padding: 0.6rem 1.4rem;
     border: 1px solid var(--primary-color);
@@ -214,18 +216,27 @@ a.cta {
     transition: background-color 0.2s, color 0.2s;
 }
 
-a.cta:hover {
+.content a.cta:hover {
     background-color: var(--primary-color);
-    color: #fff;
+    color: #ffffff;
+    border-color: var(--primary-color);
 }
 
-a.cta-primary {
+.content a.cta-primary {
     background-color: var(--primary-color);
-    color: #fff;
+    color: #ffffff;
 }
 
-a.cta-primary:hover {
+.content a.cta-primary:hover {
     opacity: 0.9;
+    color: #ffffff;
+}
+
+/* Dark theme: primary is a light blue — dark text reads far better on it */
+[data-theme="dark"] .content a.cta:hover,
+[data-theme="dark"] .content a.cta-primary,
+[data-theme="dark"] .content a.cta-primary:hover {
+    color: #0b1727;
 }
 
 /* What's-next block (final book page) */

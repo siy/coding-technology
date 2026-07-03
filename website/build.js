@@ -4,7 +4,6 @@ const fs = require('fs');
 const path = require('path');
 const MarkdownIt = require('markdown-it');
 const markdownItAnchor = require('markdown-it-anchor');
-const frontMatter = require('front-matter');
 
 // Initialize markdown parser with GitHub-flavored markdown
 const md = new MarkdownIt({
@@ -27,7 +26,6 @@ const MARKDOWN_FILES = [
   'README.md',
   'MANAGEMENT_PERSPECTIVE.md',
   'CHANGELOG.md',
-  'TECHNOLOGY.md',
   'PL_IMPROVEMENTS.md',
   'AI-TOOLING.md',
   'CLI-TOOLING.md',
@@ -36,6 +34,14 @@ const MARKDOWN_FILES = [
   'jbct-reviewer.md',
   'CONTACT.md'
 ];
+
+// Nav highlight key per output page (book subpages handled separately)
+const NAV_KEYS = {
+  'index.html': 'home',
+  'AI-TOOLING.html': 'tools',
+  'MANAGEMENT_PERSPECTIVE.html': 'management',
+  'CONTACT.html': 'services'
+};
 
 // Book chapters
 const BOOK_CHAPTERS = [
@@ -90,27 +96,65 @@ function getTitle(content, filename) {
   return filename.replace(/\.md$/, '').replace(/-/g, ' ');
 }
 
-function convertMarkdownToHtml(markdownContent, filename, isSubPage = false) {
-  // Parse front matter if exists
-  let content = markdownContent;
-  let metadata = {};
+function escapeHtml(s) {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
 
-  try {
-    const parsed = frontMatter(markdownContent);
-    content = parsed.body;
-    metadata = parsed.attributes;
-  } catch (e) {
-    // No front matter, use entire content
+// Robustly strip a leading `---` front-matter block and pull out top-level
+// scalar keys. Tolerant of values that contain colons (e.g. dates, URLs),
+// which a strict YAML parser rejects and would otherwise leak into the page.
+function stripFrontMatter(raw) {
+  const m = raw.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?/);
+  if (!m) {
+    return { body: raw, attributes: {} };
   }
+  const attributes = {};
+  m[1].split(/\r?\n/).forEach(line => {
+    const kv = line.match(/^([A-Za-z0-9_-]+):\s*(.*)$/);
+    if (kv) {
+      attributes[kv[1]] = kv[2].trim().replace(/^["']|["']$/g, '');
+    }
+  });
+  return { body: raw.slice(m[0].length), attributes };
+}
+
+// Build the prev / Contents / next bar for a book chapter.
+// {{POS}} is replaced with top/bottom so CSS can place the divider.
+function buildChapterNav(prev, next) {
+  const prevLink = prev
+    ? `<a class="nav-prev" href="${prev.htmlName}">&larr; ${escapeHtml(prev.title)}</a>`
+    : `<span class="nav-prev"></span>`;
+  const nextLink = next
+    ? `<a class="nav-next" href="${next.htmlName}">${escapeHtml(next.title)} &rarr;</a>`
+    : `<span class="nav-next"></span>`;
+  const contents = `<a class="nav-contents" href="index.html">Contents</a>`;
+  return `<nav class="chapter-nav {{POS}}">${prevLink}${contents}${nextLink}</nav>\n`;
+}
+
+function convertMarkdownToHtml(markdownContent, filename, isSubPage = false, navKey = '', chapterNav = '') {
+  // Strip front matter (tolerant of colon-bearing values)
+  const { body, attributes: metadata } = stripFrontMatter(markdownContent);
+  let content = body;
 
   // Convert markdown links to HTML links
   content = content.replace(/\.md(#[^)]*)?(\))/g, '.html$1$2');
 
   // Convert to HTML
-  const htmlContent = md.render(content);
+  let htmlContent = md.render(content);
 
   // Get title
-  const title = metadata.title || getTitle(markdownContent, filename);
+  const title = metadata.title || getTitle(content, filename);
+
+  // Ensure every page opens with a styled H1. Pages whose body has no leading
+  // H1 (e.g. front-matter-titled agent pages) get one synthesized from the title.
+  if (!/^\s*<h1[\s>]/.test(htmlContent)) {
+    htmlContent = `<h1>${escapeHtml(title)}</h1>\n` + htmlContent;
+  }
+
+  // Wrap book chapters with prev / Contents / next navigation (top and bottom)
+  if (chapterNav) {
+    htmlContent = chapterNav.replace('{{POS}}', 'top') + htmlContent + chapterNav.replace('{{POS}}', 'bottom');
+  }
 
   // Load template
   const template = readTemplate('page');
@@ -124,14 +168,19 @@ function convertMarkdownToHtml(markdownContent, filename, isSubPage = false) {
     .replace('{{CONTENT}}', htmlContent)
     .replace(/{{NAV_CONTEXT}}/g, navContext);
 
+  // Highlight the active top-nav item
+  if (navKey) {
+    html = html.replace(`id="nav-${navKey}"`, `id="nav-${navKey}" class="active"`);
+  }
+
   return html;
 }
 
-function buildPage(sourceFile, outputFile, isSubPage = false) {
+function buildPage(sourceFile, outputFile, isSubPage = false, navKey = '', chapterNav = '') {
   console.log(`Building: ${sourceFile} -> ${outputFile}`);
 
   const markdown = fs.readFileSync(sourceFile, 'utf-8');
-  const html = convertMarkdownToHtml(markdown, path.basename(sourceFile), isSubPage);
+  const html = convertMarkdownToHtml(markdown, path.basename(sourceFile), isSubPage, navKey, chapterNav);
 
   ensureDir(path.dirname(outputFile));
   fs.writeFileSync(outputFile, html);
@@ -186,7 +235,8 @@ function buildMainPages() {
     }
 
     const outputPath = path.join(DIST_DIR, outputName);
-    buildPage(sourcePath, outputPath, false);
+    const navKey = NAV_KEYS[outputName] || '';
+    buildPage(sourcePath, outputPath, false, navKey);
   });
 }
 
@@ -198,26 +248,43 @@ function buildBookPages() {
 
   ensureDir(bookDistDir);
 
-  // Build index
+  // Build index (no chapter nav)
   const indexSource = path.join(bookDir, 'index.md');
   if (fs.existsSync(indexSource)) {
-    buildPage(indexSource, path.join(bookDistDir, 'index.html'), true);
+    buildPage(indexSource, path.join(bookDistDir, 'index.html'), true, 'book');
   } else {
     console.warn('Warning: book/index.md not found, skipping');
   }
 
-  BOOK_CHAPTERS.forEach(file => {
-    const sourcePath = path.join(bookDir, file);
+  // Reading sequence: chapters + appendices in order. CHANGELOG is not part of it.
+  const sequence = BOOK_CHAPTERS
+    .filter(file => file !== 'CHANGELOG.md')
+    .map(file => {
+      const sourcePath = path.join(bookDir, file);
+      if (!fs.existsSync(sourcePath)) {
+        console.warn(`Warning: book/${file} not found, skipping`);
+        return null;
+      }
+      const markdown = fs.readFileSync(sourcePath, 'utf-8');
+      return {
+        sourcePath,
+        htmlName: file.replace('.md', '.html'),
+        title: getTitle(markdown, file)
+      };
+    })
+    .filter(Boolean);
 
-    if (!fs.existsSync(sourcePath)) {
-      console.warn(`Warning: book/${file} not found, skipping`);
-      return;
-    }
-
-    const outputName = file.replace('.md', '.html');
-    const outputPath = path.join(bookDistDir, outputName);
-    buildPage(sourcePath, outputPath, true);
+  // Build each reading-sequence page with prev / Contents / next navigation
+  sequence.forEach((chapter, i) => {
+    const chapterNav = buildChapterNav(sequence[i - 1], sequence[i + 1]);
+    buildPage(chapter.sourcePath, path.join(bookDistDir, chapter.htmlName), true, 'book', chapterNav);
   });
+
+  // CHANGELOG: Contents link only, no prev/next
+  const changelogSource = path.join(bookDir, 'CHANGELOG.md');
+  if (fs.existsSync(changelogSource)) {
+    buildPage(changelogSource, path.join(bookDistDir, 'CHANGELOG.html'), true, 'book', buildChapterNav(null, null));
+  }
 }
 
 function generateSitemap() {

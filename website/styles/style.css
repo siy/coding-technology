@@ -228,6 +228,23 @@ a.cta-primary:hover {
     opacity: 0.9;
 }
 
+/* What's-next block (final book page) */
+.whats-next {
+    margin-top: 2.5rem;
+    padding: 1.5rem;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+}
+
+.whats-next h2 {
+    margin-top: 0;
+    font-size: 1.3rem;
+}
+
+.whats-next ul {
+    margin-bottom: 0;
+}
+
 /* Book cards (Books page) */
 .book-card {
     display: flex;

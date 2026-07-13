@@ -1,4 +1,4 @@
-# Chapter 2: From Process to Patterns
+# From Process to Patterns
 
 **Based on:** JBCT v4.1.1 | **Pragmatica Core:** 1.0.0-rc1
 
@@ -11,7 +11,7 @@
 - **What earns a place in code** — when a workflow materializes, when an entity is justified, and why shared code is exposed coupling rather than reuse
 - Why pattern selection follows from the process, not from preference
 
-**Prerequisites:** [Chapter 1: Introduction](ch01-introduction.md)
+**Prerequisites:** [Introduction](introduction.md)
 
 ---
 
@@ -159,7 +159,7 @@ If a single business force would rewrite them all, they belong together. The tes
 
 Sharpened to one line: *does this one change force all of these, and only these, to change?* Pass both halves and the group is cohesive. The driver's character shifts as you climb — a business policy groups use cases into a workflow, a domain concern groups workflows into a subsystem, the product boundary groups subsystems into a system — but the test is identical at every rung.
 
-That is the design rule. Its realization in the package tree — how directories telescope open as altitudes are discovered, and where shared code lives — is the **telescope rule** of [Chapter 16: Project Structure](ch15-project-structure.md).
+That is the design rule. Its realization in the package tree — how directories telescope open as altitudes are discovered, and where shared code lives — is the **telescope rule** of [Project Structure](project-structure.md).
 
 ---
 
@@ -171,7 +171,7 @@ Process-first has a default and a few exceptions. The default is plain: use case
 
 A workflow composes use cases for one business outcome, but composition is not the same as a code entity. Most workflows are **logical**: there is no orchestrator object. The use cases run on their own triggers, and what binds them into a workflow is a shared, usually persisted, **state machine** they advance — `free → held → confirmed → fulfilled`. `HoldSeat`, `ConfirmSeat`, and `ReleaseHold` are not invoked by a `ReservationWorkflow` class; each fires on its own trigger (a request, a payment event, a scheduled sweep) and moves the seat to its next legal state. The workflow is real, but it lives *as* that state machine spread across its use cases, not as code that runs them.
 
-Make the state machine **explicit**. A logical workflow almost always has one, and leaving it implicit — the legal transitions scattered as ad-hoc checks inside each use case — is exactly how illegal transitions slip through. Lift it into one place: a state type and its legal transitions, the workflow's spine, shared by the use cases that move it. Name that state type with a **`*State`** suffix — `HoldState`, `BookingState`, `SeatState` — and keep its variants bare (`Free`, `Held`, `Confirmed`, `Cancelled`, never `HeldState`): the suffix marks the sealed sum of lifecycle states a guarded transition advances, distinct from the entity, its value-object representation, and its use-case policy, so a reader who meets `…State` knows it is the workflow's spine and not a DTO. It joins JBCT's suffix-by-role family (`*Request`, `*Response`, `Cause`); reserve it for the lifecycle sum that transitions guard — a config snapshot or a UI holder is not a `*State`, and using the suffix there only dilutes the signal. (Where that shared machine sits in the package tree — the workflow's `shared` — is the telescope rule's job; see [Chapter 16](ch15-project-structure.md).)
+Make the state machine **explicit**. A logical workflow almost always has one, and leaving it implicit — the legal transitions scattered as ad-hoc checks inside each use case — is exactly how illegal transitions slip through. Lift it into one place: a state type and its legal transitions, the workflow's spine, shared by the use cases that move it. Name that state type with a **`*State`** suffix — `HoldState`, `BookingState`, `SeatState` — and keep its variants bare (`Free`, `Held`, `Confirmed`, `Cancelled`, never `HeldState`): the suffix marks the sealed sum of lifecycle states a guarded transition advances, distinct from the entity, its value-object representation, and its use-case policy, so a reader who meets `…State` knows it is the workflow's spine and not a DTO. It joins JBCT's suffix-by-role family (`*Request`, `*Response`, `Cause`); reserve it for the lifecycle sum that transitions guard — a config snapshot or a UI holder is not a `*State`, and using the suffix there only dilutes the signal. (Where that shared machine sits in the package tree — the workflow's `shared` — is the telescope rule's job; see [Project Structure & Framework Integration](project-structure.md).)
 
 A workflow **materializes** into a code entity only when it gains a **trigger of its own** — an entry point distinct from any single use case's: a schedule ("each night, settle the day's holds"), an event ("on `payment.captured`, run fulfilment"), or an explicit orchestration call. Then it takes the *same shape as a use case*, one altitude up — a functional interface plus a factory — except that its **steps are the use cases it composes** (a use case is a Leaf to the workflow, per the telescope):
 
@@ -234,7 +234,7 @@ The corollary is what most reuse instincts get wrong: **code similarity must not
 
 ## What's Next
 
-[Chapter 3](ch02-four-return-types.md) introduces the four return types — `T`, `Option<T>`, `Result<T>`, `Promise<T>` — the vocabulary every pattern in this book is written in.
+[The Four Return Types](four-return-types.md) introduces the four return types — `T`, `Option<T>`, `Result<T>`, `Promise<T>` — the vocabulary every pattern in this book is written in.
 
 ---
 

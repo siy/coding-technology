@@ -1,4 +1,4 @@
-# Chapter 11: Testing Philosophy
+# Testing Philosophy
 
 ## What You'll Learn
 
@@ -7,7 +7,7 @@
 - How to handle complex test inputs with builders and factories
 - When you still need unit tests
 
-**Prerequisites:** [Chapter 10: Thread Safety](ch09-thread-safety.md)
+**Prerequisites:** [Thread Safety](thread-safety.md)
 
 ---
 
@@ -344,4 +344,4 @@ See [Appendix B](appendix-b-exercises.md) for exercises on:
 
 ## What's Next
 
-[Chapter 12](ch11-testing-practice.md) covers testing in practice - organizing large test suites, the complete RegisterUser example, and migrating from traditional unit testing.
+[Testing in Practice](testing-practice.md) covers testing in practice - organizing large test suites, the complete RegisterUser example, and migrating from traditional unit testing.

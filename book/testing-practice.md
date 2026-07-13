@@ -1,4 +1,4 @@
-# Chapter 12: Testing in Practice
+# Testing in Practice
 
 ## What You'll Learn
 
@@ -7,7 +7,7 @@
 - Complete worked example: RegisterUser from stub to production
 - How to migrate from traditional unit testing
 
-**Prerequisites:** [Chapter 11: Testing Philosophy](ch10-testing-philosophy.md)
+**Prerequisites:** [Testing Philosophy](testing-philosophy.md)
 
 ---
 
@@ -522,4 +522,4 @@ See [Appendix B](appendix-b-exercises.md) for exercises on:
 
 ## What's Next
 
-[Chapter 13](ch12-registeruser-example.md) presents the complete RegisterUser use case - from requirements to production code, demonstrating all patterns working together.
+[Complete Example - RegisterUser](registeruser-example.md) presents the complete RegisterUser use case - from requirements to production code, demonstrating all patterns working together.

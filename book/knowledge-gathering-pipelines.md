@@ -1,4 +1,4 @@
-# Chapter 9b: Knowledge-Gathering Pipelines
+# Knowledge-Gathering Pipelines
 
 ## What You'll Learn
 
@@ -6,11 +6,11 @@
 - **The `mapWith` family** (`mapWith` / `flatMapWith` / `ensureWith`, Pragmatica Core 1.0.0-rc1) — turn each stage into one lambda-free line
 - **Gating vs. evidence** — the one place a fallible check may discard its result, and when it must accrete it instead
 
-**Prerequisites:** [Chapter 9: Advanced Patterns](ch08-advanced-patterns.md), [Chapter 5: Parse, Don't Validate](ch04-parse-dont-validate.md)
+**Prerequisites:** [Advanced Patterns](advanced-patterns.md), [Parse, Don't Validate](parse-dont-validate.md)
 
 ---
 
-[Chapter 2](ch02-design-methodology.md) framed every backend process as **knowledge gathering**:
+[From Process to Patterns](from-process-to-patterns.md) framed every backend process as **knowledge gathering**:
 each step acquires a piece of knowledge, and the process ends — successfully or not — when enough
 has accumulated to answer the caller. That chapter sketched a process's *shape* as a data
 dependency graph. It left one question open, the question every pipeline design must eventually
@@ -18,7 +18,7 @@ answer:
 
 **What concrete data structure flows between the steps?**
 
-[Chapter 5](ch04-parse-dont-validate.md) supplies half the answer: parse, don't validate — wrap
+[Parse, Don't Validate](parse-dont-validate.md) supplies half the answer: parse, don't validate — wrap
 input at the boundary into types whose existence proves validity. This chapter develops the other
 half to the same depth: how to design the records that travel *between* steps so each carries
 exactly the knowledge gathered so far, and how the context-preserving combinators added in
@@ -384,6 +384,6 @@ container untouched (assert the same instance flows through).
 
 ## What's Next
 
-[Chapter 10](ch09-thread-safety.md) consolidates the thread-safety rules across JBCT patterns —
+[Thread Safety](thread-safety.md) consolidates the thread-safety rules across JBCT patterns —
 including why the immutable, reference-only stage records of this chapter cross Fork-Join
 boundaries safely.

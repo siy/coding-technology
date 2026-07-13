@@ -11,7 +11,7 @@ This document maps existing series content to book chapters.
 | **PART I: FOUNDATIONS** |
 | Ch 1: Introduction | series/part-01-foundations.md (lines 1-130) | - | Extract intro sections |
 | Ch 2: Four Return Types | series/part-02-four-return-types.md | - | Adapt directly |
-| Ch 3: Pragmatica Core | book/ch03-pragmatica-lite-essentials.md | CLAUDE.md API ref | NEW - Done |
+| Ch 3: Pragmatica Core | book/pragmatica-core-essentials.md | CLAUDE.md API ref | NEW - Done |
 | **PART II: CORE PRINCIPLES** |
 | Ch 4: Parse Don't Validate | series/part-03-parse-dont-validate.md | - | Adapt directly |
 | Ch 5: Error Handling | series/part-04-error-handling.md (first half) | - | Split - error types |
@@ -25,14 +25,14 @@ This document maps existing series content to book chapters.
 | Ch 11: Testing in Practice | series/part-08-testing-practice.md | - | Adapt directly |
 | **PART V: PRODUCTION SYSTEMS** |
 | Ch 12: RegisterUser | series/part-09-production-systems.md (RegisterUser) | - | Extract example |
-| Ch 13: PlaceOrder | book/ch13-placeorder-example.md | - | NEW - Done |
-| Ch 14: PublishArticle & TransferFunds | book/ch14a-publisharticle-example.md, ch14b-transferfunds-example.md | - | NEW - Done |
+| Ch 13: PlaceOrder | book/placeorder-example.md | - | NEW - Done |
+| Ch 14: PublishArticle & TransferFunds | book/publisharticle-example.md, transferfunds-example.md | - | NEW - Done |
 | Ch 15: Project Structure | series/part-09-production-systems.md (structure) | - | Extract structure |
 | **PART VI: ADOPTION** |
 | Ch 16: Systematic Application | series/part-10-systematic-application.md | - | Adapt directly |
-| Ch 17: Migration Strategies | book/ch17-migration-strategies.md | - | NEW - Done |
-| Ch 18: Comparison | book/ch18-comparison.md | - | NEW - Done |
-| Ch 19: Troubleshooting | book/ch19-troubleshooting-faq.md | - | NEW - Done |
+| Ch 17: Migration Strategies | book/migration-strategies.md | - | NEW - Done |
+| Ch 18: Comparison | book/comparison.md | - | NEW - Done |
+| Ch 19: Troubleshooting | book/troubleshooting-faq.md | - | NEW - Done |
 | **APPENDICES** |
 | App A: API Reference | CLAUDE.md | - | Extract API section |
 | App B: Exercises | book/appendix-b-exercises.md | - | NEW - Done |
@@ -52,7 +52,7 @@ This document maps existing series content to book chapters.
    - Series navigation blocks → Chapter navigation
 
 2. **Update cross-references:**
-   - `[Part 3](part-03-xxx.md)` → `[Chapter 4](ch04-parse-dont-validate.md)`
+   - `[Part 3](part-03-xxx.md)` → `[Chapter 4](parse-dont-validate.md)`
    - Internal links must use book chapter numbers
 
 3. **Consistent terminology:**
@@ -75,37 +75,37 @@ This document maps existing series content to book chapters.
 ## Files to Create
 
 ### From part-01-foundations.md:
-- `ch01-introduction.md` - Extract intro, "Code in New Era", evaluation framework
+- `introduction.md` - Extract intro, "Code in New Era", evaluation framework
 
 ### From part-02-four-return-types.md:
-- `ch02-four-return-types.md` - Adapt with chapter structure
+- `four-return-types.md` - Adapt with chapter structure
 
 ### From part-03-parse-dont-validate.md:
-- `ch04-parse-dont-validate.md` - Adapt with chapter structure
+- `parse-dont-validate.md` - Adapt with chapter structure
 
 ### From part-04-error-handling.md:
-- `ch05-error-handling.md` - First half (error types, composition)
-- `ch06-null-policy-recovery.md` - Second half (null policy, recovery)
+- `error-handling.md` - First half (error types, composition)
+- `null-policy-recovery.md` - Second half (null policy, recovery)
 
 ### From part-05-basic-patterns.md:
-- `ch07-basic-patterns.md` - Adapt directly
+- `basic-patterns.md` - Adapt directly
 
 ### From part-06-advanced-patterns.md:
-- `ch08-advanced-patterns.md` - Extract Sequencer, Fork-Join, Aspects
-- `ch09-thread-safety.md` - Extract thread safety, expand
+- `advanced-patterns.md` - Extract Sequencer, Fork-Join, Aspects
+- `thread-safety.md` - Extract thread safety, expand
 
 ### From part-07-testing-philosophy.md:
-- `ch10-testing-philosophy.md` - Adapt directly
+- `testing-philosophy.md` - Adapt directly
 
 ### From part-08-testing-practice.md:
-- `ch11-testing-practice.md` - Adapt directly
+- `testing-practice.md` - Adapt directly
 
 ### From part-09-production-systems.md:
-- `ch12-registeruser-example.md` - Extract RegisterUser
-- `ch15-project-structure.md` - Extract structure sections
+- `registeruser-example.md` - Extract RegisterUser
+- `project-structure.md` - Extract structure sections
 
 ### From part-10-systematic-application.md:
-- `ch16-systematic-application.md` - Adapt directly
+- `systematic-application.md` - Adapt directly
 
 ### From CLAUDE.md:
 - `appendix-a-api-reference.md` - Extract Pragmatica Core API section
@@ -115,38 +115,38 @@ This document maps existing series content to book chapters.
 ## Priority Order for Restructuring
 
 ### Phase 6.1: Core Adaptations (High Priority)
-1. ch01-introduction.md
-2. ch02-four-return-types.md
-3. ch04-parse-dont-validate.md
-4. ch05-error-handling.md
-5. ch06-null-policy-recovery.md
+1. introduction.md
+2. four-return-types.md
+3. parse-dont-validate.md
+4. error-handling.md
+5. null-policy-recovery.md
 
 ### Phase 6.2: Pattern Chapters (Medium Priority)
-6. ch07-basic-patterns.md
-7. ch08-advanced-patterns.md
-8. ch09-thread-safety.md
+6. basic-patterns.md
+7. advanced-patterns.md
+8. thread-safety.md
 
 ### Phase 6.3: Testing & Production (Medium Priority)
-9. ch10-testing-philosophy.md
-10. ch11-testing-practice.md
-11. ch12-registeruser-example.md
-12. ch15-project-structure.md
+9. testing-philosophy.md
+10. testing-practice.md
+11. registeruser-example.md
+12. project-structure.md
 
 ### Phase 6.4: Adoption (Low Priority - already done)
-13. ch16-systematic-application.md
+13. systematic-application.md
 14. appendix-a-api-reference.md
 
 ---
 
 ## Already Complete (NEW content)
 
-- ch03-pragmatica-lite-essentials.md
-- ch13-placeorder-example.md
-- ch14a-publisharticle-example.md
-- ch14b-transferfunds-example.md
-- ch17-migration-strategies.md
-- ch18-comparison.md
-- ch19-troubleshooting-faq.md
+- pragmatica-core-essentials.md
+- placeorder-example.md
+- publisharticle-example.md
+- transferfunds-example.md
+- migration-strategies.md
+- comparison.md
+- troubleshooting-faq.md
 - appendix-b-exercises.md
 - appendix-c-glossary.md
 - appendix-d-quick-reference.md

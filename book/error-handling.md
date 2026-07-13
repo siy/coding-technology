@@ -1,4 +1,4 @@
-# Chapter 6: Error Handling & Composition
+# Error Handling & Composition
 
 ## What You'll Learn
 
@@ -7,7 +7,7 @@
 - Error accumulation vs fail-fast semantics
 - Monadic composition rules
 
-**Prerequisites:** [Chapter 5: Parse, Don't Validate](ch04-parse-dont-validate.md)
+**Prerequisites:** [Parse, Don't Validate](parse-dont-validate.md)
 
 ---
 
@@ -329,4 +329,4 @@ See [Appendix B](appendix-b-exercises.md) for exercises on:
 
 ## What's Next
 
-[Chapter 7](ch06-null-policy-recovery.md) covers null policy - when null is acceptable and how to recover from errors with fallback values.
+[Null Policy & Error Recovery](null-policy-recovery.md) covers null policy - when null is acceptable and how to recover from errors with fallback values.

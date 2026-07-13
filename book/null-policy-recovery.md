@@ -1,4 +1,4 @@
-# Chapter 7: Null Policy & Error Recovery
+# Null Policy & Error Recovery
 
 ## What You'll Learn
 
@@ -8,7 +8,7 @@
 - Graceful degradation strategies
 - The recovery triple: backward recovery, forward recovery, and designing failure out
 
-**Prerequisites:** [Chapter 6: Error Handling & Composition](ch05-error-handling.md)
+**Prerequisites:** [Error Handling & Composition](error-handling.md)
 
 ---
 
@@ -457,4 +457,4 @@ See [Appendix B](appendix-b-exercises.md) for exercises on:
 
 ## What's Next
 
-[Chapter 8](ch07-basic-patterns.md) introduces the basic structural patterns - Leaf, Condition, and Iteration - that handle 80% of your daily coding needs.
+[Basic Patterns & Structure](basic-patterns.md) introduces the basic structural patterns - Leaf, Condition, and Iteration - that handle 80% of your daily coding needs.

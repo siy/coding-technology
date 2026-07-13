@@ -1,4 +1,4 @@
-# Chapter 1: Introduction - Code Unification
+# Introduction - Code Unification
 
 **Based on:** JBCT v4.1.1 | **Pragmatica Core:** 1.0.0-rc1
 
@@ -328,6 +328,6 @@ See [Appendix B](appendix-b-exercises.md) for exercises on:
 
 ## What's Next
 
-[Chapter 2](ch02-design-methodology.md) is the design half of JBCT: the process as the unit of design, a process seen as knowledge gathering, the data dependency graph that view produces, and the telescope that organizes processes once there are many. It is self-contained — the companion *Process-First Design* book develops the same ideas language-neutrally and is optional further reading.
+[From Process to Patterns](from-process-to-patterns.md) is the design half of JBCT: the process as the unit of design, a process seen as knowledge gathering, the data dependency graph that view produces, and the telescope that organizes processes once there are many. It is self-contained — the companion *Process-First Design* book develops the same ideas language-neutrally and is optional further reading.
 
-[Chapter 3](ch02-four-return-types.md) then introduces the four return types that form the implementation foundation: `T`, `Option<T>`, `Result<T>`, and `Promise<T>`. You'll learn when to use each one, how they compose, and why these four types are all you need.
+[The Four Return Types](four-return-types.md) then introduces the four return types that form the implementation foundation: `T`, `Option<T>`, `Result<T>`, and `Promise<T>`. You'll learn when to use each one, how they compose, and why these four types are all you need.

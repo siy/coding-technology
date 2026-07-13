@@ -6,29 +6,29 @@
 <meta name="description" content="{{DESCRIPTION}}">
 <meta name="author" content="Sergiy Yevtushenko">
 <title>{{TITLE}}</title>
-<link rel="icon" type="image/png" sizes="32x32" href="{{NAV_CONTEXT}}image/favicon-32x32.png">
-<link rel="icon" type="image/png" sizes="16x16" href="{{NAV_CONTEXT}}image/favicon-16x16.png">
-<link rel="apple-touch-icon" sizes="180x180" href="{{NAV_CONTEXT}}image/apple-touch-icon.png">
-<link rel="stylesheet" href="{{NAV_CONTEXT}}style.css?v={{STYLE_HASH}}">
+<link rel="icon" type="image/png" sizes="32x32" href="/image/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/image/favicon-16x16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/image/apple-touch-icon.png">
+<link rel="stylesheet" href="/style.css?v={{STYLE_HASH}}">
 <link rel="canonical" href="{{CANONICAL_URL}}">
 <meta property="og:title" content="{{TITLE}}">
 <meta property="og:description" content="{{DESCRIPTION}}">
-<meta property="og:type" content="{{OG_TYPE}}">
+<meta property="og:type" content="website">
 <meta property="og:url" content="{{CANONICAL_URL}}">
 <meta property="og:image" content="https://pragmatica.dev/image/og-default.png">
 <meta property="og:site_name" content="pragmatica.dev">
 <meta name="twitter:card" content="summary_large_image">
 </head>
-<body class="legacy">
+<body>
 
 <header>
   <div class="wrap nav">
     <a class="brand" href="/">pragmatica<span>.dev</span></a>
     <nav class="links">
-      <a href="/">Start</a>
-      <a href="/method/">The Method</a>
-      <a href="/java/">The Java Realization</a>
-      <a href="/method/glossary/">Glossary</a>
+      <a {{NAV_START}} href="/">Start</a>
+      <a {{NAV_METHOD}} href="/method/">The Method</a>
+      <a {{NAV_JAVA}} href="/java/">The Java Realization</a>
+      <a {{NAV_GLOSSARY}} href="/method/glossary/">Glossary</a>
       <a href="https://github.com/pragmaticalabs/pragmatica" target="_blank" rel="noopener">GitHub</a>
     </nav>
   </div>
@@ -36,17 +36,20 @@
 
 <div class="wrap">
   <div class="page-head">
-    <div class="crumb">Developer tooling &middot; kept at its existing URL</div>
+    {{CRUMB}}
   </div>
+
   <div class="prose">
     {{CONTENT}}
   </div>
+
+  {{RELATED}}
 </div>
 
 <footer>
   <div class="wrap">
     <div>pragmatica.dev &mdash; the education home of the series &middot; commercial: <a href="https://pragmaticalabs.io/" target="_blank" rel="noopener">pragmaticalabs.io</a></div>
-    <div><a href="/">Start</a> &middot; <a href="https://github.com/pragmaticalabs/pragmatica" target="_blank" rel="noopener">GitHub</a></div>
+    <div><a href="https://leanpub.com/u/siy" target="_blank" rel="noopener">Leanpub</a> &middot; <a href="https://github.com/pragmaticalabs/pragmatica" target="_blank" rel="noopener">GitHub</a> &middot; <a href="/method/counterexamples/">Counterexamples</a></div>
   </div>
 </footer>
 

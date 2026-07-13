@@ -1,4 +1,4 @@
-# Chapter 15a: Focused Example - PublishArticle
+# Focused Example - PublishArticle
 
 This focused example demonstrates the **Condition pattern** for routing logic in a content management domain.
 

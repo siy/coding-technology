@@ -1,4 +1,4 @@
-# Chapter 20: Troubleshooting & FAQ
+# Troubleshooting & FAQ
 
 This chapter consolidates common issues, debugging techniques, and frequently asked questions about JBCT.
 

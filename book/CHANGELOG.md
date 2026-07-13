@@ -7,6 +7,19 @@ All notable changes to the JBCT book, newest first. Format:
 Earlier history (1.x–2.x) predates per-book changelogs and lives in the
 repository root `CHANGELOG.md`.
 
+## [Unreleased]
+
+### Changed
+- **Numbering now derives from the spine.** Chapter files renamed to number-free
+  slugs (`parse-dont-validate.md`, not `ch04-…`); reading order and "Chapter N"
+  numbering live only in `root.md`; PDF/EPUB builds inject numbers from spine
+  position. Letter-suffixed chapters (9b, 15a, 15b) are absorbed into the plain
+  sequence — the book is now chapters 1–22. Inserting or moving a chapter is a
+  one-line spine edit.
+- In-prose cross-references converted from "Chapter N" to title links (104 sites,
+  scripted + verified; 83 filename links remapped). `TABLE_OF_CONTENTS.md` retired —
+  superseded by the spine and `index.md`.
+
 ## [4.2.1] - 2026-06-30
 
 ### Added

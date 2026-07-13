@@ -1,4 +1,4 @@
-# Chapter 18: Migration Strategies
+# Migration Strategies
 
 This chapter provides a practical playbook for adopting JBCT in existing codebases. Whether you're working with a legacy monolith or a modern Spring Boot application, you'll learn how to migrate incrementally without disrupting ongoing development.
 

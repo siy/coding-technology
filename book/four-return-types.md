@@ -1,4 +1,4 @@
-# Chapter 3: The Four Return Types
+# The Four Return Types
 
 ## What You'll Learn
 
@@ -397,4 +397,4 @@ See [Appendix B](appendix-b-exercises.md) for exercises on:
 
 ## What's Next
 
-[Chapter 4](ch03-pragmatica-lite-essentials.md) covers Pragmatica Core - the library that provides these four types. You'll learn the API in depth and see common usage patterns.
+[Pragmatica Core Essentials](pragmatica-core-essentials.md) covers Pragmatica Core - the library that provides these four types. You'll learn the API in depth and see common usage patterns.

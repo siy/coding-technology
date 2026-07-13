@@ -1,622 +1,414 @@
-/* Reset and Base Styles */
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
+/* pragmatica.dev — redesign v1 (2026-07-13)
+   Design reference: website-meta/mocks/{front-door,lesson}.html (approved).
+   Tokens: warm paper ground, navy-dark ink, amber = you-are-here/next-action ONLY. */
 
 :root {
-    --primary-color: #2563eb;
-    --primary-hover: #1d4ed8;
-    --text-color: #0f1520;
-    --text-secondary: #4a5568;
-    --bg-color: #f9fafd;
-    --bg-secondary: #f2f4f9;
-    --border-color: #dde2ee;
-    --code-bg: #edf0f7;
-    --code-text: #e11d48;
-    --header-bg: #f9fafd;
-    --header-shadow: rgba(25, 45, 90, 0.06);
-    --footer-bg: #0c1322;
-    --footer-text: #c8d0e0;
-    --link-color: #2563eb;
-    --link-hover: #1d4ed8;
-    --off-white: #edf0f5;
+  --paper: #f4f3f0;
+  --paper-raised: #fbfaf7;
+  --ink: #1a2840;
+  --ink-soft: #4a5468;
+  --ink-faint: #b6b1a5;
+  --line: #c9c5bc;
+  --code-bg: #eceae4;
+  --amber: #f59e0b;
+  --amber-dark: #d97706;
+  --amber-light: #fbbf24;
+  --ui: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --prose: 'Charter', 'Iowan Old Style', Georgia, 'Times New Roman', serif;
+  --mono: 'JetBrains Mono', 'Fira Code', ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
-/* Dark mode colors — navy-tinted, not zinc */
-[data-theme="dark"] {
-    --primary-color: #5b8def;
-    --primary-hover: #7aa5f5;
-    --text-color: #e8edf5;
-    --text-secondary: #8a9ab5;
-    --bg-color: #0f1117;
-    --bg-secondary: #161b27;
-    --border-color: #1e2738;
-    --code-bg: #161b27;
-    --code-text: #fb7185;
-    --header-bg: #161b27;
-    --header-shadow: rgba(15, 25, 50, 0.4);
-    --footer-bg: #080c15;
-    --footer-text: #8a9ab5;
-    --link-color: #5b8def;
-    --link-hover: #7aa5f5;
-    --off-white: #e8edf5;
-}
-
-/* System preference dark mode — matches [data-theme="dark"] */
+/* Dark theme — same ink/amber system, inverted ground. The mocks are light-only;
+   this keeps the site usable for viewers with a forced-dark preference without
+   inventing a second visual language. */
 @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) {
-        --primary-color: #5b8def;
-        --primary-hover: #7aa5f5;
-        --text-color: #e8edf5;
-        --text-secondary: #8a9ab5;
-        --bg-color: #0f1117;
-        --bg-secondary: #161b27;
-        --border-color: #1e2738;
-        --code-bg: #161b27;
-        --code-text: #fb7185;
-        --header-bg: #161b27;
-        --header-shadow: rgba(15, 25, 50, 0.4);
-        --footer-bg: #080c15;
-        --footer-text: #8a9ab5;
-        --link-color: #5b8def;
-        --link-hover: #7aa5f5;
-        --off-white: #e8edf5;
-    }
+  :root:not([data-theme="light"]) {
+    --paper: #14181f;
+    --paper-raised: #1a1f28;
+    --ink: #e8ecf5;
+    --ink-soft: #9aa5bd;
+    --ink-faint: #5a6478;
+    --line: #2c3341;
+    --code-bg: #1e2530;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #14181f;
+  --paper-raised: #1a1f28;
+  --ink: #e8ecf5;
+  --ink-soft: #9aa5bd;
+  --ink-faint: #5a6478;
+  --line: #2c3341;
+  --code-bg: #1e2530;
 }
 
-html {
-    font-size: 16px;
-    scroll-behavior: smooth;
-}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
 
 body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    line-height: 1.6;
-    color: var(--text-color);
-    background-color: var(--bg-color);
-}
-
-.container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 2rem;
-}
-
-/* Header */
-header {
-    background-color: var(--header-bg);
-    border-bottom: 1px solid var(--border-color);
-    position: sticky;
-    top: 0;
-    z-index: 1000;
-    box-shadow: 0 2px 4px var(--header-shadow);
-}
-
-.header-content {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1rem 0;
-}
-
-.site-title {
-    font-size: 1.5rem;
-    font-weight: 700;
-}
-
-.site-title a {
-    color: var(--primary-color);
-    text-decoration: none;
-}
-
-.main-nav {
-    display: flex;
-    gap: 2rem;
-    align-items: center;
-}
-
-.main-nav a {
-    color: var(--text-color);
-    text-decoration: none;
-    font-weight: 500;
-    transition: color 0.2s;
-}
-
-.main-nav a:hover {
-    color: var(--primary-color);
-}
-
-.main-nav a.active {
-    color: var(--primary-color);
-    border-bottom: 2px solid var(--primary-color);
-    padding-bottom: 2px;
-}
-
-/* Main Content */
-main {
-    min-height: calc(100vh - 200px);
-    padding: 3rem 0;
-}
-
-.content {
-    max-width: 900px;
-    margin: 0 auto;
-}
-
-/* Chapter navigation (book reading sequence) */
-.chapter-nav {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    font-size: 0.9rem;
-    font-weight: 500;
-}
-
-.chapter-nav.top {
-    margin-bottom: 2.5rem;
-    padding-bottom: 1rem;
-    border-bottom: 1px solid var(--border-color);
-}
-
-.chapter-nav.bottom {
-    margin-top: 3rem;
-    padding-top: 1rem;
-    border-top: 1px solid var(--border-color);
-}
-
-.chapter-nav a {
-    color: var(--link-color);
-    text-decoration: none;
-    border-bottom: 1px solid transparent;
-    transition: border-color 0.2s;
-}
-
-.chapter-nav a:hover {
-    border-bottom-color: var(--link-hover);
-}
-
-.chapter-nav .nav-prev,
-.chapter-nav .nav-next {
-    max-width: 42%;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.chapter-nav .nav-next {
-    text-align: right;
-}
-
-.chapter-nav .nav-contents {
-    color: var(--text-secondary);
-    white-space: nowrap;
-}
-
-/* Hero CTA row (landing page). Scoped under .content so these rules outrank
-   the general .content a link styling that would otherwise repaint the button
-   text in link color (= primary color = the button background). */
-.cta-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-    margin: 2rem 0;
-}
-
-.content a.cta {
-    display: inline-block;
-    padding: 0.6rem 1.4rem;
-    border: 1px solid var(--primary-color);
-    border-radius: 6px;
-    color: var(--primary-color);
-    font-weight: 600;
-    text-decoration: none;
-    transition: background-color 0.2s, color 0.2s;
-}
-
-.content a.cta:hover {
-    background-color: var(--primary-color);
-    color: #ffffff;
-    border-color: var(--primary-color);
-}
-
-.content a.cta-primary {
-    background-color: var(--primary-color);
-    color: #ffffff;
-}
-
-.content a.cta-primary:hover {
-    opacity: 0.9;
-    color: #ffffff;
-}
-
-/* Dark theme: primary is a light blue — dark text reads far better on it */
-[data-theme="dark"] .content a.cta:hover,
-[data-theme="dark"] .content a.cta-primary,
-[data-theme="dark"] .content a.cta-primary:hover {
-    color: #0b1727;
-}
-
-/* What's-next block (final book page) */
-.whats-next {
-    margin-top: 2.5rem;
-    padding: 1.5rem;
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-}
-
-.whats-next h2 {
-    margin-top: 0;
-    font-size: 1.3rem;
-}
-
-.whats-next ul {
-    margin-bottom: 0;
-}
-
-/* Book cards (Books page) */
-.book-card {
-    display: flex;
-    gap: 2rem;
-    align-items: flex-start;
-    margin: 2.5rem 0;
-    padding: 1.5rem;
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-}
-
-.book-card .book-cover {
-    width: 180px;
-    max-width: 30%;
-    height: auto;
-    flex-shrink: 0;
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-}
-
-.book-card h2 {
-    margin-top: 0;
-}
-
-.book-card .book-tagline {
-    color: var(--text-secondary);
-    font-style: italic;
-    margin-top: -0.5rem;
-}
-
-.book-card .book-links {
-    margin-bottom: 0;
-    line-height: 2;
-}
-
-@media (max-width: 640px) {
-    .book-card {
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-    }
-
-    .book-card .book-cover {
-        max-width: 60%;
-    }
-}
-
-/* Typography */
-.content h1 {
-    font-size: 2.5rem;
-    font-weight: 700;
-    margin-bottom: 1.5rem;
-    line-height: 1.2;
-    color: var(--text-color);
-}
-
-.content h2 {
-    font-size: 2rem;
-    font-weight: 600;
-    margin-top: 2.5rem;
-    margin-bottom: 1rem;
-    line-height: 1.3;
-    color: var(--text-color);
-    padding-bottom: 0.5rem;
-    border-bottom: 2px solid var(--border-color);
-}
-
-.content h3 {
-    font-size: 1.5rem;
-    font-weight: 600;
-    margin-top: 2rem;
-    margin-bottom: 0.75rem;
-    color: var(--text-color);
-}
-
-.content h4 {
-    font-size: 1.25rem;
-    font-weight: 600;
-    margin-top: 1.5rem;
-    margin-bottom: 0.5rem;
-    color: var(--text-color);
-}
-
-.content h5,
-.content h6 {
-    font-size: 1.125rem;
-    font-weight: 600;
-    margin-top: 1.25rem;
-    margin-bottom: 0.5rem;
-    color: var(--text-color);
-}
-
-.content p {
-    margin-bottom: 1.25rem;
-    color: var(--text-color);
-}
-
-.content a {
-    color: var(--link-color);
-    text-decoration: none;
-    border-bottom: 1px solid transparent;
-    transition: border-color 0.2s;
-}
-
-.content a:hover {
-    color: var(--link-hover);
-    border-bottom-color: var(--link-hover);
-}
-
-/* Lists */
-.content ul,
-.content ol {
-    margin-bottom: 1.25rem;
-    padding-left: 2rem;
-}
-
-.content li {
-    margin-bottom: 0.5rem;
-}
-
-.content li > ul,
-.content li > ol {
-    margin-top: 0.5rem;
-    margin-bottom: 0.5rem;
-}
-
-/* Code */
-.content code {
-    background-color: var(--code-bg);
-    padding: 0.2rem 0.4rem;
-    border-radius: 3px;
-    font-family: "SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, "Courier New", monospace;
-    font-size: 0.875em;
-    color: var(--code-text);
-}
-
-.content pre {
-    background-color: var(--code-bg);
-    padding: 1.25rem;
-    border-radius: 6px;
-    overflow-x: auto;
-    margin-bottom: 1.25rem;
-    border: 1px solid var(--border-color);
-}
-
-.content pre code {
-    background-color: transparent;
-    padding: 0;
-    color: var(--text-color);
-    font-size: 0.875rem;
-    line-height: 1.5;
-}
-
-/* Blockquotes */
-.content blockquote {
-    border-left: 4px solid var(--primary-color);
-    padding-left: 1.25rem;
-    margin: 1.5rem 0;
-    color: var(--text-secondary);
-    font-style: italic;
-}
-
-.content blockquote strong {
-    color: var(--primary-color);
-    font-style: normal;
-    font-weight: 600;
-}
-
-/* Tables */
-.content table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-bottom: 1.5rem;
-    overflow-x: auto;
-    display: block;
-}
-
-.content th,
-.content td {
-    padding: 0.75rem;
-    text-align: left;
-    border: 1px solid var(--border-color);
-}
-
-.content th {
-    background-color: var(--bg-secondary);
-    font-weight: 600;
-}
-
-.content tr:nth-child(even) {
-    background-color: var(--bg-secondary);
-}
-
-/* Horizontal Rule */
-.content hr {
-    border: none;
-    border-top: 2px solid var(--border-color);
-    margin: 2rem 0;
-}
-
-/* Images */
-.content img {
-    max-width: 100%;
-    height: auto;
-    border-radius: 6px;
-    margin: 1.5rem 0;
-}
-
-/* Footer */
-footer {
-    background-color: var(--footer-bg);
-    color: var(--footer-text);
-    padding: 3rem 0 1.5rem;
-    margin-top: 4rem;
-}
-
-.footer-content {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 2rem;
-    margin-bottom: 2rem;
-}
-
-.footer-section h3 {
-    color: var(--off-white);
-    font-size: 1.125rem;
-    margin-bottom: 1rem;
-    font-weight: 600;
-}
-
-.footer-section p {
-    color: var(--footer-text);
-    line-height: 1.6;
-}
-
-.footer-section ul {
-    list-style: none;
-}
-
-.footer-section ul li {
-    margin-bottom: 0.5rem;
-}
-
-.footer-section a {
-    color: var(--footer-text);
-    text-decoration: none;
-    transition: color 0.2s;
-}
-
-.footer-section a:hover {
-    color: var(--off-white);
-}
-
-.footer-bottom {
-    padding-top: 2rem;
-    border-top: 1px solid rgba(100, 140, 220, 0.1);
-    text-align: center;
-    color: var(--footer-text);
-}
-
-.footer-bottom a {
-    color: var(--footer-text);
-    text-decoration: underline;
-}
-
-.footer-bottom a:hover {
-    color: var(--off-white);
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-    .container {
-        padding: 0 1rem;
-    }
-
-    .header-content {
-        flex-direction: column;
-        gap: 1rem;
-    }
-
-    .main-nav {
-        flex-wrap: wrap;
-        gap: 1rem;
-        justify-content: center;
-    }
-
-    .content h1 {
-        font-size: 2rem;
-    }
-
-    .content h2 {
-        font-size: 1.5rem;
-    }
-
-    .content h3 {
-        font-size: 1.25rem;
-    }
-
-    .content pre {
-        padding: 1rem;
-        font-size: 0.8rem;
-    }
-
-    .footer-content {
-        grid-template-columns: 1fr;
-    }
-
-    .chapter-nav {
-        font-size: 0.8rem;
-        gap: 0.5rem;
-    }
-
-    .chapter-nav .nav-prev,
-    .chapter-nav .nav-next {
-        max-width: 40%;
-    }
-}
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--ui);
+  line-height: 1.6;
+}
+
+a { color: var(--ink); }
+
+.wrap { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+.wrap-narrow { max-width: 760px; margin: 0 auto; padding: 0 24px; }
+
+/* ---------- Header: full (front door, landing, course TOC, reference) ---------- */
+
+header { border-bottom: 1px solid var(--line); }
+
+.nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 64px;
+}
+
+.brand { font-weight: 700; font-size: 17px; letter-spacing: -.01em; text-decoration: none; color: var(--ink); }
+.brand span { color: var(--ink-soft); font-weight: 400; }
+
+nav.links { display: flex; align-items: center; }
+nav.links a {
+  margin-left: 28px;
+  text-decoration: none;
+  font-size: 15px;
+  color: var(--ink-soft);
+}
+nav.links a.current {
+  color: var(--ink);
+  border-bottom: 2px solid var(--amber);
+  padding-bottom: 2px;
+}
+.nav-toggle { display: none; }
+
+/* ---------- Header: lesson (immersive reading, no footer) ---------- */
+
+.nav-lesson {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 56px;
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+.nav-lesson a.up { font-size: 14px; color: var(--ink-soft); text-decoration: none; }
+.nav-lesson a.up:hover { color: var(--ink); }
+
+/* ---------- Front door: hero / pipeline / entries ---------- */
+
+.hero { padding: 72px 0 40px; text-align: center; }
+.hero h1 { font-size: 52px; line-height: 1.1; letter-spacing: -.02em; font-weight: 700; }
+.hero p.sub { margin: 18px auto 0; max-width: 620px; font-size: 19px; color: var(--ink-soft); }
+
+.pipeline { padding: 36px 0 8px; overflow-x: auto; }
+.pipeline svg { display: block; margin: 0 auto; }
+
+.entries { display: flex; gap: 14px; justify-content: center; padding: 26px 0 8px; flex-wrap: wrap; }
+.chip {
+  border: 1.5px solid var(--ink);
+  border-radius: 22px;
+  padding: 9px 18px;
+  font-size: 14.5px;
+  text-decoration: none;
+  background: transparent;
+  color: var(--ink);
+}
+.chip.active { border-color: var(--amber); box-shadow: 0 0 0 1.5px var(--amber) inset; }
+.chip small { display: block; color: var(--ink-soft); font-size: 12px; }
+
+/* ---------- Halves (front door) / related-links (landing pages) ---------- */
+
+.halves { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; padding: 56px 0 8px; }
+.half { border: 1.5px solid var(--ink); border-radius: 10px; padding: 28px; }
+.half h2 { font-size: 22px; margin-bottom: 6px; }
+.half p.tag { color: var(--ink-soft); font-size: 14.5px; margin-bottom: 16px; }
+.half ul { list-style: none; }
+.half li { padding: 9px 0; border-top: 1px solid var(--line); font-size: 15.5px; }
+.half li:first-child { border-top: none; }
+.half li a { text-decoration: none; }
+.half li a:hover { text-decoration: underline; }
+.half li span { color: var(--ink-soft); font-size: 13.5px; float: right; }
+.declare {
+  margin-top: 14px;
+  font-size: 13.5px;
+  color: var(--ink-soft);
+  border-left: 3px solid var(--amber);
+  padding-left: 12px;
+}
+
+/* ---------- Book shelf (front door) ---------- */
+
+.books { padding: 56px 0 72px; }
+.books h2 { font-size: 26px; text-align: center; margin-bottom: 8px; }
+.books p.note { color: var(--ink-soft); text-align: center; font-size: 15px; margin-bottom: 30px; }
+.shelf { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+.card { border: 1.5px solid var(--ink); border-radius: 10px; padding: 22px; text-align: center; }
+.card svg { display: block; margin: 6px auto 14px; }
+.card h3 { font-size: 17px; }
+.card p { font-size: 13.5px; color: var(--ink-soft); margin: 6px 0 14px; }
+.card .row { display: flex; justify-content: center; gap: 10px; }
+.btn { display: inline-block; font-size: 13.5px; text-decoration: none; padding: 7px 14px; border-radius: 6px; }
+.btn.course { background: var(--amber); color: var(--ink); font-weight: 600; }
+.btn.book { border: 1.5px solid var(--ink); color: var(--ink); }
+.btn.soon { border: 1.5px dashed var(--ink-soft); color: var(--ink-soft); }
+.btn.course:hover { background: var(--amber-dark); }
+.btn.book:hover, .btn.soon:hover { background: var(--code-bg); }
+
+/* ---------- Footer (front door, landing, course TOC, reference) ---------- */
+
+footer { border-top: 1px solid var(--line); padding: 26px 0 40px; color: var(--ink-soft); font-size: 13.5px; }
+footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+footer a { color: var(--ink-soft); }
+footer a:hover { color: var(--ink); }
+
+/* ---------- Landing pages (/method/, /java/, /method/pfd/, ...) ---------- */
+
+.page-head { padding: 44px 0 10px; }
+.crumb { font-size: 13.5px; color: var(--ink-soft); }
+.crumb a { color: var(--ink-soft); text-decoration: none; }
+.crumb a:hover { color: var(--ink); text-decoration: underline; }
+.crumb b { color: var(--ink); font-weight: 600; }
+
+.prose { font-family: var(--ui); font-size: 17px; line-height: 1.72; padding: 10px 0 8px; }
+.prose h1 { font-size: 38px; letter-spacing: -.02em; line-height: 1.15; margin: 0 0 22px; }
+.prose h2 { font-size: 22px; letter-spacing: -.01em; margin: 34px 0 12px; }
+.prose h3 { font-size: 18px; margin: 26px 0 10px; }
+.prose p { margin: 0 0 18px; }
+.prose ul, .prose ol { margin: 0 0 18px 22px; }
+.prose li { margin-bottom: 6px; }
+.prose strong { font-weight: 700; }
+.prose a { color: var(--ink); text-decoration: underline; text-decoration-color: var(--line); text-underline-offset: 2px; }
+.prose a:hover { text-decoration-color: var(--ink); }
+.prose code { font-family: var(--mono); font-size: .85em; background: var(--code-bg); border-radius: 4px; padding: 1px 5px; }
+.prose blockquote { border-left: 3px solid var(--amber); padding-left: 14px; margin: 0 0 18px; color: var(--ink-soft); }
+.prose table { width: 100%; border-collapse: collapse; margin: 0 0 22px; font-size: 15px; }
+.prose th, .prose td { text-align: left; padding: 8px 10px; border: 1px solid var(--line); }
+.prose th { background: var(--paper-raised); font-weight: 600; }
+.prose hr { border: none; border-top: 1px solid var(--line); margin: 28px 0; }
+.prose img { max-width: 100%; height: auto; border-radius: 6px; }
+
+/* Serif prose modifier — lesson reading only */
+.prose-serif { font-family: var(--prose); font-size: 18.5px; line-height: 1.72; }
+.prose-serif h2 { font-family: var(--ui); font-size: 24px; }
+.prose-serif h3 { font-family: var(--ui); font-size: 19px; }
+
+/* Landing "related pages" list reuses .half styling under a plain heading */
+.related { margin: 40px 0 8px; }
+.related h2 { font-size: 15px; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-soft); margin-bottom: 10px; }
+.related ul { list-style: none; border: 1.5px solid var(--ink); border-radius: 10px; overflow: hidden; }
+.related li { border-top: 1px solid var(--line); }
+.related li:first-child { border-top: none; }
+.related li a {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 20px;
+  text-decoration: none;
+  font-size: 15.5px;
+}
+.related li a:hover { background: var(--paper-raised); }
+.related li a span { color: var(--ink-soft); font-size: 13.5px; }
+
+.placeholder-note {
+  margin: 24px 0;
+  padding: 14px 18px;
+  border: 1.5px dashed var(--ink-faint);
+  border-radius: 8px;
+  color: var(--ink-soft);
+  font-size: 14px;
+}
+
+/* ---------- Code blocks (shared: landing prose + lesson article) ---------- */
+
+pre {
+  font-family: var(--mono);
+  font-size: 13.5px;
+  line-height: 1.6;
+  background: var(--paper-raised);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--ink);
+  border-radius: 6px;
+  padding: 16px 18px;
+  overflow-x: auto;
+  margin: 0 0 18px;
+  white-space: pre;
+}
+pre .c { color: #8a8578; font-style: italic; }
+pre .k { color: #1e40af; font-weight: 700; }
+pre .s { color: #92400e; }
+:root[data-theme="dark"] pre .k { color: #7aa5f5; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) pre .k { color: #7aa5f5; }
+}
+
+/* ---------- Course TOC (/java/jbct/course/) ---------- */
+
+.course-lattice { padding: 8px 0 4px; }
+.part-block { margin: 40px 0; }
+.part-block h2 { font-size: 20px; margin-bottom: 4px; }
+.part-block .part-cap { font-size: 13px; color: var(--ink-soft); margin-bottom: 16px; }
+.part-block svg { display: block; margin-bottom: 18px; }
+
+.lesson-list { list-style: none; }
+.lesson-list li {
+  border-top: 1px solid var(--line);
+  padding: 14px 0;
+}
+.lesson-list li:first-child { border-top: none; }
+.lesson-list a { text-decoration: none; display: block; }
+.lesson-list .num { color: var(--ink-soft); font-size: 13px; margin-right: 8px; }
+.lesson-list .title { font-size: 16.5px; font-weight: 600; }
+.lesson-list .blurb { color: var(--ink-soft); font-size: 14.5px; margin-top: 4px; }
+.lesson-list a:hover .title { text-decoration: underline; }
+
+/* ---------- Lesson page ---------- */
+
+.lesson-head { padding: 44px 0 10px; }
+.lesson-head h1 { font-size: 38px; letter-spacing: -.02em; line-height: 1.15; margin: 10px 0 18px; }
+
+.progress { display: flex; align-items: center; gap: 14px; padding: 4px 0 26px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+.progress .cap { font-size: 13px; color: var(--ink-soft); }
+.progress svg .node { fill: none; stroke: var(--ink); stroke-width: 1.5; }
+.progress svg .node.done { fill: var(--ink); stroke: var(--ink); }
+.progress svg .node.current { fill: var(--paper); stroke: var(--amber); stroke-width: 3; }
+
+.learn {
+  border: 1.5px solid var(--ink);
+  border-radius: 10px;
+  padding: 18px 22px;
+  margin: 30px 0 8px;
+}
+.learn h2 {
+  font-family: var(--ui);
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--ink-soft);
+  margin-bottom: 10px;
+}
+.learn ul { margin-left: 18px; font-size: 15px; line-height: 1.75; }
+
+.lesson-note {
+  font-family: var(--ui);
+  font-size: 14.5px;
+  color: var(--ink-soft);
+  border-left: 3px solid var(--line);
+  padding: 2px 0 2px 16px;
+  margin: 22px 0 8px;
+}
+
+article.lesson-body { padding: 22px 0 8px; }
+
+.exercise { border: 1.5px solid var(--ink); border-radius: 10px; margin: 30px 0; overflow: hidden; }
+.exercise .bar {
+  font-family: var(--ui);
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  padding: 9px 20px;
+  border-bottom: 1.5px solid var(--ink);
+  display: flex;
+  justify-content: space-between;
+}
+.exercise .bar span { color: var(--ink-soft); font-weight: 400; text-transform: none; letter-spacing: 0; }
+.exercise .body { font-family: var(--prose); font-size: 17px; line-height: 1.65; padding: 16px 20px; }
+.exercise .body p:last-child { margin-bottom: 0; }
+
+.check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14.5px;
+  color: var(--ink-soft);
+  padding: 6px 0 26px;
+  cursor: pointer;
+  width: fit-content;
+}
+.check input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.check .box {
+  width: 18px;
+  height: 18px;
+  border: 1.5px solid var(--ink);
+  border-radius: 4px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  line-height: 1;
+  color: var(--paper);
+}
+.check input:checked + .box { background: var(--amber); border-color: var(--amber-dark); }
+.check input:checked + .box::after { content: '\2713'; color: var(--ink); }
+.check input:focus-visible + .box { outline: 2px solid var(--amber-dark); outline-offset: 2px; }
+.check .muted { color: var(--ink-faint); }
+
+.pager { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--line); padding: 24px 0 64px; gap: 16px; flex-wrap: wrap; }
+.pager a.prev { font-size: 14.5px; color: var(--ink-soft); text-decoration: none; }
+.pager a.prev:hover { color: var(--ink); }
+.pager a.next {
+  background: var(--amber);
+  color: var(--ink);
+  font-weight: 600;
+  font-size: 15px;
+  text-decoration: none;
+  padding: 12px 22px;
+  border-radius: 8px;
+}
+.pager a.next:hover { background: var(--amber-dark); }
+
+/* ---------- Legacy pages (tooling docs kept at their existing URLs) ---------- */
+
+.legacy .prose { max-width: 900px; margin: 0 auto; }
+.legacy .prose pre code { background: transparent; }
+
+/* ---------- Responsive ---------- */
+
+@media (max-width: 720px) {
+  .wrap, .wrap-narrow { padding: 0 18px; }
+  .nav { height: auto; flex-direction: column; align-items: flex-start; padding: 14px 0; gap: 10px; }
+  nav.links { flex-wrap: wrap; }
+  nav.links a { margin-left: 0; margin-right: 20px; }
+  .nav-lesson { flex-direction: column; align-items: flex-start; height: auto; padding: 12px 18px; gap: 6px; }
+
+  .hero { padding: 44px 0 28px; }
+  .hero h1 { font-size: 34px; }
+  .hero p.sub { font-size: 16.5px; }
+
+  .halves { grid-template-columns: 1fr; }
+  .shelf { grid-template-columns: 1fr; }
+
+  .prose h1, .lesson-head h1 { font-size: 28px; }
+  .prose { font-size: 16px; }
+  .prose-serif { font-size: 17px; }
+
+  .learn, .exercise .body { font-size: 15px; }
+  pre { font-size: 12.5px; padding: 12px 14px; }
+
+  .pager { flex-direction: column; align-items: stretch; }
+  .pager a.next { text-align: center; }
+
+  footer .wrap { flex-direction: column; }
+
+  .related li a { flex-direction: column; gap: 2px; }
+}
+
+@media (max-width: 480px) {
+  .hero h1 { font-size: 28px; }
+  .entries { gap: 10px; }
+  .chip { padding: 8px 14px; font-size: 13.5px; }
+}
+
+/* ---------- Print ---------- */
 
-/* Print Styles */
 @media print {
-    header,
-    footer {
-        display: none;
-    }
-
-    .content a {
-        color: var(--text-color);
-        text-decoration: underline;
-    }
-
-    .content pre {
-        border: 1px solid var(--text-color);
-        page-break-inside: avoid;
-    }
-}
-
-/* Theme Toggle Button */
-.theme-toggle {
-    background: none;
-    border: 2px solid var(--border-color);
-    border-radius: 6px;
-    padding: 0.5rem 0.75rem;
-    cursor: pointer;
-    font-size: 1.25rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s;
-    color: var(--text-color);
-}
-
-.theme-toggle:hover {
-    background-color: var(--bg-secondary);
-    border-color: var(--primary-color);
-}
-
-.theme-toggle:active {
-    transform: scale(0.95);
-}
-
-.theme-icon {
-    width: 20px;
-    height: 20px;
+  header, footer, .pager, .check { display: none; }
+  body { background: #fff; color: #000; }
 }

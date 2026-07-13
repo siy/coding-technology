@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="{{DESCRIPTION}}">
+<meta name="author" content="Sergiy Yevtushenko">
+<title>{{TITLE}}</title>
+<link rel="icon" type="image/png" sizes="32x32" href="/image/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/image/favicon-16x16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/image/apple-touch-icon.png">
+<link rel="stylesheet" href="/style.css?v={{STYLE_HASH}}">
+<link rel="canonical" href="{{CANONICAL_URL}}">
+<meta property="og:title" content="{{TITLE}}">
+<meta property="og:description" content="{{DESCRIPTION}}">
+<meta property="og:type" content="article">
+<meta property="og:url" content="{{CANONICAL_URL}}">
+<meta property="og:image" content="https://pragmatica.dev/image/og-default.png">
+<meta property="og:site_name" content="pragmatica.dev">
+<meta name="twitter:card" content="summary_large_image">
+</head>
+<body>
+
+<header>
+  <div class="nav-lesson">
+    <a class="brand" href="/">pragmatica<span>.dev</span></a>
+    <a class="up" href="/java/jbct/course/">JBCT course &middot; contents &uarr;</a>
+  </div>
+</header>
+
+<div class="wrap-narrow">
+
+  <div class="lesson-head">
+    <div class="crumb"><a href="/java/">The Java Realization</a> / <a href="/java/jbct/">JBCT course</a> / <b>{{PART_NAME}}</b></div>
+    <h1>{{TITLE_TEXT}}</h1>
+  </div>
+
+  <div class="progress">
+    {{LATTICE_SVG}}
+    <div class="cap">Lesson {{LESSON_POS}} of {{LESSON_TOTAL}} &middot; {{PART_NAME}}</div>
+  </div>
+
+  {{LEARN_BOX}}
+
+  {{NOTE}}
+
+  <article class="lesson-body prose prose-serif">
+    {{BODY}}
+  </article>
+
+  {{EXERCISE}}
+
+  <label class="check">
+    <input type="checkbox" id="complete-toggle">
+    <span class="box" aria-hidden="true"></span>
+    Mark lesson complete <span class="muted">(stored locally &mdash; no account)</span>
+  </label>
+
+  <div class="pager">
+    {{PREV_LINK}}
+    {{NEXT_LINK}}
+  </div>
+
+</div>
+
+<script>
+(function(){
+  var SLUG = {{SLUG_JSON}};
+  var PART_SLUGS = {{PART_SLUGS_JSON}};
+  var KEY_PREFIX = 'jbct:';
+
+  function isDone(slug) { return localStorage.getItem(KEY_PREFIX + slug) === '1'; }
+
+  // Sync lattice nodes for sibling lessons in this part against real progress.
+  document.querySelectorAll('[data-lesson-slug]').forEach(function (el) {
+    var slug = el.getAttribute('data-lesson-slug');
+    if (slug === SLUG) return;
+    if (isDone(slug)) el.classList.add('done');
+  });
+
+  var cb = document.getElementById('complete-toggle');
+  if (cb) {
+    cb.checked = isDone(SLUG);
+    cb.addEventListener('change', function () {
+      if (cb.checked) {
+        localStorage.setItem(KEY_PREFIX + SLUG, '1');
+      } else {
+        localStorage.removeItem(KEY_PREFIX + SLUG);
+      }
+    });
+  }
+})();
+</script>
+
+</body>
+</html>

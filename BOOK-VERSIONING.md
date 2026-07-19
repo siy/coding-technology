@@ -4,6 +4,7 @@ How the books in this repository are versioned and how readers track changes
 between editions. The same scheme applies to every book:
 
 - **Process-First Design** — `book-pfd/` (built from `book-pfd-meta/`)
+- **Architecture Synthesis** — `book-arch/`
 - **Java Backend Coding Technology** — `book/`
 - **Aether** — `book-aether/` (when the manuscript begins)
 

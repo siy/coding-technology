@@ -42,7 +42,7 @@ Run these searches and report ALL hits:
 ### Manual Checks
 
 For each method:
-- Implements exactly ONE pattern = ONE BPMN construct (Leaf=Task, Sequencer=Sequence Flow, Fork-Join=Parallel Gateway, Condition=Exclusive Gateway, Iteration=Multi-Instance, Aspects=Event Sub-Process)?
+- Implements exactly ONE pattern (Leaf, Sequencer, Fork-Join, Condition, Iteration, Aspects) — never a mix?
 - Method ≤10 lines or justified?
 - Growing context in Sequencers (named intermediate records)?
 - Lambda format compliant (method ref > single expression > extract)?

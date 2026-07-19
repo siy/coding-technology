@@ -42,6 +42,103 @@ const STYLE_HASH = crypto.createHash('md5')
 
 const SITEMAP_URLS = [];
 
+// ---------- Course registry (JBCT + PFD + AS) ----------
+// Each course renders its book's chapters as sequential web lessons. JBCT's config
+// reproduces the previously-hardcoded behaviour exactly (byte-identical output).
+
+const COURSES = [
+  {
+    id: 'jbct',
+    bookDir: path.join(ROOT_DIR, 'book'),
+    layerDir: path.join(__dirname, 'course', 'jbct'),
+    urlBase: '/java/jbct/course/',
+    referenceUrlBase: '/java/jbct/reference/',
+    referenceSlug: 'appendix-a-api-reference',
+    tocFileSlug: 'appendix-b-exercises',
+    glossarySlug: 'appendix-c-glossary',
+    storagePrefix: 'jbct:',
+    nav: 'java',
+    realm: { href: '/java/', label: 'The Java Realization' },
+    parent: { href: '/java/jbct/', label: 'JBCT course' },
+    courseLabel: 'JBCT course',
+    crumbLabel: 'JBCT course',
+    h1: 'Java Backend Coding Technology &mdash; Course',
+    titleSuffix: 'JBCT course',
+    tocTitle: 'JBCT Course — pragmatica.dev',
+    tocDescription: 'The full JBCT method, chapter by chapter: six parts, twenty-two lessons, each pairing book prose with a short exercise. Free, no account required.',
+    tocIntro: 'Twenty-two lessons across six parts. Each pairs the book’s prose with a short exercise; progress is tracked locally in your browser, no account required.',
+    footerLinks: '<a href="/java/jbct/reference/">API reference</a> &middot; <a href="https://leanpub.com/jbct-book" target="_blank" rel="noopener">Get the book</a> &middot; ',
+    nonLessonSlugs: new Set(['appendix-a-api-reference', 'appendix-b-exercises', 'appendix-c-glossary'])
+  },
+  {
+    id: 'pfd',
+    bookDir: path.join(ROOT_DIR, 'book-pfd'),
+    layerDir: path.join(__dirname, 'course', 'pfd'),
+    urlBase: '/method/pfd/course/',
+    referenceUrlBase: null,
+    referenceSlug: null,
+    tocFileSlug: null,
+    glossarySlug: 'glossary',
+    storagePrefix: 'pfd:',
+    nav: 'method',
+    realm: { href: '/method/', label: 'The Method' },
+    parent: { href: '/method/pfd/', label: 'Process-First Design' },
+    courseLabel: 'PFD course',
+    crumbLabel: 'PFD course',
+    h1: 'Process-First Design &mdash; Course',
+    titleSuffix: 'PFD course',
+    tocTitle: 'Process-First Design Course — pragmatica.dev',
+    tocDescription: 'Process-First Design, chapter by chapter: the spiral walked at four altitudes, each lesson pairing book prose with an apply-to-your-system exercise. Free, no account required.',
+    tocIntro: 'The whole method as a sequence of lessons. Each pairs the book’s prose with a short exercise you run on a system you own; progress is tracked locally in your browser, no account required.',
+    footerLinks: '<a href="https://leanpub.com/process-first-design" target="_blank" rel="noopener">Get the book</a> &middot; ',
+    nonLessonSlugs: new Set(['series-note', 'acknowledgments', 'afterword', 'glossary', 'references'])
+  },
+  {
+    id: 'as',
+    bookDir: path.join(ROOT_DIR, 'book-arch'),
+    layerDir: path.join(__dirname, 'course', 'architecture-synthesis'),
+    urlBase: '/method/architecture-synthesis/course/',
+    referenceUrlBase: '/method/architecture-synthesis/reference/',
+    referenceSlug: 'appendix-reference-cards',
+    tocFileSlug: null,
+    glossarySlug: 'glossary',
+    storagePrefix: 'as:',
+    nav: 'method',
+    realm: { href: '/method/', label: 'The Method' },
+    parent: { href: '/method/architecture-synthesis/', label: 'Architecture Synthesis' },
+    courseLabel: 'Architecture Synthesis course',
+    crumbLabel: 'Architecture Synthesis course',
+    h1: 'Architecture Synthesis &mdash; Course',
+    titleSuffix: 'Architecture Synthesis course',
+    tocTitle: 'Architecture Synthesis Course — pragmatica.dev',
+    tocDescription: 'Architecture Synthesis, chapter by chapter: derive an architecture from service-level objectives, verify it against its own budget, and grade it against real systems. Each lesson pairs book prose with an apply-to-your-system exercise. Free, no account required.',
+    tocIntro: 'The whole derivation method as a sequence of lessons. Each pairs the book’s prose with a short exercise you run on a system you own; progress is tracked locally in your browser, no account required.',
+    footerLinks: '<a href="/method/architecture-synthesis/reference/">Reference cards</a> &middot; <a href="https://leanpub.com/architecture-synthesis-the-next-correct-step" target="_blank" rel="noopener">Get the book</a> &middot; ',
+    nonLessonSlugs: new Set(['series-note', 'acknowledgments', 'appendix-worksheet', 'appendix-reference-cards', 'references'])
+  }
+];
+
+const courseByBookDir = {};
+COURSES.forEach(c => { courseByBookDir[path.basename(c.bookDir)] = c; });
+
+// Course-nav link list, reproducing the TOC template's original markup exactly
+// (no class on inactive links, class="current" on the active realm).
+function courseNavLinks(navKey) {
+  const a = (key, href, label) =>
+    `<a ${navKey === key ? 'class="current" ' : ''}href="${href}">${label}</a>`;
+  return [
+    a('start', '/', 'Start'),
+    a('method', '/method/', 'The Method'),
+    a('java', '/java/', 'The Java Realization'),
+    a('glossary', '/method/glossary/', 'Glossary'),
+    '<a href="https://github.com/pragmaticalabs/pragmatica" target="_blank" rel="noopener">GitHub</a>'
+  ].join('\n      ');
+}
+
+function courseOutSegs(course) {
+  return course.urlBase.replace(/^\/|\/$/g, '').split('/');
+}
+
 // ---------- Generic helpers ----------
 
 function ensureDir(dir) {
@@ -124,36 +221,29 @@ function walk(dir) {
 
 // ---------- Spine (book/root.md) ----------
 
-function parseSpine() {
-  const raw = fs.readFileSync(path.join(BOOK_DIR, 'root.md'), 'utf-8');
+function parseSpine(course) {
+  const raw = fs.readFileSync(path.join(course.bookDir, 'root.md'), 'utf-8');
   const lines = raw.split(/\r?\n/);
   const parts = [];
-  const backMatter = [];
   let current = null;
-  let inBackMatter = false;
 
   for (const line of lines) {
-    const partMatch = line.match(/^## (Part [IVX]+) — (.+)$/);
-    const backMatch = line.match(/^## Back matter\s*$/);
-    if (partMatch) {
-      current = { roman: partMatch[1].replace('Part ', ''), name: partMatch[2].trim(), lessons: [] };
+    const headMatch = line.match(/^## (.+?)\s*$/);
+    if (headMatch) {
+      current = { label: headMatch[1].trim(), lessons: [] };
       parts.push(current);
-      inBackMatter = false;
-      continue;
-    }
-    if (backMatch) {
-      current = null;
-      inBackMatter = true;
       continue;
     }
     const itemMatch = line.match(/^- \[(.+?)\]\(([a-z0-9-]+)\.md\)/);
-    if (itemMatch) {
-      const item = { title: itemMatch[1].trim(), slug: itemMatch[2].trim() };
-      if (current) current.lessons.push(item);
-      else if (inBackMatter) backMatter.push(item);
+    if (itemMatch && current) {
+      const slug = itemMatch[2].trim();
+      if (!course.nonLessonSlugs.has(slug)) {
+        current.lessons.push({ title: itemMatch[1].trim(), slug });
+      }
     }
   }
-  return { parts, backMatter };
+  // Sections with no lessons (front/back matter, notes) drop out entirely.
+  return parts.filter(p => p.lessons.length > 0);
 }
 
 function flattenSpine(parts) {
@@ -163,7 +253,7 @@ function flattenSpine(parts) {
       flat.push({
         slug: lesson.slug,
         specTitle: lesson.title,
-        partName: `Part ${part.roman} — ${part.name}`,
+        partName: part.label,
         partSlugs: part.lessons.map(l => l.slug),
         posInPart,
         partTotal: part.lessons.length
@@ -176,15 +266,24 @@ function flattenSpine(parts) {
 
 // ---------- Book-chapter link rewriting ----------
 
-function rewriteBookLinks(markdown, courseSlugSet) {
+function rewriteBookLinks(markdown, course, byBook) {
   return markdown.replace(/\]\(([^)#\s]+\.md)((?:#[^)]*)?)\)/g, (match, target, anchor) => {
-    const clean = target.replace(/^\.\//, '');
-    if (clean === 'appendix-a-api-reference.md') return `](/java/jbct/reference/${anchor || ''})`;
-    if (clean === 'appendix-c-glossary.md') return `](/method/glossary/${anchor || ''})`;
-    if (clean === 'appendix-b-exercises.md') return `](/java/jbct/course/)`;
+    let clean = target.replace(/^\.\//, '');
+    let cc = course;
+    // A ../book-*/ prefix targets another book → resolve against that course.
+    const cross = clean.match(/^\.\.\/([^/]+)\/(.+)$/);
+    if (cross) {
+      const other = byBook[cross[1]];
+      if (!other) return match;
+      cc = other;
+      clean = cross[2];
+    }
     const slug = clean.replace(/\.md$/, '');
-    if (courseSlugSet.has(slug)) return `](/java/jbct/course/${slug}/${anchor || ''})`;
-    console.warn(`  WARN: unrecognized book-internal link target "${target}" — left unresolved`);
+    if (slug === cc.glossarySlug) return `](/method/glossary/${anchor || ''})`;
+    if (cc.referenceSlug && slug === cc.referenceSlug) return `](${cc.referenceUrlBase}${anchor || ''})`;
+    if (cc.tocFileSlug && slug === cc.tocFileSlug) return `](${cc.urlBase})`;
+    if (cc.lessonSlugSet && cc.lessonSlugSet.has(slug)) return `](${cc.urlBase}${slug}/${anchor || ''})`;
+    console.warn(`  WARN: unrecognized book-internal link target "${target}" in ${course.id} — left unresolved`);
     return match;
   });
 }
@@ -193,7 +292,10 @@ function rewriteBookLinks(markdown, courseSlugSet) {
 
 function parseCourseLayer(raw) {
   const sections = {};
-  const re = /^## (blurb|learn|note|exercise)\s*\r?\n([\s\S]*?)(?=\r?\n## |\s*$)/gm;
+  // Capture each section's full body: everything up to the next "## " header or the
+  // true end of input. (A bare `$` under /m matches every line-end and truncates
+  // multi-line sections after their first line — hence `$(?![\s\S])` for real EOF.)
+  const re = /^## (blurb|learn|note|exercise)\s*\r?\n([\s\S]*?)(?=\r?\n## |$(?![\s\S]))/gm;
   let m;
   while ((m = re.exec(raw))) sections[m[1]] = m[2].trim();
   return sections;
@@ -308,6 +410,7 @@ const LANDING_PAGES = [
     src: 'website/content/pfd.md', out: 'method/pfd/index.html', fallbackTitle: 'Process-First Design',
     crumb: crumbSub('/method/', 'The Method', 'Process-First Design'), nav: 'method',
     related: [
+      { href: '/method/pfd/course/', label: 'PFD course', note: 'start learning' },
       { href: '/method/', label: 'The Method', note: 'parent' },
       { href: '/method/architecture-synthesis/', label: 'Architecture Synthesis', note: 'next step' },
       { href: '/method/glossary/', label: 'Series glossary', note: 'reference' }
@@ -317,6 +420,7 @@ const LANDING_PAGES = [
     src: 'website/content/architecture-synthesis.md', out: 'method/architecture-synthesis/index.html', fallbackTitle: 'Architecture Synthesis',
     crumb: crumbSub('/method/', 'The Method', 'Architecture Synthesis'), nav: 'method',
     related: [
+      { href: '/method/architecture-synthesis/course/', label: 'Architecture Synthesis course', note: 'start learning' },
       { href: '/method/', label: 'The Method', note: 'parent' },
       { href: '/method/pfd/', label: 'Process-First Design', note: 'upstream' },
       { href: '/method/glossary/', label: 'Series glossary', note: 'reference' }
@@ -370,6 +474,16 @@ const LANDING_PAGES = [
       { href: '/java/jbct/course/', label: 'JBCT course', note: 'back to contents' },
       { href: '/java/jbct/', label: 'Java Backend Coding Technology', note: 'overview' }
     ]
+  },
+  {
+    src: 'book-arch/appendix-reference-cards.md', out: 'method/architecture-synthesis/reference/index.html', fallbackTitle: 'Reference Cards',
+    crumb: crumbDeep([{ href: '/method/', label: 'The Method' }, { href: '/method/architecture-synthesis/course/', label: 'Architecture Synthesis course' }], 'Reference cards'),
+    nav: 'method',
+    description: 'The Architecture Synthesis reference cards: the nine questions, the ledger of axis values and costs, and the derivation rules — the whole method as a deck.',
+    related: [
+      { href: '/method/architecture-synthesis/course/', label: 'Architecture Synthesis course', note: 'back to contents' },
+      { href: '/method/architecture-synthesis/', label: 'Architecture Synthesis', note: 'overview' }
+    ]
   }
 ];
 
@@ -379,24 +493,24 @@ function buildLandingPages() {
 
 // ---------- Course TOC ----------
 
-function buildCourseToc(parts, flat) {
+function buildCourseToc(course, parts, flat) {
   const template = readTemplate('course-toc');
   const partsHtml = parts.map(part => {
     const slugs = part.lessons.map(l => l.slug);
     const svg = buildLatticeSVG(slugs, -1);
     const items = part.lessons.map((lesson, i) => {
-      const layerPath = path.join(COURSE_DIR, `${lesson.slug}.md`);
+      const layerPath = path.join(course.layerDir, `${lesson.slug}.md`);
       let blurb = '';
       if (fs.existsSync(layerPath)) {
         const sections = parseCourseLayer(fs.readFileSync(layerPath, 'utf-8'));
         blurb = sections.blurb || '';
       } else {
-        console.warn(`  WARN: course/jbct/${lesson.slug}.md not found — TOC blurb omitted`);
+        console.warn(`  WARN: ${course.id} course layer ${lesson.slug}.md not found — TOC blurb omitted`);
       }
-      return `<li><a href="/java/jbct/course/${lesson.slug}/"><span class="num">${i + 1}</span><span class="title">${escapeHtml(lesson.title)}</span>${blurb ? `<div class="blurb">${escapeHtml(blurb)}</div>` : ''}</a></li>`;
+      return `<li><a href="${course.urlBase}${lesson.slug}/"><span class="num">${i + 1}</span><span class="title">${escapeHtml(lesson.title)}</span>${blurb ? `<div class="blurb">${escapeHtml(blurb)}</div>` : ''}</a></li>`;
     }).join('\n      ');
     return `<div class="part-block">
-      <h2>Part ${part.roman} — ${escapeHtml(part.name)}</h2>
+      <h2>${escapeHtml(part.label)}</h2>
       <div class="part-cap">${part.lessons.length} lesson${part.lessons.length === 1 ? '' : 's'}</div>
       ${svg}
       <ul class="lesson-list">
@@ -405,45 +519,47 @@ function buildCourseToc(parts, flat) {
     </div>`;
   }).join('\n\n');
 
-  const title = 'JBCT Course — pragmatica.dev';
-  const description = 'The full JBCT method, chapter by chapter: six parts, twenty-two lessons, each pairing book prose with a short exercise. Free, no account required.';
-  const intro = 'Twenty-two lessons across six parts. Each pairs the book’s prose with a short exercise; progress is tracked locally in your browser, no account required.';
-
   const html = template
-    .replace(/{{TITLE}}/g, escapeAttr(title))
-    .replace(/{{DESCRIPTION}}/g, escapeAttr(description))
-    .replace(/{{CANONICAL_URL}}/g, SITE_URL + '/java/jbct/course/')
+    .replace(/{{TITLE}}/g, escapeAttr(course.tocTitle))
+    .replace(/{{DESCRIPTION}}/g, escapeAttr(course.tocDescription))
+    .replace(/{{CANONICAL_URL}}/g, SITE_URL + course.urlBase)
     .replace(/{{STYLE_HASH}}/g, STYLE_HASH)
-    .replace('{{INTRO}}', escapeHtml(intro))
+    .replace('{{NAV_LINKS}}', courseNavLinks(course.nav))
+    .replace(/{{REALM_HREF}}/g, course.realm.href)
+    .replace(/{{REALM_LABEL}}/g, escapeHtml(course.realm.label))
+    .replace(/{{CRUMB_LABEL}}/g, escapeHtml(course.crumbLabel))
+    .replace('{{COURSE_H1}}', course.h1)
+    .replace('{{FOOTER_LINKS}}', course.footerLinks)
+    .replace('{{INTRO}}', escapeHtml(course.tocIntro))
     .replace('{{PARTS}}', partsHtml);
 
-  writePage(path.join(DIST_DIR, 'java', 'jbct', 'course', 'index.html'), html, SITE_URL + '/java/jbct/course/');
+  writePage(path.join(DIST_DIR, ...courseOutSegs(course), 'index.html'), html, SITE_URL + course.urlBase);
 }
 
 // ---------- Lesson pages ----------
 
-function buildLessonPages(flat, courseSlugSet) {
+function buildLessonPages(course, flat) {
   const template = readTemplate('lesson');
 
   flat.forEach((lesson, i) => {
-    const chapterPath = path.join(BOOK_DIR, `${lesson.slug}.md`);
+    const chapterPath = path.join(course.bookDir, `${lesson.slug}.md`);
     if (!fs.existsSync(chapterPath)) {
-      console.warn(`  WARN: book/${lesson.slug}.md not found — skipping lesson`);
+      console.warn(`  WARN: ${course.id} book/${lesson.slug}.md not found — skipping lesson`);
       return;
     }
     const rawChapter = fs.readFileSync(chapterPath, 'utf-8');
     const { body: chapterBody } = stripFrontMatter(rawChapter);
     const { title: h1Title, body: strippedBody } = stripLeadingH1(chapterBody);
     const title = h1Title || lesson.specTitle;
-    const rewritten = rewriteBookLinks(strippedBody, courseSlugSet);
+    const rewritten = rewriteBookLinks(strippedBody, course, courseByBookDir);
     const bodyHtml = md.render(rewritten);
 
-    const layerPath = path.join(COURSE_DIR, `${lesson.slug}.md`);
+    const layerPath = path.join(course.layerDir, `${lesson.slug}.md`);
     let sections = {};
     if (fs.existsSync(layerPath)) {
       sections = parseCourseLayer(fs.readFileSync(layerPath, 'utf-8'));
     } else {
-      console.warn(`  WARN: course/jbct/${lesson.slug}.md not found — lesson rendered without course-layer blocks`);
+      console.warn(`  WARN: ${course.id} course layer ${lesson.slug}.md not found — lesson rendered without course-layer blocks`);
     }
 
     const learnBox = sections.learn
@@ -460,26 +576,33 @@ function buildLessonPages(flat, courseSlugSet) {
     <div class="body">${md.render(ex.body)}</div>
   </div>`;
     }
-    const description = sections.blurb || extractFirstParagraph(chapterBody) || `${title} — JBCT course.`;
+    const description = sections.blurb || extractFirstParagraph(chapterBody) || `${title} — ${course.titleSuffix}.`;
 
     const latticeSvg = buildLatticeSVG(lesson.partSlugs, lesson.posInPart);
 
     const prev = i > 0 ? flat[i - 1] : null;
     const next = i < flat.length - 1 ? flat[i + 1] : null;
     const prevLink = prev
-      ? `<a class="prev" href="/java/jbct/course/${prev.slug}/">&larr; ${escapeHtml(prev.specTitle)}</a>`
-      : `<a class="prev" href="/java/jbct/course/">&larr; Course contents</a>`;
+      ? `<a class="prev" href="${course.urlBase}${prev.slug}/">&larr; ${escapeHtml(prev.specTitle)}</a>`
+      : `<a class="prev" href="${course.urlBase}">&larr; Course contents</a>`;
     const nextLink = next
-      ? `<a class="next" href="/java/jbct/course/${next.slug}/">Next: ${escapeHtml(next.specTitle)} &rarr;</a>`
-      : `<a class="next" href="/java/jbct/course/">Next: Course contents &rarr;</a>`;
+      ? `<a class="next" href="${course.urlBase}${next.slug}/">Next: ${escapeHtml(next.specTitle)} &rarr;</a>`
+      : `<a class="next" href="${course.urlBase}">Next: Course contents &rarr;</a>`;
 
-    const canonicalUrl = `${SITE_URL}/java/jbct/course/${lesson.slug}/`;
+    const canonicalUrl = `${SITE_URL}${course.urlBase}${lesson.slug}/`;
 
     const html = template
-      .replace(/{{TITLE}}/g, escapeAttr(`${title} — JBCT course`))
+      .replace(/{{TITLE}}/g, escapeAttr(`${title} — ${course.titleSuffix}`))
       .replace(/{{DESCRIPTION}}/g, escapeAttr(description))
       .replace(/{{CANONICAL_URL}}/g, canonicalUrl)
       .replace(/{{STYLE_HASH}}/g, STYLE_HASH)
+      .replace(/{{COURSE_HOME}}/g, course.urlBase)
+      .replace(/{{COURSE_LABEL}}/g, course.courseLabel)
+      .replace(/{{REALM_HREF}}/g, course.realm.href)
+      .replace(/{{REALM_LABEL}}/g, escapeHtml(course.realm.label))
+      .replace(/{{PARENT_HREF}}/g, course.parent.href)
+      .replace(/{{PARENT_LABEL}}/g, escapeHtml(course.parent.label))
+      .replace(/{{STORAGE_PREFIX}}/g, course.storagePrefix)
       .replace(/{{PART_NAME}}/g, escapeHtml(lesson.partName))
       .replace('{{TITLE_TEXT}}', escapeHtml(title))
       .replace('{{LATTICE_SVG}}', latticeSvg)
@@ -494,7 +617,7 @@ function buildLessonPages(flat, courseSlugSet) {
       .replace('{{SLUG_JSON}}', JSON.stringify(lesson.slug))
       .replace('{{PART_SLUGS_JSON}}', JSON.stringify(lesson.partSlugs));
 
-    writePage(path.join(DIST_DIR, 'java', 'jbct', 'course', lesson.slug, 'index.html'), html, canonicalUrl);
+    writePage(path.join(DIST_DIR, ...courseOutSegs(course), lesson.slug, 'index.html'), html, canonicalUrl);
   });
 }
 
@@ -726,16 +849,22 @@ function build() {
   fs.rmSync(DIST_DIR, { recursive: true, force: true });
   ensureDir(DIST_DIR);
 
-  const { parts, backMatter } = parseSpine();
-  const flat = flattenSpine(parts);
-  const courseSlugSet = new Set(flat.map(l => l.slug));
-
-  console.log(`Spine: ${parts.length} parts, ${flat.length} lessons.`);
+  // Parse every course's spine first so cross-course links resolve at render time.
+  COURSES.forEach(course => {
+    course.parts = parseSpine(course);
+    course.flat = flattenSpine(course.parts);
+    course.lessonSlugSet = new Set(course.flat.map(l => l.slug));
+    console.log(`Spine (${course.id}): ${course.parts.length} parts, ${course.flat.length} lessons.`);
+  });
 
   buildFrontDoor();
   buildLandingPages();
-  buildCourseToc(parts, flat);
-  buildLessonPages(flat, courseSlugSet);
+
+  COURSES.forEach(course => {
+    buildCourseToc(course, course.parts, course.flat);
+    buildLessonPages(course, course.flat);
+  });
+
   buildLegacyPages();
   buildRedirects();
 

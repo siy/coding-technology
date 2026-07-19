@@ -8,4 +8,4 @@ A practicing architect can start here directly; a reader arriving from Process-F
 
 Four architectures have been derived blind, against a locked answer sheet, and graded against what those systems actually run — in the open, with the misses shown alongside the hits. The registered predictions, answer sheets, operator prompts, and grading rubrics are public in a [replication kit](https://github.com/siy/derivation-artifacts). Every derivation after the first four is registered there before its outcome is checked, and counterexamples are invited.
 
-The book — [*Architecture Synthesis: The Next Correct Step*](https://leanpub.com/architecture-synthesis-the-next-correct-step) — is on Leanpub. A course edition follows.
+The book — [*Architecture Synthesis: The Next Correct Step*](https://leanpub.com/architecture-synthesis-the-next-correct-step) — is on Leanpub. The [free course edition](/method/architecture-synthesis/course/) walks the whole derivation lesson by lesson, each paired with an exercise you run on a system you own.

@@ -107,7 +107,7 @@ There are four moments. A datum is *minted* when an operation first needs an ide
 
 ## The shapes
 
-**Every value a process handles has one of four shapes, and the shape is a domain statement, not a stylistic choice.** They are type-honest: the type says what the domain knows about the value. A type's capacity to carry a business statement rather than merely a layout is its *semantic potential* — the term is William Jackson's — and these shapes are the first place the methodology spends it.
+**Every value a process handles has one of four shapes, and the shape is a domain statement, not a stylistic choice.** They are type-honest: the type says what the domain knows about the value. A type's capacity to carry a business statement rather than merely a layout is its *semantic potential* — the term is William Jackson's — and these shapes are the first place the methodology spends it. The spending is not lost in realization: the companion coding technology preserves these statements through implementation — return types, `Option` parameters, and the composition operators carry the same domain facts the shapes declare — so finished code reads back as the process it implements. *Hide the machinery, keep the meaning*, as JBCT names it.
 
 - **`T` — the value exists, unconditionally. No absence, no failure, no waiting.**
 - **`Option<T>` — the value may or may not exist, and its absence is a domain fact, not an error.**
@@ -233,8 +233,8 @@ Step back and the whole shape of the thing inverts the usual order. You did not 
 
 **When something is invalidated — a step fails after earlier steps have changed state — there are three responses, and the methodology names all three where most discourse names only the first.**
 
-- **BER (Backward Error Recovery) — compensate by an inverse action. Release the held seat, void the authorization, reverse the entry. The classic rollback or saga shape.**
-- **FER (Forward Error Recovery) — continue with degraded state rather than undoing. Defaults under partial failure, a notification queued for retry while the booking stands, a value allowed to decay through `fresh → stale → expired`.**
+- **BER (Backward Error Recovery; long name: *compensate-by-inverse*) — compensate by an inverse action. Release the held seat, void the authorization, reverse the entry. The classic rollback or saga shape.**
+- **FER (Forward Error Recovery; long name: *degrade-and-continue*) — continue with degraded state rather than undoing. Defaults under partial failure, a notification queued for retry while the booking stands, a value allowed to decay through `fresh → stale → expired`.**
 - **Design-out — change the model so the invalidation cannot arise. An immutable log corrected by appending rather than overwriting; a reservation model where two bookings of one seat is structurally impossible; an idempotent operation safe to repeat.**
 
 **Which applies is a judgment across four axes — reversibility, forward-progress value, domain shape, coordination cost — and mixed strategies are normal: a system can use BER for money, FER for telemetry, and design-out for collaborative state, coherently, at once.** The spiral surfaces which response each altitude reaches for; the full selection mechanism is the Architecture Synthesis module's work.

@@ -12,6 +12,8 @@ The spiral climbed four altitudes and, at every one, surfaced architecture decis
 
 One distinction governs everything below. **The spiral organized the work by altitude — use case, workflow, subsystem, system. This module organizes it by phase.** **Phase 4 elicits what the system must satisfy. Phase 5 selects the architecture that satisfies it. Phase 6 picks the concrete technology.** The phases are not altitudes wearing new names; a single use case has all six phases, and a thousand-venue platform has the same six. The module owns Phase 4 and Phase 5, draws the line where Phase 6 begins, and presents the framework for changing an architecture over time that the Brownfield chapter then applies to an inherited system.
 
+One note before the work starts. Since this book's second edition, the module's method has grown into a book of its own — *Architecture Synthesis: The Next Correct Step* — which carries what this preview only names: the full ledger of axis values and costs, the derivation procedure with its conflict rule and halts, the verification arithmetic, and four blind derivations graded in the open. The two share one question sheet. For architecture work, start there; this module remains the bridge from the spiral to that book, and nothing it teaches is contradicted on the way.
+
 ---
 
 ## The deferred-decision inventory
@@ -36,27 +38,25 @@ The last two never had an obvious home in the spiral. They get one here.
 
 **Phase 4 asks what the system must be true of, before any architecture is on the table.** The discipline that mattered through the whole book matters again: name the questions, keep the set small, and resist the urge to invent a special question per project. The minimal set is universal across enterprise backend work. The answer varies wildly between a single venue and a global platform; the question does not.
 
-**There are eleven questions, in four categories: service-level objectives (SLOs), constraints, operational targets, and substrate-shaping forces.**
+**There are nine questions, in four categories: service-level objectives (SLOs), constraints, operational targets, and substrate-shaping forces.** The set is shared with this book's architecture companion (*Architecture Synthesis*), where each question earned its seat under an audit; the changelog carries the transition from this module's earlier eleven.
 
 | # | Question | Category |
 |---|---|---|
-| 1 | Latency, per use case, usually P95/P99 | SLO |
-| 2 | Throughput, steady-state and peak | SLO |
-| 3 | Availability, per use-case criticality | SLO |
+| 1 | Time budget — latency per use case, usually P95/P99; completion windows for batch | SLO |
+| 2 | Failure budget — availability per use-case criticality | SLO |
+| 3 | Loss budget — durability, the recovery-point objective, retention | SLO |
 | 4 | Consistency contract, per data class (strict / read-your-writes / bounded-staleness / eventual) | SLO |
-| 5 | Durability, the recovery-point objective | SLO |
-| 6 | Compliance, the regulatory and contractual regimes | Constraint |
-| 7 | Technology and platform mandates | Constraint |
-| 8 | Deploy frequency and safety | Operational target |
-| 9 | Cost shape, a ceiling or a per-operation budget | Operational target |
-| 10 | Multi-X — multi-country, -currency, -tenant, -region | Substrate-shaping |
-| 11 | Scale shape — read-heavy, write-heavy, event-heavy, mixed | Substrate-shaping |
+| 5 | Load — magnitude at steady state and peak, shape per path (read-heavy, write-heavy, event-heavy, mixed), concentration, window | Substrate-shaping |
+| 6 | External constraints — compliance regimes, residency, mandates that strike values outright | Constraint |
+| 7 | Release structure — deploy cadence divergence and deploy safety | Operational target |
+| 8 | Cost and capacity envelope — a ceiling or a per-operation budget, and who operates | Operational target |
+| 9 | Multi-X — multi-country, -currency, -tenant, -region | Substrate-shaping |
 
-These are the system's **qualities**, and they are not one kind of thing. The four categories above drive different decisions, so a single label flattens exactly the distinctions Phase 5 turns on. Substrate-shaping in particular earns its own category rather than hiding among constraints: multi-X partitions the data, and scale shape decides what the substrate has to be, before any single target is read.
+These are the system's **qualities**, and they are not one kind of thing. The four categories above drive different decisions, so a single label flattens exactly the distinctions Phase 5 turns on. Substrate-shaping in particular earns its own category rather than hiding among constraints: multi-X partitions the data, and load's shape decides what the substrate has to be, before any single target is read.
 
-The answers attach at three scopes, and the scope is part of the answer. Latency, throughput, and availability attach **per use case**: buying a ticket and quoting a price have different targets. Consistency and durability attach **per data class**: a booking and a price quote tolerate very different staleness. Compliance, mandates, deploy frequency, cost shape, multi-X, and scale shape attach **per domain**, describing the whole product rather than one operation. **A subsystem's target is rarely stated directly; it is the derived envelope of its workflows' targets, the tightest each axis demands.**
+The answers attach at four scopes, and the scope is part of the answer. The time and failure budgets attach **per use case**: buying a ticket and quoting a price have different targets. The consistency contract and the loss budget attach **per data class**: a booking and a price quote tolerate very different staleness. Load attaches **per path**, because one system is routinely read-heavy at one tier and write-heavy at another. External constraints, release structure, the cost envelope, and multi-X attach **per domain**, describing the whole product rather than one operation. **A subsystem's target is rarely stated directly; it is the derived envelope of its workflows' targets, the tightest each axis demands.**
 
-Phase 4 does not own the trigger. What makes a use case run is Phase-1 territory, settled when the use case was identified. When Phase 4 surfaces a use case nobody had written down, the response is **targeted insertion** — fold that one use case back into Phase 1 and re-derive only it. Not a full re-derivation. The minimal set is a floor, not a ceiling; contextual questions ride along when a domain demands them — recovery-time objectives, sovereignty of data, an explicitly contracted external dependency, a backwards-compatibility window, seasonal load, the shape of audits and disputes. They are illustrations, not a longer mandatory list.
+Phase 4 does not own the trigger. What makes a use case run is Phase-1 territory, settled when the use case was identified. When Phase 4 surfaces a use case nobody had written down, the response is **targeted insertion** — fold that one use case back into Phase 1 and re-derive only it. Not a full re-derivation. The minimal set is a floor, not a ceiling; contextual questions ride along when a domain demands them — recovery-time objectives, an explicitly contracted external dependency, a backwards-compatibility window, seasonal load, the shape of audits and disputes. They are illustrations, not a longer mandatory list.
 
 ---
 
@@ -93,7 +93,7 @@ What Phase 5 is *for* is worth stating plainly, because it answers the oldest ob
 
 ## Selecting the vector: thought process, not flowchart
 
-**How a team gets from eleven answers to six axis values is the heart of the method, and it is deliberately not a procedure that hands back an answer.** A decision tree per axis was considered and rejected: it reads like a recipe and it misses the interactions between axes, which is where the real judgment lives. A compatibility matrix of every axis against every other was considered and rejected too: it explodes combinatorially, it goes brittle the moment an axis gains a value, and its false precision invites the reader to trust a lookup where they should be thinking.
+**How a team gets from nine answers to six axis values is the heart of the method, and it is deliberately not a procedure that hands back an answer.** A decision tree per axis was considered and rejected: it reads like a recipe and it misses the interactions between axes, which is where the real judgment lives. A compatibility matrix of every axis against every other was considered and rejected too: it explodes combinatorially, it goes brittle the moment an axis gains a value, and its false precision invites the reader to trust a lookup where they should be thinking.
 
 What replaces them is a small set of considerations per axis, each anchored in a Phase-4 input, phrased as *consider this as well* rather than *pick from this menu*, demonstrated by working real profiles end to end. **The stance, stated once: show the thought process, give the reader a tool for building their own thought process, and let them make their own decision.** The walkthrough below is where the considerations are shown in motion. Only afterward are they named and collected, because a heuristic read before it has been seen at work is a rule, and rules are what this method is trying not to ship.
 
@@ -155,33 +155,33 @@ What the walkthrough did not do, and what the next section does, is name the con
 
 The three profiles were not consulting a lookup table. They were running the same short set of considerations on each axis, and letting the Phase-4 answers decide. Named after the fact, the considerations are these. Read them as *also worth weighing*, never as a flowchart that returns a value, and notice that each one points back at a numbered Phase-4 input.
 
-**Deployment topology** — *primary inputs: scale shape (#11), multi-X (#10), deploy frequency (#8), cost (#9).*
+**Deployment topology** — *primary inputs: load (#5), multi-X (#9), release structure (#7), cost envelope (#8).*
 
 - Single team, bounded complexity budget, one region → a single deployable.
 - Several teams gaining independence, deployment complexity still bounded → a modulith, split by subdomain inside one deployable.
 - Strongly-coupled subsystems that scale together and want a transport-transparent wire → a unified runtime.
 - One part with a scaling shape unlike the rest (a high-fanout read path) → split that part out and leave the coupled core whole. The result is a hybrid, and that is fine.
 
-**Composition substrate** — *primary inputs: latency (#1), consistency (#4), scale shape (#11).*
+**Composition substrate** — *primary inputs: time budget (#1), consistency contract (#4), load (#5).*
 
 - One deployable, latency budget allows, no cross-unit fan-out → direct composition.
 - Cross-unit facts that tolerate propagation lag → event-based composition.
 - A continuous, ordered, high-volume feed → streaming for that feed.
 - Strict consistency inside a unit, lag tolerated across → mixed, and expect mixed at any real scale.
 
-**Read/write model** — *primary inputs: scale shape (#11), latency (#1), consistency (#4).*
+**Read/write model** — *primary inputs: load (#5), time budget (#1), consistency contract (#4).*
 
 - Reads and writes at similar volume, no separate read SLO → unified.
 - A read path with its own tight latency target and tolerable staleness → separate the read model, for that path only.
 - Do not separate the model on a write-dominant strict path; the projection earns nothing and costs synchronization.
 
-**State storage** — *primary inputs: durability (#5), compliance (#6), consistency (#4).*
+**State storage** — *primary inputs: loss budget (#3), external constraints (#6), consistency contract (#4).*
 
 - No audit-or-replay requirement → current-state.
 - Regulatory audit plus replay or dispute reconstruction → event-sourced, for that data class.
 - Audit needed but not replay → current-state with an audit log kept as data; do not let it slide into full event-sourcing.
 
-**Persistence configuration** — *primary inputs: scale shape (#11), multi-X (#10), mandates (#7), durability (#5).*
+**Persistence configuration** — *primary inputs: load (#5), multi-X (#9), external constraints (#6), loss budget (#3).*
 
 - Single team, single region, modest scale → a single shared store.
 - Multi-region transactional guarantees → a distributed shared store.
@@ -250,6 +250,6 @@ The last piece of the framework reframes everything before it. **An architecture
 
 ## Closing: the first derivative
 
-**The spiral surfaced the decisions; this module made them.** **The eleven questions of Phase 4, the six axes of Phase 5, the line where Phase 6 begins, the three recovery classes and the judgment that picks among them, and the framework that treats every architecture as a step rather than a destination.** The three-profile walkthrough showed the whole of it in motion: one domain, three sets of answers, three architectures that share a method and almost nothing else, and not one moment where the architecture was chosen rather than derived.
+**The spiral surfaced the decisions; this module made them.** **The nine questions of Phase 4, the six axes of Phase 5, the line where Phase 6 begins, the three recovery classes and the judgment that picks among them, and the framework that treats every architecture as a step rather than a destination.** The three-profile walkthrough showed the whole of it in motion: one domain, three sets of answers, three architectures that share a method and almost nothing else, and not one moment where the architecture was chosen rather than derived.
 
 The reframe at the end points the way forward. If even a greenfield architecture is only the first derivative — the next correct step from a blank page, given the answers in hand — then the system that arrives already built, already running, already carrying decisions nobody alive remembers making, is the same problem from a harder starting point. The Brownfield chapter takes it up: the reader who inherits the system rather than designs it, and who needs the next correct step most of all. **It is the harder version of the problem, and by far the more common one, because most working systems are inherited rather than begun.**

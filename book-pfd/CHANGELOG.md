@@ -7,6 +7,20 @@ All notable changes to the PFD book, newest first. Format:
 `0.x` versions were preview editions; `1.0.0` marked the first edition released to
 readers, and `1.x` are its maintenance and expansion releases.
 
+## [2.1.0] - 2026-07-15
+
+The Phase-4 question set converges with *Architecture Synthesis*: **nine questions**, one sheet across both books.
+
+### Changed
+- **The Phase-4 question set: eleven → nine** (the transition story, told on this book's own pages as *Architecture Synthesis* promised). The eleven were audited, in the AS book's validation runs, against a membership criterion — a question earns its seat only if its answer can press or prune an architecture axis independently of every other answer. Two failures: *throughput* and *scale shape* never pressed anything separately — every derivation cited them together — and merged into **Load** (magnitude, shape per path, concentration, window); *technology mandates* never pressed an architecture axis — they bind the Phase-6 technology choice, reaching architecture only when a mandate strikes a value outright ("no cloud" kills serverless) — and folded into **External constraints** as one clause. Three survivors — latency, availability, durability — turned out to be one grammar in three vocabularies, regrammared as the budgets: **time budget**, **failure budget**, **loss budget**. Nine survived; the count is an output of the criterion, and the sheet grows the day a tenth demand demonstrates independent pressure. **For readers who learned the eleven: nothing you learned is wrong** — two pairs merged, three renamed; the sheets are compatible. The published articles keep the historical eleven.
+- **Touched by the convergence:** the module's question table, categories, and scope paragraph (answers now attach at four scopes — load reads per path); the per-axis primary-input citations; the brownfield audit walkthroughs' question numbers; Spiral Pass 1's Phase-4 scope note. The four question categories (SLO / constraint / operational target / substrate-shaping) are unchanged.
+
+### Added
+- **About the Series** front-matter note (`series-note.md`, first spine entry): the series pipeline, reading map, and register note — the reading map identical across all three books.
+- **The module → book pointer** (Architecture Synthesis module, landing with the AS book's ship): names the full book, what it adds beyond the preview (the ledger, the derivation procedure with conflict rule and halts, verification arithmetic, the blind-derivation evidence), and that the two share one question sheet.
+- **Recovery-triple long names at first use** (Foundations + glossary): BER — *compensate-by-inverse*; FER — *degrade-and-continue* (series terminology ruling 2026-07-12; the short forms remain the compact notation).
+- **The shapes' statements survive realization** (Foundations, the shapes): the semantic-potential paragraph closes the loop with JBCT's newly named twin property — *hide the machinery, keep the meaning* (JBCT 4.3.0): the realization preserves the domain facts the shapes declare, so finished code reads back as the process it implements.
+
 ## [2.0.1] - 2026-07-03
 
 Coherence pass on the condensed edition: the spine now reads end-to-end as a self-sufficient argument. Nearly all changes are re-selection of which sentences carry the spine (`**` placement); the full book's rendered text is unchanged except one clarification noted below.

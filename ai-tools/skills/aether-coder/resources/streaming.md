@@ -56,7 +56,17 @@ public record AuditEvent(@PartitionKey String userId, String action, Instant tim
 
 ## Config
 
+Stream configuration is **application-level**, not node-level. It lives in the
+blueprint's `src/main/resources/resources.toml` — NOT in the node's
+`aether.toml`. The jbct-maven-plugin packages this file into the blueprint JAR
+as `META-INF/resources.toml`; at deploy time each node loads the stream config
+from the blueprint's own resources.
+
+Missing stream config → slice fails to load with:
+`Config section not found: streams.<name>` → blueprint gets deregistered.
+
 ```toml
+# src/main/resources/resources.toml (packaged with the blueprint)
 [streams.audit-log]
 partitions = 8
 retention = "time"
@@ -72,3 +82,8 @@ on-failure = "retry"
 max-retries = 3
 dead-letter = "audit-log-dlq"
 ```
+
+See [configuration.md](configuration.md) for the config source merge order
+(SLICE > NODE > GLOBAL/resources.toml). Same rule applies to any other
+`@ResourceQualifier(config = "...")` lookups — pub-sub topics, database
+names, HTTP clients, rate limits.

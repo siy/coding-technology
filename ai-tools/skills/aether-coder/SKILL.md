@@ -28,7 +28,7 @@ This skill understands Aether-specific patterns. For Java code generation and re
 - **Review:** Use `jbct-reviewer` subagent — checks JBCT compliance. Supplement with Aether-specific checks (routes.toml consistency, error mapping completeness, resource wiring).
 - **Formatting & Linting:** Use `jbct` CLI tool:
   ```bash
-  jbct check src/main/java     # Format + lint (37 rules)
+  jbct check src/main/java     # Format + lint (41 rules)
   jbct format src/main/java    # Format only
   jbct lint src/main/java      # Lint only
   ```
@@ -63,8 +63,8 @@ This skill understands Aether-specific patterns. For Java code generation and re
 
 - `@Codec` is NOT needed on slice types. The slice processor generates serialization codecs automatically.
 - All slice methods must return `Promise<T>`.
-- Pub-Sub, Streaming, Scheduled, PG LISTEN/NOTIFY all use `@ResourceQualifier` custom annotations — there are no shortcut annotations for these.
-- Built-in shortcut annotations exist only for: `@Sql` (database), `@PgSql` (PostgreSQL persistence), `@Http` (HTTP client), `@Notify` (notifications).
+- Pub-Sub, Streaming, PG LISTEN/NOTIFY, and most scheduled tasks use `@ResourceQualifier` custom annotations — no shortcut annotations (exception: `@Heartbeat` is the built-in shortcut for the heartbeat scheduled task).
+- Built-in shortcut annotations: `@Sql` (database), `@PgSql` (PostgreSQL persistence; also usable on a `@Query` interface TYPE), `@Http` (HTTP client), `@Notify` (notifications), `@Jooq` (jOOQ connector), `@Heartbeat` (heartbeat scheduled task, method-level).
 
 ## Self-Validation Checkpoint
 
@@ -95,7 +95,7 @@ Before considering a slice complete:
 
 ### Testing
 - [ ] Unit tests for validation, happy path, failure cases
-- [ ] `jbct check` passes (format + 37 lint rules)
+- [ ] `jbct check` passes (format + 41 lint rules)
 - [ ] Forge smoke test with curl
 - [ ] k6 steady-state test at expected load
 

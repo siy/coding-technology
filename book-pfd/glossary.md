@@ -16,7 +16,7 @@ The methodology's vocabulary, defined once. These terms are the shared spine the
 
 ## B
 
-**BER (Backward Error Recovery).** The first member of the recovery triple: undo an invalidated step by an inverse action — release the held seat, void the authorization. The classic rollback or saga shape. (The recovery triple.)
+**BER (Backward Error Recovery).** The first member of the recovery triple: undo an invalidated step by an inverse action — release the held seat, void the authorization. The classic rollback or saga shape. Series long name: *compensate-by-inverse*. (The recovery triple.)
 
 **Boundary contract.** What a subsystem owns at its edge — what another subsystem must send to ask it for something, what it returns, which failures it exposes — composed from its internal types rather than invented anew (*composed-not-invented*). (Spiral 3.)
 
@@ -48,7 +48,7 @@ The methodology's vocabulary, defined once. These terms are the shared spine the
 
 ## F
 
-**FER (Forward Error Recovery).** The second member of the recovery triple: continue with degraded state rather than undoing — a notification queued for retry while the booking stands, a value allowed to decay through fresh → stale → expired. (The recovery triple.)
+**FER (Forward Error Recovery).** The second member of the recovery triple: continue with degraded state rather than undoing — a notification queued for retry while the booking stands, a value allowed to decay through fresh → stale → expired. Series long name: *degrade-and-continue*. (The recovery triple.)
 
 **Fork-Join.** The pattern for independent steps run in parallel and joined. (The patterns.)
 

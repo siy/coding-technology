@@ -6,7 +6,7 @@ Key takeaways from each chapter for quick review.
 
 ## Part I: Foundations
 
-### Chapter 1: Introduction - Code Unification
+### Introduction - Code Unification
 
 **Key Takeaways:**
 - JBCT's goal is code unification - making code predictable across teams and AI collaboration
@@ -19,7 +19,7 @@ Key takeaways from each chapter for quick review.
 
 ---
 
-### Chapter 2: The Four Return Types
+### The Four Return Types
 
 **Key Takeaways:**
 - **T** - Pure value, cannot fail, always present
@@ -40,7 +40,7 @@ Can fail? → NO  → Optional? → NO  → T
 
 ---
 
-### Chapter 3: Pragmatica Core Essentials
+### Pragmatica Core Essentials
 
 **Key Takeaways:**
 - Consistent API across types: `map()`, `flatMap()`, `filter()`, `recover()`
@@ -55,7 +55,7 @@ Can fail? → NO  → Optional? → NO  → T
 
 ## Part II: Core Principles
 
-### Chapter 4: Parse, Don't Validate
+### Parse, Don't Validate
 
 **Key Takeaways:**
 - Create types that make invalid states unrepresentable
@@ -79,7 +79,7 @@ public record Email(String value) {
 
 ---
 
-### Chapter 5: Error Handling & Composition
+### Error Handling & Composition
 
 **Key Takeaways:**
 - Errors are values (Cause), not exceptions
@@ -92,7 +92,7 @@ public record Email(String value) {
 
 ---
 
-### Chapter 6: Null Policy & Recovery
+### Null Policy & Recovery
 
 **Key Takeaways:**
 - Null is only acceptable at external boundaries
@@ -107,7 +107,7 @@ public record Email(String value) {
 
 ## Part III: Patterns
 
-### Chapter 7: Basic Patterns
+### Basic Patterns
 
 **Key Takeaways:**
 
@@ -131,7 +131,7 @@ Promise.allOf(items.map(this::process))
 
 ---
 
-### Chapter 8: Advanced Patterns
+### Advanced Patterns
 
 **Key Takeaways:**
 
@@ -155,7 +155,7 @@ withRetry(withTimeout(operation))
 
 ---
 
-### Chapter 9: Thread Safety & Immutability
+### Thread Safety & Immutability
 
 **Key Takeaways:**
 - Immutable data is inherently thread-safe
@@ -170,7 +170,7 @@ withRetry(withTimeout(operation))
 
 ## Part IV: Testing
 
-### Chapter 10: Testing Philosophy
+### Testing Philosophy
 
 **Key Takeaways:**
 - Test value objects with boundary cases
@@ -183,7 +183,7 @@ withRetry(withTimeout(operation))
 
 ---
 
-### Chapter 11: Testing in Practice
+### Testing in Practice
 
 **Key Takeaways:**
 - Stubs are simple lambdas: `id -> Promise.success(value)`
@@ -198,7 +198,7 @@ withRetry(withTimeout(operation))
 
 ## Part V: Production Systems
 
-### Chapter 12: Complete Example - RegisterUser
+### Complete Example - RegisterUser
 
 **Key Takeaways:**
 - Use case interface contains everything: records, steps, factory
@@ -211,7 +211,7 @@ withRetry(withTimeout(operation))
 
 ---
 
-### Chapter 13: Complete Example - PlaceOrder
+### Complete Example - PlaceOrder
 
 **Key Takeaways:**
 - Fork-Join for parallel inventory checks
@@ -224,7 +224,7 @@ withRetry(withTimeout(operation))
 
 ---
 
-### Chapter 14: Focused Examples
+### Focused Examples
 
 **PublishArticle - Condition Pattern:**
 - Route by author tier (PREMIUM, STANDARD, NEW)
@@ -242,7 +242,7 @@ withRetry(withTimeout(operation))
 
 ---
 
-### Chapter 15: Project Structure & Frameworks
+### Project Structure & Frameworks
 
 **Key Takeaways:**
 - Three zones: External, Adapter, Domain
@@ -266,7 +266,7 @@ feature/
 
 ## Part VI: Adoption
 
-### Chapter 16: Systematic Application (Checkpoints)
+### Systematic Application (Checkpoints)
 
 **Key Takeaways:**
 - 8 checkpoints for coding and review
@@ -279,20 +279,20 @@ feature/
 
 ---
 
-### Chapter 17: Migration Strategies
+### Migration Strategies
 
 **Key Takeaways:**
-- Phase 1: Value objects only (immediate benefits)
-- Phase 2: Result in new code (stop adding exceptions)
-- Phase 3: Extract use cases (separate concerns)
-- Phase 4: Adapter isolation (complete boundaries)
+- Stage 1: Value objects only (immediate benefits)
+- Stage 2: Result in new code (stop adding exceptions)
+- Stage 3: Extract use cases (separate concerns)
+- Stage 4: Adapter isolation (complete boundaries)
 
 **Remember:**
 > "Incremental migration beats big-bang rewrites."
 
 ---
 
-### Chapter 18: Comparison with Other Approaches
+### Comparison with Other Approaches
 
 **Key Takeaways:**
 - JBCT works within any architecture (Layered, Hexagonal, Clean)
@@ -305,7 +305,7 @@ feature/
 
 ---
 
-### Chapter 19: Troubleshooting & FAQ
+### Troubleshooting & FAQ
 
 **Key Takeaways:**
 - Add `onSuccess`/`onFailure` for visibility in chains

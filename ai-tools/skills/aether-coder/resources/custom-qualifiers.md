@@ -16,12 +16,18 @@ public @interface AnalyticsDb {}
 
 Built-in shortcuts (use directly, no custom annotation needed):
 
-| Annotation | Type | Config Section |
-|-----------|------|---------------|
-| `@Sql` | SqlConnector | `"database"` |
-| `@PgSql` | PgSqlConnector | `"database"` |
-| `@Http` | HttpClient | `"http"` |
-| `@Notify` | NotificationSender | `"notification"` |
+| Annotation | Type | Config Section | Target |
+|-----------|------|---------------|--------|
+| `@Sql` | SqlConnector | `"database"` | PARAMETER |
+| `@PgSql` | PgSqlConnector (or a `@PgSql` `@Query` persistence interface) | `"database"` | PARAMETER, TYPE |
+| `@Http` | HttpClient | `"http"` | PARAMETER |
+| `@Notify` | NotificationSender | `"notification"` | PARAMETER |
+| `@Jooq` | JooqConnector | `"database"` | PARAMETER |
+| `@Heartbeat` | Scheduled (heartbeat task) | `"scheduling.heartbeat"` | METHOD |
+
+`@Heartbeat` is the built-in shortcut for the heartbeat scheduled task (method must
+be zero-arg, returning `Promise<Unit>`); other schedules still need a custom
+`Scheduled.class` qualifier.
 
 Custom qualifiers required for (no built-in shortcuts):
 

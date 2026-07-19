@@ -1,0 +1,71 @@
+# Brownfield
+
+Most worked examples in architecture books are systems their authors built, which makes every one of them a take-home exam again. This chapter's case is a system nobody reading it built, documented for over a decade by an institution with no stake in the narrative: **Universal Credit**, the United Kingdom's welfare-benefits platform — audited by the National Audit Office in 2013, 2014, 2018, and 2024, examined by Parliament on the record, and carrying the rare thing this chapter needs most: an *admitted* failure, with the reset that followed it documented in public.
+
+It is also, quietly, the book's best evidence for Chapter 9. The system has completed one full derivation cycle — inherited position, reset, rebuilt vector, legacy decommissioned — and a second reform program opened against the rebuilt system while this book was being written. Architecture as a derivative stops being a metaphor here; it is a timeline with an auditor.
+
+One discipline governs everything below, stated once: where the public record attests a fact, it is cited; where the chapter must infer, the inference is labeled **[reconstruction]** and argued from the finding record. A worked example's authority comes from keeping those two registers separate: the same rule the blind derivations ran on, applied to history. (The evidence base is UK public sector three times over in this book, and the reason is structural, not patriotic: the NAO and its parliamentary counterparts *publish the demand side* — budgets, deadlines, failures, write-offs — with a candor no private enterprise volunteers. Gradeable systems live where auditors publish.)
+
+## The inheritance: V₀, named honestly
+
+It is 2013, and you have just inherited the Universal Credit "live service." The programme began in 2011: six legacy benefits to be merged into one, delivered under waterfall contracts by four systems integrators: £1.12 billion in contracts let across IBM, Accenture, HP, and BT (contract ceilings of £525m, ~£500m, and £100m for the first three; actual spend to March 2013: Accenture £125m, IBM £75m, HP £49m, BT £16m). By the end of 2012, £638 million had gone to IT, £441 million of it on design and development. In early 2013 a review by Capgemini and an internal reset stocktake concluded the architecture was of "limited extensibility," with — the National Audit Office's own summary — **no detailed blueprint, no target architecture, and no operating model ever produced**. The Major Projects Authority told the Public Accounts Committee that much of the IT was "not fit for purpose" and unlikely to be reusable. Up to £130 million of work was headed for write-off; £34–40 million was formally written down. (The persistent claim that a specific commercial case-management product sat at the core is UNVERIFIED at the primary-source level, and the chapter does not use it; the finding record carries the argument without it.)
+
+Run Chapter 9's audit question against this inheritance — *name the answer that forces each position* — and the audit returns silence on essentially every axis: **V₀ is almost entirely uncited.** Not "bad"; *unforced*, which is the precise finding. The four failure modes this book's companion methodology names for inherited systems, checked in turn:
+
+**Boundaries that predate their reasons.** The system's seams were the *contract* seams — four vendors' delivery boundaries, drawn by procurement rather than derived from anything. The record supplies the epitaph, from a consultant on the programme: **"We were effectively on a waterfall project, because it was a waterfall contract."** The contract shape was the architecture shape. No answer was ever asked to force it. This is the rival account of architecture — that contracts and org charts draw the seams, not demands — caught in the act, and naming it is what the method is for: a boundary no answer forces is an unforced position whichever hand drew it, and procurement is only the most expensive hand. The contract did not disprove the derivation. It stood in for one, and the audit trail is the bill.
+
+**A model that was never a model.** "No blueprint or target architecture ever produced" is this failure mode in an auditor's handwriting. There was nothing to audit positions *against* — the F-question ("what forces this?") had no ledger on either side.
+
+**Legacy persistence swallowed the domain.** [reconstruction] The volatile part of a benefits platform is the *rules* — welfare policy changes with political weather, and six benefits' worth of live amendment history were being merged. "Limited extensibility" is what that looks like operationally when rules are welded to stored case-record shape: a policy change becomes a schema-and-system change. The inference is argued from the extensibility finding and the contract structure; the product identity it is usually hung on is unnecessary as well as unverified.
+
+**The fourth mode — components that must deploy together — is absent**, and saying so matters: the failure modes are a checklist, never a prophecy. V₀ failed as a monolith with vendor seams, which is its own way to fail.
+
+## The answers, as they stood in 2013
+
+Hindsight is the enemy of a fair reconstruction, so the sheet below admits only commitments on the record *before or at* the reset:
+
+- **Continuity, prune-grade:** existing claimants must be paid, every period, through any transformation. The one non-negotiable — and it survives verbatim into every later cycle of this story.
+- **The parliamentary calendar:** national rollout from October 2013, completion by 2017 — politically committed, publicly tracked. In Chapter 2's triage, a *requester's-clock* answer: it binds the programme and will become a path constraint; no latency mechanism can address it.
+- **Volume, projected:** seven-million-plus households at full scale — a demand *with a date*, per the entry gate, never a day-one requirement.
+- **Fraud and error:** the 2010 White Paper committed to reducing fraud and error by £1 billion a year against a £5.2 billion baseline, and administrative costs by half a billion — a *verification-shaped* demand on the calculation core (correct entitlement, per rule version), which is a consistency answer wearing a fiscal costume.
+- **Policy volatility:** [reconstruction, from the regulations record] the Welfare Reform Act 2012 trailed a multi-year series of amending regulations before the first pathfinder claim was taken. The change driver on the rules is permanent and external — the load-bearing answer nobody priced.
+- **Digital by default** (White Paper), a security and identity-assurance requirement the 2013 record already shows straining, and a **cost envelope** of roughly £2.4 billion, with a department that had not built software in-house for twenty years — the bound-mode answer that explains the contracts.
+
+## The audit, and the auditors
+
+Now derive. Continuity plus policy volatility force **isolation between the paying path and the changing rules** — this period's payments must not sit in the blast radius of next period's rule changes. V₀ welded them: uncontained. The fraud/error commitment forces **entitlement computed reconstructably per rule version** — a replay-shaped demand on one data class [reconstruction at mechanism level]; V₀'s current-state case records cannot answer it: uncontained. And the volume projection, decomposed, presses *nothing in 2013*: the pathfinder that eventually launched was deliberately capped at ~1,500 simple claims a month; building day-one for seven million households was the classic unforced position, and the record shows the contracts bought exactly that, at £638 million for a caseload three orders of magnitude smaller.
+
+Read those three findings against the NAO's: "limited extensibility" is the volatility driver uncontained; "no blueprint" is the audit's silence, institutionalized; the write-off is the price of the unforced position. **The auditors ran this book's audit by hand and called it a stocktake.** The derivation adds nothing to their verdict except the part that matters going forward: *why*, row by row, and therefore *what next*.
+
+## The reset as a renegotiation menu
+
+2013's position is Chapter 8's structure in the wild: the parliamentary calendar × continuity × an unusable V₀ cannot all hold. The menu, as history actually faced it:
+
+1. **Patch forward** on V₀ — the pre-reset default. Price: the uncontained volatility driver compounds; the record had already priced this option at £130 million of scrap.
+2. **Big-bang replace** — stop, rebuild, cut over. Struck on *path* grounds, per Chapter 10: the cutover transits an intermediate state that gambles payment continuity — the prune-grade answer — on an unproven system. This menu entry is how the programme got here; choosing it twice would have been the same derivation error at higher stakes.
+3. **Twin-track** — keep the live service paying while building the replacement beside it at the narrowest scope, migrating by readiness. Price: **double-run**, stated in the open — two systems, years of parallel operation, the boundary cost paid in time instead of risk.
+4. **Renegotiate the calendar** — the menu's standing fourth entry, because commitments are answers too. The record shows this happened repeatedly: the 2017 target slid, in public, under parliamentary protest.
+
+History chose three *and* four. The claim this chapter makes is deliberately modest: not that anyone ran this procedure, but that **the feasible-path structure was derivable in advance** — and the two years and £34–40 million spent discovering it by exhaustion were the price of not deriving it. The price of the missing *diagnosis*, precisely: whether the organization could have acted on a 2013 derivation inside the contracts it had already signed is a different question, and Part IV names it as one of the method's walls.
+
+## The path, walked and graded
+
+The executed route, delta by delta, against Chapter 10's indicators:
+
+1. **Pathfinder at one jobcentre** — Ashton-under-Lyne, 29 April 2013, capped at ~1,500 straightforward single-claimant cases a month, "careful and controlled" in the Secretary of State's own framing. The narrowest-scope delta, fully reversible — close it and the live service still pays — with the scope restriction written into the *eligibility rules*: the demand itself was narrowed, not just the deployment. Reversible-first, textbook placement.
+2. **Expansion gated on maturity, not calendar** — test-and-learn, service by service, district by district. Where the calendar reasserted itself the indicators name the cost precisely: the 2018 NAO report records many claimants suffering hardship during the full-service rollout, from design and implementation issues combined — **dual-state duration whose costs were borne by the users**, the one indicator no programme dashboard tracks and the audit record does.
+3. **Live service closed to new claims (2018)** — the first hard-to-reverse delta, placed *late*, after the digital service demonstrably carried the full intake load. Irreversibility ordering, executed by instinct.
+4. **Live service decommissioned (2019)** — cycle one closes: V₀ → reset → V₁, complete.
+5. **Managed migration of remaining legacy claimants** — the statutory-calendar-constrained final delta, still running a decade after the reset; the 2024 NAO report records that one in five invited tax-credit claimants did not complete the move and had benefits stopped. The chapter keeps that sentence. Paths have human costs, auditors record them, and a method that talks about calendar walls owes its readers the number.
+
+**The grade on V₁ arrived unrequested, in March 2020.** The pandemic put a roughly fivefold demand spike on the rebuilt system — 950,000 applications in a single fortnight, active claims rising toward five million, 2.2 million calls in a day, release cadence forced from six changes to seventy-six urgent changes in two months — absorbed, per the department's own engineering account, without statutory payment deadlines moving. History load-tested the derivative and published the result. Keep the two grades distinct, though, because the record does: the *architecture* absorbed the surge; the *business case's* fraud number did not land (a later NAO assessment found fraud and error above the White Paper's forecast). A derivation answers for the vector. It has never answered for the policy.
+
+## Coda: the derivative keeps deriving
+
+In April 2026 the department opened a market notice titled, verbatim, "UC Project Zora — Application Decomposition & Microservices Transition": a £40 million programme against "the constraints of a long-standing monolithic application estate," to decompose the rebuilt system progressively "while maintaining continuity of service." Sixteen years after the White Paper, the continuity answer survives, word for word, into a third cycle's founding document — and cycle three begins while this book is in print. [One neutral observation the record supports: Zora is itself a procurement seeking an external delivery partner — the 2011 pattern under a different contracting philosophy; whether the new seams follow change drivers this time is a question the audit trail will answer for whoever writes the next edition of this chapter.]
+
+Run the closing question the way Chapter 9 taught: *which answers changed?* Post-pandemic load shape; a decade of accumulated policy deltas; the estate's own age as an operability answer. The derivative computes the next step; the next step is being taken; the chapter closes on an open case because every real system is one.
+
+What the method has now done — derived, verified, graded blind, halted honestly, audited, walked, inherited — is bounded on every side by things it deliberately does not do. Part IV names them, and names the trend this book joins by refusing to join it loudly.
+
+*Rules exercised: the audit against an inherited vector · four failure modes as checklist · hindsight-clean elicitation · requester's-clock triage at programme scale · the unforced position, priced by an auditor · the renegotiation menu in the historical record · reversible-first and irreversible-late · dual-state costs · the derivative across three cycles.*

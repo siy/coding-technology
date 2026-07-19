@@ -1,167 +1,54 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="{{DESCRIPTION}}">
-    <meta name="keywords" content="Java, Backend, Coding Standards, Pragmatica, Result, Option, Promise, Functional Programming, BPMN, Business Process">
-    <meta name="author" content="Sergiy Yevtushenko">
-    <title>{{TITLE}} | Pragmatica</title>
-    <link rel="icon" type="image/png" sizes="32x32" href="{{NAV_CONTEXT}}image/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="{{NAV_CONTEXT}}image/favicon-16x16.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="{{NAV_CONTEXT}}image/apple-touch-icon.png">
-    <link rel="stylesheet" href="{{NAV_CONTEXT}}style.css?v={{STYLE_HASH}}">
-    <link rel="canonical" href="{{CANONICAL_URL}}">
-    <!-- Social sharing -->
-    <meta property="og:title" content="{{TITLE}} | Pragmatica">
-    <meta property="og:description" content="{{DESCRIPTION}}">
-    <meta property="og:type" content="{{OG_TYPE}}">
-    <meta property="og:url" content="{{CANONICAL_URL}}">
-    <meta property="og:image" content="https://pragmatica.dev/image/og-default.png">
-    <meta property="og:site_name" content="Pragmatica">
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="{{TITLE}} | Pragmatica">
-    <meta name="twitter:description" content="{{DESCRIPTION}}">
-    <meta name="twitter:image" content="https://pragmatica.dev/image/og-default.png">
-    <!-- Highlight.js for syntax highlighting -->
-    <link rel="stylesheet" id="highlight-theme" href="">
-    <script>
-        // Theme initialization - runs before page render to prevent flash
-        (function() {
-            const stored = localStorage.getItem('theme');
-            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            const theme = stored || (prefersDark ? 'dark' : 'light');
-            document.documentElement.setAttribute('data-theme', theme);
-
-            // Set highlight.js theme based on current theme
-            const highlightTheme = theme === 'dark'
-                ? 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css'
-                : 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css';
-            document.getElementById('highlight-theme').href = highlightTheme;
-        })();
-    </script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="{{DESCRIPTION}}">
+<meta name="author" content="Sergiy Yevtushenko">
+<title>{{TITLE}}</title>
+<link rel="icon" type="image/png" sizes="32x32" href="{{NAV_CONTEXT}}image/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="{{NAV_CONTEXT}}image/favicon-16x16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="{{NAV_CONTEXT}}image/apple-touch-icon.png">
+<link rel="stylesheet" href="{{NAV_CONTEXT}}style.css?v={{STYLE_HASH}}">
+<link rel="canonical" href="{{CANONICAL_URL}}">
+<meta property="og:title" content="{{TITLE}}">
+<meta property="og:description" content="{{DESCRIPTION}}">
+<meta property="og:type" content="{{OG_TYPE}}">
+<meta property="og:url" content="{{CANONICAL_URL}}">
+<meta property="og:image" content="https://pragmatica.dev/image/og-default.png">
+<meta property="og:site_name" content="pragmatica.dev">
+<meta name="twitter:card" content="summary_large_image">
 </head>
-<body>
-    <header>
-        <div class="container">
-            <div class="header-content">
-                <h1 class="site-title">
-                    <a href="{{NAV_CONTEXT}}index.html">Pragmatica</a>
-                </h1>
-                <nav class="main-nav">
-                    <a id="nav-home" href="{{NAV_CONTEXT}}index.html">Home</a>
-                    <a id="nav-books" href="{{NAV_CONTEXT}}books.html">Books</a>
-                    <a id="nav-tools" href="{{NAV_CONTEXT}}AI-TOOLING.html">Tools</a>
-                    <a id="nav-management" href="{{NAV_CONTEXT}}MANAGEMENT_PERSPECTIVE.html">Management</a>
-                    <a id="nav-services" href="{{NAV_CONTEXT}}CONTACT.html">Services</a>
-                    <a href="https://github.com/pragmaticalabs/pragmatica" target="_blank" rel="noopener">Library</a>
-                    <a href="https://leanpub.com/jbct-book" target="_blank" rel="noopener">Get the PDF</a>
-                    <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme">
-                        <span class="theme-icon">🌙</span>
-                    </button>
-                </nav>
-            </div>
-        </div>
-    </header>
+<body class="legacy">
 
-    <main>
-        <div class="container">
-            <article class="content">
-                {{CONTENT}}
-            </article>
-        </div>
-    </main>
+<header>
+  <div class="wrap nav">
+    <a class="brand" href="/">pragmatica<span>.dev</span></a>
+    <nav class="links">
+      <a href="/">Start</a>
+      <a href="/method/">The Method</a>
+      <a href="/java/">The Java Realization</a>
+      <a href="/method/glossary/">Glossary</a>
+      <a href="https://github.com/pragmaticalabs/pragmatica" target="_blank" rel="noopener">GitHub</a>
+    </nav>
+  </div>
+</header>
 
-    <footer>
-        <div class="container">
-            <div class="footer-content">
-                <div class="footer-section">
-                    <h3>Pragmatica</h3>
-                    <p>Executable business process specifications. Code that reads like a business process, because it is one.</p>
-                </div>
-                <div class="footer-section">
-                    <h3>Resources</h3>
-                    <ul>
-                        <li><a href="{{NAV_CONTEXT}}books.html">Books</a></li>
-                        <li><a href="{{NAV_CONTEXT}}book/index.html">JBCT Book (Web Edition)</a></li>
-                        <li><a href="https://leanpub.com/process-first-design" target="_blank" rel="noopener">PFD — Free Sample</a></li>
-                        <li><a href="{{NAV_CONTEXT}}CHANGELOG.html">Changelog</a></li>
-                    </ul>
-                </div>
-                <div class="footer-section">
-                    <h3>Tools</h3>
-                    <ul>
-                        <li><a href="{{NAV_CONTEXT}}AI-TOOLING.html">AI Tooling</a></li>
-                        <li><a href="{{NAV_CONTEXT}}CLI-TOOLING.html">CLI Tools</a></li>
-                        <li><a href="{{NAV_CONTEXT}}MAVEN-PLUGIN.html">Maven Plugin</a></li>
-                        <li><a href="https://github.com/siy/jbct-cli" target="_blank" rel="noopener">JBCT CLI Repo</a></li>
-                    </ul>
-                </div>
-                <div class="footer-section">
-                    <h3>Library</h3>
-                    <ul>
-                        <li><a href="https://github.com/pragmaticalabs/pragmatica" target="_blank" rel="noopener">GitHub Repository</a></li>
-                        <li><a href="https://central.sonatype.com/artifact/org.pragmatica-lite/core" target="_blank" rel="noopener">Maven Central</a></li>
-                        <li><a href="https://javadoc.io/doc/org.pragmatica-lite/core" target="_blank" rel="noopener">API Documentation</a></li>
-                    </ul>
-                </div>
-                <div class="footer-section">
-                    <h3>Support</h3>
-                    <ul>
-                        <li><a href="https://leanpub.com/jbct-book" target="_blank" rel="noopener">JBCT Book ($25)</a></li>
-                        <li><a href="https://leanpub.com/process-first-design" target="_blank" rel="noopener">PFD Book</a></li>
-                        <li><a href="https://github.com/sponsors/siy" target="_blank" rel="noopener">GitHub Sponsors</a></li>
-                    </ul>
-                </div>
-                <div class="footer-section">
-                    <h3>Connect</h3>
-                    <ul>
-                        <li><a href="{{NAV_CONTEXT}}CONTACT.html">Contact Us</a></li>
-                        <li><a href="https://github.com/siy/coding-technology" target="_blank" rel="noopener">Documentation Repo</a></li>
-                        <li><a href="https://github.com/siy/coding-technology/discussions" target="_blank" rel="noopener">Discussions</a></li>
-                        <li><a href="https://github.com/siy/coding-technology/issues" target="_blank" rel="noopener">Report Issues</a></li>
-                    </ul>
-                </div>
-            </div>
-            <div class="footer-bottom">
-                <p>&copy; 2025-2026 Sergiy Yevtushenko. Licensed under the <a href="{{NAV_CONTEXT}}LICENSE">MIT License</a>.</p>
-            </div>
-        </div>
-    </footer>
+<div class="wrap">
+  <div class="page-head">
+    <div class="crumb">Developer tooling &middot; kept at its existing URL</div>
+  </div>
+  <div class="prose">
+    {{CONTENT}}
+  </div>
+</div>
 
-    <!-- Highlight.js library -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/java.min.js"></script>
-    <script>
-        // Initialize syntax highlighting
-        hljs.highlightAll();
+<footer>
+  <div class="wrap">
+    <div>pragmatica.dev &mdash; the education home of the series &middot; commercial: <a href="https://pragmaticalabs.io/" target="_blank" rel="noopener">pragmaticalabs.io</a></div>
+    <div><a href="/">Start</a> &middot; <a href="https://github.com/pragmaticalabs/pragmatica" target="_blank" rel="noopener">GitHub</a></div>
+  </div>
+</footer>
 
-        // Theme toggle functionality
-        const themeToggle = document.getElementById('theme-toggle');
-        const themeIcon = themeToggle.querySelector('.theme-icon');
-
-        function updateThemeIcon(theme) {
-            themeIcon.textContent = theme === 'dark' ? '☀️' : '🌙';
-        }
-
-        // Initialize icon based on current theme
-        const currentTheme = document.documentElement.getAttribute('data-theme');
-        updateThemeIcon(currentTheme);
-
-        themeToggle.addEventListener('click', () => {
-            const current = document.documentElement.getAttribute('data-theme');
-            const next = current === 'dark' ? 'light' : 'dark';
-
-            document.documentElement.setAttribute('data-theme', next);
-            localStorage.setItem('theme', next);
-            updateThemeIcon(next);
-
-            // Update highlight.js theme
-            const highlightTheme = next === 'dark'
-                ? 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css'
-                : 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css';
-            document.getElementById('highlight-theme').href = highlightTheme;
-        });
-    </script>
 </body>
 </html>

@@ -30,6 +30,7 @@ command -v xelatex >/dev/null 2>&1 || { echo "Error: xelatex not installed"; exi
 
 # --- reading order (matches book-pfd/root.md) ---
 CHAPTERS=(
+  series-note.md
   introduction.md
   acknowledgments.md
   spiral-0-decisions.md

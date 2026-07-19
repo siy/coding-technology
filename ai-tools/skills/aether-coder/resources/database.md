@@ -93,7 +93,7 @@ Supported types: all PG built-ins (int, text, uuid, jsonb, timestamptz, arrays, 
 ### jOOQ Runtime Connectors
 
 ```java
-static MySlice mySlice(@JooqConnector JooqConnector jooq) { ... }
+static MySlice mySlice(@Jooq JooqConnector jooq) { ... }
 ```
 
 Available connectors: `JdbcJooqConnector` (sync), `JooqR2dbcConnector` (reactive). Both support `transactional()` with auto-commit/rollback.

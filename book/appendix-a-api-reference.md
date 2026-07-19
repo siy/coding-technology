@@ -224,8 +224,8 @@ Promise.any(Promise<T>...) // First success, cancels others
 ### Recovery
 
 ```java
-.or(T replacement)                    // Fallback value
-.or(Supplier<T> supplier)             // Lazy fallback
+.or(T replacement)                    // Option/Result: fallback value
+.or(Supplier<T> supplier)             // Option/Result: lazy fallback
 .orElse(M<T> replacement)             // Fallback monadic value
 .recover(Fn1<T, Cause> mapper)        // Result/Promise: recover from failure
 ```

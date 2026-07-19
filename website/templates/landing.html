@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<script>(function(){try{var t=localStorage.getItem('theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
 <meta name="description" content="{{DESCRIPTION}}">
 <meta name="author" content="Sergiy Yevtushenko">
 <title>{{TITLE}}</title>
@@ -49,9 +50,11 @@
 <footer>
   <div class="wrap">
     <div>pragmatica.dev &mdash; the education home of the series &middot; commercial: <a href="https://pragmaticalabs.io/" target="_blank" rel="noopener">pragmaticalabs.io</a></div>
-    <div><a href="https://leanpub.com/u/siy" target="_blank" rel="noopener">Leanpub</a> &middot; <a href="https://github.com/pragmaticalabs/pragmatica" target="_blank" rel="noopener">GitHub</a> &middot; <a href="/method/counterexamples/">Counterexamples</a></div>
+    <div><a href="https://leanpub.com/u/sergiy1yevtushenko" target="_blank" rel="noopener">Leanpub</a> &middot; <a href="https://github.com/pragmaticalabs/pragmatica" target="_blank" rel="noopener">GitHub</a> &middot; <a href="/method/counterexamples/">Counterexamples</a></div>
   </div>
 </footer>
 
+<button class="theme-toggle" id="theme-toggle" type="button" aria-label="Toggle light or dark theme"><span class="theme-icon" aria-hidden="true">🌙</span></button>
+<script>(function(){var b=document.getElementById('theme-toggle');if(!b)return;var i=b.querySelector('.theme-icon');function s(t){i.textContent=t==='dark'?'☀️':'🌙';}s(document.documentElement.getAttribute('data-theme'));b.addEventListener('click',function(){var c=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';document.documentElement.setAttribute('data-theme',c);try{localStorage.setItem('theme',c);}catch(e){}s(c);});})();</script>
 </body>
 </html>

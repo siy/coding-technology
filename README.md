@@ -322,18 +322,18 @@ This repository documents a methodology, not a software project. Contributions w
 
 **No Business Exceptions**: Business failures are expected outcomes, not exceptions. They flow through `Result` or `Promise` as typed `Cause` objects.
 
-**Six Patterns = Six BPMN Constructs**: All code fits one pattern, each mapping directly to a BPMN flow construct:
+**Six Patterns**: All code fits one of six patterns, derived from the process's data dependency graph:
 
-| Pattern | BPMN Construct | Role |
-|---------|---------------|------|
-| **Leaf** | Task | Atomic operation (business logic or I/O adapter) |
-| **Sequencer** | Sequence Flow | Chain dependent steps (2-5 steps) |
-| **Fork-Join** | Parallel Gateway | Parallel independent operations |
-| **Condition** | Exclusive Gateway | Branching as values |
-| **Iteration** | Multi-Instance Activity | Functional combinators over collections |
-| **Aspects** | Event Sub-Process | Cross-cutting concerns (retry, timeout, metrics) |
+| Pattern | Role |
+|---------|------|
+| **Leaf** | Atomic operation (business logic or I/O adapter) |
+| **Sequencer** | Chain dependent steps (2-5 steps) |
+| **Fork-Join** | Parallel independent operations |
+| **Condition** | Branching as values |
+| **Iteration** | Functional combinators over collections |
+| **Aspects** | Cross-cutting concerns (retry, timeout, metrics) |
 
-If you can draw it as a BPMN diagram, you can write it as JBCT code. The structure is the same.
+Code written in these patterns reads as the business process it implements — the structure is the same.
 
 **Vertical Slicing**: Each use case is self-contained. Business logic isolated per use case, not centralized.
 

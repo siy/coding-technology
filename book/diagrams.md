@@ -400,7 +400,7 @@ flowchart TB
 **Code Pattern:**
 ```java
 operation.apply(input)
-    .recover(this::handleError);
+    .fold(result -> result.fold(this::handleError, Promise::success));
 
 private Promise<T> handleError(Cause cause) {
     return switch (cause) {

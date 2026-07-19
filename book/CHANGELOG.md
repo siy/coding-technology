@@ -7,6 +7,72 @@ All notable changes to the JBCT book, newest first. Format:
 Earlier history (1.x–2.x) predates per-book changelogs and lives in the
 repository root `CHANGELOG.md`.
 
+## [4.3.0] - 2026-07-15
+
+### Added
+- **About the Series** — the series pipeline, reading map, and register note at the head
+  of the Introduction (the reading map identical across all three books).
+- **Hide the machinery, keep the meaning** — the method's undersold half, named: business
+  facts survive into types and combinators (return types state fallibility and absence;
+  `Option` parameters state domain optionality; `flatMap` states dependency; `all()`
+  states independence; sealed `Cause` states the failure catalog; `*State` states the
+  lifecycle; a missing `Result` states a failure designed out — code reads twice, as Java
+  by the compiler and as the process by the reader). Capstone section + inventory table in
+  *From Process to Patterns*; positioning entry and takeaway in the Introduction; glossary
+  entries here and in the series glossary.
+
+### Changed
+- **Migration "Phases" → "stages"** (series-consistency rename: the word collided with the
+  architecture layer's Phase 4/5/6 — elicit / select / pick-technology; the site glossary
+  crosswalk records the rename). Touched: *Migration Strategies*, the exercises appendix,
+  chapter summaries.
+- **Recovery triple carries the series' long names at first use** (*Null Policy & Error
+  Recovery*): BER — *compensate-by-inverse*; FER — *degrade-and-continue*; design-out
+  already is its long name (series terminology ruling 2026-07-12; short forms remain the
+  compact notation).
+- **Pattern catalog grounded in its own derivation** (*Basic Patterns*, *Advanced Patterns*):
+  the catalog now leads with its process-side lineage — the data dependency graph — with
+  external notation correspondences consolidated into a single convergence aside; discovery
+  questions credited to the patterns' own structure.
+- **Numbering now derives from the spine.** Chapter files renamed to number-free
+  slugs (`parse-dont-validate.md`, not `ch04-…`); reading order and "Chapter N"
+  numbering live only in `root.md`; PDF/EPUB builds inject numbers from spine
+  position. Letter-suffixed chapters (9b, 15a, 15b) are absorbed into the plain
+  sequence — the book is now chapters 1–22. Inserting or moving a chapter is a
+  one-line spine edit.
+- In-prose cross-references converted from "Chapter N" to title links (104 sites,
+  scripted + verified; 83 filename links remapped). `TABLE_OF_CONTENTS.md` retired —
+  superseded by the spine and `index.md`.
+
+### Fixed
+- **`.recover()` restored to its real, synchronous contract.** Its mapper returns a plain
+  value, not a `Promise`; every worked example and exercise that fed it a `Promise`-returning
+  lambda now uses the combinator that actually compiles — `fold` for async failure branches
+  (the *Transfer Funds* retry aspect, the *Place Order* and appendix saga compensations, the
+  *Config* and retry exercises), `mapError` for pure cause mapping (*Register User* token
+  errors, *Place Order* payment errors), `orElse` for an async alternative source (the
+  cache-then-database exercise), and a bare-value `recover` for degrade-to-empty. Touched:
+  *Transfer Funds*, *Register User*, *Place Order*, *Null Policy & Error Recovery*,
+  *Pragmatica Core Essentials*, *From Process to Patterns*, *Diagrams*, Appendix B.
+- **`Unit.INSTANCE` → `Unit.unit()`** (*Transfer Funds*): the constant does not exist in
+  Pragmatica Core; `unit()` is the only accessor.
+- **`Option.orElse(null)` → `Option.or(null)`** (*Null Policy & Error Recovery*, *Register
+  User*): `orElse` expects another `Option`/supplier and is ambiguous on a bare `null`; `or`
+  unwraps to the nullable value a JDBC/jOOQ setter needs — fixed in the pattern text and every
+  write-to-nullable-column example.
+- **Fire-and-forget confirmation no longer passes a scope-escaping `null`** (*Place Order*):
+  the best-effort `SendConfirmation` call moved inside the `flatMap` where the validated
+  request is in scope, so it receives the real argument.
+- **End-of-chapter exercise pointers realigned to Appendix B** (9 chapters): footers citing
+  renumbered or nonexistent exercises (3.6/3.7, 4.4, 5.4) now match the appendix's real
+  numbering and titles.
+- **The `.or()` fallback family corrected against the real API** (*Null Policy & Error
+  Recovery*): `Promise` carries no `.or()` — degrade-to-value on a `Promise` is
+  `recover(cause -> value)`; the fallback doc rows and the dashboard graceful-degradation
+  example fixed accordingly. The three-tier `Config` fallback now chains `orElse` (which
+  keeps the `Option`) before the final unwrapping `.or(...)` — the original chained two
+  unwrapping calls and could not compile.
+
 ## [4.2.1] - 2026-06-30
 
 ### Added

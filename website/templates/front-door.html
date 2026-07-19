@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="{{DESCRIPTION}}">
+<meta name="author" content="Sergiy Yevtushenko">
+<title>{{TITLE}}</title>
+<link rel="icon" type="image/png" sizes="32x32" href="/image/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/image/favicon-16x16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/image/apple-touch-icon.png">
+<link rel="stylesheet" href="/style.css?v={{STYLE_HASH}}">
+<link rel="canonical" href="{{CANONICAL_URL}}">
+<meta property="og:title" content="{{TITLE}}">
+<meta property="og:description" content="{{DESCRIPTION}}">
+<meta property="og:type" content="website">
+<meta property="og:url" content="{{CANONICAL_URL}}">
+<meta property="og:image" content="https://pragmatica.dev/image/og-default.png">
+<meta property="og:site_name" content="pragmatica.dev">
+<meta name="twitter:card" content="summary_large_image">
+</head>
+<body>
+
+<header>
+  <div class="wrap nav">
+    <a class="brand" href="/">pragmatica<span>.dev</span></a>
+    <nav class="links">
+      <a class="current" href="/">Start</a>
+      <a href="/method/">The Method</a>
+      <a href="/java/">The Java Realization</a>
+      <a href="/method/glossary/">Glossary</a>
+      <a href="https://github.com/pragmaticalabs/pragmatica" target="_blank" rel="noopener">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<section class="hero wrap">
+  <h1>Less Art, More Engineering.</h1>
+  <p class="sub">Deriving software systems from business intent through progressively
+  smaller decision spaces &mdash; a series of methods, each free to learn here, each also a book.</p>
+</section>
+
+<section class="pipeline wrap" aria-label="The pipeline">
+  <svg width="960" height="150" viewBox="0 0 960 150" fill="none">
+    <g stroke="#1a2840" stroke-width="1.8" fill="none">
+      <rect x="8"   y="46" width="140" height="46" rx="8"/>
+      <rect x="216" y="46" width="170" height="46" rx="8"/>
+      <rect x="454" y="46" width="176" height="46" rx="8"/>
+      <rect x="698" y="46" width="110" height="46" rx="8"/>
+      <rect x="864" y="46" width="90"  height="46" rx="8" stroke-dasharray="5 4"/>
+    </g>
+    <g stroke="#1a2840" stroke-width="1.6">
+      <line x1="148" y1="69" x2="212" y2="69"/><path d="M206 65 L214 69 L206 73" fill="none"/>
+      <line x1="386" y1="69" x2="450" y2="69"/><path d="M444 65 L452 69 L444 73" fill="none"/>
+      <line x1="630" y1="69" x2="694" y2="69"/><path d="M688 65 L696 69 L688 73" fill="none"/>
+      <line x1="808" y1="69" x2="860" y2="69"/><path d="M854 65 L862 69 L854 73" fill="none"/>
+    </g>
+    <g font-family="Inter,sans-serif" font-size="14.5" fill="#1a2840" text-anchor="middle">
+      <text x="78"  y="74">Business intent</text>
+      <text x="301" y="66">Process-First</text><text x="301" y="84">Design</text>
+      <text x="542" y="66">Architecture</text><text x="542" y="84">Synthesis</text>
+      <text x="753" y="74">JBCT</text>
+      <text x="909" y="74" fill="#4a5468">Runtime</text>
+    </g>
+    <g font-family="Inter,sans-serif" font-size="12" fill="#4a5468" text-anchor="middle">
+      <text x="301" y="112">how the application thinks</text>
+      <text x="542" y="112">where computation happens</text>
+      <text x="753" y="112">how each part is built</text>
+    </g>
+    <circle cx="301" cy="46" r="7" fill="#f4f3f0" stroke="#f59e0b" stroke-width="3"/>
+    <text x="301" y="24" font-family="Inter,sans-serif" font-size="12" fill="#d97706" text-anchor="middle">you start here</text>
+  </svg>
+</section>
+
+<section class="entries wrap">
+  <a class="chip active" href="https://leanpub.com/process-first-design" target="_blank" rel="noopener">I design processes <small>start with Process-First Design</small></a>
+  <a class="chip" href="/method/architecture-synthesis/">I am an architect <small>start with Architecture Synthesis</small></a>
+  <a class="chip" href="/java/jbct/course/">I write Java backends <small>start with the JBCT course</small></a>
+</section>
+
+<section class="halves wrap">
+  <div class="half">
+    <h2>The Method</h2>
+    <p class="tag">Stack-independent. Any language, any framework.</p>
+    <ul>
+      <li><a href="/method/pfd/">Process-First Design</a> <span>course &middot; book</span></li>
+      <li><a href="/method/architecture-synthesis/">Architecture Synthesis</a> <span>course &middot; book</span></li>
+      <li><a href="/method/glossary/">Series glossary</a> <span>reference</span></li>
+      <li><a href="/method/counterexamples/">Counterexamples wanted</a> <span>replication kit</span></li>
+    </ul>
+  </div>
+  <div class="half">
+    <h2>The Java Realization</h2>
+    <p class="tag">The same principles, made concrete in one stack.</p>
+    <ul>
+      <li><a href="/java/jbct/">Java Backend Coding Technology</a> <span>course &middot; book</span></li>
+      <li><a href="/java/pragmatica/">Pragmatica core library</a> <span>OSS</span></li>
+      <li><a href="/java/aether/">Aether runtime</a> <span>in development</span></li>
+    </ul>
+    <p class="declare">Java is the reference realization, not a lock-in &mdash; every
+    principle here ports to other languages.</p>
+  </div>
+</section>
+
+<section class="books wrap">
+  <h2>Learn free. Own the book.</h2>
+  <p class="note">Every book has a free course edition on this site. The books remain books.</p>
+  <div class="shelf">
+    <div class="card">
+      <svg width="72" height="72" viewBox="0 0 72 72"><g stroke="#1a2840" stroke-width="1.6" fill="none">
+        <path d="M16 10 L56 10 L36 36 L56 62 L16 62 L36 36 Z"/></g>
+        <circle cx="36" cy="36" r="3.4" fill="#f59e0b" stroke="#1a2840" stroke-width="1.2"/></svg>
+      <h3>Process-First Design</h3>
+      <p>The design method: nine questions, four shapes, six altitudes.</p>
+      <div class="row"><a class="btn soon" href="/method/pfd/">Course planned</a><a class="btn book" href="https://leanpub.com/process-first-design" target="_blank" rel="noopener">Book</a></div>
+    </div>
+    <div class="card">
+      <svg width="72" height="72" viewBox="0 0 72 72"><g stroke="#1a2840" stroke-width="1.4">
+        <line x1="12" y1="12" x2="12" y2="60"/><line x1="24" y1="12" x2="24" y2="60"/>
+        <line x1="36" y1="12" x2="36" y2="60"/><line x1="48" y1="12" x2="48" y2="60"/>
+        <line x1="60" y1="12" x2="60" y2="60"/></g>
+        <polyline points="12,32 24,40 36,26 48,44 60,36" fill="none" stroke="#1a2840" stroke-width="2.6"/>
+        <circle cx="12" cy="32" r="3.4" fill="#f59e0b" stroke="#1a2840" stroke-width="1.2"/></svg>
+      <h3>Architecture Synthesis</h3>
+      <p>The next correct step: architecture derived, not chosen.</p>
+      <div class="row"><a class="btn soon" href="/method/architecture-synthesis/">Course planned</a><a class="btn book" href="https://leanpub.com/architecture-synthesis" target="_blank" rel="noopener">Book</a></div>
+    </div>
+    <div class="card">
+      <svg width="72" height="72" viewBox="0 0 72 72"><g stroke="#1a2840" stroke-width="1.6" fill="none">
+        <path d="M10 22 C 26 22, 20 50, 36 50 L62 50"/><path d="M10 36 L62 36"/>
+        <path d="M10 50 C 26 50, 20 22, 36 22 L62 22"/></g>
+        <circle cx="62" cy="36" r="3.4" fill="#f59e0b" stroke="#1a2840" stroke-width="1.2"/></svg>
+      <h3>Java Backend Coding Technology</h3>
+      <p>Hide the machinery, keep the meaning: deterministic code whose types state the business facts.</p>
+      <div class="row"><a class="btn course" href="/java/jbct/course/">Free course</a><a class="btn book" href="https://leanpub.com/jbct-book" target="_blank" rel="noopener">Book</a></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div>pragmatica.dev &mdash; the education home of the series &middot; commercial: <a href="https://pragmaticalabs.io/" target="_blank" rel="noopener">pragmaticalabs.io</a></div>
+    <div><a href="https://leanpub.com/u/siy" target="_blank" rel="noopener">Leanpub</a> &middot; <a href="https://github.com/pragmaticalabs/pragmatica" target="_blank" rel="noopener">GitHub</a> &middot; <a href="/method/counterexamples/">Counterexamples</a></div>
+  </div>
+</footer>
+
+</body>
+</html>

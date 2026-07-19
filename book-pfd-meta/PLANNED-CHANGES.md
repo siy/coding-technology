@@ -14,6 +14,45 @@ is retained for reference.
 
 ---
 
+## 12. Series-review retrofits (2026-07-12) — POSTPONED to next PFD/JBCT revisions; specified now
+
+**Source:** `book-arch-meta/series-review-feedback.md` + `SERIES-REVIEW-DISPOSITION.md` (v2). Arch-book-side items applied 2026-07-12 (manuscript 0.3.0); the cross-book retrofits below ride the next release cycle of each published book.
+
+**Series terminology ruling (user, 2026-07-12) — the recovery triple:** canonical long names = **compensate-by-inverse / degrade-and-continue / design-out**; BER/FER remain the official SHORT forms (backward/forward recovery — compact notation for tables, matrices, code). First use per chapter gives both; prose prefers long names. Retrofit is ADDITIVE for PFD/JBCT (their BER/FER stays valid): introduce long names as canonical prose at next revision.
+
+**PFD next revision:**
+- **Question-set convergence to nine — DONE both sides 2026-07-15** (user ruling 2026-07-14, AS
+  read-feedback item 1; AS-side 0.3.9, PFD-side **2.1.0** — pulled forward by user from "next
+  revision"; site glossary crosswalk made historical, front-door card updated; module table +
+  categories + scopes, per-axis citations, brownfield numbering, spiral-1 scope note converged). PFD adopts the nine-question sheet natively; **PFD's
+  changelog carries the transition story**, relocated here from AS ch. 2 (which keeps only the
+  membership criterion + count-is-output law). The story, preserved for the changelog entry:
+  the module and the articles ran eleven questions; auditing the AS validation runs against the
+  membership criterion (an answer must press or prune an axis independently) showed two failures —
+  *peak load* and *scale shape* never pressed anything separately (every derivation cited them
+  together → merged into **Load**), and *technology mandates* never pressed an architecture axis
+  (they bind the later technology choice, reaching architecture only when striking a value
+  outright, e.g. "no cloud" kills serverless → folded into **External constraints** as one
+  clause); and three survivors — latency, availability, durability targets — turned out to be one
+  grammar wearing three vocabularies, regrammared as the three **budgets** (time / failure /
+  loss). Nine survived; the count is an output of the criterion. Migration note for PFD's pages:
+  *nothing you learned is wrong — two pairs merged, three were regrammared; the sheets are
+  compatible.* Articles stay at eleven (historical record, untouched). Knock-ons at this landing:
+  AS series-note supersession sentence simplifies (both books speak nine); site glossary
+  crosswalk row "eleven→nine" becomes a historical note.
+- Recovery-triple long names introduced (BER/FER kept as short forms) — Foundations + glossary.
+- Driver modes (prune/select/isolate/split/bound) become the canonical question taxonomy (crosswalk from the four categories; glossary carries it).
+- Architecture Synthesis module → design-time preview + canonical pointer to the Arch book, **at the Arch book's ship** (decision D in Arch BOOK-PLAN); supersession recorded in both revision histories.
+- Reading map + register note added to front matter (identical text across the series; source: book-arch/series-note.md).
+
+**JBCT next revision:**
+- Ch. 18 migration "Phases" → "stages" (collides with PFD's Phase 1–6).
+- Recovery-triple long names introduced (as above).
+- Backlog (from review §JBCT): separate universal principles from Java-specific realization; principles vs Pragmatica-library features made explicit; Spring-brownfield adoption path (fold the legacy-adoption article rather than writing fresh).
+- Reading map + register note in front matter.
+
+---
+
 ## 10. Poltorak full-read review (2026-07-01) — deferred items
 
 He read the whole book. Landed edits shipped in **1.8.0** (variation-without-branching worked example;
@@ -29,6 +68,48 @@ scope-band definition; tiers overclaim; single-sitting-read correction). Still o
   Deferred; currently local-only.
 - **Testimonial.** He offered a Leanpub testimonial; accept it. Also offered coupon distribution to Ukrainian
   IT chats and an r/softwarearchitecture post — low-cost, his call.
+
+---
+
+## 11. Use case vs workflow — the bridge + the discriminator rule (2026-07-09)
+
+**STATUS (user ruling 2026-07-11): POSTPONED — no PFD book edits while the architecture book is the focus.** The item stays fully specified below for the next PFD pass (2.x); it ships together with item 5's trigger taxonomy. Nothing here blocks the architecture book.
+
+**Origin:** Yannick L. (IVP), personal DM 2026-07-09, mid-read of the book — first cold-reader-confirmed
+clarity gap: "what qualifies as a Use Case, what qualifies as a workflow." He knows EPC, BPMN2, and
+classic UC theory; if the boundary wobbles at his depth of reading, the book explains it worse than
+assumed.
+
+**The gap (two halves):**
+
+1. **Both glossary definitions lean on "one outcome"** (use case: "one trigger, one outcome"; workflow:
+   "composition of use cases for one business outcome") and the discriminator is never stated as a rule —
+   a reader with a multi-step operation can't mechanically decide which altitude they're holding.
+2. **No positioning against the classic definitions.** A Cockburn/Jacobson-literate reader gets no signal
+   that PFD's use case is deliberately not theirs, so silence reads as "same concept, unclear scoping."
+
+**Decision (user, 2026-07-09): keep PFD's own definition — adopting a classic one would break the telescope.**
+Jacobson's actor-centricity ("observable result of value to an actor") excludes event-triggered and
+internally-invoked use cases (PFD's trigger taxonomy is wider); Cockburn's goal levels (summary /
+user-goal / subfunction) are the taxonomy altitudes *dissolve* — importing him reintroduces the exact
+ambiguity with someone else's labels; all classics define a narrative document (scenario + extensions)
+with a heuristic boundary ("one sitting, one goal"), while the telescope needs a *mechanical* boundary
+because altitudes must be checkable. And "one trigger, one outcome" is load-bearing: it is what SLOs and
+change drivers attach to.
+
+**The fix (two edits, ship together):**
+
+- **A short "relation to the classic use case" note** (The telescope, at the definition): cite the lineage
+  (Jacobson, Cockburn), name the deliberate deviations — trigger-centric not actor-centric; a structural
+  unit composed from patterns, not a narrative document; altitude instead of goal levels.
+- **State the discriminator as a rule:** a use case decomposes into *patterns*, never into independently
+  triggerable business operations. The moment a step is independently triggerable — or state must survive
+  between steps — you are at workflow altitude, and the workflow owns that spanning state machine.
+  Sharpen the two glossary entries so they stop resting on "one outcome" alone.
+
+**Adjacencies:** item 5's "use-case invocation as a valid trigger" (trigger taxonomy) is the same
+neighborhood — ship in the same pass. The reply giving Yannick the one-line version of the rule is in
+`book-arch-meta/ENGAGEMENT-2026-07-06.md` (2026-07-09 entry).
 
 ---
 

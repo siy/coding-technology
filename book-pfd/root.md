@@ -3,6 +3,7 @@
 In-progress draft. Read top-to-bottom; each piece is written to land naturally from the one before.
 
 ## Front matter
+- [About the Series](series-note.md) — layers, reading map, register note.
 - [Introduction](introduction.md) — thesis, compact convergence, five principles, reading guide.
 - [Acknowledgments](acknowledgments.md) — the foundational named-idea credits: Jackson, King, Loth, Poltorak.
 

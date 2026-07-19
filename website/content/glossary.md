@@ -9,9 +9,9 @@ Renames and mappings across the series, so a reader who learned a term in one bo
 | In one book | Maps to | Note |
 |---|---|---|
 | AS's long names — *compensate-by-inverse*, *degrade-and-continue*, *design-out* | PFD/JBCT's **BER**, **FER**, **design-out** | Same three classes, the [recovery triple](#recovery-triple). AS spells them out in prose; PFD/JBCT use the short acronyms as the series' compact notation. |
-| PFD's eleven Phase-4 questions (*Architecture Synthesis* module) | AS's [nine questions](#nine-questions) | The audit that produced AS found two pairs redundant — throughput + scale shape merged into *Load*; technology mandates folded into *External constraints* — and regrammared latency/availability/durability as budgets (time/failure/loss). AS's sheet **supersedes** the PFD module for architecture work; PFD's next revision will say so on its own pages. |
+| PFD's eleven Phase-4 questions (editions before 2.1.0) | The series' [nine questions](#nine-questions) | Historical: the audit that produced AS found two pairs redundant — throughput + scale shape merged into *Load*; technology mandates folded into *External constraints* — and regrammared latency/availability/durability as budgets (time/failure/loss). As of PFD 2.1.0 both books ask the same nine; PFD's changelog carries the transition. |
 | PFD's four question categories (SLO / Constraint / Operational target / Substrate-shaping) | AS's five [driver modes](#driver-modes) (prune / select / isolate / split / bound) | Driver modes are the series-canonical taxonomy — they classify by what an answer *does* in the derivation, not by what kind of requirement it superficially looks like. |
-| JBCT's migration "Phases" (Phase 1–4: incremental steps for adopting JBCT in an existing codebase) | — | Unrelated to AS's Phase 4/5/6 (elicit/select/pick-technology) despite the shared word. Rename pending in JBCT's next revision to "stages," to remove the collision. |
+| JBCT's migration "Phases" (editions before 4.3.0) | JBCT's migration **stages** (Stage 1–4: incremental steps for adopting JBCT in an existing codebase) | Renamed in JBCT 4.3.0 to remove the collision with AS's Phase 4/5/6 (elicit/select/pick-technology) — unrelated concepts that shared a word. |
 
 ---
 
@@ -182,7 +182,7 @@ Collecting every failure instead of stopping at the first; `Result.all()` accumu
 *Defined in: JBCT*
 
 **Evidence Grades** {#evidence-grades}
-The protection levels assigned to a derivation run's evidence, worst first: **C** — registered in advance but drawn from memory of the same public sources it's graded against. **B** — registered before the answer sheet was assembled, operator not isolated. **A** — executed by an operator that provably could not have seen the outcome.
+The protection levels assigned to a derivation run's evidence, worst first: **C** — registered in advance but drawn from memory of the same public sources it's graded against. **B** — registered before the answer sheet was assembled, operator not isolated. **A** — executed by operators quarantined from the outcome (no browsing; every step cites a published answer and a named rule).
 *Defined in: AS*
 
 **Event-Based Step Composition** {#event-based-step-composition}
@@ -251,6 +251,10 @@ The execution path when every operation succeeds. In JBCT it's the default read 
 Ports-and-adapters: domain at the center, adapters at the edges. JBCT's step interfaces play a role similar to ports.
 *Defined in: JBCT*
 
+**Hide the Machinery, Keep the Meaning** {#hide-the-machinery-keep-the-meaning}
+JBCT's twin property, and the undersold half of "code reads like the process": technical detail is hidden in adapters and [Aspects](#aspects), while the business facts survive in types and combinators — [the shapes](#the-shapes) state fallibility and absence, `Option` parameters state domain optionality, `flatMap` states dependency, `all()` states independence, sealed [`Cause`](#cause) hierarchies state the failure catalog, [`*State`](#state-machine) sums state the lifecycle. The code reads twice: once by the compiler as Java, once by the reader as the business process — [semantic potential](#semantic-potential), spent and kept.
+*Defined in: JBCT*
+
 **Honest Limit** {#honest-limit}
 The acknowledged edge of [data as residue](#data-as-residue): in domains dense with cross-field invariants (a ledger, a tax engine), stored state has real structure and a record earns its place — data is minimized there, not eliminated.
 *Defined in: PFD*
@@ -268,6 +272,10 @@ An object that cannot change after construction. Java records are immutable by d
 **Independent Variation Principle (IVP)** {#independent-variation-principle}
 Yannick Loth's criterion: unify elements sharing a change-driver assignment, separate those that don't. PFD reaches the same partition from the process side.
 *Defined in: PFD*
+
+**Inert** {#inert}
+An answer whose demand the current position already contains: it presses on nothing, moves no axis, and is recorded rather than acted on. Most answers on most sheets are inert — a result, not an anticlimax. Opposite of [press](#press).
+*Defined in: AS*
 
 **Information Hiding** {#information-hiding}
 Parnas's criterion: decompose by hiding the design decisions most likely to change, so the module boundary follows the change list, not the flowchart.
@@ -318,7 +326,7 @@ Countries, currencies, tenants, regions, versions — one of the [nine questions
 ## N
 
 **Nine Questions** {#nine-questions}
-AS's elicitation sheet — the minimal set of questions whose answers can press or prune an architecture axis independently of every other question's answer. Time budget, failure budget, loss budget, consistency contract, load, external constraints, release structure, cost & capacity envelope, multi-X. Organized by [driver mode](#driver-modes); see the [crosswalk](#crosswalk) for its relation to PFD's eleven.
+AS's elicitation sheet — the minimal set of questions whose answers can press or prune an architecture axis independently of every other question's answer. Time budget, failure budget, loss budget, consistency contract, load, external constraints, release structure, cost & capacity envelope, multi-X. Organized by [driver mode](#driver-modes); shared by AS and PFD (2.1.0+) — see the [crosswalk](#crosswalk) for the historical eleven.
 *Defined in: AS*
 
 **Null Vector** {#null-vector}
@@ -346,7 +354,7 @@ The sufficient set of composition primitives, identical at every altitude: [Leaf
 *Defined in: PFD*
 
 **Persistence Configuration** {#persistence-configuration}
-One of the [six axes](#six-axes): single shared store, distributed shared, sharded, per-component, or polyglot. The distributed shared store is the only value giving strict cross-region transactions with zero data loss on regional failure — priced in physics (a cross-region round-trip floor), not tunable away.
+One of the [six axes](#six-axes): single shared store, distributed shared, sharded, per-component, or polyglot. The distributed shared store is the only value in the ledger giving strict cross-region transactions with zero data loss on regional failure — priced in physics (a cross-region round-trip floor), not tunable away.
 *Defined in: AS*
 
 **Phase 4 / Phase 5 / Phase 6** {#phase-4-5-6}
@@ -360,6 +368,10 @@ In Hexagonal Architecture, an interface defining how the domain talks to the out
 **Pragmatica Core** {#pragmatica-core}
 The minimal Java library providing Option, Result, Promise, and Cause — the foundation JBCT's patterns are built on.
 *Defined in: JBCT*
+
+**Press** {#press}
+What an uncontained demand does to an axis: a demand *presses* when it escapes what the current position contains, forcing the axis toward a value whose capability envelope holds it. An answer that presses nothing is [inert](#inert).
+*Defined in: AS*
 
 **Pressure Matrix** {#pressure-matrix}
 The derivation's working record of which answer pressed which axis toward which value. During derivation it's the workspace; kept afterward, it's the traceability record a [decision record](#decision-record) is built from.
@@ -522,7 +534,7 @@ A type with a single value, meaning "no meaningful result" — used instead of `
 *Defined in: JBCT*
 
 **Use Case** {#use-case}
-One business operation with one trigger and one outcome. JBCT realizes it as a functional interface holding Request/ValidRequest/Response records and step interfaces; it's the floor of PFD's [telescope](#telescope), composed internally from [the patterns](#the-patterns); AS attaches per-use-case SLO answers (latency, throughput, availability) to it as an elicitation scope.
+One business operation with one trigger and one outcome. JBCT realizes it as a functional interface holding Request/ValidRequest/Response records and step interfaces; it's the floor of PFD's [telescope](#telescope), composed internally from [the patterns](#the-patterns); AS attaches per-use-case answers — the [time and failure budgets](#nine-questions) — to it as an elicitation scope.
 *Defined in: JBCT, PFD, AS*
 
 ## V

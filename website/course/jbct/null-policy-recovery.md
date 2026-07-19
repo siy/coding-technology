@@ -4,7 +4,7 @@ When null is acceptable, converting it to Option at the boundary, and the recove
 ## learn
 - When null is acceptable (adapter boundaries only)
 - Converting null to Option immediately
-- Fallback, alternative-source, and re-throw recovery
+- Fallback, alternative-source, and conditional recovery
 - The recovery triple: backward, forward, designing failure out
 
 ## exercise

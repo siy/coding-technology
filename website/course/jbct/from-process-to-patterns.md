@@ -7,6 +7,7 @@ How a business process becomes a data dependency graph, and why pattern choice f
 - The data dependency graph (DDG) and its mapping to JBCT patterns
 - The telescope: how workflows, subsystems, and systems emerge
 - What earns a place in code: workflows, entities, shared modules
+- Hide the machinery, keep the meaning: the inventory of business facts the code preserves
 
 ## note
 Conceptual - no code by the end of this lesson. Read it slowly: every pattern lesson later in the

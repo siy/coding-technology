@@ -26,19 +26,15 @@
   <div class="wrap nav">
     <a class="brand" href="/">pragmatica<span>.dev</span></a>
     <nav class="links">
-      <a href="/">Start</a>
-      <a href="/method/">The Method</a>
-      <a class="current" href="/java/">The Java Realization</a>
-      <a href="/method/glossary/">Glossary</a>
-      <a href="https://github.com/pragmaticalabs/pragmatica" target="_blank" rel="noopener">GitHub</a>
+      {{NAV_LINKS}}
     </nav>
   </div>
 </header>
 
 <div class="wrap">
   <div class="page-head">
-    <div class="crumb"><a href="/java/">The Java Realization</a> / <b>JBCT course</b></div>
-    <h1 style="font-size:38px;letter-spacing:-.02em;line-height:1.15;margin:10px 0 6px">Java Backend Coding Technology &mdash; Course</h1>
+    <div class="crumb"><a href="{{REALM_HREF}}">{{REALM_LABEL}}</a> / <b>{{CRUMB_LABEL}}</b></div>
+    <h1 style="font-size:38px;letter-spacing:-.02em;line-height:1.15;margin:10px 0 6px">{{COURSE_H1}}</h1>
     <p style="color:var(--ink-soft);font-size:16px;margin-bottom:8px">{{INTRO}}</p>
   </div>
 
@@ -50,7 +46,7 @@
 <footer>
   <div class="wrap">
     <div>pragmatica.dev &mdash; the education home of the series &middot; commercial: <a href="https://pragmaticalabs.io/" target="_blank" rel="noopener">pragmaticalabs.io</a></div>
-    <div><a href="/java/jbct/reference/">API reference</a> &middot; <a href="https://leanpub.com/jbct-book" target="_blank" rel="noopener">Get the book</a> &middot; <a href="https://github.com/pragmaticalabs/pragmatica" target="_blank" rel="noopener">GitHub</a></div>
+    <div>{{FOOTER_LINKS}}<a href="https://github.com/pragmaticalabs/pragmatica" target="_blank" rel="noopener">GitHub</a></div>
   </div>
 </footer>
 

@@ -216,12 +216,18 @@ public interface TransferFunds {
         Supplier<Promise<TransferResult>> operation
     ) {
         return operation.get()
-            .recover(cause -> {
-                if (policy.shouldRetry(cause) && policy.attemptsRemaining() > 0) {
-                    return retryWithPolicy(policy.decrementAttempts(), operation);
-                }
-                return cause.promise();
-            });
+            .fold(result -> result.fold(cause -> retryOrFail(policy, operation, cause),
+                                        Promise::success));
+    }
+
+    private static Promise<TransferResult> retryOrFail(
+        RetryPolicy policy,
+        Supplier<Promise<TransferResult>> operation,
+        Cause cause
+    ) {
+        return policy.shouldRetry(cause) && policy.attemptsRemaining() > 0
+            ? retryWithPolicy(policy.decrementAttempts(), operation)
+            : cause.promise();
     }
 
     // ASPECT: Audit (wraps execution with before/after logging)
@@ -466,7 +472,7 @@ class TransferFundsTest {
                 t -> Promise.success(t),
                 t -> Promise.success(t),
                 failingThenSucceeding,
-                e -> Promise.success(Unit.INSTANCE),
+                e -> Promise.success(Unit.unit()),
                 TimeSpan.timeSpan(5).seconds(),
                 policy
             );
@@ -483,7 +489,7 @@ class TransferFundsTest {
 
             TransferFunds.AuditLog auditLog = entry -> {
                 auditedEntries.add(entry);
-                return Promise.success(Unit.INSTANCE);
+                return Promise.success(Unit.unit());
             };
 
             var useCase = TransferFunds.transferFunds(
@@ -509,7 +515,7 @@ class TransferFundsTest {
 
             TransferFunds.AuditLog auditLog = entry -> {
                 auditedEntries.add(entry);
-                return Promise.success(Unit.INSTANCE);
+                return Promise.success(Unit.unit());
             };
 
             var useCase = TransferFunds.transferFunds(

@@ -300,8 +300,7 @@ Tests are sequential, so mutable fixtures don't create races.
 ## Exercises
 
 See [Appendix B](appendix-b-exercises.md) for exercises on:
-- Exercise 3.6: Identifying thread safety issues
-- Exercise 3.7: Converting unsafe code to safe patterns
+- Exercise 3.5: Thread Safety Analysis
 
 ---
 

@@ -339,8 +339,8 @@ static Step validate(Validator validator) {
 ## Exercises
 
 See [Appendix B](appendix-b-exercises.md) for exercises on:
-- Exercise 6.1: Checkpoint application practice
-- Exercise 6.3: Code review using checkpoints
+- Exercise 6.1: Code Review Checklist
+- Exercise 6.3: Debugging Practice
 
 ---
 

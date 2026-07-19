@@ -13,22 +13,13 @@
 
 ## Single Pattern Per Function
 
-Every function implements exactly one pattern from a fixed catalog: Leaf, Sequencer, Fork-Join, Condition, or Iteration. (Aspects are the exception—they decorate other patterns.) Each pattern maps directly to a BPMN flow construct:
+Every function implements exactly one pattern from a fixed catalog: Leaf, Sequencer, Fork-Join, Condition, or Iteration. (Aspects are the exception—they decorate other patterns.) The catalog is not invented; it comes from the process side — the data dependency graph and its operators, derived in [From Process to Patterns](from-process-to-patterns.md).
 
-| Pattern | BPMN Construct | Structural Role |
-|---------|---------------|-----------------|
-| **Leaf** | Task / Service Task | Atomic operation, one responsibility |
-| **Sequencer** | Sequence Flow | Dependent steps in order |
-| **Fork-Join** | Parallel Gateway | Independent concurrent operations |
-| **Condition** | Exclusive Gateway | Routing, no transformation |
-| **Iteration** | Multi-Instance Activity | Collection processing |
-| **Aspects** | Event Sub-Process | Cross-cutting concerns wrapping logic |
-
-This is not a metaphor — JBCT grew from functional programming, BPMN grew from business process modeling, and they converged because they describe the same thing: how work flows through a system. If you can draw it as a BPMN diagram, you can write it as JBCT code. The structure is the same.
+> **A convergence worth noting.** Business process notation arrived at the same shapes independently: BPMN's core constructs correspond one-to-one to the catalog — Task ↔ Leaf, Sequence Flow ↔ Sequencer, Parallel Gateway ↔ Fork-Join, Exclusive Gateway ↔ Condition, Multi-Instance Activity ↔ Iteration, Event Sub-Process ↔ Aspects. The recognition is corroboration, not foundation: both describe how work flows through a system, and the catalog is derived from the process, not from the notation. The practical difference is location — a process diagram lives beside the system and drifts; here the process is the code, compiled and typed. If your shop draws BPMN, the correspondence is your dictionary — read it toward the code.
 
 **Why?** Cognitive load. When reading a function, you should recognize its shape immediately. If it's a Sequencer, you know it chains dependent steps linearly. If it's Fork-Join, you know it runs independent operations and combines results. Mixing patterns within a function creates mixed abstraction levels and forces readers to hold multiple mental models simultaneously.
 
-This rule has a mechanical benefit: it makes refactoring deterministic. When a function grows beyond one pattern, you extract the second pattern into its own function. There's no subjective judgment about "is this too complex?" — if you're doing two patterns, split it. In BPMN terms: each method is one Task, one Gateway, or one Sub-Process — not a mix.
+This rule has a mechanical benefit: it makes refactoring deterministic. When a function grows beyond one pattern, you extract the second pattern into its own function. There's no subjective judgment about "is this too complex?" — if you're doing two patterns, split it.
 
 **Why by criteria:**
 - **Mental Overhead**: One pattern per function means immediate recognition - no mental model switching (+2)
@@ -726,9 +717,8 @@ void execute_fails_whenEmailAlreadyExists()
 ## Exercises
 
 See [Appendix B](appendix-b-exercises.md) for exercises on:
-- Exercise 3.1: Pattern identification
-- Exercise 3.2: Leaf extraction
-- Exercise 3.4: Zone-based naming
+- Exercise 3.1: Pattern Identification
+- Exercise 3.3: Implement Condition Pattern
 
 ---
 

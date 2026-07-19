@@ -282,10 +282,10 @@ feature/
 ### Migration Strategies
 
 **Key Takeaways:**
-- Phase 1: Value objects only (immediate benefits)
-- Phase 2: Result in new code (stop adding exceptions)
-- Phase 3: Extract use cases (separate concerns)
-- Phase 4: Adapter isolation (complete boundaries)
+- Stage 1: Value objects only (immediate benefits)
+- Stage 2: Result in new code (stop adding exceptions)
+- Stage 3: Extract use cases (separate concerns)
+- Stage 4: Adapter isolation (complete boundaries)
 
 **Remember:**
 > "Incremental migration beats big-bang rewrites."

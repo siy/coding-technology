@@ -242,7 +242,7 @@ class JooqUserRepository implements SaveUser {
                        .set(USERS.EMAIL, user.email().value())
                        .set(USERS.PASSWORD_HASH, user.hashed().value())
                        .set(USERS.REFERRAL_CODE,
-                            user.refCode().map(ReferralCode::value).orElse(null))
+                            user.refCode().map(ReferralCode::value).or(null))
                        .returningResult(USERS.ID)
                        .fetchSingle()
                        .value1();
@@ -261,15 +261,15 @@ class TokenServiceClient implements GenerateToken {
         return httpClient.post("/tokens/confirm",
                                Map.of("userId", user.id().value()))
                          .map(resp -> buildResponse(user.id(), resp))
-                         .recover(this::mapTokenError);
+                         .mapError(this::mapTokenError);
     }
 
     private Response buildResponse(UserId userId, Map<String, String> resp) {
         return new Response(userId, new ConfirmationToken(resp.get("token")));
     }
 
-    private Promise<Response> mapTokenError(Cause cause) {
-        return RegistrationError.General.TOKEN_GENERATION_FAILED.promise();
+    private Cause mapTokenError(Cause cause) {
+        return RegistrationError.General.TOKEN_GENERATION_FAILED;
     }
 }
 ```
@@ -403,8 +403,7 @@ void execute_fails_whenEmailAlreadyExists() {
 ## Exercises
 
 See [Appendix B](appendix-b-exercises.md) for exercises on:
-- Exercise 5.1: Extend RegisterUser with email verification
-- Exercise 5.3: Add premium referral validation
+- Exercise 5.1: Complete Use Case Design
 
 ---
 

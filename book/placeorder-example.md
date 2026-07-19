@@ -426,9 +426,8 @@ public interface PlaceOrder {
                 createOrder,
                 releaseInventory,
                 priceCalculator
-            ))
-            .onSuccess(response -> sendConfirmation.apply(response.orderId(), null)
-                .onFailure(e -> { /* log but don't fail */ }));
+            ).onSuccess(response -> sendConfirmation.apply(response.orderId(), valid)
+                .onFailure(e -> { /* log but don't fail */ })));
     }
 
     private static Promise<Response> executeWithCompensation(
@@ -445,7 +444,9 @@ public interface PlaceOrder {
             .flatMap(reservation -> processPayment.apply(reservation, total)
                 .flatMap(payment -> createOrder.apply(reservation, payment))
                 .map(orderId -> new Response(orderId, total))
-                .recover(cause -> compensateAndFail(reservation, releaseInventory, cause)));
+                .fold(result -> result.fold(
+                    cause -> compensateAndFail(reservation, releaseInventory, cause),
+                    Promise::success)));
     }
 
     private static Promise<Response> compensateAndFail(
@@ -603,21 +604,21 @@ public class PaymentProcessor implements ProcessPayment {
             OrderError.PaymentFailed::new,
             () -> gateway.charge(total.value())
         ).map(txId -> new PaymentConfirmation(txId, Instant.now()))
-         .recover(this::mapPaymentError);
+         .mapError(this::mapPaymentError);
     }
 
-    private Promise<PaymentConfirmation> mapPaymentError(Cause cause) {
+    private Cause mapPaymentError(Cause cause) {
         return switch (cause) {
             case OrderError.PaymentFailed pf -> {
                 if (pf.cause() instanceof TimeoutException) {
-                    yield OrderError.General.PAYMENT_TIMEOUT.promise();
+                    yield OrderError.General.PAYMENT_TIMEOUT;
                 }
                 if (isDeclined(pf.cause())) {
-                    yield OrderError.General.PAYMENT_DECLINED.promise();
+                    yield OrderError.General.PAYMENT_DECLINED;
                 }
-                yield cause.promise();
+                yield cause;
             }
-            default -> cause.promise();
+            default -> cause;
         };
     }
 

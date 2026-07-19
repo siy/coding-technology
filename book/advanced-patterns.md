@@ -12,13 +12,13 @@
 
 ## Discovery Questions for Advanced Patterns
 
-[Basic Patterns & Structure](basic-patterns.md) introduced gap detection and the pattern-BPMN mapping. Here are the discovery questions for advanced patterns — they emerge from the BPMN constructs themselves:
+[Basic Patterns & Structure](basic-patterns.md) introduced gap detection and the pattern catalog. Here are the discovery questions for advanced patterns — they emerge from the structure of each pattern:
 
-| Pattern | BPMN | Key Questions |
-|---------|------|--------------|
-| **Sequencer** | Sequence Flow | What does step 1 produce that step 2 needs? Can step 3 happen if step 2 fails? Is order fixed? |
-| **Fork-Join** | Parallel Gateway | Do these depend on each other? Can we fetch X while fetching Y? What if one succeeds and another fails? |
-| **Aspects** | Event Sub-Process | Retry on failure? How many times? Timeout duration? What needs logging? |
+| Pattern | Key Questions |
+|---------|--------------|
+| **Sequencer** | What does step 1 produce that step 2 needs? Can step 3 happen if step 2 fails? Is order fixed? |
+| **Fork-Join** | Do these depend on each other? Can we fetch X while fetching Y? What if one succeeds and another fails? |
+| **Aspects** | Retry on failure? How many times? Timeout duration? What needs logging? |
 
 These questions emerge from the patterns themselves — the structure demands specific information.
 
@@ -610,8 +610,8 @@ The honest boundary: wrapping for observability is old (proxies, decorators, AOP
 ## Exercises
 
 See [Appendix B](appendix-b-exercises.md) for exercises on:
-- Exercise 3.3: Pattern composition
-- Exercise 3.5: Aspect implementation
+- Exercise 3.2: Implement Fork-Join
+- Exercise 3.4: Implement Aspects
 
 ---
 

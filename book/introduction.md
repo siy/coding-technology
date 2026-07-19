@@ -1,6 +1,10 @@
 # Introduction - Code Unification
 
-**Based on:** JBCT v4.1.1 | **Pragmatica Core:** 1.0.0-rc1
+**Based on:** JBCT v4.3.0 | **Pragmatica Core:** 1.0.0-rc1
+
+## About the Series
+
+This book is the Java layer of a series that derives software systems from business intent: business intent → **Process-First Design** (how the application thinks) → **Architecture Synthesis** (where computation happens) → **JBCT** (how each component is implemented) → running software. Each volume stands alone. The reading map: a Java developer starts *here*; a methodologist or language-neutral reader starts with *Process-First Design*; a practicing architect starts with *Architecture Synthesis*. The series speaks in two registers on purpose: PFD and AS are continuous argumentative prose; this book is a working manual with exercises and checklists — a coding book and a methodology book serve different hours of the reader's day.
 
 ## What You'll Learn
 
@@ -44,6 +48,8 @@ The benefits compound:
 **Common language** emerges when patterns become vocabulary. The six patterns (Leaf, Sequencer, Fork-Join, Condition, Iteration, Aspects) describe both code structure and business processes. When business says "First we verify, then we process, then we notify"—that's a Sequencer. When they say "We need profile, preferences, and history"—that's a Fork-Join. The translation is mechanical, and requirements discussions become technical design sessions.
 
 **Business logic as a readable language** happens when patterns become vocabulary. The four return types, parse-don't-validate, and the fixed pattern catalog form a consistent way to express domain concepts in code. Anyone who understands the domain can pick up a new codebase virtually instantly.
+
+**Hide the machinery, keep the meaning** is the property those last two add up to, and it deserves its own name. Technical noise is pushed to the edges *and* the business facts survive in the types: a return type states whether a step can fail, an `Option` parameter states that the domain allows absence, `Promise.all` states that steps are independent, a sealed error type states the complete failure catalog. The code executes and testifies at once — and because the testimony lives in types, the compiler keeps it true. The full inventory is a table in [From Process to Patterns](from-process-to-patterns.md), and it is why JBCT code stays legible to humans and AI assistants alike after its authors have moved on.
 
 **Deterministic code generation** becomes possible when the mapping from requirements to code is mechanical. Given a use case specification - inputs, outputs, validation rules, steps - there's essentially one correct structure. Different developers (or AI assistants) should produce nearly identical implementations.
 
@@ -315,6 +321,7 @@ All input data passed to operations must be treated as immutable and read-only. 
 3. **Side effects at edges** - Keep business logic pure, isolate I/O in adapters
 4. **Composition over imperative** - Chain operations, let structure handle errors
 5. **Monads invert control** - You describe transformations, the monad handles execution
+6. **Hide the machinery, keep the meaning** - Technical noise at the edges, business facts preserved in types; the code executes and testifies at once
 
 ---
 

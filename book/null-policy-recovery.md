@@ -108,7 +108,7 @@ public Promise<Unit> saveUser(User user) {
                    .set(USERS.ID, user.id().value())
                    .set(USERS.EMAIL, user.email().value())
                    .set(USERS.REFERRAL_CODE,
-                        user.refCode().map(ReferralCode::value).orElse(null))  // Option -> nullable column
+                        user.refCode().map(ReferralCode::value).or(null))  // Option -> nullable column
                    .execute();
                 return Unit.unit();
             });
@@ -121,10 +121,10 @@ PreparedStatement stmt = connection.prepareStatement(
     "INSERT INTO users (id, email, referral_code) VALUES (?, ?, ?)");
 stmt.setString(1, user.id().value());
 stmt.setString(2, user.email().value());
-stmt.setString(3, user.refCode().map(ReferralCode::value).orElse(null));  // Option -> null
+stmt.setString(3, user.refCode().map(ReferralCode::value).or(null));  // Option -> null
 ```
 
-**Pattern**: `.orElse(null)` ONLY when mapping `Option<T>` to nullable database column.
+**Pattern**: `.or(null)` ONLY when mapping `Option<T>` to nullable database column.
 
 ### 3. Testing Validation
 
@@ -240,7 +240,7 @@ public Result<User> enrichUser(User user) {
 | Return values from JBCT code | Never | Use `Option<T>` |
 | Parameters between JBCT components | Never | Use `Option<T>` or required types |
 | Wrapping external API returns | Allowed | `Option.option(nullable)` immediately |
-| Writing to nullable DB columns | Allowed | `.orElse(null)` at write boundary |
+| Writing to nullable DB columns | Allowed | `.or(null)` at write boundary |
 | Test inputs for validation | Allowed | Test null rejection |
 | "Unknown" or "absent" semantics | Never | Use `Option<T>` or `Result<T>` |
 
@@ -271,12 +271,12 @@ public Theme getUserTheme(UserId userId) {
 // Lazy evaluation with supplier
 public Config getConfig(String key) {
     return loadFromCache(key)  // Returns Option<Config>
-        .or(() -> loadFromDefaults(key))  // Only evaluated if cache miss
-        .or(Config.EMPTY);  // Final fallback
+        .orElse(() -> loadFromDefaults(key))  // Try defaults if cache miss (still Option<Config>)
+        .or(Config.EMPTY);  // Final fallback, unwraps to Config
 }
 ```
 
-The `.or()` method works with `Option`, `Result`, and `Promise`:
+The `.or()` method works with `Option` and `Result` — its mapper-free forms unwrap to the plain value:
 
 ```java
 // Option<T> - provide value if empty
@@ -286,10 +286,13 @@ option.or(() -> computeDefault())
 // Result<T> - provide value if failure
 result.or(defaultValue)
 result.or(() -> computeDefault())
+```
 
+`Promise` carries no `.or()` — the degrade-to-value move on a `Promise` is `recover`, whose mapper returns the plain value:
+
+```java
 // Promise<T> - provide value if failure (async)
-promise.or(defaultValue)
-promise.or(() -> computeDefault())
+promise.recover(cause -> defaultValue)
 ```
 
 ### Fallback to Alternative Operations
@@ -335,19 +338,20 @@ private User recoverUserErrors(Cause cause) {
 }
 ```
 
-**Promise version with async recovery:**
+**Promise version — async recovery via `fold` (recover's mapper is synchronous):**
 ```java
 public Promise<Order> processOrder(OrderRequest request) {
     return paymentService.charge(request)
-        .recover(this::recoverPaymentErrors);
+        .fold(result -> result.fold(cause -> recoverPaymentErrors(request, cause),
+                                    Promise::success));
 }
 
-private Promise<Order> recoverPaymentErrors(Cause cause) {
+private Promise<Order> recoverPaymentErrors(OrderRequest request, Cause cause) {
     return switch (cause) {
         case PaymentError.InsufficientFunds ignored ->
             splitPaymentService.process(request);  // Async alternative
         case PaymentError.TemporaryFailure ignored ->
-            Promise.success(request).flatMap(paymentService::charge);  // Retry once
+            paymentService.charge(request);  // Retry once
         default -> cause.promise();  // Can't recover
     };
 }
@@ -362,8 +366,8 @@ Combine recovery with feature detection:
 ```java
 public Promise<Dashboard> loadDashboard(UserId userId) {
     return Promise.all(loadUserProfile(userId),
-                       loadRecentOrders(userId).or(List.of()),
-                       loadRecommendations(userId).or(List.of()))
+                       loadRecentOrders(userId).recover(cause -> List.of()),
+                       loadRecommendations(userId).recover(cause -> List.of()))
                   .map(Dashboard::new);
 }
 ```
@@ -382,7 +386,7 @@ public interface LoadConfig {
                                  LoadFromEnv loadEnv) {
         return () -> loadFile.apply()
                              .orElse(loadEnv.apply())
-                             .or(() -> new Config("https://api.default.com", 30, true));
+                             .recover(cause -> new Config("https://api.default.com", 30, true));
     }
 }
 ```
@@ -427,8 +431,8 @@ Recovery is for **expected** failures where degradation makes sense (cache miss,
 
 The patterns above answer "this operation failed — what value do I return instead?" A harder question sits one level up: a step fails *after earlier steps already changed state* — a seat is held, an authorization placed — and that state is now invalid. There are exactly three responses, and naming all three keeps the choice deliberate instead of defaulting to the first.
 
-- **BER — Backward Error Recovery.** Undo by an inverse action: release the held seat, void the authorization, reverse the ledger entry. The classic rollback or saga shape. Reach for it when the change is reversible and correctness demands the system look as if nothing happened — money, inventory.
-- **FER — Forward Error Recovery.** Do not undo; continue with degraded state. Queue a confirmation email for retry while the booking stands; let a cached value decay `fresh -> stale -> expired` rather than fail outright. The `.or(...)` and graceful-degradation patterns above are FER. Reach for it when forward progress is worth more than perfect consistency — telemetry, notifications, optional enrichment.
+- **BER — Backward Error Recovery.** Series long name: *compensate-by-inverse*. Undo by an inverse action: release the held seat, void the authorization, reverse the ledger entry. The classic rollback or saga shape. Reach for it when the change is reversible and correctness demands the system look as if nothing happened — money, inventory.
+- **FER — Forward Error Recovery.** Series long name: *degrade-and-continue*. Do not undo; continue with degraded state. Queue a confirmation email for retry while the booking stands; let a cached value decay `fresh -> stale -> expired` rather than fail outright. The `.or(...)` and graceful-degradation patterns above are FER. Reach for it when forward progress is worth more than perfect consistency — telemetry, notifications, optional enrichment.
 - **Design-out.** Change the model so the invalidation cannot arise: a reservation type where two bookings of one seat is structurally impossible; an idempotent write safe to repeat; an append-only log corrected by appending. The failure mode is removed rather than handled — the strongest option, when the model permits it.
 
 Which applies is a judgment — reversibility, the value of partial progress, the domain's shape, coordination cost — and mixed strategies are normal: one booking flow can use BER for the payment, FER for the confirmation email, and design-out for the seat model, all at once. Name the triple for each step that changes state, and recovery becomes a design decision rather than an afterthought.
@@ -450,8 +454,8 @@ Which applies is a judgment — reversibility, the value of partial progress, th
 ## Exercises
 
 See [Appendix B](appendix-b-exercises.md) for exercises on:
-- Exercise 2.5: Recovery patterns
-- Exercise 5.2: Graceful degradation scenarios
+- Exercise 2.5: Recovery Patterns
+- Exercise 5.2: Compensation Pattern
 
 ---
 

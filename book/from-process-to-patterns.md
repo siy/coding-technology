@@ -1,6 +1,6 @@
 # From Process to Patterns
 
-**Based on:** JBCT v4.1.1 | **Pragmatica Core:** 1.0.0-rc1
+**Based on:** JBCT v4.3.0 | **Pragmatica Core:** 1.0.0-rc1
 
 ## What You'll Learn
 
@@ -10,6 +10,7 @@
 - The **telescope** — how use cases, workflows, subsystems, and systems emerge, and the one test that groups them
 - **What earns a place in code** — when a workflow materializes, when an entity is justified, and why shared code is exposed coupling rather than reuse
 - Why pattern selection follows from the process, not from preference
+- **Hide the machinery, keep the meaning** — the inventory of business facts the code preserves, and the second reading it enables
 
 **Prerequisites:** [Introduction](introduction.md)
 
@@ -74,7 +75,7 @@ Three operators define the structure:
 |----------|---------|-------------|------|
 | **Sequential** | Need A before gathering B | Sequencer | `a.flatMap(b)` |
 | **ALL(A, B)** | Need both, they're independent | Fork-Join | `Promise.all(a, b)` |
-| **ANY(A, B)** | Either source suffices | Condition / fallback | `a.recover(b)` |
+| **ANY(A, B)** | Either source suffices | Condition / fallback | `a.orElse(b)` |
 
 Between operators, **transformation functions** convert one piece of knowledge into another — these are Leaf operations (pure business logic, validation, mapping).
 
@@ -219,6 +220,40 @@ The corollary is what most reuse instincts get wrong: **code similarity must not
 
 ---
 
+## Hide the Machinery, Keep the Meaning
+
+JBCT's promise is usually told as one move: technical noise is pushed to the edges so the business flow stands out. That is half of it. The other half is the one that compounds: **the business facts survive the translation into code.** Every structural choice does double duty — it executes, and it states something the business said. Together the halves are the method's actual property: **hide the machinery, keep the meaning.**
+
+The statements are not comments and not documentation. They live in types and combinators, so the compiler checks them and refactoring cannot silently erase them:
+
+| The code says | The business fact it states |
+|---|---|
+| returns `T` | this step cannot fail and always has an answer |
+| returns `Option<T>` | absence is a normal domain outcome, not a failure |
+| returns `Result<T>` | this can fail for a business reason, and the reasons are enumerated |
+| returns `Promise<T>` | this leaves the process's own hands; time and failure are both in play |
+| `Option<T>` parameter or field | the domain itself makes this optional — legitimately absent, never "maybe null" |
+| `ValidRequest` parameter | the trust boundary is behind us; this data is already proven |
+| `map(...)` | a pure transformation — a calculation that cannot fail |
+| `flatMap(...)` | a dependent step — it needs the previous answer and may itself fail; order is load-bearing |
+| `recover(...)` / `orElse(...)` | the fallback policy, in the order the business ranks it |
+| `onSuccess(...)` / `onFailure(...)` | observation only — audit, notification; the outcome does not gate on it |
+| `Result.all(...)` | independent validations — every failure matters, so all are reported |
+| `Promise.all(...)` | independent work — these steps do not need each other, and may run in parallel |
+| sealed `Cause` hierarchy | the complete catalog of this operation's business failure modes |
+| `*State` sealed sum | the lifecycle — every legal state enumerated, transitions the only writes |
+| no `Result` in the signature | the failure was designed out — it cannot occur; the strongest statement of all |
+
+Read the table as a whole and the consequence appears: **JBCT code reads twice.** The compiler reads it as Java. A person — or an AI assistant — reads it as the business process: which steps depend on which, what can fail and why, what is optional, what runs independently, what is merely observed. Hand a JBCT codebase to a newcomer with no documentation and the process is recoverable — not the vague flow, the *annotated* process: failure catalog, fallback policies, lifecycles, trust boundaries. Documentation drifts; types compile.
+
+The claim has a boundary, and it sits exactly where the first half operates. The types carry the *process* semantics; the purely technical detail — which store, which client, which retry budget — is hidden in adapters and Aspects, where it belongs. Technical failures do travel the same `Result`/`Promise` channels as business failures; keeping the two distinguishable is the `Cause` hierarchy's job.
+
+This is also the half of "AI-friendly" that determinism alone does not deliver. Deterministic structure means an assistant *generates* the right shape; preserved meaning means an assistant *reading* the code recovers the intent instead of guessing it. Generation and comprehension, both directions.
+
+Most of this table's vocabulary arrives over the next chapters — the four return types first, then the patterns. Return to it as the constructs land; it is the map of what your code will be saying.
+
+---
+
 ## Key Takeaways
 
 - The **unit of design is the process, not the entity.** Types belong to processes; what is genuinely common becomes a small shared value object. Data follows process.
@@ -229,6 +264,7 @@ The corollary is what most reuse instincts get wrong: **code similarity must not
 - Many processes organize by the **telescope** — use case, workflow, subsystem, system — grouped by one test: *what change would force all of these, and only these, to change together?*
 - **Structure earns code.** A workflow stays logical — a state machine across its use cases — until it gains a trigger of its own, then materializes as an interface + factory whose steps are those use cases. An entity is justified only by a persistence edge or a cross-field invariant.
 - **Shared code is exposed coupling, not reuse.** Promote to `shared` because users share a change driver, never because code looks alike — similar code governed by different drivers belongs apart.
+- **Hide the machinery, keep the meaning.** Every structural choice states a business fact; the inventory table is this chapter's capstone. Code reads twice — as Java by the compiler, as the process by the reader — and documentation drifts while types compile.
 
 ---
 

@@ -337,8 +337,8 @@ public interface TestVectors {
 ## Exercises
 
 See [Appendix B](appendix-b-exercises.md) for exercises on:
-- Exercise 4.1: Building test data builders
-- Exercise 4.2: Evolutionary testing walkthrough
+- Exercise 4.1: Test Structure
+- Exercise 4.2: Stub Implementation
 
 ---
 

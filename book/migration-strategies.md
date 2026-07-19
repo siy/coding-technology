@@ -79,9 +79,9 @@ public class UserService {
 
 ---
 
-## Migration Phases
+## Migration Stages
 
-### Phase 1: Value Objects Only (Week 1-2)
+### Stage 1: Value Objects Only (Week 1-2)
 
 **Goal:** Introduce parse-don't-validate without changing existing code structure.
 
@@ -142,7 +142,7 @@ public Result<User> registerValidated(Email email, Password password) {
 3. Update callers one by one
 4. Delete old method when all callers migrated
 
-### Phase 2: Result in New Code (Week 3-4)
+### Stage 2: Result in New Code (Week 3-4)
 
 **Goal:** Stop adding new exception-based code.
 
@@ -203,7 +203,7 @@ public ResponseEntity<?> applyDiscount(
 }
 ```
 
-### Phase 3: Extract Use Cases (Week 5-8)
+### Stage 3: Extract Use Cases (Week 5-8)
 
 **Goal:** Separate business logic from framework code.
 
@@ -331,7 +331,7 @@ public class OrderService {
 }
 ```
 
-### Phase 4: Adapter Isolation (Week 9-12)
+### Stage 4: Adapter Isolation (Week 9-12)
 
 **Goal:** All I/O wrapped in adapter leaves with Promise.lift.
 
@@ -566,7 +566,7 @@ return findUser(id)
 
 ### "We don't have time to rewrite everything"
 
-**Response:** You don't have to. Start with value objects only (Phase 1). That's one week for immediate benefits. Each phase is incremental.
+**Response:** You don't have to. Start with value objects only (Stage 1). That's one week for immediate benefits. Each stage is incremental.
 
 ### "Our team doesn't know functional programming"
 
@@ -591,25 +591,25 @@ return findUser(id)
 
 ## Migration Checklist
 
-### Phase 1 Complete When:
+### Stage 1 Complete When:
 - [ ] Pragmatica Core added to project
 - [ ] At least 5 value objects created
 - [ ] One service method uses value objects
 - [ ] Team has reviewed value object patterns
 
-### Phase 2 Complete When:
+### Stage 2 Complete When:
 - [ ] Team agreement: new code uses Result/Promise
 - [ ] At least one new feature built with JBCT
 - [ ] Controller bridges exception/Result boundary
 - [ ] Error types defined for new feature
 
-### Phase 3 Complete When:
+### Stage 3 Complete When:
 - [ ] At least one use case extracted
 - [ ] Use case has step interfaces
 - [ ] Service is thin adapter
 - [ ] Integration tests pass
 
-### Phase 4 Complete When:
+### Stage 4 Complete When:
 - [ ] All new adapters use Promise.lift
 - [ ] Database access wrapped
 - [ ] External HTTP calls wrapped
@@ -621,7 +621,7 @@ return findUser(id)
 
 1. **Audit your codebase:** Find three methods with scattered validation. Which value objects would consolidate them?
 
-2. **Plan Phase 1:** List the top 5 value objects your codebase needs. Prioritize by how many places validate the same data.
+2. **Plan Stage 1:** List the top 5 value objects your codebase needs. Prioritize by how many places validate the same data.
 
 3. **Identify extraction candidates:** Find a service method with more than 50 lines. Can you identify the Sequencer pattern in it?
 
@@ -633,13 +633,13 @@ return findUser(id)
 
 Migration to JBCT is incremental:
 
-1. **Phase 1:** Value objects only - immediate validation benefits
-2. **Phase 2:** Result in new code - stop adding exceptions
-3. **Phase 3:** Extract use cases - separate concerns
-4. **Phase 4:** Adapter isolation - complete the boundary
+1. **Stage 1:** Value objects only - immediate validation benefits
+2. **Stage 2:** Result in new code - stop adding exceptions
+3. **Stage 3:** Extract use cases - separate concerns
+4. **Stage 4:** Adapter isolation - complete the boundary
 
 Key principles:
 - Never big-bang rewrite
-- Each phase delivers value independently
+- Each stage delivers value independently
 - Mixed codebase is acceptable during transition
 - Team buy-in through working examples, not mandates

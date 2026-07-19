@@ -515,8 +515,7 @@ void forkJoin_completesAllBranches() {
 ## Exercises
 
 See [Appendix B](appendix-b-exercises.md) for exercises on:
-- Exercise 4.3: Test suite organization
-- Exercise 4.4: Migration from traditional testing
+- Exercise 4.3: Testing Async Behavior
 
 ---
 

@@ -246,12 +246,12 @@ Result<Integer> adult = age.filter(
 
 ```java
 Promise<Config> config = loadFromDatabase()
-    .recover(cause -> switch (cause) {
-        case DatabaseError _ -> loadFromFile();
-        case FileError _ -> Promise.success(Config.defaults());
-        default -> cause.promise();
-    });
+    .recover(cause -> Config.defaults());  // any failure -> built-in defaults
 ```
+
+`recover`'s mapper is synchronous — it turns a failure into a plain value. When the
+alternative is itself asynchronous (load from a file, retry, propagate some causes), use
+`fold` or `orElse` instead.
 
 ### or / orElse - Provide Fallback
 

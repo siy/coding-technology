@@ -105,7 +105,7 @@ public Promise<UserProfile> loadProfile(String userId) {
         .async()  // Result -> Promise
         .flatMap(id -> cache.get(id)
             .async(CACHE_MISS)  // Option -> Promise (with cause for empty)
-            .recover(cause -> database.fetchProfile(id)));
+            .orElse(database.fetchProfile(id)));
 }
 
 // Alternative: if cache miss should fall through silently
@@ -426,13 +426,13 @@ private Config defaultConfig() { /* ... */ }
 ```java
 public Promise<Config> loadConfig() {
     return loadFromDatabase()
-        .recover(this::recoverFromDatabaseError);
+        .fold(result -> result.fold(this::recoverFromDatabaseError, Promise::success));
 }
 
 private Promise<Config> recoverFromDatabaseError(Cause cause) {
     return switch (cause) {
         case ConnectionError ignored -> loadFromFile()
-            .recover(this::recoverFromFileError);
+            .fold(result -> result.fold(this::recoverFromFileError, Promise::success));
         default -> cause.promise();
     };
 }
@@ -534,7 +534,7 @@ public interface LoadDashboard {
         return userId -> Promise.all(fetchProfile.apply(userId),
                                     fetchOrders.apply(userId),
                                     fetchRecommendations.apply(userId)
-                                        .recover(cause -> Promise.success(List.of())))
+                                        .recover(cause -> List.of()))
                                 .map(Dashboard::new);
     }
 }
@@ -645,22 +645,30 @@ public interface FetchData {
                                            DataId id,
                                            Logger log,
                                            int remainingAttempts) {
-        return operation.recover(cause -> {
-            log.warn("Fetch failed for {}: {}", id, cause.message());
+        return operation.fold(result -> result.fold(
+            cause -> retryOnFailure(operation, id, log, remainingAttempts, cause),
+            Promise::success));
+    }
 
-            if (remainingAttempts <= 0) {
-                return cause.promise();
+    private static Promise<Data> retryOnFailure(Promise<Data> operation,
+                                                DataId id,
+                                                Logger log,
+                                                int remainingAttempts,
+                                                Cause cause) {
+        log.warn("Fetch failed for {}: {}", id, cause.message());
+
+        if (remainingAttempts <= 0) {
+            return cause.promise();
+        }
+
+        return switch (cause) {
+            case TransientError ignored -> {
+                log.info("Retrying fetch for {}, {} attempts remaining",
+                         id, remainingAttempts);
+                yield withRetry(operation, id, log, remainingAttempts - 1);
             }
-
-            return switch (cause) {
-                case TransientError ignored -> {
-                    log.info("Retrying fetch for {}, {} attempts remaining",
-                             id, remainingAttempts);
-                    yield withRetry(operation, id, log, remainingAttempts - 1);
-                }
-                default -> cause.promise();
-            };
-        });
+            default -> cause.promise();
+        };
     }
 }
 ```
@@ -1062,12 +1070,16 @@ public interface BookSeat {
         return request -> reserveSeat.apply(request.seatId())
             .flatMap(reservationId ->
                 chargePayment.apply(request.userId(), request.amount())
-                    .recover(cause -> compensateReservation(releaseSeat, reservationId, cause))
+                    .fold(result -> result.fold(
+                        cause -> compensateReservation(releaseSeat, reservationId, cause),
+                        Promise::success))
                     .flatMap(paymentId ->
                         sendConfirmation.apply(request.userId(), reservationId)
-                            .recover(cause -> compensatePayment(
-                                releaseSeat, refundPayment,
-                                reservationId, paymentId, cause))
+                            .fold(result -> result.fold(
+                                cause -> compensatePayment(
+                                    releaseSeat, refundPayment,
+                                    reservationId, paymentId, cause),
+                                Promise::success))
                             .map(unit -> new Booking(reservationId, paymentId))));
     }
 
@@ -1221,7 +1233,7 @@ public interface CreateUser {
 
 ### Exercise 6.2 [Intermediate] - Migration Planning
 
-You have this legacy service. Plan a phase-by-phase migration:
+You have this legacy service. Plan a stage-by-stage migration:
 
 ```java
 @Service
@@ -1239,17 +1251,17 @@ public class OrderService {
 <details>
 <summary>Solution</summary>
 
-**Phase 1: Value Objects (Week 1)**
+**Stage 1: Value Objects (Week 1)**
 - Create: OrderId, ProductId, Quantity, Money, CustomerId
 - Parallel method: `placeOrderValidated(ValidOrderRequest request)`
 - Keep original method, call validated version internally
 
-**Phase 2: Result in New Code (Week 2)**
+**Stage 2: Result in New Code (Week 2)**
 - Extract validation to `ValidOrderRequest.validRequest(OrderDto)`
 - Return `Result<Order>` instead of throwing
 - Create `OrderError` sealed interface
 
-**Phase 3: Extract Use Case (Week 3-4)**
+**Stage 3: Extract Use Case (Week 3-4)**
 - Create `PlaceOrder` interface with step interfaces:
   - `CheckInventory`
   - `ProcessPayment`
@@ -1258,7 +1270,7 @@ public class OrderService {
 - Move business logic to factory method
 - Service becomes thin wrapper calling use case
 
-**Phase 4: Adapter Isolation (Week 5)**
+**Stage 4: Adapter Isolation (Week 5)**
 - Wrap inventory check in `Promise.lift()`
 - Wrap payment gateway in `Promise.lift()`
 - Wrap repository in `Promise.lift()`

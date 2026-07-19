@@ -105,6 +105,9 @@ The execution path when all operations succeed. In JBCT, the happy path is the d
 **Hexagonal Architecture**
 Ports and Adapters architecture. Domain at center, adapters at edges. JBCT's step interfaces are similar to ports.
 
+**Hide the Machinery, Keep the Meaning**
+JBCT's twin property: technical detail is pushed to adapters and Aspects (the machinery hidden), while business facts are preserved in types and combinators (the meaning kept) — return types state fallibility and absence, `Option` parameters state domain optionality, `flatMap` states dependency, `all()` states independence, sealed `Cause` hierarchies state the failure catalog, `*State` sums state the lifecycle. The code reads twice: as Java by the compiler, as the business process by the reader. The inventory table is in From Process to Patterns.
+
 ---
 
 ## I

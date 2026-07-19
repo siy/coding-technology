@@ -483,8 +483,7 @@ This table is the flat base case. As the design discovers workflows and subsyste
 ## Exercises
 
 See [Appendix B](appendix-b-exercises.md) for exercises on:
-- Exercise 5.4: Package organization
-- Exercise 6.2: Module setup
+- Exercise 5.3: Project Structure
 
 ---
 

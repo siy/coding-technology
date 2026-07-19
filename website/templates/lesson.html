@@ -25,14 +25,14 @@
 <header>
   <div class="nav-lesson">
     <a class="brand" href="/">pragmatica<span>.dev</span></a>
-    <a class="up" href="/java/jbct/course/">JBCT course &middot; contents &uarr;</a>
+    <a class="up" href="{{COURSE_HOME}}">{{COURSE_LABEL}} &middot; contents &uarr;</a>
   </div>
 </header>
 
 <div class="wrap-narrow">
 
   <div class="lesson-head">
-    <div class="crumb"><a href="/java/">The Java Realization</a> / <a href="/java/jbct/">JBCT course</a> / <b>{{PART_NAME}}</b></div>
+    <div class="crumb"><a href="{{REALM_HREF}}">{{REALM_LABEL}}</a> / <a href="{{PARENT_HREF}}">{{PARENT_LABEL}}</a> / <b>{{PART_NAME}}</b></div>
     <h1>{{TITLE_TEXT}}</h1>
   </div>
 
@@ -68,7 +68,7 @@
 (function(){
   var SLUG = {{SLUG_JSON}};
   var PART_SLUGS = {{PART_SLUGS_JSON}};
-  var KEY_PREFIX = 'jbct:';
+  var KEY_PREFIX = '{{STORAGE_PREFIX}}';
 
   function isDone(slug) { return localStorage.getItem(KEY_PREFIX + slug) === '1'; }
 

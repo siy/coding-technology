@@ -6,4 +6,4 @@ The book carries one ticketing platform from a single use case to a multi-tenant
 
 The condensed edition — the whole argument in about 25 minutes — is free. The full book is on [Leanpub](https://leanpub.com/process-first-design).
 
-A course edition is planned; this page holds its slot until then.
+The [free course edition](/method/pfd/course/) walks the whole method lesson by lesson, each paired with an exercise you run on a system you own.

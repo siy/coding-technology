@@ -113,7 +113,7 @@ const COURSES = [
     tocTitle: 'Architecture Synthesis Course — pragmatica.dev',
     tocDescription: 'Architecture Synthesis, chapter by chapter: derive an architecture from service-level objectives, verify it against its own budget, and grade it against real systems. Each lesson pairs book prose with an apply-to-your-system exercise. Free, no account required.',
     tocIntro: 'The whole derivation method as a sequence of lessons. Each pairs the book’s prose with a short exercise you run on a system you own; progress is tracked locally in your browser, no account required.',
-    footerLinks: '<a href="/method/architecture-synthesis/reference/">Reference cards</a> &middot; <a href="https://leanpub.com/architecture-synthesis-the-next-correct-step" target="_blank" rel="noopener">Get the book</a> &middot; ',
+    footerLinks: '<a href="/method/architecture-synthesis/reference/">Reference cards</a> &middot; <a href="/method/architecture-synthesis/worksheet/">Worksheet</a> &middot; <a href="https://leanpub.com/architecture-synthesis-the-next-correct-step" target="_blank" rel="noopener">Get the book</a> &middot; ',
     nonLessonSlugs: new Set(['series-note', 'acknowledgments', 'appendix-worksheet', 'appendix-reference-cards', 'references'])
   }
 ];
@@ -483,6 +483,16 @@ const LANDING_PAGES = [
     related: [
       { href: '/method/architecture-synthesis/course/', label: 'Architecture Synthesis course', note: 'back to contents' },
       { href: '/method/architecture-synthesis/', label: 'Architecture Synthesis', note: 'overview' }
+    ]
+  },
+  {
+    src: 'book-arch/appendix-worksheet.md', out: 'method/architecture-synthesis/worksheet/index.html', fallbackTitle: 'The Derivation Worksheet',
+    crumb: crumbDeep([{ href: '/method/', label: 'The Method' }, { href: '/method/architecture-synthesis/course/', label: 'Architecture Synthesis course' }], 'Worksheet'),
+    nav: 'method',
+    description: 'The Architecture Synthesis derivation worksheet: the blank two-part table you fill to derive an architecture from answers and verify it against its own budget.',
+    related: [
+      { href: '/method/architecture-synthesis/course/', label: 'Architecture Synthesis course', note: 'back to contents' },
+      { href: '/method/architecture-synthesis/reference/', label: 'Reference cards', note: 'the method as a deck' }
     ]
   }
 ];

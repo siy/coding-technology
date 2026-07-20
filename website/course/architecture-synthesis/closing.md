@@ -12,4 +12,4 @@ The companion repository (github.com/siy/derivation-artifacts) is both the repli
 
 ## exercise
 ### Fill the Worksheet, End to End | ~60 min
-Take the derivation worksheet (book Appendix — The Worksheet) and fill both parts for one real system you operate: answers, pressure pass, resolved vector, verification. If the derived vector looks wrong against what you actually know, file it as a counterexample — a GitHub issue at github.com/siy/derivation-artifacts, with the sheet attached.
+Take the [derivation worksheet](/method/architecture-synthesis/worksheet/) and fill both parts for one real system you operate: answers, pressure pass, resolved vector, verification. If the derived vector looks wrong against what you actually know, file it as a counterexample — a GitHub issue at github.com/siy/derivation-artifacts, with the sheet attached.

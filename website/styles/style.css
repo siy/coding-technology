@@ -62,6 +62,19 @@
 @media (prefers-reduced-motion: reduce) { .theme-toggle { transition: none; } }
 @media print { .theme-toggle { display: none; } }
 
+/* Front-door decorative SVGs (pipeline + entry-card icons) hardcode the light-theme
+   brand colors as presentation attributes, so they vanish on the dark ground. Route
+   each hardcoded hex through its theme token: light mode is unchanged (the tokens
+   resolve to the same hex), dark mode gets visible ink. */
+.front-door svg [stroke="#1a2840"] { stroke: var(--ink); }
+.front-door svg [fill="#1a2840"]   { fill: var(--ink); }
+.front-door svg [fill="#4a5468"]   { fill: var(--ink-soft); }
+.front-door svg [fill="#f4f3f0"]   { fill: var(--paper); }
+.front-door svg [fill="#f59e0b"]   { fill: var(--amber); }
+.front-door svg [stroke="#f59e0b"] { stroke: var(--amber); }
+.front-door svg [fill="#d97706"]   { fill: var(--amber-dark); }
+
+
 html { scroll-behavior: smooth; }
 
 body {

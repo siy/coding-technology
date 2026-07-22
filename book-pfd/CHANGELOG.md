@@ -7,6 +7,13 @@ All notable changes to the PFD book, newest first. Format:
 `0.x` versions were preview editions; `1.0.0` marked the first edition released to
 readers, and `1.x` are its maintenance and expansion releases.
 
+## [2.2.1] - 2026-07-22
+
+Scope the change-driver-as-fact claim by what the business can actually know, and ship the greenfield honest-limit.
+
+### Added
+- **The knowable-vs-predicted limit** (Foundations — *Where the structure comes from*): a paragraph scoping the change driver's objectivity — a measurable fact where volatility is realized (a system with history), an elicited low-confidence prediction where it is not (a young company predicting its own future, and businesses are routinely wrong about that) — and noting the thin end self-corrects as co-change history promotes a predicted driver to a measured one.
+
 ## [2.2.0] - 2026-07-22
 
 The decomposition method gets its name, and the property it buys is exposed where readers first meet it.

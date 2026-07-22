@@ -7,6 +7,17 @@ All notable changes to the PFD book, newest first. Format:
 `0.x` versions were preview editions; `1.0.0` marked the first edition released to
 readers, and `1.x` are its maintenance and expansion releases.
 
+## [2.2.0] - 2026-07-22
+
+The decomposition method gets its name, and the property it buys is exposed where readers first meet it.
+
+### Added
+- **The method's two names** (Foundations — *the change driver*; glossary): the move — attribute each use case to its driver, group by shared driver — is now named **driver attribution**, and the property it buys, **quasi-linear cohesion**. Both enter the glossary, and the Introduction's jigsaw picture now states the payoff — the work scales with the number of use cases, not the pairs between them — where a first-time reader meets it, instead of leaving it inside Foundations alone.
+- **A mechanical use-case / workflow discriminator** (Foundations — *the telescope*; glossary): the boundary is now a stated rule — a use case decomposes into patterns, never into independently triggerable steps; the moment a step could stand alone under its own trigger, or state must survive between steps, you are at workflow altitude — with a short note positioning the term against the classic (Jacobson/Cockburn) use case. Closes the first cold-reader-confirmed clarity gap.
+
+### Changed
+- **"near-linear" → "quasi-linear"** for the decomposition-cost claim (Foundations): one defensible term — the guaranteed bound of a labeling pass plus a sort — replacing the informal one.
+
 ## [2.1.0] - 2026-07-15
 
 The Phase-4 question set converges with *Architecture Synthesis*: **nine questions**, one sheet across both books.

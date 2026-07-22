@@ -481,6 +481,127 @@ is worth a short paragraph in the same appendix.
 
 ---
 
+## 13. The decomposition hub — name it, expose it, generalize it (2026-07-21)
+
+**Source:** design discussion this session (pfd-editor), building on shipped item 3 (change-driver
+tracking, now living in `foundations.md`) and the greenfield reframe. Three linked outputs: (A) name +
+expose the already-shipped linearization; (B) generalize the attribution side across project/org
+contexts (new); (C) a standalone Brooks/parallelism article (in `articles/`, not book prose — pointer
+only). PFD is at 2.1.0; this rides the next PFD pass (2.x) with items 5 and 11 unless Part A's naming is
+pulled forward (low-risk, additive).
+
+**Naming ruling (user, 2026-07-21):** the triple is named —
+- **change-driver register** = the artifact (already named, shipped).
+- **driver attribution** = the mechanism. *Attribute each use case to the driver that moves it; group by
+  shared attribution.* "Attribution" carries the objectivity: you attribute to an external cause, you do
+  not adjudicate a pairwise resemblance.
+- **quasi-linear cohesion** = the property — the payoff driver attribution buys.
+
+### Part A — name and expose the linearization (promotion of shipped item 3)
+
+The linearization shipped *inside* `foundations.md` (item 3), unnamed, phrased as a step in a derivation
+— which is why readers skim past the single most differentiating claim in the method. No new argument;
+naming + exposure + one precision fix.
+
+- **The honest form to attach to the name** (or a skeptic guts the headline): driver attribution replaces
+  **O(N^2) *subjective* pairwise cohesion judgments** ("do these two belong together?") with **an O(N)
+  attribution pass + a mechanical group-by**. Double win — fewer operations *and* each operation is
+  derivable instead of taste. Headline contrast: **quadratic -> quasi-linear.**
+- **Why "quasi-linear," precisely** (consistency-lens): attribution is one O(N) pass; grouping identical
+  driver keys is O(N) by hash (unordered) or O(N log N) by sort (deterministic). The shipped text says
+  "~O(N)" (`foundations.md:327`, the hash view). Name the property **quasi-linear** because that is the
+  bound we can *guarantee deterministically* (stable sort by driver key) without assuming hashing —
+  naming the guarantee, not the average case, is the method's own discipline. Reconcile the shipped
+  "~O(N)" line: keep O(N) as the hash best-case, present quasi-linear as the named guaranteed bound. Do
+  **not** inflate to strict "linear."
+- **Standardize the term:** the shipped "near-linear" (`foundations.md:196`) becomes **quasi-linear**
+  everywhere — one defensible word instead of two informal ones.
+- **Expose without dilution** (four moves, not loud repetition): (1) headline the property *once* in the
+  intro/positioning — one sentence, "driver attribution makes cohesion quasi-linear," mechanism deferred;
+  (2) keep the derivation in `foundations.md` but let it *point forward* to the named property instead of
+  being the only place it lives; (3) register both names in the glossary (item 2) and named-principles
+  list (item 5); (4) stop — no fourth restatement.
+- **Why it's the hub (the argument for promoting at all):** the parallelism claim (Part C) works *only*
+  because the register yields a clean partition = Brooks' "no communication among them"; Part B is nothing
+  but *how you populate the register*; the recombination-as-original-work defense rests on the assembly
+  doing work the parts can't. Three threads, one hub — burying the hub mid-chapter is a structural error.
+- **The tradeoff, ruled:** under-selling it as *earned discovery* (let it emerge quietly, so it doesn't
+  invite attack on page one) vs headlining it. Ruling: headline it. The book's whole positioning is "less
+  art, more engineering" — quasi-linear cohesion *is* the engineering payoff, and hiding the headline
+  payoff undersells the thesis. Cure for "invites the skeptic early" is precision (the honest form above),
+  not concealment.
+
+### Part B — driver attribution across contexts (new)
+
+The reframe: what looks like "greenfield is PFD's worst case" is one technique — **driver attribution** —
+operating over **two independent context axes**, with **three things** varying along them. The book
+already says green/brown "work is identical" (`introduction.md:61`); that sentence sees only one axis.
+
+**Two axes:**
+- **Project history** (brownfield <-> greenfield): does the *artifact* carry driver evidence? Brownfield:
+  git co-change confirms drivers (realized, high fidelity). Greenfield: no artifact history; drivers must
+  be *sourced*.
+- **Org history** (established <-> new): does *institutional memory* carry it? Established: people remember
+  what got rebuilt (recallable). New/startup: no memory; borrow from founder-prior + incumbent evolution.
+
+**Three faces vary along the axes:**
+1. **Evidence source** — where the attribution label comes from.
+2. **Output form** — what an undecided/mis-owned driver *becomes* (tracks the org axis): an *ownership
+   fix* for an established org (ties item 4), an *open strategic question* for a startup.
+3. **Error cost** — what being wrong costs. **The load-bearing face** — without it the universal claim
+   looks reckless at the thin-evidence end.
+
+**The 2x2:**
+
+| | Established org (memory) | New org / startup (no memory) |
+|---|---|---|
+| **Brownfield** (git carries drivers) | Classic. Git confirms, people corroborate. Richest evidence. | **Inherited codebase, new team.** Git has the drivers; nobody to ask -> *reading the register builds the memory the org lacks.* (The case the axes surface on their own — the tell the model is real, not greenfield relabeled.) |
+| **Greenfield** (no artifact history) | New product in a mature company. No code history, but real domain data + memory. High confidence. | True startup. Borrowed history only. Register = list of unplaced bets. Thinnest evidence. |
+
+**The gradient (the safety net):** evidence fidelity runs highest top-left, lowest bottom-right; **error
+cost runs the opposite way** — top-left has mass to restructure, bottom-right has ~ten use cases and the
+absorption/emancipation machinery (item 4) makes re-grouping a *transform, not a rewrite*. The two curves
+cross: "hardest to attribute" and "cheapest to get wrong" coincide at the same corner — which is what
+makes applying the universal technique at the thin end honest rather than reckless.
+
+**Output form, spelled out:** undecided drivers become *ownership fixes* on the established side (who
+should own this boundary — Conway/org-improvement feedback) and *open strategic questions* on the startup
+side ("you haven't decided pricing authority, so this boundary can't be drawn yet"). At true greenfield
+PFD partly stops being a decomposition method and becomes a **readiness instrument**: the register is a
+list of bets the founders haven't consciously placed — startup risks wearing a design costume.
+
+**Honest limit (bake in, or a skeptic finds it):** borrowed history (founder-prior, incumbent evolution)
+can *mislead* precisely when the startup's whole thesis is that the incumbents' volatility no longer
+applies. So it is a **low-confidence prior, marked as such in the register**, not realized data of equal
+weight. The residue discipline pointed at your own evidence — the admission strengthens the section.
+
+**Relationship to shipped material:** generalizes item 3 (register) + item 4 (ownership dynamics = the
+established-org output form); retires greenfield-as-bottom-up-objection (item 9) into greenfield-as-
+context. Additive — nothing shipped becomes wrong.
+
+**Target home:** a short new section — "Attribution across contexts" — in the Foundations back-half (near
+the change-driver material) or adjacent to Brownfield. Decision at prose time. Keep additive to
+`foundations.md`/`brownfield.md`, not a restatement (that material is already dense — duplication risk).
+
+### Part C — the Brooks / parallelism article (pointer only)
+
+Standalone article in `articles/` (drafted this session), sequel to the shipped reflection piece. Thesis:
+use-case decomposition does not contradict Brooks' Law — it satisfies the one condition Brooks named for
+partitioning to work (no communication among workers), by driving the communication term toward zero via
+driver attribution + stable interfaces; the ceiling is Amdahl, not Brooks; determinism + AI operators
+change the *kind* of the communication cost. Book impact: at most a one-line forward pointer from
+`foundations.md:220` ("a thousand independent descents") to the article. Series has zero Brooks/Amdahl
+mentions (confirmed), so no contradiction risk.
+
+### Salvage from the "rediscovery" thread (one line, not a thread)
+
+The one reusable sentence: *for a mature field, recombination is not the consolation prize of original
+work — it is most of what original work is; the test is whether the assembly does work the parts could not
+do alone.* Pre-emptive answer to the "this is just Parnas/DDD" review. Home: item 6 (DDD stance) or the
+intro positioning. One sentence.
+
+---
+
 ## Release scope & versions
 
 Target: **PFD 1.2.0 → 1.3.0**, **JBCT 4.1.2 → 4.2.0** (minor — feature additions, single-sourced from each

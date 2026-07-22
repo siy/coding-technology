@@ -24,7 +24,7 @@ The methodology's vocabulary, defined once. These terms are the shared spine the
 
 **Change driver.** A reason code changes: a force that, when it moves, forces the code to move with it. A boundary is right when everything inside changes for the same reason and nothing outside changes for that reason. Distinct from a *trigger*, and itself not fixed — change drivers evolve as the business does. (Finding the change driver.)
 
-**Change-driver cohesion.** The grouping criterion: units cohere when a single change driver governs them, so one change would force all of them, and only them, to change together. Tested along two axes, *completeness* and *purity*. (The telescope; Finding the change driver.)
+**Change-driver cohesion.** The grouping criterion: units cohere when a single change driver governs them, so one change would force all of them, and only them, to change together. Tested along two axes, *completeness* and *purity*, and made operational by *driver attribution*. (The telescope; Finding the change driver.)
 
 **Completeness.** One axis of the cohesion test: is every unit a driver governs inside the group, or are some scattered elsewhere so one change must chase them across modules — the smell of shotgun surgery? (The telescope.)
 
@@ -39,6 +39,8 @@ The methodology's vocabulary, defined once. These terms are the shared spine the
 **Design-out.** Changing the model so an invalidation cannot arise rather than recovering after the fact — the third member of the recovery triple, and, for races, a family of tactics that move contention to one coordination point and make the conflicting state unconstructible. (The recovery triple; Designing out contention.)
 
 **Direct step composition.** Wiring steps by calling the next on the value the previous returns, the chain written out, output feeding input. Contrast *event-based step composition*. (Foundations.)
+
+**Driver attribution.** Attributing each use case to the change driver that moves it, then grouping the use cases that share one — the move that replaces a pairwise *do these belong together?* comparison with a single labeling pass and a sort. What makes cohesion *quasi-linear*. (Finding the change driver.)
 
 ## E
 
@@ -86,6 +88,10 @@ The methodology's vocabulary, defined once. These terms are the shared spine the
 
 **Purity.** One axis of the cohesion test: is only what a driver governs inside the group, or is a foreign unit riding along so its unrelated changes leak in as accidental coupling? (The telescope.)
 
+## Q
+
+**Quasi-linear cohesion.** The property *driver attribution* buys: because each use case is placed by its own driver rather than weighed against every other, the cost of keeping a decomposition cohesive grows quasi-linearly with the number of use cases — a labeling pass and a sort — instead of quadratically, as pairwise comparison would. (Finding the change driver.)
+
 ## R
 
 **Recovery triple.** The three responses to an invalidated step — BER (compensate), FER (continue degraded), and design-out (make the invalidation impossible) — where most discourse names only the first. (The recovery triple.)
@@ -114,7 +120,7 @@ The methodology's vocabulary, defined once. These terms are the shared spine the
 
 ## U
 
-**Use case.** One business operation — one trigger, one outcome — and the floor of the telescope, composed internally from the patterns. (The telescope.)
+**Use case.** One business operation — one trigger, one outcome — and the floor of the telescope, composed internally from the patterns and never from steps that could be triggered on their own. Deliberately not the classic (Jacobson/Cockburn) use case: trigger-centric rather than actor-centric, and a structural unit rather than a narrative document. (The telescope.)
 
 ## V
 
@@ -124,4 +130,4 @@ The methodology's vocabulary, defined once. These terms are the shared spine the
 
 **Within-altitude composition / cross-altitude grouping.** The two operations that recur at every altitude: composition (how units at an altitude compose into one, via the patterns) and grouping (how units of the level below cohere to form one, via change-driver cohesion). (The telescope.)
 
-**Workflow.** A composition of use cases for one business outcome, cohering under one business policy; a Leaf to its subsystem. (The telescope.)
+**Workflow.** A composition of use cases for one business outcome, cohering under one business policy; a Leaf to its subsystem. The altitude at which a step becomes independently triggerable and state must survive between steps — the workflow owns that spanning state machine. (The telescope.)

@@ -7,6 +7,16 @@ All notable changes to the PFD book, newest first. Format:
 `0.x` versions were preview editions; `1.0.0` marked the first edition released to
 readers, and `1.x` are its maintenance and expansion releases.
 
+## [2.3.0] - 2026-07-23
+
+Two moves: the numbers stop clogging the core vocabulary, and a new section generalizes driver attribution across project and organizational contexts.
+
+### Added
+- **"Attribution across contexts"** (Foundations, after *Where the structure comes from*): a two-axis treatment — project history (does the artifact carry the drivers?) × organizational history (does anyone remember them?) — naming the four corners, including the inherited-codebase / new-team case where reading the register *builds* the memory the org lacks. States the error-cost inversion (hardest to know where cheapest to get wrong), the output-form split (a governance finding for an established org vs an open strategic question / readiness instrument for a startup), and the borrowed-history caution. Generalizes the greenfield honest-limit shipped in 2.2.1.
+
+### Changed
+- **Numbers no longer brand the core vocabulary** (Foundations): the introductions of the process properties, the shapes, the composition primitives, the ownership moments, the *parse, don't validate* levels, and the telescope's altitudes now lead with the names rather than announcing a count ("six primitives" → "a small, fixed set"; "one of four shapes" → "a shape"; "There are four moments." dropped; and so on). The argument-bearing counts — the recovery triple, the nine questions, the two cohesion axes — are kept. Addresses the reviewer note that readers retain the tally and forget the members.
+
 ## [2.2.1] - 2026-07-22
 
 Scope the change-driver-as-fact claim by what the business can actually know, and ship the greenfield honest-limit.

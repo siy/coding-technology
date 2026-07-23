@@ -153,6 +153,28 @@ nav.links a.current {
 .chip.active { border-color: var(--amber); box-shadow: 0 0 0 1.5px var(--amber) inset; }
 .chip small { display: block; color: var(--ink-soft); font-size: 12px; }
 
+.proof {
+  max-width: 700px;
+  margin: 12px auto 0;
+  padding: 16px 22px;
+  border: 1.5px solid var(--ink);
+  border-radius: 10px;
+  text-align: center;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+.proof strong { color: var(--ink); font-weight: 700; }
+.proof .go {
+  display: inline-block;
+  margin-top: 10px;
+  color: var(--ink);
+  font-weight: 600;
+  text-decoration: none;
+  border-bottom: 2px solid var(--amber);
+}
+.proof .go:hover { background: var(--amber); color: var(--paper); }
+
 /* ---------- Halves (front door) / related-links (landing pages) ---------- */
 
 .halves { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; padding: 56px 0 8px; }

@@ -244,7 +244,7 @@ public Result<Integer> refresh() {
 - [ ] Every monadic chain checked against M1-M4
 - [ ] Every log statement checked against G1-G4
 - [ ] No FQCNs in code (use imports)
-- [ ] Test names follow `methodName_outcome_condition`
+- [ ] Test names follow `method_[scenario_]expectation` (two or more segments)
 
 ---
 

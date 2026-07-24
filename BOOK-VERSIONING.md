@@ -39,8 +39,8 @@ Current state:
 
 | Book | Version | Status |
 |------|---------|--------|
-| JBCT | 4.1.0 | released; continues its existing history |
-| PFD  | 2.3.0 | released |
+| JBCT | 4.3.1 | released; continues its existing history |
+| PFD  | 2.3.1 | released |
 | Aether | 0.1.0 | once the manuscript begins |
 
 > The books use plain SemVer, not an `rc` suffix. The `1.0.0-rc1` in the text

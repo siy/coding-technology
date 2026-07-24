@@ -12,7 +12,7 @@ The derivation gives questions a job description. An answer participates by *pre
 
 Nine questions hold seats under that criterion, each audited against every derivation this book runs. The count deserves one sentence of standing law rather than a history: it is an output, and if a tenth demand ever demonstrates independent pressure — pressing or pruning an axis no current answer reaches — the sheet grows. The criterion outranks the number.
 
-The questions organize by what their answers *do* in the derivation, because that is the property that matters when you hold the sheet. Five driver modes cover them.
+The questions organize by what their answers *do* in the derivation, because that is the property that matters when you hold the sheet. Driver modes cover them.
 
 ## Prune mode: the correctness answers
 

@@ -3,6 +3,14 @@
 All notable manuscript changes. Format: keep-a-changelog-ish; the top entry's version is
 what the build stamps on the PDF (single source of truth).
 
+## [1.0.1] — 2026-07-24
+
+Terminology pass, shared with the companion editions.
+
+### Changed
+- **Numbers no longer brand the label-only sets**: the driver modes, the cost-and-risk indicators, and the path constraints are introduced by name rather than by count. The counts that carry an argument are kept — the nine questions (an output of the membership criterion) and the six axes (with their completeness argument).
+- **Recovery value name standardized**: the axis table's *design-the-failure-out* becomes *design-out*, matching the ledger and the rest of the series.
+
 ## [1.0.0] — 2026-07-19
 
 First edition. Content as of 0.3.15 (fresh-read pass, user read feedback items 1–4,

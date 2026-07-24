@@ -7,6 +7,11 @@ All notable changes to the PFD book, newest first. Format:
 `0.x` versions were preview editions; `1.0.0` marked the first edition released to
 readers, and `1.x` are its maintenance and expansion releases.
 
+## [2.3.1] - 2026-07-24
+
+### Changed
+- **Brownfield cost-and-risk indicators de-branded** (*Brownfield*): the six-indicators / six-dimensions references now lead with the name, matching the *Architecture Synthesis* edition. Argument-bearing counts unchanged.
+
 ## [2.3.0] - 2026-07-23
 
 Two moves: the numbers stop clogging the core vocabulary, and a new section generalizes driver attribution across project and organizational contexts.

@@ -7,6 +7,14 @@ All notable changes to the JBCT book, newest first. Format:
 Earlier history (1.x–2.x) predates per-book changelogs and lives in the
 repository root `CHANGELOG.md`.
 
+## [4.3.1] - 2026-07-24
+
+Reconciliation with the merged rc3 lint rules.
+
+### Changed
+- **Value-object member order** (*Project Structure*): public constants lead; private implementation constants (validation patterns, private formatters) sit at the bottom near their use, exempt from constants-first; the factory / accessor / helper methods carry no enforced relative order (keep conversion pairs like `toJson`/`fromJson` together). Reverses the previous patterns-first ordering to match every value object in the codebase.
+- **Test-method naming relaxed to two-or-more segments** (*Chapter Summaries*; *Systematic Application* checklist): `method_[scenario_]expectation` (e.g. `validate_rejectsEmpty`, or the fuller `register_succeeds_forNewEmail`), from the former strict three-segment form, matching the codebase's pervasive readable two-segment names.
+
 ## [4.3.0] - 2026-07-15
 
 ### Added

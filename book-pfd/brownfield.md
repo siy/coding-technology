@@ -89,9 +89,9 @@ Some deltas are genuinely staged, even under this discipline. Moving from a shar
 
 ---
 
-## The six indicators, applied in brownfield
+## The cost-and-risk indicators, applied in brownfield
 
-The previous module named six cost-and-risk indicators for weighing a candidate next-correct-step. In brownfield, those indicators become the chapter's working tool. Each shows up differently in an inherited system than in a clean design, and the differences are worth naming.
+The previous module named the cost-and-risk indicators for weighing a candidate next-correct-step. In brownfield, those indicators become the chapter's working tool. Each shows up differently in an inherited system than in a clean design, and the differences are worth naming.
 
 **Reversibility** in greenfield is a property of the chosen design. In brownfield, it is a property of the *step* relative to the existing system. A delta that adds something (a new read model, a new audit log) is usually reversible by removing the addition. A delta that splits something (a schema, a service, a workflow) is usually irreversible at any practical cost; the data has fanned out, the consumers have multiplied, the team has reorganized around the split. The brownfield instinct is to under-rate reversibility because everything in legacy already feels permanent. **The methodology argues for the opposite: when the legacy is dense, the reversible additions are where the team has the most room to learn cheaply, and the irreversible splits are where every false move compounds.**
 
@@ -119,7 +119,7 @@ What the methodology provides:
 - **Delta options** — one or more candidate next-correct-steps, each anchored in a specific failed input and a specific axis change.
 - **Coherence check** — for each delta, whether the resulting V₁ is feasible, and whether the intermediate state during the transition is feasible.
 - **Reversibility assessment** — whether the delta can be undone cheaply, and if not, what its mitigation plan would look like.
-- **Cost-and-risk indicators** — the six dimensions, applied to each candidate so the trade-offs are visible.
+- **Cost-and-risk indicators** — the dimensions, applied to each candidate so the trade-offs are visible.
 
 What the business decides:
 
@@ -131,7 +131,7 @@ What the business decides:
 
 The line is sharp on purpose. **A methodology that pretends to make business decisions sacrifices its credibility on the technical ones; a methodology that hides from business decisions becomes the abstraction layer the reviewer warned against.** The methodology stays on its side of the line and asks the business to stay on its own. Where the two meet — coherence is multi-dimensional — the methodology surfaces the technical shape of the trade-off in terms the business can act on, rather than absorbing the business question into itself.
 
-The conversation looks the same shape every time the methodology has produced a candidate delta. The team brings what the methodology produced: V₀ named, the failed Phase-4 inputs identified, one or two candidate deltas with their V₁ and intermediate-state designs, the six indicators per delta. The business asks the questions the methodology cannot answer: how much engineering capacity the delta consumes; whether the transition window falls inside or outside a sensitive period (year-end close and tax-filing season are payroll's immovable walls); what the team will not do during the transition that they would otherwise be doing; what the employee-visible risk is and what protections are available. Some questions cross back over the line, and the methodology answers them: whether a postponement to a calmer quarter changes the indicator profile (it changes transition-duration risk, sometimes intermediate-state feasibility); whether a smaller staged delta would lower the failure-mode amplification (often yes, at the cost of a longer total program). Some questions stay on the business side, and the methodology refuses to answer them: whether the cost is worth paying, whether the timing is right, whether the team has the capacity now. **The discipline of refusing those questions is what keeps the methodology useful on the questions it can answer.**
+The conversation looks the same shape every time the methodology has produced a candidate delta. The team brings what the methodology produced: V₀ named, the failed Phase-4 inputs identified, one or two candidate deltas with their V₁ and intermediate-state designs, the indicators per delta. The business asks the questions the methodology cannot answer: how much engineering capacity the delta consumes; whether the transition window falls inside or outside a sensitive period (year-end close and tax-filing season are payroll's immovable walls); what the team will not do during the transition that they would otherwise be doing; what the employee-visible risk is and what protections are available. Some questions cross back over the line, and the methodology answers them: whether a postponement to a calmer quarter changes the indicator profile (it changes transition-duration risk, sometimes intermediate-state feasibility); whether a smaller staged delta would lower the failure-mode amplification (often yes, at the cost of a longer total program). Some questions stay on the business side, and the methodology refuses to answer them: whether the cost is worth paying, whether the timing is right, whether the team has the capacity now. **The discipline of refusing those questions is what keeps the methodology useful on the questions it can answer.**
 
 ---
 
@@ -183,7 +183,7 @@ The current vector V₀, read from the reverse-application exercise: *three depl
 
 The candidate delta the methodology produces is the merge-back. V₁: *single deployable, modulith / direct calls within the modulith / unified / current-state / single shared store / BER.* Four axes are unchanged; deployment topology moves from many to one. **The justification is direct: the Phase-4 inputs that failed (deploy independence, availability under deploy, operational cost) are all satisfied by removing the deployment separation that the rest of the architecture never honored anyway.** The delta carries no axis changes that fail other inputs, because the system was already operating as a modulith under the surface of its deployment.
 
-The six indicators applied to this delta:
+The indicators applied to this delta:
 
 - **Reversibility.** Re-splitting the modulith into services later is possible if the Phase-4 answers shift to justify it; the modulith preserves the subdomain boundaries internally as modules, which keeps the option open. The merge itself is also reversible in the short term by redeploying the previous topology, before consumers and operators have re-tuned around the modulith.
 - **Intermediate-state feasibility.** The intermediate is the most awkward part of this delta and deserves explicit design. Running services and modulith in parallel during cutover is rarely feasible; the cleaner intermediate is a planned window between pay runs combined with a rollback path. The team that cannot accept the window will need to stage the merge differently (module by module behind a front routing layer, a longer sequence of smaller deltas), and the methodology produces that sequence on request, with its own indicator profile.

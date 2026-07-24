@@ -49,7 +49,7 @@ The output is not a style with a name. It is a position on **six axes**, each wi
 | Read/write model | unified / separated |
 | State storage | current-state / event-sourced |
 | Persistence | single shared / distributed / sharded / per-component / polyglot |
-| Recovery | compensate-by-inverse / degrade-and-continue / design-the-failure-out |
+| Recovery | compensate-by-inverse / degrade-and-continue / design-out |
 
 "Microservices versus monolith" — the debate that consumes the industry — is one value on one axis. The other five axes exist whether or not you name them, and every one of them is being set, by someone or by default, every time a system is built. Most preference wars are two people arguing about different axes without noticing.
 

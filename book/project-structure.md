@@ -253,9 +253,10 @@ Beyond package organization, JBCT standardizes the internal structure of source 
 6. Factory method
 
 **Value Object:**
-1. Static constants (patterns, cause factories)
-2. Factory method
-3. Helper methods
+1. Public constants (named instances, shared sentinels)
+2. Constructor (if explicit)
+3. Methods - factory, accessors, and helpers (relative order not enforced; keep conversion pairs like `toJson`/`fromJson` together)
+4. Private implementation constants (validation patterns, private formatters) - conventionally at the bottom, near their use
 
 **Error Interface:**
 1. Enum variants (fixed-message errors, grouped)

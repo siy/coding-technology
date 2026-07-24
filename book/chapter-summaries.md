@@ -189,7 +189,7 @@ withRetry(withTimeout(operation))
 - Stubs are simple lambdas: `id -> Promise.success(value)`
 - Test each step failure independently
 - Async tests need `.await()` before assertions
-- Name test methods: `methodUnderTest_expectedBehavior_condition`
+- Name test methods: `method_[scenario_]expectation` - at least two underscore-separated segments (e.g. `validate_rejectsEmpty`, or the fuller `register_succeeds_forNewEmail`)
 
 **Remember:**
 > "Stubs are just lambdas. Keep them simple."

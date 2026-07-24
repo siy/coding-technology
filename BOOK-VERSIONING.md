@@ -6,7 +6,7 @@ between editions. The same scheme applies to every book:
 - **Process-First Design** — `book-pfd/` (built from `book-pfd-meta/`)
 - **Architecture Synthesis** — `book-arch/`
 - **Java Backend Coding Technology** — `book/`
-- **Aether** — `book-aether/` (when the manuscript begins)
+- **Aether** — `book-aether/` (draft in progress)
 
 ## One version line per book
 
@@ -41,7 +41,8 @@ Current state:
 |------|---------|--------|
 | JBCT | 4.3.1 | released; continues its existing history |
 | PFD  | 2.3.1 | released |
-| Aether | 0.1.0 | once the manuscript begins |
+| AS   | 1.0.1 | released |
+| Aether | 0.1.0 | draft (pre-GA); manuscript in progress, not yet tagged |
 
 > The books use plain SemVer, not an `rc` suffix. The `1.0.0-rc1` in the text
 > refers to the Pragmatica Core *library*, not to any book.
@@ -63,7 +64,7 @@ reading the book), not authoring/tooling detail.
 ## Tagging
 
 Each book is tagged independently with an **annotated** tag named
-`<book>-v<X.Y.Z>` — `jbct-v3.2.0`, `pfd-v0.9.0`, `aether-v0.1.0`. The tag points at
+`<book>-v<X.Y.Z>` — `jbct-v3.2.0`, `pfd-v0.9.0`, `arch-v1.0.0`, `aether-v0.1.0`. The tag points at
 the commit the book builds as that version (the commit whose `CHANGELOG.md` top
 entry is that version).
 

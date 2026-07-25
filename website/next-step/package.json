@@ -1,0 +1,6 @@
+{
+  "name": "next-step",
+  "private": true,
+  "type": "module",
+  "description": "next_step entry gate — pure ES module, no dependencies, runs in the browser and in node"
+}

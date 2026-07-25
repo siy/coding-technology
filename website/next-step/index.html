@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script>(function(){try{var t=localStorage.getItem('theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+<meta name="description" content="Run the Architecture Synthesis entry gate on an answer sheet. It reports what is unpriced, unscoped, undecomposed or untriaged — and derives nothing.">
+<meta name="author" content="Sergiy Yevtushenko">
+<title>next_step — the entry gate</title>
+<link rel="icon" type="image/png" sizes="32x32" href="/image/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/image/favicon-16x16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/image/apple-touch-icon.png">
+<link rel="stylesheet" href="/style.css">
+<link rel="canonical" href="https://pragmatica.dev/method/architecture-synthesis/next-step/">
+<meta property="og:title" content="next_step — the entry gate">
+<meta property="og:description" content="The Architecture Synthesis entry gate, as an executable. It refuses incomplete answer sheets and derives nothing.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://pragmatica.dev/method/architecture-synthesis/next-step/">
+<meta property="og:image" content="https://pragmatica.dev/image/og-default.png">
+<meta property="og:site_name" content="pragmatica.dev">
+<meta name="twitter:card" content="summary_large_image">
+<style>
+.ns-intro { max-width: 62ch; }
+.ns-scope { border: 1px solid var(--line); border-left: 3px solid var(--amber);
+            background: var(--paper-raised); padding: 1rem 1.15rem; margin: 1.5rem 0;
+            border-radius: 3px; }
+.ns-scope p { margin: 0 0 .5rem; }
+.ns-scope p:last-child { margin-bottom: 0; }
+.ns-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-top: 1.5rem; }
+@media (max-width: 900px) { .ns-grid { grid-template-columns: 1fr; } }
+.ns-pane h2 { font-size: .95rem; text-transform: uppercase; letter-spacing: .06em;
+              color: var(--ink-soft); margin: 0 0 .5rem; }
+.ns-bar { display: flex; gap: .5rem; align-items: center; margin-bottom: .5rem; flex-wrap: wrap; }
+.ns-bar button { font: inherit; font-size: .85rem; padding: .35rem .7rem; cursor: pointer;
+                 background: var(--paper-raised); color: var(--ink);
+                 border: 1px solid var(--line); border-radius: 3px; }
+.ns-bar button:hover { border-color: var(--amber-dark); }
+#sheet { width: 100%; min-height: 30rem; resize: vertical; padding: .8rem;
+         font-family: var(--mono); font-size: .82rem; line-height: 1.5;
+         background: var(--code-bg); color: var(--ink);
+         border: 1px solid var(--line); border-radius: 3px; tab-size: 2; }
+#sheet:focus { outline: 2px solid var(--amber); outline-offset: -2px; }
+.ns-verdict { padding: .7rem .9rem; border-radius: 3px; margin-bottom: .9rem;
+              font-weight: 600; border: 1px solid var(--line); background: var(--paper-raised); }
+.ns-verdict.pass { border-left: 3px solid #15803d; }
+.ns-verdict.fail { border-left: 3px solid #b91c1c; }
+.ns-verdict small { display: block; font-weight: 400; color: var(--ink-soft);
+                    margin-top: .25rem; font-size: .82rem; }
+.ns-item { border: 1px solid var(--line); border-left: 3px solid var(--ink-faint);
+           background: var(--paper-raised); padding: .6rem .8rem; margin-bottom: .55rem;
+           border-radius: 3px; }
+.ns-item.finding { border-left-color: #b91c1c; }
+.ns-item.note { border-left-color: var(--amber); }
+.ns-code { font-family: var(--mono); font-size: .74rem; font-weight: 700;
+           letter-spacing: .04em; }
+.ns-where { font-family: var(--mono); font-size: .72rem; color: var(--ink-soft);
+            float: right; }
+.ns-msg { margin: .3rem 0 0; font-size: .88rem; }
+.ns-card { font-size: .74rem; color: var(--ink-soft); margin-top: .3rem;
+           font-style: italic; }
+.ns-empty { color: var(--ink-soft); font-size: .9rem; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap nav">
+    <a href="/">Start</a>
+    <a href="/method/" class="current">The Method</a>
+    <a href="/java/">The Java Realization</a>
+    <a href="/method/glossary/">Glossary</a>
+    <a href="https://github.com/pragmaticalabs/pragmatica" target="_blank" rel="noopener">GitHub</a>
+  </div>
+</header>
+
+<main class="wrap">
+  <nav class="crumb"><a href="/method/">The Method</a> &rsaquo;
+    <a href="/method/architecture-synthesis/">Architecture Synthesis</a> &rsaquo; next_step</nav>
+
+  <h1><code>next_step</code> — the entry gate</h1>
+
+  <div class="ns-intro">
+    <p>The book claims the derivation is mechanical and the judgment points are named.
+    This page is the first half of that claim as an executable: it runs the entry gate
+    over an answer sheet and reports, in the book's own vocabulary, what is not yet an
+    answer.</p>
+  </div>
+
+  <div class="ns-scope">
+    <p><strong>What this does.</strong> Checks the five disciplines of the entry gate —
+    <em>priced</em>, <em>scoped</em>, <em>decomposed</em>, <em>triaged</em>,
+    <em>surfaced</em> — and cites the card behind each refusal.</p>
+    <p><strong>What it will not do.</strong> It derives no vector, forces no axis, and
+    resolves no judgment point. Targets, recovery ties, contradiction choices and
+    product picks are the book's named refusals; a tool that answered them would
+    overclaim exactly the way the book warns against. An <code>UNKNOWN</code> is a
+    valid answer here, recorded and never guessed.</p>
+    <p>Runs entirely in your browser. Nothing is uploaded.</p>
+  </div>
+
+  <div class="ns-grid">
+    <section class="ns-pane">
+      <h2>Answer sheet</h2>
+      <div class="ns-bar">
+        <button type="button" id="load-clean">Load a complete sheet</button>
+        <button type="button" id="load-broken">Load one with gaps</button>
+        <button type="button" id="clear">Clear</button>
+      </div>
+      <textarea id="sheet" spellcheck="false" aria-label="Answer sheet in TOML"></textarea>
+    </section>
+
+    <section class="ns-pane">
+      <h2>Gate</h2>
+      <div id="verdict" class="ns-verdict">Waiting for a sheet.</div>
+      <div id="results"></div>
+    </section>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div>pragmatica.dev &mdash; the education home of the series &middot; commercial: <a href="https://pragmaticalabs.io/" target="_blank" rel="noopener">pragmaticalabs.io</a></div>
+    <div><a href="https://leanpub.com/u/sergiy1yevtushenko" target="_blank" rel="noopener">Leanpub</a> &middot; <a href="https://github.com/pragmaticalabs/pragmatica" target="_blank" rel="noopener">GitHub</a> &middot; <a href="/method/counterexamples/">Counterexamples</a></div>
+  </div>
+</footer>
+
+<button class="theme-toggle" id="theme-toggle" type="button" aria-label="Toggle light or dark theme"><span class="theme-icon" aria-hidden="true">🌙</span></button>
+<script>(function(){var b=document.getElementById('theme-toggle');if(!b)return;var i=b.querySelector('.theme-icon');function s(t){i.textContent=t==='dark'?'☀️':'🌙';}s(document.documentElement.getAttribute('data-theme'));b.addEventListener('click',function(){var c=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';document.documentElement.setAttribute('data-theme',c);try{localStorage.setItem('theme',c);}catch(e){}s(c);});})();</script>
+
+<script type="module">
+import { checkSheet } from './engine.js';
+import { CLEAN_SHEET, GAPPY_SHEET } from './examples.js';
+
+const sheet = document.getElementById('sheet');
+const verdict = document.getElementById('verdict');
+const results = document.getElementById('results');
+
+const escape = text => String(text).replace(/[&<>"]/g,
+  c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+function item(entry, kind) {
+  const where = entry.line ? `line ${entry.line}` : (entry.row || '');
+  return `<div class="ns-item ${kind}">
+    <span class="ns-where">${escape(where)}</span>
+    <span class="ns-code">${escape(entry.code)}</span>
+    <p class="ns-msg">${escape(entry.message)}</p>
+    ${entry.card ? `<div class="ns-card">${escape(entry.card)}</div>` : ''}
+  </div>`;
+}
+
+function render() {
+  const text = sheet.value;
+  if (!text.trim()) {
+    verdict.className = 'ns-verdict';
+    verdict.textContent = 'Waiting for a sheet.';
+    results.innerHTML = '';
+    return;
+  }
+
+  const { findings, notes, summary } = checkSheet(text);
+  verdict.className = 'ns-verdict ' + (summary.passed ? 'pass' : 'fail');
+  verdict.innerHTML = summary.passed
+    ? `Gate passed. <small>${summary.answered} answered, ${summary.unknown} UNKNOWN. `
+      + `The sheet is admissible — this says nothing about what it derives.</small>`
+    : `${findings.length} ${findings.length === 1 ? 'row is' : 'rows are'} not yet an answer. `
+      + `<small>${summary.answered} answered, ${summary.unknown} UNKNOWN.</small>`;
+
+  results.innerHTML =
+    findings.map(f => item(f, 'finding')).join('')
+    + notes.map(n => item(n, 'note')).join('')
+    + (findings.length || notes.length ? '' : '<p class="ns-empty">Nothing to report.</p>');
+}
+
+sheet.addEventListener('input', render);
+document.getElementById('load-clean').addEventListener('click', () => {
+  sheet.value = CLEAN_SHEET; render();
+});
+document.getElementById('load-broken').addEventListener('click', () => {
+  sheet.value = GAPPY_SHEET; render();
+});
+document.getElementById('clear').addEventListener('click', () => {
+  sheet.value = ''; render();
+});
+
+sheet.value = GAPPY_SHEET;
+render();
+</script>
+</body>
+</html>

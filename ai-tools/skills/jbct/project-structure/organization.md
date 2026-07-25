@@ -95,8 +95,23 @@ com.example.adapter.persistence/
 └── ProductRepositoryAdapter.java
 ```
 
+## Import Ordering
+
+<!-- book:import-ordering -->
+```
+1. java.*
+2. javax.*
+3. org.pragmatica.*
+4. third-party (org.*, com.* - alphabetically)
+5. project imports
+6. (blank line)
+7. static imports (same grouping order)
+```
+<!-- /book:import-ordering -->
+
 ## Member Ordering by File Type
 
+<!-- book:member-ordering -->
 **Use Case Interface:**
 1. Public API (Request, Response records)
 2. Execute method
@@ -124,7 +139,8 @@ com.example.adapter.persistence/
 **Utility Interface:**
 1. Constants
 2. Static methods
-3. `unused` record (always last - prevents implementation)
+3. `unused` record (always last—prevents implementation)
+<!-- /book:member-ordering -->
 
 ## Layer Responsibilities
 

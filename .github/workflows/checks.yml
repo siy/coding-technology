@@ -20,3 +20,6 @@ jobs:
 
       - name: Check AI tooling for drift
         run: ./ai-tools/check-drift.sh
+
+      - name: Check book-owned blocks are in sync
+        run: python3 ./ai-tools/sync-book-blocks.py --check

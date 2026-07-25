@@ -315,7 +315,7 @@ Promise.all(applyBogo(cart, context),     // mutates context
         .map(this::merge);
 ```
 
-**See [ch09-thread-safety.md](../../book/ch09-thread-safety.md)** for comprehensive thread safety coverage, including detailed examples and common mistakes.
+**See [Thread Safety](https://pragmatica.dev/java/jbct/course/thread-safety/)** for comprehensive thread safety coverage, including detailed examples and common mistakes.
 
 ## Lambda Composition Guidelines
 
@@ -605,7 +605,8 @@ Result.lift(
 - **Factory methods**: `TypeName.typeName(...)` (lowercase-first)
 - **Validated inputs**: `Valid` prefix (not `Validated`): `ValidRequest`, `ValidUser`
 - **Error types**: Past tense verbs: `EmailNotFound`, `AccountLocked`, `PaymentFailed`
-- **Test names**: `methodName_outcome_condition`
+- **State-machine state types**: `*State` suffix for the sealed sum of lifecycle states — `HoldState`, `BookingState`, `SeatState` — with variants kept bare (`Free`, `Held`, `Confirmed`, `Cancelled`, never `HeldState`). Reserve the suffix for the lifecycle sum a guarded transition advances, not every mutable holder; it joins the suffix-by-role family (`*Request`, `*Response`, `Cause`).
+- **Test names**: `method_[scenario_]expectation` — at least two underscore-separated segments (`validate_rejectsEmpty`, or the fuller `register_succeeds_forNewEmail`)
 - **Acronyms**: Treat as words (camelCase): `httpClient`, `apiKey` not `HTTPClient`, `APIKey`
 
 ### Zone-Based Naming (Abstraction Levels)
@@ -633,7 +634,7 @@ return ValidRequest.validRequest(request)
                    .flatMap(this::sendConfirmation);
 ```
 
-**For complete zone verb vocabulary**, see **[ch07-basic-patterns.md](../../book/ch07-basic-patterns.md)**.
+**For complete zone verb vocabulary**, see **[Basic Patterns](https://pragmatica.dev/java/jbct/course/basic-patterns/)**.
 
 ## Project Structure (Vertical Slicing)
 
@@ -916,7 +917,7 @@ This skill contains comprehensive guidance organized by topic:
   - Detailed violation reports with fixes
 
 ### Documentation
-- **[../../book/index.md](../../book/index.md)** - Complete technical reference (JBCT book)
+- **[JBCT book](https://pragmatica.dev/java/jbct/course/)** - Complete technical reference (JBCT book)
 - **../../TECHNOLOGY.md** - High-level pattern catalog
 - **../../CHANGELOG.md** - Version history and changes
 

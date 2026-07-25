@@ -1,6 +1,6 @@
 # Introduction - Code Unification
 
-**Based on:** JBCT v4.3.0 | **Pragmatica Core:** 1.0.0-rc1
+**Based on:** JBCT v4.3.1 | **Pragmatica Core:** 1.0.0-rc1
 
 ## About the Series
 

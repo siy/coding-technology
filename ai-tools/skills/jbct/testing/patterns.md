@@ -378,21 +378,16 @@ class RegisterUserIntegrationTest {
 
 ## Test Naming
 
-Pattern: `method_[scenario_]expectation` — at least two underscore-separated segments.
+<!-- book:test-naming -->
+Follow the pattern: `method_[scenario_]expectation` - at least two underscore-separated segments. The scenario segment is optional; include it when the expectation alone would not identify the case.
 
 ```java
-@Test
-void email_succeeds_forValidFormat() { ... }
-
-@Test
-void email_fails_forNull() { ... }
-
-@Test
-void execute_fails_whenEmailExists() { ... }
-
-@Test
-void execute_succeeds_withValidInput() { ... }
+void validate_rejectsEmpty()
+void validRequest_fails_forInvalidEmail()
+void execute_succeeds_forValidInput()
+void execute_fails_whenEmailAlreadyExists()
 ```
+<!-- /book:test-naming -->
 
 ## What NOT to Test
 

@@ -634,7 +634,30 @@ return ValidRequest.validRequest(request)
                    .flatMap(this::sendConfirmation);
 ```
 
-**For complete zone verb vocabulary**, see **[Basic Patterns](https://pragmatica.dev/java/jbct/course/basic-patterns/)**.
+<!-- book:zone-verbs -->
+**Zone 2 Verbs (Step Interfaces - Orchestration):**
+
+| Verb | When to Use | Example |
+|------|-------------|---------|
+| `validate` | Checking rules/constraints | `ValidateInput` |
+| `process` | Transforming or interpreting data | `ProcessPayment` |
+| `handle` | Coordinating reactions to events | `HandleRefund` |
+| `load` | Retrieving data for use | `LoadUserProfile` |
+| `save` | Persisting changes | `SaveOrder` |
+| `check` | Verifying conditions | `CheckInventory` |
+
+**Zone 3 Verbs (Leaves - Implementation):**
+
+| Verb | Typical Use | Example |
+|------|-------------|---------|
+| `get` | Retrieve a value | `getTimestamp()` |
+| `fetch` | Pull from external source | `fetchWeatherData()` |
+| `parse` | Break down structured input | `parseJson()` |
+| `calculate` | Perform computation | `calculateTax()` |
+| `hash` | Cryptographic transformation | `hashPassword()` |
+| `format` | Build structured output | `formatDate()` |
+| `send` | Transmit over network | `sendEmail()` |
+<!-- /book:zone-verbs -->
 
 ## Project Structure (Vertical Slicing)
 

@@ -13,6 +13,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **`ai-tools/check-drift.sh`** — drift guard for the AI tooling, wired into CI as `.github/workflows/checks.yml`. Skills are installed away from this repo (`~/.claude/skills`), so a stale reference here becomes an invisible wrong answer there. Checks: references to retired documents, links that do not resolve, links that escape their skill directory (these cannot survive installation — book citations must be `pragmatica.dev` URLs), Pragmatica Core pins that disagree with the declared canonical version, book version headers that disagree with the book's own `CHANGELOG.md`, and divergence between this repo and an installed copy. The install-drift check skips automatically where no `~/.claude` exists, so CI runs the rest.
+- **Member ordering by file type** (`skills/jbct/project-structure/organization.md`) — JBCT-ORD-01 was in the book (`book/project-structure.md`) but had never reached the skill.
+
+### Fixed
+- **Bidirectional tooling drift** — the installed copies of `jbct-coder`, `jbct-reviewer` and `code-reviewer` had accumulated content that was never backported (the `*State` naming rule, the `@NullReturn` intent annotation, the `Verify.Is`/built-in-VO catalog rules, the mirrored-API sibling-diff review pass, and `code-reviewer`'s rescoping to non-JBCT code), while the repo copies were ahead on the pattern-origin framing. Both directions reconciled against the book.
+- **BPMN framing** — `jbct-coder` and `jbct-reviewer` claimed the six patterns "map to" BPMN constructs. The book is explicit that the correspondence is *"corroboration, not foundation — the catalog is derived from the process, not from the notation"* (`book/basic-patterns.md:18`). Patterns now lead from the process side, with BPMN retained as a dictionary.
+- **Test-naming rule** — skill still carried the pre-4.3.1 three-segment `methodName_outcome_condition`; relaxed to `method_[scenario_]expectation` (two or more segments) per JBCT-NAM-05.
+- **Dead book references** — `CODING_GUIDE.md` (retired 2026-06-22) and the non-existent `book/ch09-thread-safety.md` / `book/ch07-basic-patterns.md` paths replaced with published web-edition URLs.
+- **Stale book version headers** — `book/introduction.md` and `book/from-process-to-patterns.md` announced JBCT v4.3.0 against a 4.3.1 changelog.
+
 ## [3.1.0] - 2026-06-13
 
 ### Added

@@ -39,6 +39,37 @@ cp -r skills agents ~/.claude/
 ### Verify Installation
 
 ```bash
+./check-drift.sh
+```
+
+Reports any skill or agent whose installed copy has diverged from this repo, alongside
+the other staleness checks below. Re-run `cp -r skills agents ~/.claude/` to reconcile.
+
+## Maintenance
+
+Skills are installed away from this repo, so a stale reference here becomes an invisible
+wrong answer there. Two scripts keep that from happening; both run in CI
+(`.github/workflows/checks.yml`).
+
+```bash
+./check-drift.sh                    # references, version pins, installed-copy divergence
+python3 sync-book-blocks.py --check # book-owned blocks still match the books
+python3 sync-book-blocks.py --write # regenerate them after a book edit
+```
+
+`check-drift.sh` flags references to retired documents, links that do not resolve, links
+that escape their skill directory (those cannot survive installation — cite the book by
+its `pragmatica.dev` URL), Pragmatica Core pins that disagree with the declared canonical
+version, and book version headers that disagree with the book's own `CHANGELOG.md`.
+
+`sync-book-blocks.py` copies enumerable rules the books own — naming vocabularies,
+ordering rules, catalogs — into the tooling between `<!-- book:<id> -->` markers. The
+book is the source; those regions are build output, so edit the book and regenerate. A
+renamed book heading fails extraction rather than silently leaving a stale copy.
+
+### Manual Verification
+
+```bash
 ls ~/.claude/skills/jbct/SKILL.md
 ls ~/.claude/skills/jbct-review/SKILL.md
 ls ~/.claude/agents/jbct-coder.md

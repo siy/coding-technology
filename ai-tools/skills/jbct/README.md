@@ -82,9 +82,9 @@ Claude Code navigates to specific files as needed, optimizing context usage.
 
 ## Related Resources
 
-- **[JBCT book](../../book/index.md)** - Complete technical reference
-- **[jbct-coder.md](../../jbct-coder.md)** - Code generation subagent
-- **[jbct-reviewer.md](../../jbct-reviewer.md)** - Code review subagent
+- **[JBCT book](https://pragmatica.dev/java/jbct/course/)** - Complete technical reference
+- **[jbct-coder](https://github.com/siy/coding-technology/blob/main/ai-tools/agents/jbct-coder.md)** - Code generation subagent
+- **[jbct-reviewer](https://github.com/siy/coding-technology/blob/main/ai-tools/agents/jbct-reviewer.md)** - Code review subagent
 
 ## Version
 
@@ -92,4 +92,4 @@ Based on Java Backend Coding Technology (last modified: 2026-03-27)
 
 ## License
 
-MIT License - see [LICENSE](../../LICENSE) for details
+MIT License - see [LICENSE](https://github.com/siy/coding-technology/blob/main/LICENSE) for details

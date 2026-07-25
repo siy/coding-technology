@@ -95,6 +95,37 @@ com.example.adapter.persistence/
 └── ProductRepositoryAdapter.java
 ```
 
+## Member Ordering by File Type
+
+**Use Case Interface:**
+1. Public API (Request, Response records)
+2. Execute method
+3. Internal types (ValidRequest + validation helpers)
+4. Step interfaces
+5. Domain fragments (records used only by this use case)
+6. Factory method
+
+**Value Object:**
+1. Public constants (named instances, shared sentinels)
+2. Constructor (if explicit)
+3. Methods - factory, accessors, and helpers (relative order not enforced; keep conversion pairs like `toJson`/`fromJson` together)
+4. Private implementation constants (validation patterns, private formatters) - conventionally at the bottom, near their use
+
+**Error Interface:**
+1. Enum variants (fixed-message errors, grouped)
+2. Record variants (errors carrying data)
+
+**Step Implementation:**
+1. Dependencies (final fields)
+2. Constructor
+3. Interface method(s)
+4. Private helpers
+
+**Utility Interface:**
+1. Constants
+2. Static methods
+3. `unused` record (always last - prevents implementation)
+
 ## Layer Responsibilities
 
 ### Use Case Layer

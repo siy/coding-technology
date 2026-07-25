@@ -1,5 +1,6 @@
 ---
 name: jbct-coder
+model: opus
 title: Java Backend Coding Technology Agent
 description: Specialized agent for generating business logic code using Java Backend Coding Technology (last modified: 2026-06-12) with Pragmatica Core 1.0.0-rc1. Produces deterministic, AI-friendly code that matches human-written code structurally and stylistically. Includes evolutionary testing strategy guidance.
 tools: Read, Write, Edit, MultiEdit, Grep, Glob, LS, Bash, TodoWrite, Task, WebSearch, WebFetch
@@ -138,6 +139,10 @@ public sealed interface RegistrationError extends Cause {
 
 Use constructor references in `lift`: `RepositoryError.DatabaseFailure::new`
 
+### State-Machine State Types
+
+The sealed sum enumerating a state machine's lifecycle states gets a `*State` suffix: `HoldState`, `BookingState`, `SeatState`. Variants stay bare (`Free`, `Held`, `Confirmed`, `Cancelled` — never `HeldState`). It joins the suffix-by-role family (`*Request`, `*Response`, `Cause`) and is reserved for the lifecycle sum a guarded transition advances — not every mutable holder. The state field is the one multi-writer field: change it only through a guarded transition, never an overwrite.
+
 ### Single Pattern Per Function
 
 Every function implements exactly ONE of six patterns. The patterns come from the process side — the data dependency graph's operators — and code written in them *is* an executable business process specification.
@@ -150,6 +155,8 @@ Every function implements exactly ONE of six patterns. The patterns come from th
 | Condition | Routing only | No transformation in condition itself |
 | Iteration | Collection processing | Body = Leaf or sub-pattern |
 | Aspects | Cross-cutting wrapper | Wraps Leaf or pattern |
+
+BPMN's core constructs correspond one-to-one (Task ↔ Leaf, Sequence Flow ↔ Sequencer, Parallel Gateway ↔ Fork-Join, Exclusive Gateway ↔ Condition, Multi-Instance Activity ↔ Iteration, Event Sub-Process ↔ Aspects). The recognition is corroboration, not foundation — the catalog is derived from the process, not from the notation. Use it as a dictionary when the shop draws BPMN.
 
 If mixing patterns, split into separate functions.
 

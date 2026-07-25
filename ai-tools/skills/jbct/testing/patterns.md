@@ -378,7 +378,7 @@ class RegisterUserIntegrationTest {
 
 ## Test Naming
 
-Pattern: `methodName_outcome_condition`
+Pattern: `method_[scenario_]expectation` — at least two underscore-separated segments.
 
 ```java
 @Test

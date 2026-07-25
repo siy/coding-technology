@@ -450,7 +450,7 @@ Design complete. Ready for jbct-coder.
 
 ## References
 
-- **[JBCT book](../../book/index.md)** - Complete JBCT reference
+- **[JBCT book](https://pragmatica.dev/java/jbct/course/)** - Complete JBCT reference
 - **jbct-coder.md** - Implementation agent (receives your designs)
 - **jbct-reviewer.md** - Review agent (validates implementations)
 - **articles/six-patterns-that-cover-everything.md** - Pattern rationale

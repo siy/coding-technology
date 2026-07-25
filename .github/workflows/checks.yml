@@ -23,3 +23,20 @@ jobs:
 
       - name: Check book-owned blocks are in sync
         run: python3 ./ai-tools/sync-book-blocks.py --check
+
+  next-step-engine:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Test the next_step entry gate
+        run: node --test website/next-step/*.test.js

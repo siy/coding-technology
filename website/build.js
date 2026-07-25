@@ -760,8 +760,24 @@ function copyImages() {
   });
 }
 
-// ---------- Sitemap ----------
+// ---------- next_step playground ----------
 
+// The entry gate runs client-side: the page and its modules are copied verbatim,
+// with no bundling step and no dependencies. Tests and the type marker stay behind.
+function copyNextStep() {
+  const source = path.join(__dirname, 'next-step');
+  const dest = path.join(DIST_DIR, 'method', 'architecture-synthesis', 'next-step');
+  if (!fs.existsSync(source)) {
+    console.warn('WARN: next-step directory not found');
+    return;
+  }
+  ensureDir(dest);
+  fs.readdirSync(source)
+    .filter(file => !file.endsWith('.test.js') && file !== 'package.json')
+    .forEach(file => fs.copyFileSync(path.join(source, file), path.join(dest, file)));
+}
+
+// ---------- Sitemap ----------
 function generateSitemap() {
   const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
@@ -880,6 +896,7 @@ function build() {
 
   copyStyles();
   copyImages();
+  copyNextStep();
 
   generateSitemap();
 

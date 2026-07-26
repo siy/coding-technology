@@ -140,6 +140,18 @@ nav.links a.current {
 .pipeline { padding: 36px 0 8px; overflow-x: auto; }
 .pipeline svg { display: block; margin: 0 auto; }
 
+/* Each pipeline stage is a link. The box interiors are fill:none, so a transparent
+   hit rect makes the whole stage clickable rather than just its stroke and text. */
+.pipeline a.stage { cursor: pointer; }
+.pipeline a.stage rect.hit { fill: transparent; stroke: none; }
+.pipeline a.stage:hover rect[stroke="#1a2840"] { stroke: var(--amber-dark); stroke-width: 2.4; }
+.pipeline a.stage:hover text { fill: var(--amber-dark); }
+.pipeline a.stage:focus-visible { outline: none; }
+.pipeline a.stage:focus-visible rect.hit { stroke: var(--amber); stroke-width: 2.5; rx: 10; }
+@media (prefers-reduced-motion: no-preference) {
+  .pipeline a.stage rect[stroke="#1a2840"], .pipeline a.stage text { transition: stroke .12s, fill .12s; }
+}
+
 .entries { display: flex; gap: 14px; justify-content: center; padding: 26px 0 8px; flex-wrap: wrap; }
 .chip {
   border: 1.5px solid var(--ink);
@@ -212,6 +224,8 @@ nav.links a.current {
 .btn.soon { border: 1.5px dashed var(--ink-soft); color: var(--ink-soft); }
 .btn.course:hover { background: var(--amber-dark); }
 .btn.book:hover, .btn.soon:hover { background: var(--code-bg); }
+.cta { margin: 1.75rem 0; }
+.cta .btn { font-size: 15px; padding: 10px 20px; }
 
 /* ---------- Footer (front door, landing, course TOC, reference) ---------- */
 

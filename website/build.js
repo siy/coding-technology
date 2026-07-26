@@ -42,6 +42,17 @@ const STYLE_HASH = crypto.createHash('md5')
 
 const SITEMAP_URLS = [];
 
+// Pages that are deliberately reachable only by direct URL or redirect. Anything
+// else with no inbound link is a build error, not a style preference.
+// These four are legacy root pages kept so previously-published URLs do not 404;
+// they are not part of the current IA and nothing should link to them.
+const ORPHAN_ALLOWED = new Set([
+  'CHANGELOG.html',
+  'PL_IMPROVEMENTS.html',
+  'jbct-coder.html',
+  'jbct-reviewer.html',
+]);
+
 // ---------- Course registry (JBCT + PFD + AS) ----------
 // Each course renders its book's chapters as sequential web lessons. JBCT's config
 // reproduces the previously-hardcoded behaviour exactly (byte-identical output).
@@ -113,7 +124,7 @@ const COURSES = [
     tocTitle: 'Architecture Synthesis Course — pragmatica.dev',
     tocDescription: 'Architecture Synthesis, chapter by chapter: derive an architecture from service-level objectives, verify it against its own budget, and grade it against real systems. Each lesson pairs book prose with an apply-to-your-system exercise. Free, no account required.',
     tocIntro: 'The whole derivation method as a sequence of lessons. Each pairs the book’s prose with a short exercise you run on a system you own; progress is tracked locally in your browser, no account required.',
-    footerLinks: '<a href="/method/architecture-synthesis/reference/">Reference cards</a> &middot; <a href="/method/architecture-synthesis/worksheet/">Worksheet</a> &middot; <a href="https://leanpub.com/architecture-synthesis-the-next-correct-step" target="_blank" rel="noopener">Get the book</a> &middot; ',
+    footerLinks: '<a href="/method/architecture-synthesis/reference/">Reference cards</a> &middot; <a href="/method/architecture-synthesis/worksheet/">Worksheet</a> &middot; <a href="/method/architecture-synthesis/next-step/">Entry gate</a> &middot; <a href="https://leanpub.com/architecture-synthesis-the-next-correct-step" target="_blank" rel="noopener">Get the book</a> &middot; ',
     nonLessonSlugs: new Set(['series-note', 'acknowledgments', 'appendix-worksheet', 'appendix-reference-cards', 'references'])
   }
 ];
@@ -421,6 +432,7 @@ const LANDING_PAGES = [
     crumb: crumbSub('/method/', 'The Method', 'Architecture Synthesis'), nav: 'method',
     related: [
       { href: '/method/architecture-synthesis/course/', label: 'Architecture Synthesis course', note: 'start learning' },
+      { href: '/method/architecture-synthesis/next-step/', label: 'Run the entry gate', note: 'check an answer sheet' },
       { href: '/method/', label: 'The Method', note: 'parent' },
       { href: '/method/pfd/', label: 'Process-First Design', note: 'upstream' },
       { href: '/method/glossary/', label: 'Series glossary', note: 'reference' }
@@ -774,7 +786,20 @@ function copyNextStep() {
   ensureDir(dest);
   fs.readdirSync(source)
     .filter(file => !file.endsWith('.test.js') && file !== 'package.json')
-    .forEach(file => fs.copyFileSync(path.join(source, file), path.join(dest, file)));
+    .forEach(file => {
+      const from = path.join(source, file);
+      // The page is hand-written rather than template-rendered, so it carries the
+      // stylesheet placeholder and gets the same cache-busting stamp as every
+      // generated page. Without it a returning visitor can be served a stale
+      // stylesheet, since CSS ships with long cache headers.
+      if (file.endsWith('.html')) {
+        const html = fs.readFileSync(from, 'utf-8').replace(/{{STYLE_HASH}}/g, STYLE_HASH);
+        fs.writeFileSync(path.join(dest, file), html);
+      } else {
+        fs.copyFileSync(from, path.join(dest, file));
+      }
+    });
+  SITEMAP_URLS.push(SITE_URL + '/method/architecture-synthesis/next-step/');
 }
 
 // ---------- Sitemap ----------
@@ -810,6 +835,7 @@ function verifyLinks() {
   });
 
   let broken = 0;
+  const linked = new Set();
   const hrefRe = /(?:href|src)="([^"]+)"/g;
 
   files.forEach(file => {
@@ -857,8 +883,22 @@ function verifyLinks() {
           broken++;
         }
       }
+
+      if (candidate !== rel) linked.add(candidate);
     }
   });
+
+  // A page nothing links to is unreachable in practice, however well it renders.
+  // Resolving links cannot catch that, so check reachability separately.
+  const orphans = files
+    .map(f => path.relative(DIST_DIR, f).split(path.sep).join('/'))
+    .filter(rel => rel !== 'index.html' && !linked.has(rel) && !ORPHAN_ALLOWED.has(rel));
+
+  if (orphans.length) {
+    orphans.forEach(rel => console.error(`  ORPHAN: ${rel} (no page links to it)`));
+    console.error(`\n✗ ${orphans.length} unreachable page(s).`);
+    process.exitCode = 1;
+  }
 
   if (broken > 0) {
     console.error(`\n✗ ${broken} broken internal link(s)/anchor(s).`);

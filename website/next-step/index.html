@@ -51,6 +51,15 @@
            border-radius: 3px; }
 .ns-item.finding { border-left-color: #b91c1c; }
 .ns-item.note { border-left-color: var(--amber); }
+.ns-item.judgment { border-left-color: var(--ink); }
+.ns-item.halt { border-left-color: #b45309; }
+.ns-sub { font-size: .82rem; text-transform: uppercase; letter-spacing: .05em;
+          color: var(--ink-soft); margin: 1.1rem 0 .45rem; }
+.ns-table { width: 100%; border-collapse: collapse; font-size: .85rem;
+            margin-bottom: .5rem; }
+.ns-table td { border-bottom: 1px solid var(--line); padding: .35rem .5rem; }
+.ns-table td:first-child { font-family: var(--mono); font-size: .78rem; }
+.ns-held { color: var(--ink-soft); font-size: .8rem; }
 .ns-code { font-family: var(--mono); font-size: .74rem; font-weight: 700;
            letter-spacing: .04em; }
 .ns-where { font-family: var(--mono); font-size: .72rem; color: var(--ink-soft);
@@ -89,12 +98,19 @@
   <div class="ns-scope">
     <p><strong>What this does.</strong> Checks the five disciplines of the entry gate —
     <em>priced</em>, <em>scoped</em>, <em>decomposed</em>, <em>triaged</em>,
-    <em>surfaced</em> — and cites the card behind each refusal.</p>
-    <p><strong>What it will not do.</strong> It derives no vector, forces no axis, and
-    resolves no judgment point. Targets, recovery ties, contradiction choices and
-    product picks are the book's named refusals; a tool that answered them would
-    overclaim exactly the way the book warns against. An <code>UNKNOWN</code> is a
-    valid answer here, recorded and never guessed.</p>
+    <em>surfaced</em> — and cites the card behind each refusal. Once a sheet is
+    admissible it also runs the mechanical parts of the derivation: the null vector,
+    pruning by mandate, and recovery per effectful operation.</p>
+    <p><strong>What it will not do.</strong> It forces no axis, and resolves no judgment
+    point. Targets, recovery ties, contradiction choices and product picks are the
+    book's named refusals; a tool that answered them would overclaim exactly the way
+    the book warns against. An <code>UNKNOWN</code> is a valid answer here, recorded
+    and never guessed.</p>
+    <p><strong>Press does not run yet</strong>, and the page says so rather than
+    guessing. Testing containment needs each axis value's
+    <em>provides / mechanism&nbsp;/ costs</em> entry, and the ledger does not carry
+    those yet — "the ledger cannot price this" is a different statement from "this
+    cannot be built."</p>
     <p>Runs entirely in your browser. Nothing is uploaded.</p>
   </div>
 
@@ -113,6 +129,8 @@
       <h2>Gate</h2>
       <div id="verdict" class="ns-verdict">Waiting for a sheet.</div>
       <div id="results"></div>
+      <h2 style="margin-top:1.5rem">Derivation</h2>
+      <div id="derivation"></div>
     </section>
   </div>
 </main>
@@ -128,12 +146,14 @@
 <script>(function(){var b=document.getElementById('theme-toggle');if(!b)return;var i=b.querySelector('.theme-icon');function s(t){i.textContent=t==='dark'?'☀️':'🌙';}s(document.documentElement.getAttribute('data-theme'));b.addEventListener('click',function(){var c=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';document.documentElement.setAttribute('data-theme',c);try{localStorage.setItem('theme',c);}catch(e){}s(c);});})();</script>
 
 <script type="module">
-import { checkSheet } from './engine.js';
+import { checkSheet, parseToml } from './engine.js';
+import { derive } from './derive.js';
 import { CLEAN_SHEET, GAPPY_SHEET } from './examples.js';
 
 const sheet = document.getElementById('sheet');
 const verdict = document.getElementById('verdict');
 const results = document.getElementById('results');
+const derivation = document.getElementById('derivation');
 
 const escape = text => String(text).replace(/[&<>"]/g,
   c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -148,12 +168,53 @@ function item(entry, kind) {
   </div>`;
 }
 
+function renderDerivation(text) {
+  const { sheet: parsed, errors } = parseToml(text);
+  if (errors.length) { derivation.innerHTML = ''; return; }
+  const d = derive(parsed);
+
+  const rows = Object.entries(d.vector)
+    .map(([axis, value]) => `<tr><td>${escape(axis)}</td><td>${escape(value)}</td>
+      <td class="ns-held">held &mdash; nothing has pressed it</td></tr>`).join('');
+
+  const strikes = d.strikes.length
+    ? d.strikes.map(s => item({
+        code: 'PRUNED', row: s.row,
+        message: `${s.axis}: '${s.value}' struck by ${s.by}`, card: 'Card 5, step 2',
+      }, 'note')).join('')
+    : '';
+
+  const recovery = d.recovery.length
+    ? `<table class="ns-table"><tbody>${d.recovery.map(r =>
+        `<tr><td>${escape(r.operation)}</td><td>${escape(r.value)}</td>
+         <td class="ns-held">${escape(r.forcedBy)}</td></tr>`).join('')}</tbody></table>`
+    : '';
+
+  const judgment = d.judgmentPoints.map(j => item({
+    code: j.kind.toUpperCase().replace(/-/g, '_'), row: j.row,
+    message: j.message, card: 'Card 5 refusals',
+  }, 'judgment')).join('');
+
+  const halts = d.halts.map(h => item({
+    code: 'HALT: ' + h.kind, row: null, message: h.message, card: 'ch. 8',
+  }, 'halt')).join('');
+
+  derivation.innerHTML = `
+    <p class="ns-empty">Start: ${escape(d.start)} (${escape(d.mode)}).</p>
+    <table class="ns-table"><tbody>${rows}</tbody></table>
+    ${strikes ? '<h3 class="ns-sub">Pruned</h3>' + strikes : ''}
+    ${recovery ? '<h3 class="ns-sub">Recovery, per effectful operation</h3>' + recovery : ''}
+    ${judgment ? '<h3 class="ns-sub">Judgment points &mdash; emitted, not resolved</h3>' + judgment : ''}
+    ${halts ? '<h3 class="ns-sub">Halts</h3>' + halts : ''}`;
+}
+
 function render() {
   const text = sheet.value;
   if (!text.trim()) {
     verdict.className = 'ns-verdict';
     verdict.textContent = 'Waiting for a sheet.';
     results.innerHTML = '';
+    derivation.innerHTML = '';
     return;
   }
 
@@ -169,6 +230,8 @@ function render() {
     findings.map(f => item(f, 'finding')).join('')
     + notes.map(n => item(n, 'note')).join('')
     + (findings.length || notes.length ? '' : '<p class="ns-empty">Nothing to report.</p>');
+
+  renderDerivation(text);
 }
 
 sheet.addEventListener('input', render);

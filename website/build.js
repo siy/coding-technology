@@ -784,9 +784,14 @@ function copyNextStep() {
     return;
   }
   ensureDir(dest);
-  fs.readdirSync(source)
-    .filter(file => !file.endsWith('.test.js') && file !== 'package.json')
-    .forEach(file => {
+  fs.readdirSync(source, { withFileTypes: true })
+    // Tests, the type marker, and the golden-derivation corpus stay behind: the page
+    // ships the engine, not its test fixtures.
+    .filter(entry => entry.isFile()
+      && !entry.name.endsWith('.test.js')
+      && entry.name !== 'package.json')
+    .forEach(entry => {
+      const file = entry.name;
       const from = path.join(source, file);
       // The page is hand-written rather than template-rendered, so it carries the
       // stylesheet placeholder and gets the same cache-busting stamp as every

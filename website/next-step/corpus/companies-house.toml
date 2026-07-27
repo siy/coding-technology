@@ -91,6 +91,7 @@ status    = "UNKNOWN"
 scope     = "path:public-search"
 statement = "Register accessed 16.3 billion times; read to write on the order of 1,000 to 1."
 shape     = "volume"
+read_shape = "diverges"   # public search is redacted relative to the record of truth
 status    = "answered"
 
 [[answers.q5]]
@@ -109,6 +110,7 @@ status    = "answered"
 scope     = "path:bulk-data-export"
 statement = "Bulk export serves whole-register extracts, a read shape that diverges from the transactional record."
 shape     = "volume"
+read_shape = "diverges"   # whole-register extract is not a transactional read
 status    = "answered"
 
 # ---- Q6 External constraints ----
@@ -123,6 +125,7 @@ status    = "answered"
 scope     = "data-class:personal-data"
 kind      = "mandate"
 statement = "ECCTA bars publication of date of birth; the public-search read shape is redacted relative to the record of truth."
+reshapes_read = true
 status    = "answered"
 
 [[answers.q6]]
@@ -136,6 +139,7 @@ status    = "answered"
 [[answers.q7]]
 scope     = "system"
 statement = "UNKNOWN from the demand side: no cadence divergence is stated between any named parts. Only legislative dates are known (identity verification from 18 November 2025, iXBRL from 1 April 2027)."
+diverges  = false
 status    = "UNKNOWN"
 
 # ---- Q8 Cost & capacity envelope ----
@@ -155,6 +159,7 @@ status    = "answered"
 [[answers.q9]]
 scope     = "data-class:roe"
 statement = "Register of Overseas Entities: a different Act, 32,054 entities against 5.43m companies, and a beneficial-ownership shape. Regulation, volume and shape diverge simultaneously."
+diverges_on = ["regulation", "volume", "shape"]
 status    = "answered"
 
 # ---- Domain shape, per effectful operation ----

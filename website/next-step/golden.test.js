@@ -69,31 +69,82 @@ test('no value is pruned: this run records no mandate that strikes a value', () 
   assert.deepEqual(result.halts.filter(h => h.kind === 'contradiction'), []);
 });
 
-// --- What the engine cannot yet reproduce ---
+// --- The recorded moves ---
 
-test('PENDING: the three recorded axis moves need the ledger', () => {
+test('the three recorded axis moves reproduce exactly, with no extras', () => {
   const result = derive(sheet);
-  assert.equal(result.pressRan, false);
-  assert.equal(COMPANIES_HOUSE.moves.length, 3,
-    'substrate->event-based, read_write->separated, persistence->per-component');
-  // Until the ledger carries provides entries, no axis may move.
-  assert.ok(result.halts.some(h => h.kind === 'unexplored-territory'));
+  const moved = [];
+  for (const [axis, entries] of Object.entries(result.vector)) {
+    if (axis === 'recovery') continue;
+    for (const e of entries) if (e.moved) moved.push(`${axis}:${e.value}@${e.scope}`);
+  }
+  assert.deepEqual(moved.sort(), [
+    'persistence:per-component@data-class:roe',
+    'read_write:separated@path:bulk-data-export',
+    'read_write:separated@path:public-search',
+    'substrate:event-based@path:accounts-filing',
+  ]);
 });
 
-test('PENDING: the vector shape must become scoped before it can hold this run', () => {
+test('each move cites the mechanism the transcript names', () => {
   const result = derive(sheet);
-  // The recorded answer puts three values on read_write and two on persistence, each at
-  // a different scope. A flat value-per-axis vector cannot express that.
-  assert.equal(COMPANIES_HOUSE.vector.read_write.length, 3);
-  assert.equal(COMPANIES_HOUSE.vector.persistence.length, 2);
-  assert.equal(typeof result.vector.read_write, 'string',
-    'engine still returns one value per axis — this is the shape gap');
+  const mech = {};
+  for (const [axis, entries] of Object.entries(result.vector)) {
+    if (axis === 'recovery') continue;
+    for (const e of entries) if (e.moved) mech[`${axis}@${e.scope}`] = e.mechanism;
+  }
+  assert.equal(mech['substrate@path:accounts-filing'], 'queue');
+  assert.equal(mech['read_write@path:public-search'], 'projection pipeline');
+  assert.equal(mech['persistence@data-class:roe'], 'store');
 });
 
-test('PENDING: eight inert rows must stay inert once press runs', () => {
-  // Recorded as pressing nothing. An engine that presses any of these inflates every
-  // architecture it derives, so these are the sharpest regression guards to have ready.
-  assert.equal(COMPANIES_HOUSE.inert.length, 8);
+test('the separated move is recorded as a combination, not a single-row press', () => {
+  const result = derive(sheet);
+  const sep = result.vector.read_write.find(e => e.scope === 'path:public-search');
+  assert.equal(sep.combination, true,
+    'neither read volume nor shape divergence forces separated alone');
+});
+
+test('the ROE move is recorded as scope exclusion before hardening', () => {
+  const result = derive(sheet);
+  const roe = result.vector.persistence.find(e => e.scope === 'data-class:roe');
+  assert.equal(roe.scopeExclusion, true);
+  // The core store must not move with it.
+  assert.ok(result.vector.persistence.some(
+    e => e.value === 'single shared' && e.scope === 'system' && !e.moved));
+});
+
+test('the positions the run held stay held', () => {
+  const result = derive(sheet);
+  // Audit tempts event-sourcing and must not get it: no replay demand exists.
+  assert.deepEqual(result.vector.state, [{ value: 'current-state', scope: 'system', moved: false }]);
+  // Headcount presses cadence divergence only, and Q7 states none.
+  assert.deepEqual(result.vector.topology,
+    [{ value: 'single deployable', scope: 'system', moved: false }]);
+  // The core read path is contained by the chain below the axis move.
+  assert.ok(result.vector.read_write.some(
+    e => e.value === 'unified' && e.scope === 'system' && !e.moved));
+});
+
+test('the two filing paths do NOT earn projections', () => {
+  const result = derive(sheet);
+  const scopes = result.vector.read_write.filter(e => e.moved).map(e => e.scope);
+  assert.ok(!scopes.includes('path:accounts-filing'),
+    'an earlier rule spread one redaction mandate across every path — unforced cost');
+  assert.ok(!scopes.includes('path:confirmation-statement-filing'));
+});
+
+test('the loss-budget UNKNOWN blocks distributed shared rather than forcing it', () => {
+  const result = derive(sheet);
+  const block = result.blocked.find(b => b.value === 'distributed shared');
+  assert.ok(block);
+  assert.match(block.because, /UNKNOWN/);
+});
+
+test('PENDING: topology and state remain unpriced by the ledger', () => {
+  const result = derive(sheet);
+  const halt = result.halts.find(h => h.kind === 'unexplored-territory');
+  assert.deepEqual(halt.axes.sort(), ['state', 'topology']);
 });
 
 // --- A disagreement between the method as stated and the method as practiced ---

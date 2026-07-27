@@ -62,17 +62,73 @@ export const RUNGS = ['hardware sizing', 'cache', 'coalescing', 'replicas', 'pro
 // vector (`axes-and-ledger.md:31`).
 export const THIN_TIERS = ['load balancer', 'cache', 'coalescer', 'admission gate'];
 
-// Per-axis-value containment entries. Empty by design — see the header. Shape, for
-// whoever fills it:
+// Per-axis-value entries. `provides` is prose from the chapter, kept so a reader can
+// check an entry against its source. `mechanisms` is the countable part: resolve's
+// tiebreaker is "fewest new mechanisms", and a mechanism is a **standing operational
+// component that must be run and can fail independently** — the transcript's own usage
+// ("a queue is the named containing mechanism") and Card 6's list (stores, brokers,
+// projection pipelines, cell disciplines). Everything else the prose lists is a `cost`:
+// "a mechanism bills for existing" (axes-and-ledger.md:12).
 //
-//   'separated': {
-//     provides: [{ shape: 'volume', scope: 'path', bound: '...' }],
-//     mechanisms: ['projection', 'backfill', 'dual schema evolution'],
-//     costs: ['staleness window', 'dual schema evolution'],
-//   }
-//
-// Until an axis has entries, press cannot test containment against it and says so.
-export const CONTAINMENT = {};
+// Only the values the published runs exercise are entered so far. An axis value with no
+// entry is unpriced, and press says so rather than guessing.
+export const CONTAINMENT = {
+  substrate: {
+    'direct': {
+      provides: 'lowest latency and read-your-effects immediacy',
+      mechanisms: [],
+      costs: ['temporal coupling', 'availability multiplies down the chain',
+              'bursts arrive unbuffered at the deepest dependency'],
+      source: 'axes-and-ledger.md:43',
+    },
+    'event-based': {
+      provides: 'temporal decoupling, burst absorption, and fan-out',
+      mechanisms: ['broker'],
+      costs: ['propagation lag on every consumer view', 'idempotent consumers',
+              'ordering only per key', 'between-steps state becomes durable and operated'],
+      source: 'axes-and-ledger.md:43',
+    },
+  },
+  read_write: {
+    'unified': {
+      provides: 'read-your-writes for free and zero projection machinery; the whole containment chain lives inside this value',
+      mechanisms: [],
+      costs: [],
+      source: 'axes-and-ledger.md:45',
+    },
+    'separated': {
+      provides: 'independent scaling and shape for one read path, through projections',
+      mechanisms: ['projection pipeline'],
+      costs: ['staleness window', 'machinery to build and backfill', 'dual schema evolution'],
+      // "worth paying exactly when a read path carries its own contractual target AND
+      // its own shape, and worth refusing otherwise" — a two-condition AND.
+      source: 'axes-and-ledger.md:45',
+    },
+  },
+  persistence: {
+    'single shared': {
+      provides: 'cross-component transactions for free: strict consistency',
+      mechanisms: ['store'],
+      costs: ['shared ceiling', 'shared blast radius'],
+      source: 'axes-and-ledger.md:49',
+    },
+    'per-component': {
+      provides: 'independent evolution and stores shaped to their data',
+      mechanisms: ['store'],
+      costs: ['transactions across components decay to protocol',
+              'one operational competency per store technology'],
+      source: 'axes-and-ledger.md:49',
+    },
+    'distributed shared': {
+      provides: 'the only value providing strict transactions across regions with zero data loss on regional failure',
+      mechanisms: ['store'],
+      costs: ['a write floor of cross-region round trips times quorum, which no vendor tunes away'],
+      // Card 2's unique container: strict x multi-region x zero-loss on one data class.
+      requires: ['loss-budget'],
+      source: 'axes-and-ledger.md:49, Card 2',
+    },
+  },
+};
 
 /** Which axes the ledger can currently price. */
 export function pricedAxes() {

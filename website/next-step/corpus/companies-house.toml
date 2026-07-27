@@ -1,0 +1,226 @@
+# Companies House — answer sheet in schema form.
+#
+# Transcribed from siy/derivation-artifacts runs/companies-house/ANSWER-SHEET.md.
+# The published sheet is prose; this is its machine form, and the transcript's recorded
+# moves are the acceptance test (see companies-house.expected.js).
+#
+# Where the sheet says UNKNOWN, this file says UNKNOWN. Nothing is filled in to make the
+# sheet look complete: "an honest UNKNOWN derives a null position and a note, which
+# beats a confident guess deriving machinery" (answer-sheet.md:67).
+
+schema_version = "0.1"
+
+[meta]
+system = "companies-house"
+era    = "2024-2025"
+author = "siy"
+mode   = "greenfield"
+source = "Companies House annual report and accounts 2024-2025"
+
+# ---- Q1 Time budget ----
+# Every deadline on this sheet binds the REQUESTER's clock (statutory windows), which
+# Card 3 marks inert. None is a system response target.
+
+[[answers.q1]]
+scope     = "operation:file-confirmation-statement"
+statement = "Statutory: before the end of 14 days after the end of each review period (CA2006 s.853A). Requester's clock."
+shape     = "requester-clock"
+price     = "late filing penalty; appealable"
+status    = "answered"
+source    = "CA2006 s.853A"
+
+[[answers.q1]]
+scope     = "operation:file-accounts"
+statement = "Statutory penalty ladder: up to 1 month GBP 150, more than 6 months GBP 1,500. Requester's clock."
+shape     = "requester-clock"
+price     = "GBP 150 to GBP 1,500 penalty, appealable"
+status    = "answered"
+
+[[answers.q1]]
+scope     = "operation:incorporate-company"
+statement = "Usually registered within 24 hours online; 8 to 10 days by post. Target over physics floor is nowhere near 1."
+shape     = "requester-clock"
+price     = "no stated consequence past the window"
+status    = "answered"
+
+[[answers.q1]]
+scope     = "operation:registrar-query-decision"
+statement = "UNKNOWN: no statutory turnaround time is published for registrar query or reject decisions."
+status    = "UNKNOWN"
+
+# ---- Q2 Failure budget ----
+
+[[answers.q2]]
+scope     = "system"
+statement = "Digital services available for a minimum of 99.5% of the time; actual 99.98%."
+price     = "missed filing deadlines generate penalties, which are appealable"
+status    = "answered"
+
+[[answers.q2]]
+scope     = "operation:file-accounts"
+statement = "UNKNOWN: no per-operation criticality tiering was found."
+status    = "UNKNOWN"
+
+# ---- Q3 Loss budget ----
+
+[[answers.q3]]
+scope     = "data-class:dissolved-records"
+statement = "Retained 20 years; destruction and transfer currently paused pending review."
+status    = "answered"
+
+[[answers.q3]]
+scope     = "data-class:register"
+statement = "UNKNOWN: no explicit RPO or backup figure is published."
+status    = "UNKNOWN"
+
+# ---- Q4 Consistency contract ----
+
+[[answers.q4]]
+scope     = "data-class:filings"
+statement = "The registrar does not verify information for accuracy, accepting in good faith with only limited examination checks. An RP04 correction layers a new record; the original incorrect form remains on the register."
+status    = "answered"
+
+[[answers.q4]]
+scope     = "path:public-search"
+statement = "UNKNOWN: no public statement on acceptable staleness between an accepted filing and its visibility in public search."
+status    = "UNKNOWN"
+
+# ---- Q5 Load ----
+
+[[answers.q5]]
+scope     = "path:public-search"
+statement = "Register accessed 16.3 billion times; read to write on the order of 1,000 to 1."
+shape     = "volume"
+status    = "answered"
+
+[[answers.q5]]
+scope     = "path:accounts-filing"
+statement = "December accounts deadline peak: 503 filings inside the final hour, 28,874 missed the cut-off entirely. No stated synchronous latency target on the intake path."
+shape     = "burst"
+status    = "answered"
+
+[[answers.q5]]
+scope     = "path:confirmation-statement-filing"
+statement = "Confirmation statements are not calendar-concentrated; 14.7m filings accepted in the year, 91.5% digital."
+shape     = "volume"
+status    = "answered"
+
+[[answers.q5]]
+scope     = "path:bulk-data-export"
+statement = "Bulk export serves whole-register extracts, a read shape that diverges from the transactional record."
+shape     = "volume"
+status    = "answered"
+
+# ---- Q6 External constraints ----
+
+[[answers.q6]]
+scope     = "data-class:register"
+kind      = "audit"
+statement = "Statutory publication duty (CA2006 Part 35): who filed what and when. No demand anywhere on the sheet to reconstruct state as of a past rule version."
+status    = "answered"
+
+[[answers.q6]]
+scope     = "data-class:personal-data"
+kind      = "mandate"
+statement = "ECCTA bars publication of date of birth; the public-search read shape is redacted relative to the record of truth."
+status    = "answered"
+
+[[answers.q6]]
+scope     = "data-class:register"
+kind      = "residency"
+statement = "GDPR Article 49(1)(g) public-register transfer exemption applies, which removes the residency pressure rather than creating one."
+status    = "answered"
+
+# ---- Q7 Release structure ----
+
+[[answers.q7]]
+scope     = "system"
+statement = "UNKNOWN from the demand side: no cadence divergence is stated between any named parts. Only legislative dates are known (identity verification from 18 November 2025, iXBRL from 1 April 2027)."
+status    = "UNKNOWN"
+
+# ---- Q8 Cost & capacity envelope ----
+
+[[answers.q8]]
+scope     = "system"
+statement = "Income GBP 220.3m against operating expenditure GBP 197.9m; staff costs GBP 88.8m; headcount 1,866, up from 1,397. Fees are set on a cost-recovery basis."
+status    = "answered"
+
+# ---- Q9 Multi-X ----
+
+[[answers.q9]]
+scope     = "system"
+statement = "Three registrars (England and Wales, Scotland, Northern Ireland) distinguished only by company-number prefix, presented through one amalgamated public search."
+status    = "answered"
+
+[[answers.q9]]
+scope     = "data-class:roe"
+statement = "Register of Overseas Entities: a different Act, 32,054 entities against 5.43m companies, and a beneficial-ownership shape. Regulation, volume and shape diverge simultaneously."
+status    = "answered"
+
+# ---- Domain shape, per effectful operation ----
+
+[[domain_shape]]
+operation   = "incorporate-company"
+inverse     = "none"
+decays      = false
+reshapeable = ["append-only"]
+
+[[domain_shape]]
+operation   = "accept-filing"
+inverse     = "none"
+decays      = false
+reshapeable = ["append-only"]
+
+[[domain_shape]]
+operation   = "correct-filing-rp04"
+inverse     = "none"
+decays      = false
+reshapeable = ["append-only"]
+
+[[domain_shape]]
+operation   = "dissolve-company"
+inverse     = "none"
+decays      = false
+reshapeable = ["append-only"]
+
+[[domain_shape]]
+operation   = "eccta-query-filing"
+inverse     = "none"
+decays      = true
+reshapeable = ["none"]
+
+[[domain_shape]]
+operation   = "bulk-export"
+inverse     = "none"
+decays      = true
+reshapeable = ["none"]
+
+[[domain_shape]]
+operation   = "idv-backfill"
+inverse     = "none"
+decays      = true
+reshapeable = ["none"]
+
+[[domain_shape]]
+operation   = "court-rectification"
+inverse     = "court-ordered removal under CA2006 ss.1096-1097"
+decays      = false
+reshapeable = ["none"]
+
+[[domain_shape]]
+operation   = "eccta-post-hoc-removal"
+inverse     = "registrar removal power under ECCTA"
+decays      = false
+reshapeable = ["none"]
+
+# ---- Change drivers ----
+
+[[change_drivers]]
+scope      = "policy:filing-rules"
+volatility = "per-legislative-cycle"
+source     = "primary legislation (CA2006, ECCTA)"
+
+[[change_drivers]]
+scope      = "policy:identity-verification"
+volatility = "per-legislative-cycle"
+source     = "ECCTA commencement schedule"

@@ -14,6 +14,7 @@
 // product picks" (Card 5). A recovery tie is a judgment point in the output.
 
 import { AXES, NULL_VECTOR, unpricedAxes } from './ledger.js';
+import { press } from './press.js';
 
 const SCOPE_ORDER = ['system', 'data-class', 'path', 'operation', 'policy'];
 
@@ -124,31 +125,65 @@ export function deriveRecovery(sheet) {
 }
 
 /**
- * Step 3 — press. Cannot run: containment is tested against each axis value's ledger
- * entry, and those entries do not exist. Returns the gap rather than a guess, which is
- * the unexplored-territory halt's own logic — "the ledger cannot price this" is a
- * different statement from "this cannot be built" (`when-derivation-says-no.md:55`).
+ * Step 3 — press, delegated to press.js. Kept re-exported so callers that only want the
+ * pressure matrix do not have to run the whole derivation.
  */
-export function press() {
-  const axes = unpricedAxes();
-  return {
-    ran: false,
-    pressures: [],
-    halt: {
-      kind: 'unexplored-territory',
-      message: `The ledger has no provides/mechanism/costs entries for ${axes.length} axes (${axes.join(', ')}), so containment cannot be tested. This is a gap in the instrument, not a verdict about the system: the ledger cannot price this yet.`,
-      axes,
-    },
-  };
+export { press };
+
+/**
+ * Step 4 — resolve. Pressures become scoped positions. Values apply at demand scope and
+ * hybrids are compositions produced by scope splits (`axes-and-ledger.md:10-11`), so the
+ * vector is a set of (axis, value, scope) entries, not one value per axis.
+ *
+ * Where two pressures on one axis attach to DIFFERENT scopes, the axis does not
+ * compromise: the system splits at the boundary and each side keeps its own value
+ * (`derivation.md:33`). Same-scope opposition is a contradiction and halts.
+ */
+export function resolve(pressures, board) {
+  const vector = {};
+  for (const [axis, value] of Object.entries(NULL_VECTOR)) {
+    vector[axis] = [{ value, scope: 'system', moved: false }];
+  }
+
+  const halts = [];
+  const byAxis = {};
+  for (const p of pressures) (byAxis[p.axis] = byAxis[p.axis] || []).push(p);
+
+  for (const [axis, group] of Object.entries(byAxis)) {
+    for (const p of group) {
+      const available = board[axis] || [];
+      if (!available.includes(p.toward)) {
+        halts.push({ kind: 'contradiction', axis,
+          message: `'${p.toward}' is pressed on ${axis} at ${p.scope} but was struck during prune. No vector satisfies the answers.` });
+        continue;
+      }
+      const sameScope = group.filter(o => o.scope === p.scope && o.toward !== p.toward);
+      if (sameScope.length) {
+        halts.push({ kind: 'contradiction', axis,
+          message: `Opposing pressures on ${axis} at the same scope (${p.scope}) after decomposition: ${p.toward} against ${sameScope.map(o => o.toward).join(', ')}.` });
+        continue;
+      }
+      // Different scopes: split at the boundary, each side keeps its own value.
+      if (!vector[axis].some(e => e.value === p.toward && e.scope === p.scope)) {
+        vector[axis].push({
+          value: p.toward, scope: p.scope, moved: true,
+          forcedBy: p.row, mechanism: p.mechanism, because: p.because,
+          combination: !!p.combination, scopeExclusion: !!p.scopeExclusion,
+        });
+      }
+    }
+  }
+  return { vector, halts };
 }
 
-/** Run the derivation as far as the rules allow. Never fabricates a moved axis. */
+/** Run the derivation. Never fabricates a moved axis: every move cites a pressure. */
 export function derive(sheet) {
   const pruned = prune(sheet);
   const recovery = deriveRecovery(sheet);
-  const pressed = press();
+  const pressed = press(sheet);
+  const resolved = resolve(pressed.pressures, pruned.board);
 
-  const halts = [];
+  const halts = [...resolved.halts];
   if (pruned.emptied.length) {
     halts.push({
       kind: 'contradiction',
@@ -156,24 +191,36 @@ export function derive(sheet) {
       axes: pruned.emptied,
     });
   }
-  if (pressed.halt) halts.push(pressed.halt);
+  if (pressed.unpriced.length) {
+    halts.push({
+      kind: 'unexplored-territory',
+      message: `The ledger has no entries for ${pressed.unpriced.join(', ')}, so containment cannot be tested there. The ledger cannot price this yet — a different statement from "this cannot be built."`,
+      axes: pressed.unpriced,
+    });
+  }
 
   const mode = (sheet && sheet.meta && sheet.meta.mode) || 'greenfield';
   const start = mode === 'living' && sheet.current_vector ? 'current_vector' : 'null vector';
 
+  const vector = { ...resolved.vector };
+  vector.recovery = recovery.decided.map(r => ({
+    value: r.value, scope: `operation:${r.operation}`, forcedBy: r.row, because: r.forcedBy,
+  }));
+
   return {
     mode,
     start,
-    // Positions held, not derived: nothing has pressed them, because press did not run.
-    vector: { ...NULL_VECTOR },
+    vector,
     board: pruned.board,
     strikes: pruned.strikes,
     rejectedStrikes: pruned.rejected,
+    pressures: pressed.pressures,
+    inert: pressed.inert,
+    blocked: pressed.blocked,
     recovery: recovery.decided,
     judgmentPoints: recovery.judgmentPoints,
     pressRan: pressed.ran,
     halts,
-    // Exit codes follow spec §5: 2 halts, 3 judgment points pending, 0 clean.
     exitCode: halts.length ? 2 : (recovery.judgmentPoints.length ? 3 : 0),
   };
 }

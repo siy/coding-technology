@@ -9,7 +9,7 @@ import { test } from 'node:test';
 
 import { derive, deriveRecovery, press, prune } from './derive.js';
 import { parseToml } from './engine.js';
-import { NULL_VECTOR, unpricedAxes } from './ledger.js';
+import { NULL_VECTOR } from './ledger.js';
 
 const sheetOf = toml => parseToml(toml).sheet;
 
@@ -22,12 +22,13 @@ mode = "greenfield"
 
 // --- Step 0: the null vector ---
 
-test('derivation starts from the null vector', () => {
+test('derivation starts from the null vector, scoped at system', () => {
   const result = derive(sheetOf(HEAD));
-  assert.deepEqual(result.vector, NULL_VECTOR);
-  assert.equal(result.vector.topology, 'single deployable');
-  assert.equal(result.vector.persistence, 'single shared');
   assert.equal(result.start, 'null vector');
+  for (const [axis, value] of Object.entries(NULL_VECTOR)) {
+    assert.deepEqual(result.vector[axis], [{ value, scope: 'system', moved: false }],
+      `${axis} should hold its null value at system scope`);
+  }
 });
 
 test('a living system starts from its current vector, not the null vector', () => {
@@ -172,34 +173,33 @@ reshapeable = ["none"]
 
 // --- Step 3: press must report the gap, not guess ---
 
-test('press does not run, and says why', () => {
-  const result = press();
-  assert.equal(result.ran, false);
-  assert.deepEqual(result.pressures, []);
-  assert.equal(result.halt.kind, 'unexplored-territory');
-  assert.match(result.halt.message, /ledger cannot price this/);
+test('press runs on the axes the ledger prices, and reports the ones it does not', () => {
+  const result = press(sheetOf(HEAD));
+  assert.equal(result.ran, true);
+  // topology and state have no containment entries yet; recovery never needs one.
+  assert.deepEqual(result.unpriced.sort(), ['state', 'topology']);
+  assert.ok(!result.unpriced.includes('recovery'));
 });
 
-test('the ledger gap names every axis it cannot price', () => {
-  const axes = unpricedAxes();
-  assert.ok(axes.length > 0, 'the ledger is currently empty by design');
-  assert.ok(!axes.includes('recovery'), 'recovery derives from domain shape, not the ledger');
-  for (const axis of ['topology', 'substrate', 'read_write', 'state', 'persistence']) {
-    assert.ok(axes.includes(axis), `${axis} should be reported unpriced`);
-  }
+test('the unpriced axes surface as an unexplored-territory halt, not silence', () => {
+  const result = derive(sheetOf(HEAD));
+  const halt = result.halts.find(h => h.kind === 'unexplored-territory');
+  assert.ok(halt);
+  assert.match(halt.message, /ledger cannot price this/);
+  assert.deepEqual(halt.axes.sort(), ['state', 'topology']);
 });
 
-test('derive never reports a moved axis while press is blocked', () => {
+test('same-shape read volume is inert: the read chain contains it below the axis move', () => {
   const result = derive(sheetOf(`${HEAD}
 [[answers.q5]]
 scope = "path:search"
 statement = "500k req/s peak"
 shape = "volume"
+read_shape = "same"
 `));
-  assert.equal(result.pressRan, false);
-  assert.deepEqual(result.vector, NULL_VECTOR,
-    'no axis may move without a ledger entry justifying it');
-  assert.ok(result.halts.some(h => h.kind === 'unexplored-territory'));
+  assert.deepEqual(result.vector.read_write, [{ value: 'unified', scope: 'system', moved: false }],
+    'volume alone must not reach the projections rung');
+  assert.ok(result.inert.some(i => /cache, coalescing, replicas/.test(i.because || '')));
 });
 
 test('derive resolves no judgment point and picks no product', () => {

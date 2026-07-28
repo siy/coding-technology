@@ -150,24 +150,29 @@ test('PENDING: four axis values remain unpriced by the ledger', () => {
   ]);
 });
 
-// --- A disagreement between the method as stated and the method as practiced ---
+// --- The Q2 scope question, now ruled on ---
 
-test('FINDING: the published sheet answers Q2 at system scope, which the gate refuses', () => {
-  const { findings } = checkSheet(TOML);
-  const q2 = findings.filter(f => String(f.row).startsWith('answers.q2'));
+test('RULING: a service-level error budget at system scope is accepted, and noted', () => {
+  const result = checkSheet(TOML);
+  // Card 1 says Q2 is "per operation", but Companies House carries the department's
+  // system-wide 99.5% target and records per-operation criticality separately as
+  // UNKNOWN. The venue does the same. Q2 bundles two answers at different scopes, so
+  // the gate follows the examples and reports the missing half as a note rather than
+  // refusing the sheet. The real fix belongs in the book: decompose Q2 the way "audit"
+  // and "team independence" already are.
+  assert.ok(!result.findings.some(f => String(f.row).startsWith('answers.q2')));
+  // Companies House earns no further note: it records per-operation criticality
+  // explicitly as UNKNOWN, which is the honest shape and needs no nagging.
+  assert.ok(!result.notes.some(n => n.code === 'NO_CRITICALITY'));
+  assert.ok(result.notes.some(n => n.code === 'UNKNOWN' && String(n.row).startsWith('answers.q2')));
+});
 
-  // Card 1 demands Q2 "per operation"; the published run carries the department's
-  // system-wide 99.5% availability target and separately records per-operation
-  // criticality as UNKNOWN. The gate flags the system-scoped row.
-  assert.equal(q2.length, 1);
-  assert.equal(q2[0].code, 'UNSCOPED');
-
-  // This is a real disagreement, not an engine bug, and it cuts both ways:
-  // answer-sheet.md:47 warns that "one system-level number is how bare adjectives sneak
-  // back wearing digits" — but the transcript accepted the row and marked it inert
-  // rather than rejecting it. Either the gate is stricter than the method in practice,
-  // or the run should have refused the row. Both are findings worth resolving before
-  // this test is changed in either direction.
+test('RULING: a sheet with no per-operation criticality at all is noted', () => {
+  // The venue states only the service-level target, with no criticality row of any
+  // kind. That gap is reported as a note, not a refusal.
+  const result = checkSheet(readFileSync(join(here, 'corpus', 'ticketing-venue.toml'), 'utf-8'));
+  assert.deepEqual(result.findings.map(f => f.code), [], 'the venue sheet must pass clean');
+  assert.ok(result.notes.some(n => n.code === 'NO_CRITICALITY'));
 });
 
 // --- Profile 1 of the Three Profiles experiment: the negative pole ---

@@ -111,11 +111,20 @@ test('UNPRICED: a nine without a price is refused', () => {
   assert.match(result.findings.find(f => f.code === 'UNPRICED').message, /fifty-third minute/);
 });
 
-test('UNSCOPED: a per-operation question answered at system scope is refused', () => {
-  const result = checkSheet(CLEAN.replace('scope = "operation:accept-filing"', 'scope = "system"'));
+test('UNSCOPED: a per-data-class question answered at system scope is refused', () => {
+  const result = checkSheet(CLEAN.replace('scope = "data-class:filings"\nstatement = "RPO 0', 'scope = "system"\nstatement = "RPO 0'));
   const finding = result.findings.find(f => f.code === 'UNSCOPED');
   assert.ok(finding);
-  assert.match(finding.message, /demands operation or path/);
+  assert.match(finding.message, /demands data-class/);
+});
+
+test('Q2 accepts system scope, and notes the per-operation half it lacks', () => {
+  // Provisional ruling: Q2 bundles a service-level error budget with per-operation
+  // criticality. Both published sheets answer the first at system scope.
+  const result = checkSheet(CLEAN.replace('scope = "operation:accept-filing"', 'scope = "system"'));
+  assert.ok(!result.findings.some(f => String(f.row).startsWith('answers.q2')),
+    'a service-level error budget must not be refused');
+  assert.ok(noteCodes(result).includes('NO_CRITICALITY'));
 });
 
 test('UNSCOPED does NOT fire on Q8 — the envelope is legitimately system-scoped', () => {

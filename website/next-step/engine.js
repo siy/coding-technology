@@ -350,6 +350,14 @@ export function check(sheet, lines = {}) {
     });
   }
 
+  // --- Q2's per-operation half, when only the service-level half was answered ---
+  const q2 = answers.q2 || [];
+  if (q2.length && !q2.some(row => scopeKind(row.scope) === 'operation')) {
+    notes.push({ code: 'NO_CRITICALITY', row: 'answers.q2', line: at('answers.q2[0]'),
+      card: 'Card 1',
+      message: 'the failure budget states a service-level error budget but no per-operation criticality — the derivation will carry criticality as UNKNOWN' });
+  }
+
   // --- Domain shape: recovery cannot be derived without it ---
   for (const operation of effectful) {
     if (!shaped.has(operation)) {

@@ -1,0 +1,177 @@
+# Ticketing, profile 3 — the enterprise multi-tenant platform.
+#
+# Transcribed from book-arch/three-profiles.md:45-57.
+#
+# The opposite pole from profile 1: same domain, hostile sheet. This is the profile that
+# exercises topology, state storage and the unique-container prune, and it carries the
+# discipline test the chapter is proudest of — 10^5 attempts per minute against a handful
+# of seats moves NO axis, because contention refuses copies.
+
+schema_version = "0.1"
+
+[meta]
+system = "ticketing-enterprise"
+era    = "profile-3"
+author = "siy"
+mode   = "greenfield"
+source = "book-arch/three-profiles.md:45"
+
+# ---- Q1 Time budget ----
+
+[[answers.q1]]
+scope     = "path:quote"
+statement = "200 ms at P99, contractual, across regions."
+shape     = "system-clock"
+price     = "a contractual penalty: the number is in a customer agreement"
+status    = "answered"
+
+# ---- Q2 Failure budget ----
+
+[[answers.q2]]
+scope     = "path:quote"
+statement = "99.99% on the customer-facing read path."
+price     = "53 minutes a year; contractual exposure on the quote path"
+status    = "answered"
+
+[[answers.q2]]
+scope     = "operation:confirm-booking"
+statement = "Transactional cores run at moderate scale under saga consistency."
+price     = "a failed booking is a lost sale and a support case"
+effectful = true
+status    = "answered"
+
+# ---- Q3 Loss budget ----
+
+[[answers.q3]]
+scope     = "data-class:bookings"
+statement = "Zero loss on confirmed bookings, across regions."
+zero_loss = true
+status    = "answered"
+
+[[answers.q3]]
+scope     = "data-class:pricing"
+statement = "Price history retained for regulatory reconstruction."
+status    = "answered"
+
+# ---- Q4 Consistency contract ----
+
+[[answers.q4]]
+scope       = "data-class:bookings"
+statement   = "Strict, across regions."
+contract    = "strict"
+multi_region = true
+status      = "answered"
+
+[[answers.q4]]
+scope     = "data-class:availability"
+statement = "Bounded staleness with a named bound on availability reads."
+contract  = "bounded"
+status    = "answered"
+
+# ---- Q5 Load ----
+
+[[answers.q5]]
+scope      = "path:quote"
+statement  = "Storm-scale quote reads against a contractual latency target."
+shape      = "volume"
+read_shape = "diverges"   # quotes are served from a projected shape, not the write model
+status     = "answered"
+
+[[answers.q5]]
+scope     = "path:on-sale"
+statement = "On-sale bursts of 10^5+ attempts per minute against a handful of seats. One seat, one winner: a second copy does not help."
+shape     = "contention"
+status    = "answered"
+
+# ---- Q6 External constraints ----
+
+[[answers.q6]]
+scope     = "data-class:pricing"
+kind      = "replay"
+statement = "A regulator reconstructs quotes under past rule versions."
+status    = "answered"
+
+[[answers.q6]]
+scope     = "data-class:bookings"
+kind      = "audit"
+statement = "Who booked what and when."
+status    = "answered"
+
+[[answers.q6]]
+scope     = "data-class:bookings"
+kind      = "residency"
+statement = "Data sovereignty by country: placement is pinned within the store, which is a constraint on placement rather than a further axis move."
+status    = "answered"
+
+[[answers.q6]]
+scope     = "data-class:card-data"
+kind      = "mandate"
+statement = "Payment-card compliance."
+status    = "answered"
+
+# ---- Q7 Release structure ----
+
+[[answers.q7]]
+scope     = "path:quote"
+statement = "The read path carries its own cadence, released independently of the cores."
+cadence   = "independent"
+diverges  = true
+status    = "answered"
+
+[[answers.q7]]
+scope     = "system"
+statement = "Weekly canary releases for the cores, which scale and deploy as units."
+cadence   = "weekly-canary"
+status    = "answered"
+
+# ---- Q8 Cost & capacity envelope ----
+
+[[answers.q8]]
+scope     = "system"
+statement = "Cost under real scrutiny; operating attention is bounded."
+status    = "answered"
+
+# ---- Q9 Multi-X ----
+
+[[answers.q9]]
+scope     = "system"
+statement = "Multi-region, multi-country, multi-tenant."
+status    = "answered"
+
+[[answers.q9]]
+scope       = "data-class:event-management"
+statement   = "Event management carries document-shaped and relational-shaped data together."
+diverges_on = ["data shape", "access pattern"]
+status      = "answered"
+
+# ---- Domain shape ----
+
+[[domain_shape]]
+operation   = "confirm-booking"
+inverse     = "release the seat and void the authorization"
+decays      = false
+reshapeable = ["none"]
+
+[[domain_shape]]
+operation   = "authorize-payment"
+inverse     = "void the authorization"
+decays      = false
+reshapeable = ["none"]
+
+[[domain_shape]]
+operation   = "hold-seat"
+inverse     = "none"
+decays      = false
+reshapeable = ["idempotent", "commutative"]
+
+[[domain_shape]]
+operation   = "append-price"
+inverse     = "none"
+decays      = false
+reshapeable = ["append-only"]
+
+[[domain_shape]]
+operation   = "refresh-availability-view"
+inverse     = "none"
+decays      = true
+reshapeable = ["none"]

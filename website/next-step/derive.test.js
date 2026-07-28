@@ -173,20 +173,25 @@ reshapeable = ["none"]
 
 // --- Step 3: press must report the gap, not guess ---
 
-test('press runs on the axes the ledger prices, and reports the ones it does not', () => {
+test('press reports the axis VALUES the ledger cannot price', () => {
   const result = press(sheetOf(HEAD));
   assert.equal(result.ran, true);
-  // topology and state have no containment entries yet; recovery never needs one.
-  assert.deepEqual(result.unpriced.sort(), ['state', 'topology']);
-  assert.ok(!result.unpriced.includes('recovery'));
+  // Values no published run exercises, so no entry was written against a recorded
+  // outcome. Recovery is absent: it derives from domain shape, not the ledger.
+  assert.deepEqual(result.unpriced.sort(), [
+    'persistence:sharded', 'substrate:streaming',
+    'topology:serverless', 'topology:unified runtime',
+  ]);
+  assert.ok(!result.unpriced.some(v => v.startsWith('recovery:')));
 });
 
-test('the unpriced axes surface as an unexplored-territory halt, not silence', () => {
+test('unpriced values surface as an unexplored-territory halt, not silence', () => {
   const result = derive(sheetOf(HEAD));
   const halt = result.halts.find(h => h.kind === 'unexplored-territory');
   assert.ok(halt);
-  assert.match(halt.message, /ledger cannot price this/);
-  assert.deepEqual(halt.axes.sort(), ['state', 'topology']);
+  assert.match(halt.message, /ledger cannot price these/);
+  assert.ok(halt.values.includes('topology:unified runtime'),
+    'the position profile 3 records but the engine cannot reach');
 });
 
 test('same-shape read volume is inert: the read chain contains it below the axis move', () => {

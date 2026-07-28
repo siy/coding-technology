@@ -13,7 +13,7 @@
 // Refusals are emitted, never resolved: "targets, recovery ties, contradiction choices,
 // product picks" (Card 5). A recovery tie is a judgment point in the output.
 
-import { AXES, NULL_VECTOR, unpricedAxes } from './ledger.js';
+import { AXES, NULL_VECTOR } from './ledger.js';
 import { press } from './press.js';
 
 const SCOPE_ORDER = ['system', 'data-class', 'path', 'operation', 'policy'];
@@ -194,8 +194,8 @@ export function derive(sheet) {
   if (pressed.unpriced.length) {
     halts.push({
       kind: 'unexplored-territory',
-      message: `The ledger has no entries for ${pressed.unpriced.join(', ')}, so containment cannot be tested there. The ledger cannot price this yet — a different statement from "this cannot be built."`,
-      axes: pressed.unpriced,
+      message: `${pressed.unpriced.length} axis values carry no ledger entry (${pressed.unpriced.join(', ')}), so nothing can be pressed toward them. The ledger cannot price these yet — a different statement from "these cannot be built."`,
+      values: pressed.unpriced,
     });
   }
 

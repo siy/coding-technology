@@ -73,6 +73,36 @@ export const THIN_TIERS = ['load balancer', 'cache', 'coalescer', 'admission gat
 // Only the values the published runs exercise are entered so far. An axis value with no
 // entry is unpriced, and press says so rather than guessing.
 export const CONTAINMENT = {
+  topology: {
+    'single deployable': {
+      provides: 'in-process calls on every internal path, one operational surface, and one composition in production — the composition you test is the composition that runs; its modular form adds ownership boundaries at zero deployment cost',
+      mechanisms: [],
+      costs: ['whole-system blast radius', 'whole-unit scaling', 'one release train'],
+      source: 'axes-and-ledger.md:41',
+    },
+    'multiple deployables': {
+      provides: 'what only artifact multiplicity can: independent release cadence, independent toolchains, blast isolation that holds at deploy time',
+      mechanisms: ['pipeline'],
+      costs: ['a network inside every crossing', 'delivery plumbing multiplied',
+              'a version matrix: production runs a mixture through every rollout window'],
+      source: 'axes-and-ledger.md:41',
+    },
+  },
+  state: {
+    'current-state': {
+      provides: 'the read as the state; paired with an audit log written in the same transaction it answers every who-what-when question',
+      mechanisms: [],
+      costs: [],
+      source: 'axes-and-ledger.md:47',
+    },
+    'event-sourced': {
+      provides: 'genuine replay — state at any past moment, why under that moment\'s rules',
+      mechanisms: ['event store', 'projection pipeline'],
+      costs: ['every read a projection', 'event schemas versioned for life',
+              'unbounded growth', 'a model the team must learn to think in'],
+      source: 'axes-and-ledger.md:47',
+    },
+  },
   substrate: {
     'direct': {
       provides: 'lowest latency and read-your-effects immediacy',
@@ -112,8 +142,17 @@ export const CONTAINMENT = {
       costs: ['shared ceiling', 'shared blast radius'],
       source: 'axes-and-ledger.md:49',
     },
+    'polyglot': {
+      // axes-and-ledger.md:49 bundles these two in one sentence; they are split here
+      // because they answer different divergences — see the press rule.
+      provides: 'stores shaped to their data: document beside relational',
+      mechanisms: ['store'],
+      costs: ['transactions across components decay to protocol',
+              'one operational competency per store technology'],
+      source: 'axes-and-ledger.md:49',
+    },
     'per-component': {
-      provides: 'independent evolution and stores shaped to their data',
+      provides: 'independent evolution per component boundary',
       mechanisms: ['store'],
       costs: ['transactions across components decay to protocol',
               'one operational competency per store technology'],
@@ -130,12 +169,14 @@ export const CONTAINMENT = {
   },
 };
 
-/** Which axes the ledger can currently price. */
-export function pricedAxes() {
-  return Object.keys(AXES).filter(axis => CONTAINMENT[axis] !== undefined);
-}
-
-/** Axes press cannot evaluate, because the ledger has no entries for them. */
-export function unpricedAxes() {
-  return Object.keys(AXES).filter(axis => CONTAINMENT[axis] === undefined && axis !== 'recovery');
+/** Axis values with no ledger entry. Nothing can be pressed toward these. */
+export function unpricedValues() {
+  const out = [];
+  for (const [axis, spec] of Object.entries(AXES)) {
+    if (axis === 'recovery') continue;   // derived from domain shape, not the ledger
+    for (const value of spec.values) {
+      if (!CONTAINMENT[axis] || !CONTAINMENT[axis][value]) out.push(`${axis}:${value}`);
+    }
+  }
+  return out;
 }

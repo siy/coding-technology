@@ -141,10 +141,13 @@ test('the loss-budget UNKNOWN blocks distributed shared rather than forcing it',
   assert.match(block.because, /UNKNOWN/);
 });
 
-test('PENDING: topology and state remain unpriced by the ledger', () => {
+test('PENDING: four axis values remain unpriced by the ledger', () => {
   const result = derive(sheet);
   const halt = result.halts.find(h => h.kind === 'unexplored-territory');
-  assert.deepEqual(halt.axes.sort(), ['state', 'topology']);
+  assert.deepEqual(halt.values.sort(), [
+    'persistence:sharded', 'substrate:streaming',
+    'topology:serverless', 'topology:unified runtime',
+  ]);
 });
 
 // --- A disagreement between the method as stated and the method as practiced ---

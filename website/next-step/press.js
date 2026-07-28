@@ -9,7 +9,7 @@
 // (`derivation.md:19`). Inert rows matter as much as moves: an engine that presses one
 // inflates every architecture it derives.
 
-import { CONTAINMENT } from './ledger.js';
+import { unpricedValues } from './ledger.js';
 
 const scopeKind = scope =>
   typeof scope !== 'string' ? null : (scope === 'system' ? 'system' : scope.split(':')[0]);
@@ -274,11 +274,9 @@ export function press(sheet) {
     }
   }
 
-  // Axes with no ledger entries at all cannot be tested; say so rather than imply clean.
-  const unpriced = Object.keys(CONTAINMENT).length
-    ? Object.keys({ topology: 1, substrate: 1, read_write: 1, state: 1, persistence: 1 })
-        .filter(axis => !CONTAINMENT[axis])
-    : [];
+  // Values with no ledger entry cannot be pressed toward; say so rather than imply
+  // the derivation considered them.
+  const unpriced = unpricedValues();
 
   return { ran: true, pressures, inert, notes, blocked: blocked(sheet), unpriced };
 }

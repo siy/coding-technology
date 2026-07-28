@@ -4,16 +4,16 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script>(function(){try{var t=localStorage.getItem('theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
-<meta name="description" content="Run the Architecture Synthesis entry gate on an answer sheet. It reports what is unpriced, unscoped, undecomposed or untriaged — and derives nothing.">
+<meta name="description" content="Three answer sheets over one domain, three different architectures — derived in your browser, each position citing the answer that forced it.">
 <meta name="author" content="Sergiy Yevtushenko">
-<title>next_step — the entry gate</title>
+<title>next_step — derive an architecture</title>
 <link rel="icon" type="image/png" sizes="32x32" href="/image/favicon-32x32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="/image/favicon-16x16.png">
 <link rel="apple-touch-icon" sizes="180x180" href="/image/apple-touch-icon.png">
 <link rel="stylesheet" href="/style.css?v={{STYLE_HASH}}">
 <link rel="canonical" href="https://pragmatica.dev/method/architecture-synthesis/next-step/">
 <meta property="og:title" content="next_step — the entry gate">
-<meta property="og:description" content="The Architecture Synthesis entry gate, as an executable. It refuses incomplete answer sheets and derives nothing.">
+<meta property="og:description" content="Three answer sheets over one domain, three different architectures, derived deterministically in the browser.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://pragmatica.dev/method/architecture-synthesis/next-step/">
 <meta property="og:image" content="https://pragmatica.dev/image/og-default.png">
@@ -60,6 +60,11 @@
 .ns-table td { border-bottom: 1px solid var(--line); padding: .35rem .5rem; }
 .ns-table td:first-child { font-family: var(--mono); font-size: .78rem; }
 .ns-held { color: var(--ink-soft); font-size: .8rem; }
+.ns-barlabel { font-size: .8rem; color: var(--ink-soft); text-transform: uppercase;
+               letter-spacing: .05em; }
+.ns-bar button.on { background: var(--amber); border-color: var(--amber-dark);
+                    font-weight: 600; }
+.ns-moved { color: var(--amber-dark); font-weight: 600; }
 .ns-code { font-family: var(--mono); font-size: .74rem; font-weight: 700;
            letter-spacing: .04em; }
 .ns-where { font-family: var(--mono); font-size: .72rem; color: var(--ink-soft);
@@ -86,40 +91,49 @@
   <nav class="crumb"><a href="/method/">The Method</a> &rsaquo;
     <a href="/method/architecture-synthesis/">Architecture Synthesis</a> &rsaquo; next_step</nav>
 
-  <h1><code>next_step</code> — the entry gate</h1>
+  <h1><code>next_step</code> — the derivation, running</h1>
 
   <div class="ns-intro">
     <p>The book claims the derivation is mechanical and the judgment points are named.
-    This page is the first half of that claim as an executable: it runs the entry gate
-    over an answer sheet and reports, in the book's own vocabulary, what is not yet an
-    answer.</p>
+    This page is that claim as an executable. No model runs here: it is a few hundred
+    lines of ordinary code, which is the point &mdash; a procedure a program can execute
+    is a different kind of object from a worked example you follow along with.</p>
   </div>
 
   <div class="ns-scope">
-    <p><strong>What this does.</strong> Checks the five disciplines of the entry gate —
+    <p><strong>Three sheets, one domain.</strong> Event ticketing at three scales. Only
+    the answers change &mdash; the procedure is identical, and so is the code below.
+    If the architecture follows from the answers, three sheets must produce three
+    different vectors, each forced, with no step appealing to taste. Load them in turn
+    and watch the derivation move.</p>
+    <p><strong>What this does.</strong> Runs the entry gate's five disciplines —
     <em>priced</em>, <em>scoped</em>, <em>decomposed</em>, <em>triaged</em>,
-    <em>surfaced</em> — and cites the card behind each refusal. Once a sheet is
-    admissible it also runs the mechanical parts of the derivation: the null vector,
-    pruning by mandate, and recovery per effectful operation.</p>
-    <p><strong>What it will not do.</strong> It forces no axis, and resolves no judgment
-    point. Targets, recovery ties, contradiction choices and product picks are the
-    book's named refusals; a tool that answered them would overclaim exactly the way
-    the book warns against. An <code>UNKNOWN</code> is a valid answer here, recorded
-    and never guessed.</p>
-    <p><strong>Press does not run yet</strong>, and the page says so rather than
-    guessing. Testing containment needs each axis value's
-    <em>provides / mechanism&nbsp;/ costs</em> entry, and the ledger does not carry
-    those yet — "the ledger cannot price this" is a different statement from "this
-    cannot be built."</p>
+    <em>surfaced</em> — then the derivation itself: the null vector, pruning by mandate,
+    the pressure pass, and recovery per effectful operation. Every position that moves
+    cites the answer that forced it and the mechanism that justifies it. Every demand
+    that presses nothing is recorded too, because a documented refusal is why a system
+    carries no queue, no replicas, no projections.</p>
+    <p><strong>What it will not do.</strong> It resolves no judgment point. Targets,
+    recovery ties, contradiction choices and product picks are the book's named
+    refusals; a tool that answered them would overclaim exactly the way the book warns
+    against. An <code>UNKNOWN</code> is a valid answer here, recorded and never
+    guessed &mdash; it derives a null position, not machinery.</p>
+    <p><strong>Where the ledger is thin, the page says so.</strong> Four axis values
+    carry no <em>provides / mechanism&nbsp;/ costs</em> entry yet, so nothing can be
+    pressed toward them, and that is reported rather than passed over &mdash; "the
+    ledger cannot price this" is a different statement from "this cannot be built."</p>
     <p>Runs entirely in your browser. Nothing is uploaded.</p>
   </div>
 
   <div class="ns-grid">
     <section class="ns-pane">
       <h2>Answer sheet</h2>
+      <div class="ns-bar" id="profile-bar">
+        <span class="ns-barlabel">Three profiles:</span>
+      </div>
       <div class="ns-bar">
-        <button type="button" id="load-clean">Load a complete sheet</button>
-        <button type="button" id="load-broken">Load one with gaps</button>
+        <button type="button" id="load-clean">A complete sheet</button>
+        <button type="button" id="load-broken">One with gaps</button>
         <button type="button" id="clear">Clear</button>
       </div>
       <textarea id="sheet" spellcheck="false" aria-label="Answer sheet in TOML"></textarea>
@@ -149,6 +163,7 @@
 import { checkSheet, parseToml } from './engine.js';
 import { derive } from './derive.js';
 import { CLEAN_SHEET, GAPPY_SHEET } from './examples.js';
+import { PROFILES } from './profiles.js';
 
 const sheet = document.getElementById('sheet');
 const verdict = document.getElementById('verdict');
@@ -174,8 +189,27 @@ function renderDerivation(text) {
   const d = derive(parsed);
 
   const rows = Object.entries(d.vector)
-    .map(([axis, value]) => `<tr><td>${escape(axis)}</td><td>${escape(value)}</td>
-      <td class="ns-held">held &mdash; nothing has pressed it</td></tr>`).join('');
+    .filter(([axis]) => axis !== 'recovery')
+    .flatMap(([axis, entries]) => entries.map(e => `<tr>
+      <td>${escape(axis)}</td>
+      <td class="${e.moved ? 'ns-moved' : ''}">${escape(e.value)}</td>
+      <td class="ns-held">${escape(e.scope)}${e.moved ? ' &mdash; forced' : ' &mdash; held'}</td>
+    </tr>`)).join('');
+
+  const moved = Object.entries(d.vector).filter(([a]) => a !== 'recovery')
+    .flatMap(([, es]) => es).filter(e => e.moved);
+  const headline = moved.length
+    ? `${moved.length} ${moved.length === 1 ? 'axis' : 'axes'} forced off the null vector.`
+    : 'No axis moved: the null vector survives. Restraint is an output, not a mood.';
+
+  const notes = (d.mechanismNotes || []).map(n => item({
+    code: 'MECHANISM', row: n.row,
+    message: `${n.mechanism} — ${n.because}`, card: 'contained without an axis move',
+  }, 'note')).join('');
+
+  const rungs = d.inert.filter(i => i.rung).map(i => item({
+    code: 'RUNG: ' + i.rung, row: i.row, message: i.because, card: 'Card 4',
+  }, 'note')).join('');
 
   const strikes = d.strikes.length
     ? d.strikes.map(s => item({
@@ -200,8 +234,10 @@ function renderDerivation(text) {
   }, 'halt')).join('');
 
   derivation.innerHTML = `
-    <p class="ns-empty">Start: ${escape(d.start)} (${escape(d.mode)}).</p>
+    <p class="ns-empty">Start: ${escape(d.start)} (${escape(d.mode)}). ${escape(headline)}</p>
     <table class="ns-table"><tbody>${rows}</tbody></table>
+    ${rungs ? '<h3 class="ns-sub">Contained below the axis move</h3>' + rungs : ''}
+    ${notes ? '<h3 class="ns-sub">Mechanism notes</h3>' + notes : ''}
     ${strikes ? '<h3 class="ns-sub">Pruned</h3>' + strikes : ''}
     ${recovery ? '<h3 class="ns-sub">Recovery, per effectful operation</h3>' + recovery : ''}
     ${judgment ? '<h3 class="ns-sub">Judgment points &mdash; emitted, not resolved</h3>' + judgment : ''}
@@ -234,7 +270,23 @@ function render() {
   renderDerivation(text);
 }
 
-sheet.addEventListener('input', render);
+const bar = document.getElementById('profile-bar');
+PROFILES.forEach(profile => {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.textContent = profile.label;
+  button.addEventListener('click', () => {
+    sheet.value = profile.sheet;
+    [...bar.querySelectorAll('button')].forEach(b => b.classList.toggle('on', b === button));
+    render();
+  });
+  bar.appendChild(button);
+});
+
+sheet.addEventListener('input', () => {
+  [...bar.querySelectorAll('button')].forEach(b => b.classList.remove('on'));
+  render();
+});
 document.getElementById('load-clean').addEventListener('click', () => {
   sheet.value = CLEAN_SHEET; render();
 });

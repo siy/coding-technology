@@ -292,7 +292,7 @@ export function check(sheet, lines = {}) {
       }
       if (!row.statement) {
         add('NO_STATEMENT', id, `${qid} row has no statement`, 'Card 1');
-      } else if (!hasNumber(row.statement) && !banned.length) {
+      } else if (spec.numeric && !hasNumber(row.statement) && !banned.length) {
         notes.push({ code: 'NO_NUMBER', row: id, line: at(id), card: 'Appendix A',
           message: `${qid} statement carries no number — "every answer needs a number and a scope"` });
       }

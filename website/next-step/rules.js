@@ -14,6 +14,7 @@
 export const QUESTIONS = {
   q1: {
     title: 'Time budget',
+    numeric: true,
     demand: 'per operation: percentiles, tails, soft maxima, windows',
     scopes: ['operation', 'path'],
     priced: true,
@@ -21,6 +22,7 @@ export const QUESTIONS = {
   },
   q2: {
     title: 'Failure budget',
+    numeric: true,
     demand: 'per operation: error budget + criticality',
     // PROVISIONAL RULING, reversible. Card 1 says "per operation", but Q2 bundles two
     // answers that live at different scopes: an ERROR BUDGET, which is normally a
@@ -42,6 +44,7 @@ export const QUESTIONS = {
   },
   q3: {
     title: 'Loss budget',
+    numeric: true,
     demand: 'per data class: RPO, retention, never-lose set',
     scopes: ['data-class'],
   },
@@ -52,6 +55,7 @@ export const QUESTIONS = {
   },
   q5: {
     title: 'Load',
+    numeric: true,
     demand: 'magnitude (steady/peak), shape per path, concentration, window',
     // The whole load answer is per path, not merely its shape:
     // "load answers are only meaningful per path" (answer-sheet.md:35).
@@ -71,6 +75,7 @@ export const QUESTIONS = {
   },
   q8: {
     title: 'Cost & capacity envelope',
+    numeric: true,
     demand: 'money + who operates',
     // Legitimately whole-system: it is the envelope, not a per-unit demand.
     scopes: ['system'],

@@ -1,0 +1,143 @@
+# Ticketing, profile 2 — the regional platform.
+#
+# Transcribed from book-arch/three-profiles.md:25-41.
+#
+# The middle profile, and the one that exercises the cases the other two do not: a
+# same-scope conflict that decomposes away, a read demand contained at a rung BELOW the
+# axis move, and a demand contained by a named mechanism with no value change at all.
+
+schema_version = "0.1"
+
+[meta]
+system = "ticketing-regional"
+era    = "profile-2"
+author = "siy"
+mode   = "greenfield"
+source = "book-arch/three-profiles.md:25"
+
+# ---- Q1 Time budget ----
+
+[[answers.q1]]
+scope     = "path:availability-check"
+statement = "500 ms at P95 on a read-heavy path."
+shape     = "system-clock"
+price     = "a partner contract specifies the number"
+status    = "answered"
+
+[[answers.q1]]
+scope     = "path:buy-ticket"
+statement = "About 2 seconds, unchanged from the single venue."
+shape     = "system-clock"
+price     = "abandoned carts"
+status    = "answered"
+
+# ---- Q2 Failure budget ----
+
+[[answers.q2]]
+scope     = "path:availability-check"
+statement = "99.9% service target."
+price     = "8.8 hours a year; partner contract exposure"
+status    = "answered"
+
+# ---- Q3 Loss budget ----
+
+[[answers.q3]]
+scope     = "data-class:bookings"
+statement = "Zero loss on confirmed bookings."
+zero_loss = true
+status    = "answered"
+
+# ---- Q4 Consistency contract ----
+
+[[answers.q4]]
+scope     = "data-class:bookings"
+statement = "Strict."
+contract  = "strict"
+status    = "answered"
+
+[[answers.q4]]
+scope           = "data-class:availability"
+statement       = "Quotes tolerate bounded staleness, but a venue must see its OWN availability updates immediately."
+contract        = "bounded"
+read_your_writes = "own-writes"
+status          = "answered"
+
+# ---- Q5 Load ----
+
+[[answers.q5]]
+scope      = "path:availability-check"
+statement  = "Read-heavy: availability checks dominate, per venue and varied."
+shape      = "volume"
+read_shape = "same"     # reads and writes share a shape: the top rung stays unclimbed
+status     = "answered"
+
+[[answers.q5]]
+scope     = "path:sales-feed"
+statement = "A sales feed consumed asynchronously by venues; event-heavy integration traffic across module boundaries."
+shape     = "volume"
+fanout    = true
+status    = "answered"
+
+# ---- Q6 External constraints ----
+
+[[answers.q6]]
+scope     = "data-class:bookings"
+kind      = "audit"
+statement = "Payment-card compliance and dispute handling need who-did-what-when. No answer needs past states under past rules."
+status    = "answered"
+
+[[answers.q6]]
+scope     = "data-class:card-data"
+kind      = "mandate"
+statement = "Payment-card compliance."
+status    = "answered"
+
+# ---- Q7 Release structure ----
+# The decomposition case: ownership independence is demanded, release-cadence
+# independence is not. One weekly blue-green train is the stated cadence for everyone.
+
+[[answers.q7]]
+scope     = "system"
+statement = "Several teams need ownership boundaries. Release cadence is one weekly blue-green train for everyone: no cadence divergence between any parts."
+diverges  = false
+status    = "answered"
+
+# ---- Q8 Cost & capacity envelope ----
+
+[[answers.q8]]
+scope     = "system"
+statement = "An operations budget that presses against a second deployable."
+status    = "answered"
+
+# ---- Q9 Multi-X ----
+
+[[answers.q9]]
+scope     = "system"
+statement = "One region; multiple currencies and countries."
+status    = "answered"
+
+# ---- Domain shape ----
+
+[[domain_shape]]
+operation   = "authorize-payment"
+inverse     = "void the authorization"
+decays      = false
+reshapeable = ["none"]
+
+[[domain_shape]]
+operation   = "confirm-sale"
+inverse     = "release the seat and void the authorization"
+decays      = false
+reshapeable = ["none"]
+
+[[domain_shape]]
+operation   = "hold-seat"
+inverse     = "none"
+decays      = false
+reshapeable = ["idempotent"]
+
+[[domain_shape]]
+operation   = "increment-sales-counter"
+inverse     = "none"
+decays      = false
+reshapeable = ["commutative"]

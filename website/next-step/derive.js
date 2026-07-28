@@ -216,6 +216,7 @@ export function derive(sheet) {
     rejectedStrikes: pruned.rejected,
     pressures: pressed.pressures,
     inert: pressed.inert,
+    mechanismNotes: pressed.notes,
     blocked: pressed.blocked,
     recovery: recovery.decided,
     judgmentPoints: recovery.judgmentPoints,

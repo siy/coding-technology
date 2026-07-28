@@ -299,8 +299,9 @@ export function check(sheet, lines = {}) {
 
       // --- Priced ---
       if (spec.priced && !row.price) {
-        add('UNPRICED', id,
-          `${qid} carries no price — what does the business do differently in the fifty-third minute?`,
+        add('UNPRICED', id, spec.pricedAs === 'nines'
+          ? `${qid} carries no price — what does the business do differently in the fifty-third minute of annual downtime?`
+          : `${qid} carries no price — what does the business do differently when this number is missed?`,
           'Card 1');
       }
 
@@ -343,7 +344,9 @@ export function check(sheet, lines = {}) {
         }
       }
 
-      if (kind === 'operation' && row.scope) effectful.add(row.scope.split(':')[1]);
+      if (kind === 'operation' && row.scope && row.effectful === true) {
+        effectful.add(row.scope.split(':')[1]);
+      }
     });
   }
 

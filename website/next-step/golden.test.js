@@ -166,3 +166,62 @@ test('FINDING: the published sheet answers Q2 at system scope, which the gate re
   // or the run should have refused the row. Both are findings worth resolving before
   // this test is changed in either direction.
 });
+
+// --- Profile 1 of the Three Profiles experiment: the negative pole ---
+
+const VENUE_TOML = readFileSync(join(here, 'corpus', 'ticketing-venue.toml'), 'utf-8');
+const venue = parseToml(VENUE_TOML).sheet;
+
+test('the venue sheet parses cleanly', () => {
+  assert.deepEqual(parseToml(VENUE_TOML).errors, []);
+  assert.equal(venue.domain_shape.length, 3);
+});
+
+test('profile 1: zero pressures — the most important test in the corpus', () => {
+  const result = derive(venue);
+  assert.deepEqual(result.pressures, [],
+    'an engine that presses here is selling architecture');
+});
+
+test('profile 1: the null vector survives on every axis', () => {
+  const result = derive(venue);
+  for (const [axis, entries] of Object.entries(result.vector)) {
+    if (axis === 'recovery') continue;
+    assert.equal(entries.length, 1, `${axis} should carry exactly one position`);
+    assert.equal(entries[0].moved, false, `${axis} must not move`);
+    assert.equal(entries[0].scope, 'system');
+  }
+  assert.deepEqual(
+    Object.fromEntries(Object.entries(result.vector)
+      .filter(([a]) => a !== 'recovery').map(([a, e]) => [a, e[0].value])),
+    { topology: 'single deployable', substrate: 'direct', read_write: 'unified',
+      state: 'current-state', persistence: 'single shared' });
+});
+
+test('profile 1: every money-path step compensates, from its defined inverse', () => {
+  const { decided, judgmentPoints } = deriveRecovery(venue);
+  assert.deepEqual(judgmentPoints, []);
+  assert.deepEqual(decided.map(d => d.value), ['compensate', 'compensate', 'compensate']);
+  assert.deepEqual(decided.map(d => d.operation).sort(),
+    ['authorize-payment', 'confirm-sale', 'reserve-seat']);
+});
+
+test('profile 1: read volume without shape divergence stays below the axis move', () => {
+  const result = derive(venue);
+  assert.ok(result.inert.some(i => /cache, coalescing, replicas/.test(i.because || '')),
+    'the read chain must contain it, and say so');
+});
+
+// --- The experimental condition itself ---
+
+test('EXPERIMENT: one domain, two sheets, different vectors', () => {
+  // three-profiles.md:5 — "three answer sheets over one domain must produce three
+  // different vectors, each forced, with no step appealing to taste." Two so far;
+  // this assertion grows as profiles 2 and 3 land.
+  const venueMoves = Object.values(derive(venue).vector).flat().filter(e => e.moved).length;
+  const chMoves = Object.values(derive(sheet).vector).flat().filter(e => e.moved).length;
+  assert.equal(venueMoves, 0);
+  assert.equal(chMoves, 4);
+  assert.notEqual(venueMoves, chMoves,
+    'different answers must produce different architectures, or the method is an illustration');
+});

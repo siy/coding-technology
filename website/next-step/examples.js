@@ -83,6 +83,7 @@ statement = "checkout should respond in 200 ms"
 scope     = "operation:checkout"
 statement = "we saw 99.2% last quarter"
 observed  = true
+effectful = true
 
 # Answered at system scope; the loss budget is per data class
 [[answers.q3]]

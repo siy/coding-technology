@@ -34,6 +34,7 @@ price = "read path engineering; see Q8 envelope"
 scope = "operation:accept-filing"
 statement = "99.9% monthly, tier-1 criticality"
 price = "filing backlog and statutory penalty exposure"
+effectful = true
 
 [[answers.q3]]
 scope = "data-class:filings"

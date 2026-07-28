@@ -1,0 +1,118 @@
+# Ticketing, profile 1 — the independent venue.
+#
+# Transcribed from book-arch/two-teams.md:68-90 (the miniature, in full prose) and
+# book-arch/three-profiles.md:11-21 (the same sheet promoted to a pressure matrix).
+#
+# This is the most valuable test in the corpus: SEVEN demands, ZERO pressures. The null
+# vector survives entirely. An engine that moves any axis here is selling architecture —
+# which is the failure mode the whole method exists to prevent, and one this engine has
+# already committed once (two false projections on the Companies House run).
+
+schema_version = "0.1"
+
+[meta]
+system = "ticketing-venue"
+era    = "profile-1"
+author = "siy"
+mode   = "greenfield"
+source = "book-arch/two-teams.md:68"
+
+# ---- Q1 Time budget: response targets, so the system's clock ----
+
+[[answers.q1]]
+scope     = "path:buy-ticket"
+statement = "About 2 seconds at P95 across the reserve-authorize-confirm sequence."
+shape     = "system-clock"
+price     = "abandoned carts on a busy night"
+status    = "answered"
+
+[[answers.q1]]
+scope     = "path:availability-check"
+statement = "Under 1 second."
+shape     = "system-clock"
+price     = "browsers leave before choosing a seat"
+status    = "answered"
+
+# ---- Q2 Failure budget ----
+
+[[answers.q2]]
+scope     = "system"
+statement = "99.5% service availability: hours of downtime a year, survivable for one venue."
+price     = "hours of downtime a year, priced and accepted"
+status    = "answered"
+
+# ---- Q3 Loss budget ----
+
+[[answers.q3]]
+scope     = "data-class:bookings"
+statement = "Zero loss on confirmed sales."
+status    = "answered"
+
+# ---- Q4 Consistency contract ----
+
+[[answers.q4]]
+scope     = "data-class:bookings"
+statement = "Strictly consistent."
+status    = "answered"
+
+[[answers.q4]]
+scope     = "data-class:availability"
+statement = "Eventual is fine for availability and price reads."
+status    = "answered"
+
+# ---- Q5 Load: read-moderate, no divergence between paths ----
+
+[[answers.q5]]
+scope      = "path:booking"
+statement  = "Tens per second on a busy night."
+shape      = "volume"
+status     = "answered"
+
+[[answers.q5]]
+scope      = "path:availability-check"
+statement  = "Somewhat higher than bookings; read-moderate overall."
+shape      = "volume"
+read_shape = "same"   # reads and writes share one shape (two-teams.md:80)
+status     = "answered"
+
+# ---- Q7 Release structure: one team releasing daily as one unit ----
+
+[[answers.q7]]
+scope     = "system"
+statement = "Daily deploys; one team releasing as one unit. No cadence divergence between any parts."
+diverges  = false
+status    = "answered"
+
+# ---- Q8 Cost & capacity envelope ----
+
+[[answers.q8]]
+scope     = "system"
+statement = "A tight cost ceiling; one team operates the system."
+status    = "answered"
+
+# ---- Q9 Multi-X ----
+
+[[answers.q9]]
+scope     = "system"
+statement = "One currency, one legal regime, one region."
+status    = "answered"
+
+# ---- Domain shape: every step of the money path has a defined inverse ----
+
+[[domain_shape]]
+operation   = "reserve-seat"
+inverse     = "release the seat"
+decays      = false
+reshapeable = ["none"]
+
+[[domain_shape]]
+operation   = "authorize-payment"
+inverse     = "void the authorization"
+decays      = false
+reshapeable = ["none"]
+
+[[domain_shape]]
+operation   = "confirm-sale"
+inverse     = "release the seat and void the authorization"
+decays      = false
+reshapeable = ["none"]

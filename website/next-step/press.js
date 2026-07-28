@@ -25,6 +25,35 @@ const answered = row => (row.status || 'answered') !== 'UNKNOWN';
  */
 const SINGLE = [
   {
+    id: 'fanout-to-event-based',
+    source: 'axes-and-ledger.md:43; three-profiles.md:35',
+    // "Event-based buys temporal decoupling, burst absorption, and fan-out." A feed
+    // consumed asynchronously across module boundaries wants fan-out and tolerates lag;
+    // the booking sequence inside a module wants immediacy and keeps direct. Mixed by
+    // scope is a composition, not a compromise, and each scope stays uniform.
+    apply(row) {
+      if (row.q !== 'q5' || row.fanout !== true) return null;
+      return { axis: 'substrate', toward: 'event-based', scope: row.scope,
+        mechanism: 'broker', row: row.id,
+        because: 'consumed asynchronously with fan-out across module boundaries: lag is tolerated, and the ledger prices fan-out here' };
+    },
+  },
+  {
+    id: 'read-your-writes-mechanism',
+    source: 'three-profiles.md:33',
+    // "The venue-sees-own-updates answer is a prune-mode fact replicas alone violate.
+    // The lens forces a mechanism: session-pinned reads to the primary for a venue's own
+    // recent writes. Contained without an axis move — a mechanism note, not a value
+    // change, and the difference is the vector staying honest about what it is."
+    apply(row) {
+      if (row.q !== 'q4' || !row.read_your_writes) return null;
+      if (row.contract === 'strict') return null;   // strict already provides it
+      return { mechanismNote: true, row: row.id, scope: row.scope,
+        mechanism: 'session-pinned reads to the primary',
+        because: `read-your-writes (${row.read_your_writes}) against a ${row.contract} contract: replicas alone violate it, so the lens forces a mechanism rather than an axis move` };
+    },
+  },
+  {
     id: 'contention-refuses-copies',
     source: 'Card 3; axes-and-ledger.md:21',
     // "Contention (no - one record, one winner) -> admission control (write side),
@@ -177,8 +206,11 @@ const COMBINATIONS = [
         // wider than its demanding scope, which axes-and-ledger.md:11 calls unforced
         // cost. The Companies House corpus caught it as two false projections.
         if (load.read_shape !== 'diverges') {
-          pressures.push({ inert: true, row: load.id,
-            because: 'same-shape read volume is contained by the read chain: cache, coalescing, replicas' });
+          // Each rung contains a different shape; the top rung is the axis move and this
+          // demand does not reach it. Name where the climb stopped, so the vector records
+          // replicas as a mechanism rather than silently implying nothing happened.
+          pressures.push({ inert: true, row: load.id, rung: 'replicas',
+            because: 'same-shape read volume: the chain climbs cache, coalescing, replicas and stops there. The top rung — projections — is the axis move, and the read shape has not diverged.' });
           continue;
         }
         pressures.push({
@@ -207,6 +239,9 @@ function blocked(sheet) {
 export function press(sheet) {
   const pressures = [];
   const inert = [];
+  // Demands contained by a named mechanism with no axis move. Recorded so the vector
+  // stays honest about what it is (three-profiles.md:33).
+  const notes = [];
 
   const all = [];
   for (const q of ['q1', 'q2', 'q3', 'q4', 'q5', 'q6', 'q7', 'q8', 'q9']) {
@@ -223,7 +258,8 @@ export function press(sheet) {
       const result = rule.apply(row, sheet);
       if (!result) continue;
       matched = true;
-      if (result.inert) inert.push({ ...result, rule: rule.id, source: rule.source });
+      if (result.mechanismNote) notes.push({ ...result, rule: rule.id, source: rule.source });
+      else if (result.inert) inert.push({ ...result, rule: rule.id, source: rule.source });
       else pressures.push({ ...result, rule: rule.id, source: rule.source });
     }
     if (!matched) {
@@ -244,5 +280,5 @@ export function press(sheet) {
         .filter(axis => !CONTAINMENT[axis])
     : [];
 
-  return { ran: true, pressures, inert, blocked: blocked(sheet), unpriced };
+  return { ran: true, pressures, inert, notes, blocked: blocked(sheet), unpriced };
 }

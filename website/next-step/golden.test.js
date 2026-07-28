@@ -300,3 +300,83 @@ test('EXPERIMENT: one domain, three sheets, three different vectors', () => {
   assert.notEqual(venueMoves, entMoves,
     'same domain, same engine, different answers — different architectures');
 });
+
+// --- Profile 2: the middle, and the only one exercising these three cases ---
+
+const REG_TOML = readFileSync(join(here, 'corpus', 'ticketing-regional.toml'), 'utf-8');
+const regional = parseToml(REG_TOML).sheet;
+
+test('profile 2 passes the entry gate', () => {
+  assert.deepEqual(checkSheet(REG_TOML).findings.map(f => f.code), []);
+});
+
+test('profile 2: the decomposition case — ownership does not move topology', () => {
+  const result = derive(regional);
+  // "ownership boundaries are demanded — and module boundaries contain them at zero
+  // deployment cost; release-cadence independence is NOT demanded. The conflict
+  // evaporates." Modular monolith = single deployable, modular form.
+  assert.deepEqual(result.vector.topology,
+    [{ value: 'single deployable', scope: 'system', moved: false }]);
+  assert.ok(result.inert.some(i => /the count of parts presses nothing/.test(i.because || '')));
+});
+
+test('profile 2: the rung case — the chain stops at replicas, below the axis move', () => {
+  const result = derive(regional);
+  const rung = result.inert.find(i => i.rung);
+  assert.equal(rung.rung, 'replicas');
+  assert.match(rung.because, /top rung — projections — is the axis move/);
+  // The read/write model does not move: the read shape has not diverged.
+  assert.deepEqual(result.vector.read_write,
+    [{ value: 'unified', scope: 'system', moved: false }]);
+});
+
+test('profile 2: the mechanism case — read-your-writes forces a mechanism, not a value', () => {
+  const result = derive(regional);
+  const note = result.mechanismNotes.find(n => n.scope === 'data-class:availability');
+  assert.ok(note, 'a demand contained by a mechanism must still be recorded');
+  assert.equal(note.mechanism, 'session-pinned reads to the primary');
+  // And it must NOT appear as an axis move.
+  assert.ok(!result.pressures.some(p => p.scope === 'data-class:availability'));
+});
+
+test('profile 2: substrate mixes by scope — event-based across, direct within', () => {
+  const result = derive(regional);
+  assert.ok(result.vector.substrate.some(
+    e => e.value === 'event-based' && e.scope === 'path:sales-feed' && e.moved));
+  assert.ok(result.vector.substrate.some(
+    e => e.value === 'direct' && e.scope === 'system' && !e.moved));
+});
+
+test('profile 2: the storage trap stays disarmed — audit is not replay', () => {
+  const result = derive(regional);
+  assert.deepEqual(result.vector.state,
+    [{ value: 'current-state', scope: 'system', moved: false }]);
+  assert.ok(result.inert.some(i => /only replay earns event-sourced/.test(i.because || '')));
+});
+
+test('profile 2: money compensates, reshapeable operations design out', () => {
+  const { decided } = deriveRecovery(regional);
+  const by = v => decided.filter(d => d.value === v).map(d => d.operation).sort();
+  assert.deepEqual(by('compensate'), ['authorize-payment', 'confirm-sale']);
+  assert.deepEqual(by('design-out'), ['hold-seat', 'increment-sales-counter']);
+});
+
+// --- The experiment, all three profiles ---
+
+test('EXPERIMENT: one domain, three sheets, three distinct vectors', () => {
+  // three-profiles.md:5 — the condition the book's central claim rests on.
+  const shape = s => {
+    const d = derive(s);
+    return Object.entries(d.vector).filter(([a]) => a !== 'recovery')
+      .flatMap(([axis, es]) => es.filter(e => e.moved).map(e => `${axis}:${e.value}@${e.scope}`))
+      .sort().join('|');
+  };
+  const v1 = shape(venue), v2 = shape(regional), v3 = shape(enterprise);
+
+  assert.equal(v1, '', 'the venue derives the null vector — restraint is an output');
+  assert.notEqual(v2, v1);
+  assert.notEqual(v3, v2);
+  assert.notEqual(v3, v1);
+  assert.equal(new Set([v1, v2, v3]).size, 3,
+    'three sheets over one domain must produce three different vectors, each forced');
+});

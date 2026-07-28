@@ -225,3 +225,78 @@ test('EXPERIMENT: one domain, two sheets, different vectors', () => {
   assert.notEqual(venueMoves, chMoves,
     'different answers must produce different architectures, or the method is an illustration');
 });
+
+// --- Profile 3: the hostile pole ---
+
+const ENT_TOML = readFileSync(join(here, 'corpus', 'ticketing-enterprise.toml'), 'utf-8');
+const enterprise = parseToml(ENT_TOML).sheet;
+
+test('profile 3 passes the entry gate', () => {
+  const gate = checkSheet(ENT_TOML);
+  assert.deepEqual(gate.findings.map(f => f.code), []);
+});
+
+test('profile 3 reproduces every recorded move the ledger can price', () => {
+  const result = derive(enterprise);
+  const moved = [];
+  for (const [axis, entries] of Object.entries(result.vector)) {
+    if (axis === 'recovery') continue;
+    for (const e of entries) if (e.moved) moved.push(`${axis}:${e.value}@${e.scope}`);
+  }
+  assert.deepEqual(moved.sort(), [
+    'persistence:distributed shared@data-class:bookings',
+    'persistence:polyglot@data-class:event-management',
+    'read_write:separated@path:quote',
+    'state:event-sourced@data-class:pricing',
+    'topology:multiple deployables@path:quote',
+  ]);
+});
+
+test('profile 3: the unique container is reached by the three answers that force it', () => {
+  const result = derive(enterprise);
+  const p = result.pressures.find(x => x.toward === 'distributed shared');
+  assert.ok(p);
+  assert.equal(p.unique, true);
+  assert.match(p.because, /strict, multi-region and zero-loss/);
+});
+
+test('profile 3: 10^5 attempts per minute moves NO axis — contention refuses copies', () => {
+  const result = derive(enterprise);
+  const contention = result.inert.find(i => /second copy does not help/.test(i.because || ''));
+  assert.ok(contention, 'the contention row must be recorded inert, not discarded');
+  assert.ok(!result.pressures.some(p => p.scope === 'path:on-sale'),
+    'the most dramatic number on the sheet must move nothing');
+});
+
+test('profile 3: booking keeps current-state while pricing goes event-sourced', () => {
+  const result = derive(enterprise);
+  const state = result.vector.state;
+  assert.ok(state.some(e => e.value === 'current-state' && e.scope === 'system' && !e.moved));
+  assert.ok(state.some(e => e.value === 'event-sourced' && e.scope === 'data-class:pricing' && e.moved));
+  // Two data classes, two storage answers, one system.
+  assert.equal(state.length, 2);
+});
+
+test('profile 3: recovery spans all three classes, each from domain shape', () => {
+  const { decided } = deriveRecovery(enterprise);
+  const by = v => decided.filter(d => d.value === v).map(d => d.operation).sort();
+  assert.deepEqual(by('compensate'), ['authorize-payment', 'confirm-booking']);
+  assert.deepEqual(by('design-out'), ['append-price', 'hold-seat']);
+  assert.deepEqual(by('degrade-and-continue'), ['refresh-availability-view']);
+});
+
+// --- The experiment, complete on both poles ---
+
+test('EXPERIMENT: one domain, three sheets, three different vectors', () => {
+  // three-profiles.md:5 — "If the architecture follows from the answers, three answer
+  // sheets over one domain must produce three different vectors, each forced, with no
+  // step appealing to taste."
+  const count = s => Object.values(derive(s).vector).flat().filter(e => e.moved).length;
+  const venueMoves = count(venue);
+  const entMoves = count(enterprise);
+
+  assert.equal(venueMoves, 0, 'the venue derives the null vector');
+  assert.equal(entMoves, 5, 'the enterprise derives five forced moves');
+  assert.notEqual(venueMoves, entMoves,
+    'same domain, same engine, different answers — different architectures');
+});

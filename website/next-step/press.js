@@ -25,6 +25,38 @@ const answered = row => (row.status || 'answered') !== 'UNKNOWN';
  */
 const SINGLE = [
   {
+    id: 'contention-refuses-copies',
+    source: 'Card 3; axes-and-ledger.md:21',
+    // "Contention (no - one record, one winner) -> admission control (write side),
+    // coalescing (read side), design-out. Never sharding." The contended record has one
+    // home regardless of fleet size, so the containing mechanisms are thin tiers, and
+    // thin tiers "own no business logic and no data of record -> never in the vector."
+    // The most dramatic number on a sheet can move nothing, and that is the discipline
+    // holding under maximum provocation (three-profiles.md:55).
+    apply(row) {
+      if (row.q !== 'q5' || row.shape !== 'contention') return null;
+      return { inert: true, row: row.id,
+        because: 'contention: a second copy does not help, so containment is admission control on the write side and coalescing on the read side — thin tiers, which never enter the vector. Sharding a contention problem buys hardware and keeps the melt.' };
+    },
+  },
+  {
+    id: 'unique-container-distributed-shared',
+    source: 'Card 2; axes-and-ledger.md:49',
+    // "Unique container: strict x multi-region x zero-loss on one data class ->
+    // distributed shared only." The only value in the ledger providing strict
+    // transactions across regions with zero loss on regional failure; its price is
+    // physics, a write floor of cross-region round trips times quorum.
+    apply(row, sheet) {
+      if (row.q !== 'q4' || row.contract !== 'strict' || row.multi_region !== true) return null;
+      const zeroLoss = rowsOf(sheet, 'q3').some(
+        l => answered(l) && l.scope === row.scope && l.zero_loss === true);
+      if (!zeroLoss) return null;
+      return { axis: 'persistence', toward: 'distributed shared', scope: row.scope,
+        mechanism: 'store', row: row.id, unique: true,
+        because: 'strict, multi-region and zero-loss on one data class: the only value in the ledger that contains all three, and the write floor is physics no vendor tunes away' };
+    },
+  },
+  {
     id: 'burst-to-event-based',
     source: 'Card 3; axes-and-ledger.md:23,43',
     // "Burst (peak + tolerable settling delay) -> buffer/queue." The definition carries
@@ -98,7 +130,21 @@ const SINGLE = [
     apply(row) {
       if (row.q !== 'q9' || !Array.isArray(row.diverges_on)) return null;
       if (row.diverges_on.length < 2 || scopeKind(row.scope) === 'system') return null;
-      return { axis: 'persistence', toward: 'per-component', scope: row.scope,
+      // Two destinations, one rule. Polyglot provides "stores shaped to their data"; it
+      // is earned when the divergence is about STORAGE shape — document beside
+      // relational. Per-component provides "independent evolution"; it is earned when
+      // the divergence is across a component boundary.
+      //
+      // `diverges_on` is a controlled vocabulary, matched exactly. Substring matching
+      // cannot separate these: Companies House lists "shape" meaning the
+      // beneficial-ownership entity shape of a separate register (per-component), while
+      // profile 3 lists "data shape" meaning document beside relational (polyglot).
+      // Anything not in STORAGE_SHAPE falls to per-component, which is the cheaper value.
+      const STORAGE_SHAPE = ['data shape', 'storage shape', 'access pattern'];
+      const onStorageShape = row.diverges_on.some(
+        d => STORAGE_SHAPE.includes(String(d).trim().toLowerCase()));
+      const toward = onStorageShape ? 'polyglot' : 'per-component';
+      return { axis: 'persistence', toward, scope: row.scope,
         mechanism: 'store', row: row.id, scopeExclusion: true,
         because: `${row.diverges_on.join(', ')} diverge simultaneously at one scope; scope exclusion is tested before hardening the whole store` };
     },

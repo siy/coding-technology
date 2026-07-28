@@ -24,6 +24,7 @@ export const QUESTIONS = {
     demand: 'per operation: error budget + criticality',
     scopes: ['operation', 'path'],
     priced: true,
+    pricedAs: 'nines',
     triage: 'target',
   },
   q3: {

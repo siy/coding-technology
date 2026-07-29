@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- AS cover concept A — "The unfolding point".
+     Series-narrative play: PFD's amber neck-dot reappears as the ORIGIN; from it the
+     architecture derives downward in discrete generations into ordered structure.
+     The cone is PFD's lower funnel half, re-read: the point expands. 2100x3000. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2100 3000">
+  <rect width="2100" height="3000" fill="#f4f3f0"/>
+
+  <!-- scattered shapes: the already-elicited world, light and mostly above the apex -->
+  <g fill="#000000" stroke="#000000">
+    <polygon points="330,760 395,640 265,640" stroke="none"/>
+    <rect x="1720" y="640" width="88" height="88" stroke="none"/>
+    <circle cx="1560" cy="760" r="44" fill="none" stroke-width="6"/>
+    <polygon points="580,660 630,720 580,780 530,720" stroke="none"/>
+    <circle cx="1840" cy="880" r="26" stroke="none"/>
+    <rect x="200" y="1000" width="104" height="104" fill="none" stroke-width="6"/>
+    <polygon points="1880,1240 1950,1120 1810,1120" stroke="none"/>
+    <circle cx="245" cy="1420" r="42" fill="none" stroke-width="6"/>
+    <polygon points="1900,1700 1952,1762 1900,1824 1848,1762" stroke="none"/>
+    <rect x="170" y="1900" width="72" height="72" stroke="none"/>
+  </g>
+
+  <!-- the cone: derivation opens downward from the point -->
+  <g fill="none" stroke="#000000" stroke-linejoin="round">
+    <path d="M 1050,880 L 380,2440" stroke-width="5"/>
+    <path d="M 1050,880 L 1720,2440" stroke-width="5"/>
+  </g>
+
+  <!-- derivation tree: 1 -> 2 -> 4 -> 8, each generation more built -->
+  <g stroke="#000000" fill="none">
+    <!-- edges -->
+    <g stroke-width="4">
+      <path d="M 1050,896 L 920,1268"/>
+      <path d="M 1050,896 L 1180,1268"/>
+      <path d="M 920,1312 L 750,1758"/>
+      <path d="M 920,1312 L 950,1758"/>
+      <path d="M 1180,1312 L 1150,1758"/>
+      <path d="M 1180,1312 L 1350,1758"/>
+      <path d="M 750,1802 L 558,2242"/>
+      <path d="M 750,1802 L 708,2242"/>
+      <path d="M 950,1802 L 858,2242"/>
+      <path d="M 950,1802 L 1008,2242"/>
+      <path d="M 1150,1802 L 1148,2242"/>
+      <path d="M 1150,1802 L 1298,2242"/>
+      <path d="M 1350,1802 L 1448,2242"/>
+      <path d="M 1350,1802 L 1598,2242"/>
+    </g>
+    <!-- generation 1: open positions -->
+    <circle cx="920" cy="1290" r="22" stroke-width="5"/>
+    <circle cx="1180" cy="1290" r="22" stroke-width="5"/>
+    <!-- generation 2: framed positions -->
+    <rect x="728" y="1758" width="44" height="44" stroke-width="5"/>
+    <rect x="928" y="1758" width="44" height="44" stroke-width="5"/>
+    <rect x="1128" y="1758" width="44" height="44" stroke-width="5"/>
+    <rect x="1328" y="1758" width="44" height="44" stroke-width="5"/>
+  </g>
+  <!-- generation 3: built structure -->
+  <g fill="#000000" stroke="none">
+    <rect x="530" y="2242" width="56" height="56"/>
+    <rect x="680" y="2242" width="56" height="56"/>
+    <rect x="830" y="2242" width="56" height="56"/>
+    <rect x="980" y="2242" width="56" height="56"/>
+    <rect x="1120" y="2242" width="56" height="56"/>
+    <rect x="1270" y="2242" width="56" height="56"/>
+    <rect x="1420" y="2242" width="56" height="56"/>
+    <rect x="1570" y="2242" width="56" height="56"/>
+  </g>
+
+  <!-- the one spot of colour: PFD's neck-dot, now the origin -->
+  <circle cx="1050" cy="880" r="16" fill="#E9A23C" stroke="#000000" stroke-width="4"/>
+
+  <!-- type (house style) -->
+  <text x="1050" y="330" font-family="Inter, Roboto, 'Source Sans Pro', sans-serif"
+        font-size="116" font-weight="700" fill="#000000" text-anchor="middle">Architecture Synthesis</text>
+  <text x="1050" y="470" font-family="Inter, Roboto, 'Source Sans Pro', sans-serif"
+        font-size="56" font-weight="400" font-style="italic" fill="#333333" text-anchor="middle">The Next Correct Step</text>
+  <text x="1050" y="2880" font-family="Inter, Roboto, 'Source Sans Pro', sans-serif"
+        font-size="54" font-weight="400" fill="#000000" text-anchor="middle">Sergiy Yevtushenko</text>
+</svg>

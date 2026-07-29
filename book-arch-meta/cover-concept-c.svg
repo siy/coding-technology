@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- AS cover concept C — "Pathfinding lattice".
+     Vector space as a sparse node grid; the walked route in bold black steps; exactly
+     one segment — the next one — in amber: the title, rendered. The pending remainder
+     is dashed; the destination is the double ring. 2100x3000. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2100 3000">
+  <rect width="2100" height="3000" fill="#f4f3f0"/>
+
+  <!-- scattered shapes: the unpriced world outside the lattice, denser toward start -->
+  <g fill="#000000" stroke="#000000">
+    <polygon points="320,780 385,660 255,660" stroke="none"/>
+    <rect x="1740" y="660" width="84" height="84" stroke="none"/>
+    <circle cx="1560" cy="770" r="42" fill="none" stroke-width="6"/>
+    <polygon points="580,680 630,740 580,800 530,740" stroke="none"/>
+    <circle cx="1855" cy="900" r="26" stroke="none"/>
+    <rect x="180" y="1180" width="100" height="100" fill="none" stroke-width="6"/>
+    <polygon points="230,2480 300,2360 160,2360" stroke="none"/>
+    <rect x="330" y="2560" width="72" height="72" stroke="none"/>
+    <circle cx="1800" cy="2500" r="40" fill="none" stroke-width="6"/>
+    <polygon points="1900,1420 1952,1482 1900,1544 1848,1482" stroke="none"/>
+  </g>
+
+  <!-- the lattice: reachable positions, spacing slightly irregular off the route -->
+  <g fill="#f4f3f0" stroke="#000000" stroke-width="3.5">
+    <!-- row y~1000 -->
+    <circle cx="432" cy="988" r="13"/><circle cx="626" cy="1012" r="13"/><circle cx="848" cy="994" r="13"/>
+    <circle cx="1044" cy="1008" r="13"/><circle cx="1268" cy="990" r="13"/><circle cx="1462" cy="1014" r="13"/>
+    <!-- row y~1160 (destination row) -->
+    <circle cx="424" cy="1172" r="13"/><circle cx="636" cy="1148" r="13"/><circle cx="842" cy="1166" r="13"/>
+    <circle cx="1054" cy="1152" r="13"/><circle cx="1470" cy="1168" r="13"/>
+    <!-- row y~1420 (route row) -->
+    <circle cx="428" cy="1432" r="13"/><circle cx="634" cy="1410" r="13"/><circle cx="846" cy="1426" r="13"/>
+    <circle cx="1472" cy="1420" r="13"/><circle cx="1676" cy="1434" r="13"/>
+    <!-- row y~1630 -->
+    <circle cx="438" cy="1622" r="13"/><circle cx="628" cy="1644" r="13"/><circle cx="852" cy="1618" r="13"/>
+    <circle cx="1062" cy="1636" r="13"/><circle cx="1258" cy="1620" r="13"/><circle cx="1468" cy="1642" r="13"/>
+    <circle cx="1682" cy="1616" r="13"/>
+    <!-- row y~1840 (route row) -->
+    <circle cx="434" cy="1852" r="13"/><circle cx="1262" cy="1830" r="13"/><circle cx="1474" cy="1848" r="13"/>
+    <circle cx="1668" cy="1834" r="13"/>
+    <!-- row y~2050 -->
+    <circle cx="426" cy="2062" r="13"/><circle cx="640" cy="2038" r="13"/><circle cx="844" cy="2058" r="13"/>
+    <circle cx="1058" cy="2042" r="13"/><circle cx="1264" cy="2064" r="13"/><circle cx="1478" cy="2040" r="13"/>
+    <circle cx="1670" cy="2060" r="13"/>
+    <!-- row y~2260 (start row) -->
+    <circle cx="846" cy="2266" r="13"/><circle cx="1056" cy="2244" r="13"/><circle cx="1262" cy="2268" r="13"/>
+    <circle cx="1476" cy="2250" r="13"/><circle cx="1678" cy="2262" r="13"/>
+  </g>
+
+  <!-- walked route: reversible-first, in bold -->
+  <polyline points="420,2260 630,2260 630,1840 1050,1840 1050,1420"
+            fill="none" stroke="#000000" stroke-width="12" stroke-linejoin="round"/>
+  <!-- the one spot of colour: the next correct step -->
+  <line x1="1050" y1="1420" x2="1260" y2="1420" stroke="#E9A23C" stroke-width="12"/>
+
+  <!-- pending remainder -->
+  <polyline points="1260,1420 1260,1160 1680,1160"
+            fill="none" stroke="#8a8a8a" stroke-width="4" stroke-dasharray="18 16"/>
+
+  <!-- route landmarks -->
+  <circle cx="420"  cy="2260" r="20" fill="#000000"/>                                   <!-- start -->
+  <circle cx="630"  cy="2260" r="13" fill="#000000"/>
+  <circle cx="630"  cy="1840" r="13" fill="#000000"/>
+  <circle cx="1050" cy="1840" r="13" fill="#000000"/>
+  <circle cx="1050" cy="1420" r="18" fill="#000000"/>                                   <!-- you are here -->
+  <circle cx="1260" cy="1420" r="15" fill="#f4f3f0" stroke="#E9A23C" stroke-width="5"/> <!-- next node -->
+  <circle cx="1680" cy="1160" r="26" fill="none" stroke="#000000" stroke-width="5"/>    <!-- destination -->
+  <circle cx="1680" cy="1160" r="12" fill="#000000"/>
+
+  <!-- type (house style) -->
+  <text x="1050" y="330" font-family="Inter, Roboto, 'Source Sans Pro', sans-serif"
+        font-size="116" font-weight="700" fill="#000000" text-anchor="middle">Architecture Synthesis</text>
+  <text x="1050" y="470" font-family="Inter, Roboto, 'Source Sans Pro', sans-serif"
+        font-size="56" font-weight="400" font-style="italic" fill="#333333" text-anchor="middle">The Next Correct Step</text>
+  <text x="1050" y="2880" font-family="Inter, Roboto, 'Source Sans Pro', sans-serif"
+        font-size="54" font-weight="400" fill="#000000" text-anchor="middle">Sergiy Yevtushenko</text>
+</svg>

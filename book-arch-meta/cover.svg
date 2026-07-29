@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Architecture Synthesis — full cover (decided 2026-07-12, from concept B "the vector").
+     Series visual language: black geometric line-art on warm off-white (#f4f3f0), scattered
+     elemental shapes, one spot of colour. Hero: the book's object itself — six axes, candidate
+     values as open ticks, the derived vector as one bold polyline through one position per axis.
+     The amber dot is the LEFTMOST position: PFD's output (its amber neck-dot, same size, same
+     stroke) is this book's origin — the derivation starts from what design produced and moves
+     right. Mechanics are allowed to look mechanical (overlay rule): the instrument-readout
+     character is on-thesis. 2100x3000; rendered by build-pdf.sh via rsvg-convert. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2100 3000">
+  <rect width="2100" height="3000" fill="#f4f3f0"/>
+
+  <!-- scattered shapes: the answers, above and below the axis field -->
+  <g fill="#000000" stroke="#000000">
+    <polygon points="360,740 425,620 295,620" stroke="none"/>
+    <rect x="1700" y="620" width="88" height="88" stroke="none"/>
+    <circle cx="1520" cy="750" r="42" fill="none" stroke-width="6"/>
+    <polygon points="640,660 690,720 640,780 590,720" stroke="none"/>
+    <circle cx="1850" cy="800" r="26" stroke="none"/>
+    <rect x="230" y="800" width="96" height="96" fill="none" stroke-width="6"/>
+    <rect x="300" y="2520" width="76" height="76" stroke="none"/>
+    <circle cx="1730" cy="2560" r="42" fill="none" stroke-width="6"/>
+    <polygon points="1170,2560 1222,2622 1170,2684 1118,2622" stroke="none"/>
+    <polygon points="620,2600 690,2480 550,2480" stroke="none"/>
+  </g>
+
+  <!-- six axes -->
+  <g stroke="#000000" stroke-width="4">
+    <line x1="500"  y1="950" x2="500"  y2="2350"/>
+    <line x1="720"  y1="950" x2="720"  y2="2350"/>
+    <line x1="940"  y1="950" x2="940"  y2="2350"/>
+    <line x1="1160" y1="950" x2="1160" y2="2350"/>
+    <line x1="1380" y1="950" x2="1380" y2="2350"/>
+    <line x1="1600" y1="950" x2="1600" y2="2350"/>
+  </g>
+
+  <!-- candidate values: open ticks per axis -->
+  <g fill="#f4f3f0" stroke="#000000" stroke-width="4">
+    <!-- axis 1 (four values) -->
+    <circle cx="500" cy="1150" r="14"/><circle cx="500" cy="1850" r="14"/><circle cx="500" cy="2200" r="14"/>
+    <!-- axis 2 (three) -->
+    <circle cx="720" cy="1250" r="14"/><circle cx="720" cy="2050" r="14"/>
+    <!-- axis 3 (two) -->
+    <circle cx="940" cy="1900" r="14"/>
+    <!-- axis 4 (two) -->
+    <circle cx="1160" cy="2150" r="14"/>
+    <!-- axis 5 (five) -->
+    <circle cx="1380" cy="1100" r="14"/><circle cx="1380" cy="1400" r="14"/><circle cx="1380" cy="1700" r="14"/><circle cx="1380" cy="2300" r="14"/>
+    <!-- axis 6 (three) -->
+    <circle cx="1600" cy="1350" r="14"/><circle cx="1600" cy="2050" r="14"/>
+  </g>
+
+  <!-- the derived vector -->
+  <polyline points="500,1500 720,1650 940,1400 1160,1750 1380,2000 1600,1700"
+            fill="none" stroke="#000000" stroke-width="11" stroke-linejoin="round"/>
+  <!-- chosen positions -->
+  <g fill="#000000">
+    <circle cx="720"  cy="1650" r="16"/>
+    <circle cx="940"  cy="1400" r="16"/>
+    <circle cx="1160" cy="1750" r="16"/>
+    <circle cx="1380" cy="2000" r="16"/>
+    <circle cx="1600" cy="1700" r="16"/>
+  </g>
+  <!-- the one spot of colour: PFD's output, this book's origin -->
+  <circle cx="500" cy="1500" r="16" fill="#E9A23C" stroke="#000000" stroke-width="4"/>
+
+  <!-- type (house style) -->
+  <text x="1050" y="330" font-family="Inter, Roboto, 'Source Sans Pro', sans-serif"
+        font-size="116" font-weight="700" fill="#000000" text-anchor="middle">Architecture Synthesis</text>
+  <text x="1050" y="470" font-family="Inter, Roboto, 'Source Sans Pro', sans-serif"
+        font-size="56" font-weight="400" font-style="italic" fill="#333333" text-anchor="middle">The Next Correct Step</text>
+  <text x="1050" y="2880" font-family="Inter, Roboto, 'Source Sans Pro', sans-serif"
+        font-size="54" font-weight="400" fill="#000000" text-anchor="middle">Sergiy Yevtushenko</text>
+</svg>

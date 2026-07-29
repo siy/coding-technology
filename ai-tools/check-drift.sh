@@ -104,7 +104,34 @@ if [ -n "$stale_hdr" ]; then
   printf '%s\n' "$stale_hdr"
 fi
 
-# --- 6. Installed copy matches this repo (local only; absent in CI) ---
+# --- 6. Chapter cross-references resolve to a numbered chapter ---
+# The AS manuscript cites chapters by number ("Chapter 8's subject"). Both renderers
+# print those numbers over the twelve chapters below; front matter, the closing, the
+# appendices and the references are unnumbered and consume no number. A reference past
+# the end, or a reordering that changes which file is which number, silently breaks
+# every citation, so the order is pinned here.
+AS_CHAPTERS=(two-teams answer-sheet axes-and-ledger derivation verification
+             three-profiles derived-blind when-derivation-says-no
+             derivative pathfinding brownfield judgment)
+if [ -d ../book-arch ]; then
+  for i in "${!AS_CHAPTERS[@]}"; do
+    f="../book-arch/${AS_CHAPTERS[$i]}.md"
+    [ -f "$f" ] || fail "AS chapter $((i + 1)) is missing: ${AS_CHAPTERS[$i]}.md"
+  done
+  max=${#AS_CHAPTERS[@]}
+  bad=$(grep -ho 'Chapter [0-9]\+' ../book-arch/*.md 2>/dev/null \
+        | awk -v m="$max" '{ if ($2 < 1 || $2 > m) print }' | sort -u)
+  if [ -n "$bad" ]; then
+    fail "AS prose cites a chapter number outside 1..$max:"
+    printf '%s\n' "$bad"
+  fi
+  # The web renderer must number the same set.
+  if [ -f ../website/build.js ] && ! grep -q "chapterNumbers: true" ../website/build.js; then
+    fail "the AS course no longer prints chapter numbers, so its prose citations resolve to nothing"
+  fi
+fi
+
+# --- 7. Installed copy matches this repo (local only; absent in CI) ---
 INSTALLED="${CLAUDE_HOME:-$HOME/.claude}"
 if [ -d "$INSTALLED/skills" ]; then
   for src in skills/*/; do

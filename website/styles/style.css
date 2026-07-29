@@ -224,6 +224,10 @@ nav.links a.current {
 .btn.soon { border: 1.5px dashed var(--ink-soft); color: var(--ink-soft); }
 .btn.course:hover { background: var(--amber-dark); }
 .btn.book:hover, .btn.soon:hover { background: var(--code-bg); }
+.hero .claim { font-family: var(--ui); font-size: clamp(19px, 3.2vw, 26px);
+               font-weight: 600; color: var(--amber-dark); margin: .2rem 0 .6rem;
+               letter-spacing: -0.01em; }
+.proof .go + .go { margin-left: 1.25rem; }
 .cta { margin: 1.75rem 0; }
 .cta .btn { font-size: 15px; padding: 10px 20px; }
 

@@ -117,6 +117,10 @@ const COURSES = [
     nav: 'method',
     realm: { href: '/method/', label: 'The Method' },
     parent: { href: '/method/architecture-synthesis/', label: 'Architecture Synthesis' },
+    // Chapters the prose cites by number: two-teams is 1 and judgment is 12. `closing`
+    // sits in the reading order but is not a numbered chapter, matching the PDF.
+    chapterNumbers: true,
+    unnumberedSlugs: new Set(['closing']),
     courseLabel: 'Architecture Synthesis course',
     crumbLabel: 'Architecture Synthesis course',
     h1: 'Architecture Synthesis &mdash; Course',
@@ -613,6 +617,15 @@ function buildLessonPages(course, flat) {
 
     const canonicalUrl = `${SITE_URL}${course.urlBase}${lesson.slug}/`;
 
+    let chapterLabel = '';
+    if (course.chapterNumbers) {
+      const unnumbered = course.unnumberedSlugs || new Set();
+      if (!unnumbered.has(lesson.slug)) {
+        const number = flat.slice(0, i + 1).filter(l => !unnumbered.has(l.slug)).length;
+        chapterLabel = `Chapter ${number} &middot; `;
+      }
+    }
+
     const html = template
       .replace(/{{TITLE}}/g, escapeAttr(`${title} — ${course.titleSuffix}`))
       .replace(/{{DESCRIPTION}}/g, escapeAttr(description))
@@ -628,6 +641,7 @@ function buildLessonPages(course, flat) {
       .replace(/{{PART_NAME}}/g, escapeHtml(lesson.partName))
       .replace('{{TITLE_TEXT}}', escapeHtml(title))
       .replace('{{LATTICE_SVG}}', latticeSvg)
+      .replace('{{CHAPTER_LABEL}}', chapterLabel)
       .replace('{{LESSON_POS}}', String(lesson.posInPart + 1))
       .replace('{{LESSON_TOTAL}}', String(lesson.partTotal))
       .replace('{{LEARN_BOX}}', learnBox)

@@ -599,20 +599,46 @@ public interface OrderLedger {
 public @interface OnOrderEvent {}
 ```
 
-The method shape is the same as a topic subscriber's, the message in and `Promise<Unit>` out, but
-the runtime drives it differently. Events arrive in order, and the consumer's position is a
-committed offset the runtime keeps per consumer group. As `record` succeeds the offset advances;
-when the slice restarts it resumes from the last committed offset, so it catches up on what it
-missed instead of skipping it. Each consumer group tracks its own offset, so a ledger and a read
-model both read the whole stream independently, at their own pace.
+<!-- BANNER:stream-declarative-consumer-488 status:rc3 remove-when:#488-wires-delivery -->
+> _Status as of rc3: the annotated form above is the design intent. Declaring it registers a
+> consumer group for `streams.order-events`, but the runtime does not yet drive delivery into the
+> method (pragmatica #488), so a deployed `@OnOrderEvent record` receives nothing today. Consume
+> with the explicit `StreamAccess` path below until the driver lands; the annotated method is the
+> shape that path folds into once it does._
+<!-- /BANNER:stream-declarative-consumer-488 -->
 
-Delivery is at-least-once: a failed `record` is retried, which means the same event can arrive
-twice, so the handler must be idempotent in the sense of Part II. The ledger's
-`ON CONFLICT (event_id) DO NOTHING` makes a redelivery a no-op, which is why it is an insert
-keyed on the event id rather than a blind append. (A slice that needs to read or replay directly
-rather than be driven takes a `StreamAccess` parameter instead, which adds `fetch(fromOffset,
-max)` to read from any position and `commit` to record progress. The annotated method is the
-common case and the one to reach for first.)
+The method shape is the same as a topic subscriber's, the message in and `Promise<Unit>` out, and
+it is the shape the runtime will drive once #488 lands: events delivered in order, the consumer's
+position kept as a committed offset per consumer group, the offset advancing as each `record`
+succeeds, and a restart resuming from the last committed offset instead of skipping what it missed.
+The offset store behind that is real today; what is missing is only the loop that pushes events into
+the method.
+
+Until that loop lands you drive it yourself, with a `StreamAccess<OrderEvent>` parameter requested
+against the same `streams.order-events` section. `StreamAccess` reads and commits explicitly, and a
+consumer is a small read-process-commit loop over it:
+
+```java
+// events : StreamAccess<OrderEvent>, injected against streams.order-events
+events.fetchFromCommitted("order-ledger", partition, 100)   // Promise<List<StreamEvent<OrderEvent>>>
+      .flatMap(batch -> applyInOrder(db, batch))            // your per-event record(...), yields the new offset
+      .flatMap(offset -> events.commit("order-ledger", partition, offset));
+```
+
+`fetchFromCommitted(group, partition, max)` reads the next batch from wherever this consumer group
+last committed on that partition: offset 0 the first time, the saved cursor afterwards, so a restart
+resumes rather than replays. `commit(group, partition, offset)` records progress; the cursor is kept
+per group and per partition and, on an owner with a writable data dir, survives a restart. Plain
+`fetch(fromOffset, max)` reads from any position when you want to scan or replay. Each consumer group
+keeps its own cursor, so a ledger and a read model read the whole stream independently, at their own
+pace. The read is per partition, so a single-partition stream, the choice the partition-ordering
+note below recommends for an ordered ledger, makes partition 0 the whole log; a multi-partition
+stream needs a loop per partition.
+
+Delivery is at-least-once: a batch read but not committed is read again after a failure, so the same
+event can arrive twice, and the handler must be idempotent in the sense of Part II. The ledger's
+`ON CONFLICT (event_id) DO NOTHING` makes a redelivery a no-op, which is why it is an insert keyed on
+the event id rather than a blind append.
 
 The stream's configuration section carries one structural setting and a few tuning ones:
 
@@ -624,7 +650,19 @@ retention-value = "30d"   # tuning
 ```
 
 `partitions` is structural: ordering is guaranteed within a partition, and partitions are the
-unit of parallel consumption. The retention keys tune how long the log is kept and how large an
+unit of parallel consumption.
+
+Which partition a given event lands in is worth pinning down before you lean on order. Routing
+by key, the mechanism that would keep every event for one order in a single partition, is not
+yet wired in the runtime (pragmatica #507); today a publisher spreads its events round-robin
+across the partitions. Order still holds inside each partition, but with more than one partition
+you do not choose which partition an event takes, so a stream that must preserve the order of one
+order's events across the whole log needs a single partition. `partitions` defaults to four, so
+this is a choice to make on purpose: set `partitions = 1` when whole-stream per-key order
+matters, and treat several partitions as parallelism whose per-partition order is all you can
+rely on until key routing lands.
+
+The retention keys tune how long the log is kept and how large an
 event may be. Treat those tuning keys as the part of streaming most likely to grow or change as
 the runtime evolves; the shape this chapter relies on, a durable ordered log read by committed
 offset, is the stable part. Verify the current keys against the resource reference when you

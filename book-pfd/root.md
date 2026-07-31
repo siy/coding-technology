@@ -25,5 +25,7 @@ In-progress draft. Read top-to-bottom; each piece is written to land naturally f
 ## Back matter
 - [Closing](closing.md) — the reflexive taper-proof, honest scope, the falsifiable bet, numbered predictions, the invitation.
 - [Afterword](afterword.md) — the author's note: the density was the method leaking, unnoticed, into the prose.
+- [Appendix — The Worksheet](appendix-worksheet.md) — the sheet you fill, one bite at a time, plus the reference you consult while filling it.
+- [Appendix — Reference Cards](appendix-reference-cards.md) — one card per instrument, for the desk.
 - [Glossary](glossary.md) — the methodology's vocabulary defined once; the shared spine the companion volumes build on.
 - [References](references.md) — works cited, alphabetical: King, Loth, Poltorak, Yevtushenko.

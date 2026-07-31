@@ -86,8 +86,8 @@ const COURSES = [
     bookDir: path.join(ROOT_DIR, 'book-pfd'),
     layerDir: path.join(__dirname, 'course', 'pfd'),
     urlBase: '/method/pfd/course/',
-    referenceUrlBase: null,
-    referenceSlug: null,
+    referenceUrlBase: '/method/pfd/reference/',
+    referenceSlug: 'appendix-reference-cards',
     tocFileSlug: null,
     glossarySlug: 'glossary',
     storagePrefix: 'pfd:',
@@ -101,8 +101,9 @@ const COURSES = [
     tocTitle: 'Process-First Design Course — pragmatica.dev',
     tocDescription: 'Process-First Design, chapter by chapter: the spiral walked at four altitudes, each lesson pairing book prose with an apply-to-your-system exercise. Free, no account required.',
     tocIntro: 'The whole method as a sequence of lessons. Each pairs the book’s prose with a short exercise you run on a system you own; progress is tracked locally in your browser, no account required.',
-    footerLinks: '<a href="https://leanpub.com/process-first-design" target="_blank" rel="noopener">Get the book</a> &middot; ',
-    nonLessonSlugs: new Set(['series-note', 'acknowledgments', 'afterword', 'glossary', 'references'])
+    footerLinks: '<a href="/method/pfd/reference/">Reference cards</a> &middot; <a href="/method/pfd/worksheet/">Worksheet</a> &middot; <a href="https://leanpub.com/process-first-design" target="_blank" rel="noopener">Get the book</a> &middot; ',
+    nonLessonSlugs: new Set(['series-note', 'acknowledgments', 'afterword', 'glossary', 'references',
+                             'appendix-worksheet', 'appendix-reference-cards'])
   },
   {
     id: 'as',
@@ -499,6 +500,26 @@ const LANDING_PAGES = [
     related: [
       { href: '/method/architecture-synthesis/course/', label: 'Architecture Synthesis course', note: 'back to contents' },
       { href: '/method/architecture-synthesis/', label: 'Architecture Synthesis', note: 'overview' }
+    ]
+  },
+  {
+    src: 'book-pfd/appendix-reference-cards.md', out: 'method/pfd/reference/index.html', fallbackTitle: 'PFD Reference Cards',
+    crumb: crumbDeep([{ href: '/method/', label: 'The Method' }, { href: '/method/pfd/course/', label: 'PFD course' }], 'Reference cards'),
+    nav: 'method',
+    description: 'The Process-First Design reference cards: the shapes, the patterns, the telescope, the change driver and its register, where data comes from, and the recovery triple — the whole vocabulary as a deck.',
+    related: [
+      { href: '/method/pfd/course/', label: 'PFD course', note: 'back to contents' },
+      { href: '/method/pfd/worksheet/', label: 'The worksheet', note: 'the sheet you fill' }
+    ]
+  },
+  {
+    src: 'book-pfd/appendix-worksheet.md', out: 'method/pfd/worksheet/index.html', fallbackTitle: 'The PFD Design Worksheet',
+    crumb: crumbDeep([{ href: '/method/', label: 'The Method' }, { href: '/method/pfd/course/', label: 'PFD course' }], 'Worksheet'),
+    nav: 'method',
+    description: 'The Process-First Design worksheet: take one operation, specify its six properties, attribute it to a change driver, and let the data and the altitudes precipitate from the register.',
+    related: [
+      { href: '/method/pfd/course/', label: 'PFD course', note: 'back to contents' },
+      { href: '/method/pfd/reference/', label: 'Reference cards', note: 'the vocabulary as a deck' }
     ]
   },
   {

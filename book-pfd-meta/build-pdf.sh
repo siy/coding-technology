@@ -44,6 +44,8 @@ CHAPTERS=(
   brownfield.md
   closing.md
   afterword.md
+  appendix-worksheet.md
+  appendix-reference-cards.md
   glossary.md
   references.md
 )

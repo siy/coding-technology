@@ -7,6 +7,13 @@ All notable changes to the PFD book, newest first. Format:
 `0.x` versions were preview editions; `1.0.0` marked the first edition released to
 readers, and `1.x` are its maintenance and expansion releases.
 
+## [2.4.0] - 2026-07-31
+
+### Added
+- **Appendix A — The Design Worksheet**: the method at operating altitude. Part A is the sheet you fill one bite at a time — specify a process by its six properties, check the altitude against the use-case/workflow discriminator, attribute it to a change driver with its confidence and source, let the data precipitate under the producer-and-reader gate, choose a recovery response, and climb only when the register says to. Part B is the reference consulted while filling it. Answers a reader request: the book taught the method and shipped nothing to apply it with, while the companion *Architecture Synthesis* ships both a worksheet and cards.
+- **Appendix B — Reference Cards**: eight cards, one per instrument — process-first and the six properties, the shapes, the patterns, the telescope, the change driver and its register, where data comes from, recovery and designing out contention, and attribution across contexts. Definitions stay in Foundations; the cards are the compressed form, for the desk.
+- **Web editions of both**: `/method/pfd/worksheet/` and `/method/pfd/reference/`, mirroring the routes the *Architecture Synthesis* course already carries, and linked from the PFD course footer.
+
 ## [2.3.1] - 2026-07-24
 
 ### Changed

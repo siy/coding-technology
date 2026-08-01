@@ -4,13 +4,14 @@
 > recorded in `book-pfd/CHANGELOG.md`. Manuscript em-dash style applies once moved into the book;
 > notes here are internal.
 
-**Status (2026-06-30):** Items 1, 6, 9 shipped in **PFD 1.6.0** (the *Edge Cases* chapter and its
+**Status (2026-08-01):** Items 1, 6, 9 shipped in **PFD 1.6.0** (the *Edge Cases* chapter and its
 objections-answered close). Items 2–5 shipped earlier (1.3.0 / 1.4.0: glossary, change-driver
 tracking, ownership dynamics, the named principles). Item 8 shipped in **JBCT 4.2.0**; the JBCT-side
-`*State` rule and the shared-spine glossary cross-reference shipped in **JBCT 4.2.1**. **Still open:**
-item 7's single running example carried across all three books (PFD / JBCT / Aether) — the glossary
-spine half is done, the shared conference-booking worked example is not. The detailed register below
-is retained for reference.
+`*State` rule and the shared-spine glossary cross-reference shipped in **JBCT 4.2.1**. Item 14 shipped
+in **PFD 2.4.0** (read-write staleness — *Foundations*, both appendices, both glossaries). **Still
+open:** item 7's single running example carried across all three books (PFD / JBCT / Aether) — the
+glossary spine half is done, the shared conference-booking worked example is not. The detailed
+register below is retained for reference.
 
 ---
 
@@ -602,7 +603,7 @@ intro positioning. One sentence.
 
 ---
 
-## 14. Read-write staleness — the case *Designing out contention* does not name (2026-08-01)
+## 14. Read-write staleness — the case *Designing out contention* does not name (2026-08-01) — SHIPPED in PFD 2.4.0
 
 **Source:** Rico Fritzsche, *The Command Context Consistency Principle* (2026-07-31), plus this
 session's analysis. Rides the next PFD pass. Additive: nothing shipped is wrong, one case is absent.
@@ -666,7 +667,11 @@ ownership map. Same substrate, different question asked of it.
 
 ## Release scope & versions
 
-Target: **PFD 1.2.0 → 1.3.0**, **JBCT 4.1.2 → 4.2.0** (minor — feature additions, single-sourced from each
-`CHANGELOG.md` top entry). PFD-side: items 1, 3, 4, 5, 6 (Foundations / new sections), 2 (back-matter
-glossary = shared spine), 7 (cross-book). JBCT-side: item 8. Deferred / low-priority: dialogue format for
-the edge-cases section, blast-radius metric.
+**Historical — this block planned the 1.3.0 round and is kept for the record.** Each book's version is
+single-sourced from its own `CHANGELOG.md` top entry; as of 2026-08-01 that is **PFD 2.4.0** and
+**JBCT 4.3.1**, both well past the targets below. Do not read the numbers here as current.
+
+Original target: **PFD 1.2.0 → 1.3.0**, **JBCT 4.1.2 → 4.2.0** (minor — feature additions). PFD-side:
+items 1, 3, 4, 5, 6 (Foundations / new sections), 2 (back-matter glossary = shared spine), 7
+(cross-book). JBCT-side: item 8. Deferred / low-priority: dialogue format for the edge-cases section,
+blast-radius metric.

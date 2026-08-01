@@ -85,6 +85,8 @@ The familiar aggregate is the fossil of one such absorption: a write-need that o
 
 **What the aggregate fuses is four things that vary independently: the identity, the lifecycle state, the representation of what is stored, and the policy that acts on it.** Process-first keeps them apart. The id mints identity, the state machine owns state, a value type owns the representation, and the use cases own policy. The value type is the part people fear is lost, and it is not: encapsulating the representation behind a stable interface is exactly what a value object does. The aggregate simply adds policy to that object, and the addition is the whole difference. A value type changes when the representation changes; an aggregate changes when the representation, or any policy, or any rule on any field changes, which is every driver at once. **That is why it becomes the system's hotspot, and why a change an entity would absorb in one private method is, for process-first, the same change located differently: representation in the value type, each policy in its own use case. The magnitude is equal; the location is not.** New behavior is then an addition, a use case appearing while the old ones stay untouched, where the aggregate must be modified in place. Locating change by its driver is the cohesion test applied to data, and the aggregate fails it by fusing drivers the value object keeps apart.
 
+**The same dissolution is reachable from another axis.** Rico Fritzsche's command-context argument reaches it on concurrency grounds — an aggregate is a *static* consistency boundary, while the facts any one decision actually reads change from command to command — where this book reaches it on change-driver grounds. The ownership discipline that follows removes most of the contexts such a principle has to guard; what survives it is the read-write staleness named later in this chapter.
+
 **There is an honest limit. In a domain dense with invariants that span many fields at once, a ledger or a tax engine, the stored state has real structure that is not just per-process accretion, and a record genuinely earns its place.** That is the same corner where an entity carries cross-field invariants of its own. Data is not eliminated there; it is minimized to the invariants that genuinely span. The claim does not break at that edge; it changes magnitude. Most line-of-business software lives at the other end, process-rich and invariant-poor, and has been modeled entity-first out of habit rather than fit.
 
 What is left when the data-modeling step is gone is a system whose stored state is the residue of its processes, whose every field has a creator, and whose every coupling is a word the business says. The architecture has no content the business did not put there.
@@ -279,6 +281,23 @@ The tactics are the ways to make it impossible:
 - **Serialized intake** — where order itself is the hazard, a per-entity queue makes a new event meet only a fully-processed prior one, never a half-applied one.
 
 Each tactic removes a race by removing the thing that could be in two states at once. What is left needing coordination is the irreducible business contention, and the methodology funnels it to one visible transition where it is designed out rather than locked around. **Locking is the admission that the conflict was left constructible; design-out is the decision that it never was.**
+
+### The contention the tactics do not remove
+
+The five tactics all remove a race between two *writers*, and single-writer ownership is the very thing that hides the second kind. **A field with one writer cannot be raced; a decision that *reads* it can still go stale.** Operation A reads a field that operation B owns, decides on the value it saw, and commits after B has moved it. Nothing was written twice — the write that did happen was authorized by a fact that had already expired. Call it **read-write staleness**, to keep it apart from the write-write races above.
+
+Four cases, and the tactics answer three:
+
+| Conflict | The answer |
+|---|---|
+| Write-write, on different fields | single-writer ownership — no conflict to resolve |
+| Write-write, on the workflow's state | the guarded transition |
+| Read-write, on a fact with a unique key | a declarative constraint |
+| **Read-write, on a predicate over a set** | **design-out has nothing to bite on** |
+
+**Where the claim is reshapeable, design-out still wins** — and that is the existing stance applied to a new case, not a new stance. *No booking overlaps these dates* is a predicate only until the thing actually claimed is written down as a row per interval claimed, at which point an exclusion constraint refuses the overlap and the race is lost by construction rather than detected after the fact. Reach for the reshape before reaching for a check around it.
+
+The fourth row is where the honest limit sits. *This customer holds fewer than six tickets for this event*, *reserved capacity is still under the cap* — a claim about a **set**, with no unique key for a constraint to hold on to. Counts and sums do not reshape into rows the way an interval does. What is left is validating the read set at commit — carrying the facts the decision rested on into the write and failing if any of them moved — or a materialized counter that writers lock, which is an aggregate root wearing a different hat and worth saying so out loud. **The tactics are a discipline, not a closure: they remove every race that can be designed away, and what remains is small, named, and priced rather than assumed absent.**
 
 ---
 

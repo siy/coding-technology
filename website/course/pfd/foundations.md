@@ -7,6 +7,7 @@ The vocabulary chapter: six process properties, four value shapes, six compositi
 - Six composition patterns: Leaf, Sequencer, Fork-Join, Condition, Iteration, Aspects
 - The telescope and the change-driver cohesion test
 - The recovery triple: backward recovery, forward recovery, designing failure out
+- Designing out contention: the five tactics, and the read-write staleness they do not remove
 
 ## note
 Dense reference chapter - most later lessons, in this course and the spiral passes, point back to a term defined here.

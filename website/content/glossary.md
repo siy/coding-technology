@@ -403,6 +403,10 @@ The two-track error-handling model — success track, failure track — that Res
 One of the [six axes](#six-axes): unified (reads served from the same model as writes) or separated (a read path split into its own projection). Unified gives read-your-writes for free; separation earns its cost only when a read path carries both its own SLO and its own shape.
 *Defined in: AS*
 
+**Read-Write Staleness** {#read-write-staleness}
+The contention single-writer ownership does not remove: an operation reads a field another operation owns, decides on the value it saw, and commits after that value has moved. Nothing is written twice — the write that happened was authorized by an expired fact. Where the claim is reshapeable, [design-out](#design-out) still applies (an interval becomes a row per interval claimed, refused by an exclusion constraint); a predicate over a *set* — a count, a sum — has no unique key to constrain, and is the honest limit of the contention tactics.
+*Defined in: PFD*
+
 **Record** {#record}
 Java's immutable data class (since Java 14), used throughout JBCT for value objects, requests, responses, and error types.
 *Defined in: JBCT*

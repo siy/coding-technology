@@ -10,12 +10,14 @@ The process's middle space (see `PROCESS-DESIGN.md`, three-spaces model), made e
 - **Values apply at demand scope.** Event-source *one data class*, separate *one read path*, extract *one component*. Uniformity is never free; a value applied wider than its demanding scope is unforced cost (= debt, F10).
 - No numbers pretending to be universal. Physics floors are named (RTT, quorum), magnitudes are the derivation's job against actual answers.
 
-**Selection rule** (replaces any fake total ordering of values; this is what both dry runs did implicitly):
-1. Start at the null value (cheapest per axis).
-2. Move only when a demand is uncontained (regime insight).
-3. Among containing values, pick the one introducing the **fewest new mechanisms** — each mechanism is an ongoing cost (ops, evolution, failure modes), not a one-time price.
-4. Apply the chosen value at the **narrowest scope** that contains the demand.
-5. **For prune-mode demands, test scope exclusion first (F20):** cheapest-containing-move applies to the *demand's scope*, not only the axis value — narrowing where the demand applies competes with any axis hardening. Shopify contains PCI by splitting the card path out so the monolith never sees card data; the demand's scope shrinks, every other axis stays null.
+**Selection rule** (replaces any fake total ordering of values; this is what both dry runs did implicitly). **Cited by name, never by index** — this list has been added to twice, and the book's copy in `axes-and-ledger.md` orders it differently on purpose (chapter order teaches; this order was historical). The names are the contract:
+
+- **Start null.** Begin at the null value (cheapest per axis).
+- **Rungs before moves.** Move only when a demand is uncontained (regime insight).
+- **Scope exclusion before hardening (F20).** For prune-mode demands, test scope exclusion first: cheapest-containing-move applies to the *demand's scope*, not only the axis value — narrowing where the demand applies competes with any axis hardening. Shopify contains PCI by splitting the card path out so the monolith never sees card data; the demand's scope shrinks, every other axis stays null.
+- **Fewest new mechanisms.** Among containing values, pick the one introducing fewest — each mechanism is an ongoing cost (ops, evolution, failure modes), not a one-time price.
+- **Narrowest scope.** Apply the chosen value at the narrowest scope that contains the demand.
+- **UNKNOWN derives a null position.** An answer nobody supplied presses nothing, is recorded with the position it leaves standing, and is never guessed. (Stated as a rule as of 2026-08-01 — the blind runs had been citing it as "rule 3" against a list that never contained it.)
 
 ---
 
@@ -45,7 +47,7 @@ Mechanisms that contain demands *without moving any axis*. The ledger must price
 **Thin-tier rule (F18):** a tier that owns **no business logic and no data of record** — load balancers, caches, coalescers, admission gates (Discord's Rust data services: "no business logic, one gRPC endpoint per database query") — is a containment mechanism, not a topology move. It never appears in the vector.
 
 **Hardware rung (F12)** — vertical sizing of the null position.
-- Provides: containment of volume and latency pressure with **zero new mechanisms** — the cheapest possible move by selection rule 3. SO 2016: RAM holds the entire working set, web tier idles at 5–15% CPU, 50ms budget met at 3,000 req/s peak with no axis moved; their cost stance is the selection rule as a company value ("hardware is cheaper than developers and efficient code").
+- Provides: containment of volume and latency pressure with **zero new mechanisms** — the cheapest possible move by the fewest-new-mechanisms rule. SO 2016: RAM holds the entire working set, web tier idles at 5–15% CPU, 50ms budget met at 3,000 req/s peak with no axis moved; their cost stance is the selection rule as a company value ("hardware is cheaper than developers and efficient code").
 - Costs: the box's price curve — and its **ceiling**: the rung stops when the working set or write rate outgrows one box's *economics* (not one box's spec sheet — the crossover is priced, and past it every further dollar buys less than the mechanism it was avoiding).
 - Position: rung zero of every chain; always price it before any axis move.
 

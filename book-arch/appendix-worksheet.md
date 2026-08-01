@@ -106,11 +106,19 @@ Each rung contains a different pressure; the last one is the axis move, everythi
 
 ### Resolution rules
 
-1. **Rungs before moves.** The cheapest containing value wins; each new mechanism is an ongoing cost, not a one-time price.
-2. **Prune-mode demands: try scope exclusion first.** Narrowing where the demand applies (split the regulated path out) competes with hardening an axis — and often wins.
-3. **Conflict on one axis → the scope test.** Pressures from *different* scopes: don't compromise the axis — split the system at the boundary between the pressures and derive each part separately (the split itself has a price: a contract, a consistency decay, a translation seam, an operational seam). Pressures from the *same* scope: decompose the demands to mechanism level and satisfy the binding part minimally.
-4. **Still opposed after decomposition → a genuine contradiction.** The output is a renegotiation menu with prices, not an architecture. This is the method working, not failing.
-5. **Apply every chosen value at the narrowest scope that contains the demand.** Event-source one data class. Separate one read path. Extract one component. A value applied wider than its demand is unforced cost.
+*Named, not numbered — the name is what a derivation cites. Numbering these has drifted between documents before.*
+
+- **Rungs before moves.** Climb the containment chain before conceding a demand is uncontained; the cheapest containing value wins.
+- **Scope exclusion before hardening.** For prune-mode demands, narrowing where the demand applies (split the regulated path out) competes with hardening an axis — and often wins.
+- **Fewest new mechanisms.** Among the values that contain the demand, prefer the one adding fewest; each mechanism is an ongoing cost, not a one-time price.
+- **Narrowest scope.** Event-source one data class. Separate one read path. Extract one component. A value applied wider than its demand is unforced cost.
+- **UNKNOWN derives a null position.** An answer nobody supplied presses nothing and is never guessed — record it, with the position it leaves standing.
+
+**The conflict rule** — two demands pressing one axis in opposite directions:
+
+- *Different scopes*: don't compromise the axis — split the system at the boundary between the pressures and derive each part separately. The split has a price: a contract, a consistency decay, a translation seam, an operational seam.
+- *Same scope*: decompose the demands to mechanism level and satisfy the binding part minimally.
+- *Still opposed after decomposition*: a genuine **contradiction**. The output is a renegotiation menu with prices, not an architecture. This is the method working, not failing.
 
 ### Recovery classes (per effectful operation, from the domain-shape facts)
 

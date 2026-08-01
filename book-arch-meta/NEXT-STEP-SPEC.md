@@ -130,6 +130,14 @@ Schema notes:
   audit vs replay; team-independence rows force ownership vs release fields).
 - Anything the book marks judgment stays **prose in `statement`** — the schema
   never invents enums the method doesn't have.
+- **Divergence fields carry the sheet's normal form.** Three axes press on divergence
+  *between* units, which no single row can express, so the sheet spells it with
+  `read_shape` (per path), `diverges_on` and `diverges`. `answer-sheet.md`'s *Scoped*
+  discipline states the rule these implement — one row per unit — and names the concept
+  `read_shape` carries as **read-model divergence**; the field keeps its original
+  spelling. Renaming it to match the book is a mechanical follow-up that touches the
+  parser, all four corpus sheets and their expected files, and is deliberately not
+  bundled with the book fix.
 
 ## 4. Pipeline (mirrors Card 5 exactly)
 
@@ -180,7 +188,7 @@ emitted and not resolved.**
 critical path against `floors`; tail composition (slow-fractions in series, fan-out
 harvest); envelope composition by correlation; availability multiplication with
 earned-independence checks (shared deploys/certs/regions/config named in the sheet);
-Rule 5's mechanism bill (count of standing mechanisms × who-operates) against the Q8
+the mechanism-bill rule (Card 6: count of standing mechanisms × who-operates) against the Q8
 envelope. Floors the user didn't supply ⇒ `UNVERIFIED: floor missing`, never a
 default.
 
@@ -199,8 +207,9 @@ unexplored territory (answers are real and priced and the ledger has no entry th
 prices them — emitted verbatim as such).
 
 *Not halts, though earlier drafts of this spec listed them as such:* fake answers are
-an entry-gate/exit-gate function (`verification.md:5`), floors-exceed-target is
-verification Rule 1 (`verification.md:23`), and envelope-exceeded is Rule 5. All three
+an entry-gate/exit-gate function (`verification.md:5`), floors-exceed-target is the
+latency-decomposition rule (`verification.md:23`), and envelope-exceeded is the
+mechanism-bill rule. All three
 are ch. 5 verification failures and are emitted as such.
 
 ## 5. CLI surface
@@ -240,7 +249,7 @@ Why this placement:
   diagnostic-emitting CLI — exactly what jbct's non-Java-specific layer already is.
   Entry-gate errors map 1:1 onto `Diagnostic` (TOML sheets have line numbers).
   A second distribution channel for a standalone tool is a standing mechanism the
-  Rule-5 arithmetic says we shouldn't buy while one already exists.
+  the mechanism-bill rule says we shouldn't buy while one already exists.
 - **Same product thesis.** `jbct check` lints code against the methodology;
   `jbct derive` lints-and-derives the sheet. PFD Prediction #1 lands as one tool
   family, and JBDT (JBCT's design phase) already establishes that design-phase

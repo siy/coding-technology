@@ -8,12 +8,17 @@ ranked against the Aether book. Ground truth: Appendix A (worksheet), Appendix B
 (reference cards), chapters 2–5. Where this spec and the book disagree, the book
 wins and this spec has a bug.*
 
-*Corrected 2026-07-26 against the book, per that rule. Two bugs: citations to failure
-modes `F22`/`F23`/`F24`/`F26`, which exist in no book in the series (replaced with the
-cards that actually carry those rules), and a five-halt list of which three entries
-were verification failures rather than ch. 8 halts. `check` is implemented as a
+*Amended 2026-08-01. One real bug: the five-halt list had three entries that are ch. 5
+verification failures rather than ch. 8 halts (`when-derivation-says-no.md` has no
+inventory in the meta notes either, so the book is sole authority there). One naming
+alignment: `BARE_ILITY` renamed `BARE_ADJECTIVE`, matching the book's own phrase and the
+implemented engine. **A 2026-07-26 edit wrongly stripped the `F22`/`F23`/`F24`/`F26`
+citations on the belief they resolved nowhere; they resolve to `PROCESS-DESIGN.md`'s
+findings register and have been restored** — this is a meta document and citing meta
+findings is correct. `check` and the mechanical half of `derive` are implemented as a
 browser playground at `/method/architecture-synthesis/next-step/`; §7's jbct-module
-placement is superseded for `check` and still open for a CLI.*
+placement is superseded for those and still open for a CLI. The ledger the engine needs
+is `LEDGER.md` v0.2, not a gap.*
 
 ---
 
@@ -139,8 +144,8 @@ the book's vocabulary; each cites its card):
   per-data-class / per-path.
 - `UNDECOMPOSED` — "audit" without audit-vs-replay; "team independence" without
   ownership-vs-release; bundled answers generally.
-- `UNTRIAGED` — time answer without requester-vs-system clock (Card 3); failure answer
-  citing an observed failure as if it were a target (Card 1's entry gate).
+- `UNTRIAGED` — time answer without requester-vs-system clock (F22, Card 3); failure
+  answer citing an observed failure as if it were a target (F23).
 - `BARE_ADJECTIVE` — "scalability", "high availability", "performance": not answers.
   The book's phrase is *bare adjectives*, and it names the banned vocabulary
   explicitly (`answer-sheet.md:47`). Not "-ility" — that word belongs to the separate
@@ -158,9 +163,9 @@ leave the menu with the striking answer recorded. Binary; no weights.
 coalescing → replicas → projections) using the row's shape to pick the mechanism
 family (Card 3); contained ⇒ *inert* (recorded as a result, not discarded);
 uncontained ⇒ pressure record `(axis, direction, scope, mechanism)`.
-**Combination check is first-class** (Card 5: "check combinations, not just rows"):
-pairs of rows from different questions converging on one axis are evaluated after
-singles. Output: the pressure matrix, inert rows included.
+**Combination check is first-class** (F24, echoed by Card 5's "check combinations, not
+just rows"; F26 for the scope-composition reading): pairs of rows from different
+questions converging on one axis are evaluated after singles. Output: the pressure matrix, inert rows included.
 
 **4. Resolve.** Mechanical where the book is mechanical: cheapest containing value ·
 fewest new mechanisms · narrowest scope · rungs before moves · scope exclusion

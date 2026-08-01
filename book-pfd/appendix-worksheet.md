@@ -157,4 +157,6 @@ Where the invalidation is a race, one principle with a family of tactics: **move
 - **Declarative constraints** — push the impossibility into the store; the race is lost by construction, not by a check.
 - **Serialized intake** — where order itself is the hazard, a per-entity queue.
 
+**These remove write-write races only.** A field with one writer cannot be raced; a decision that *reads* it can still go stale — **read-write staleness**. Ask it of every decision on the sheet: which facts did this read, who owns them, and does the decision still hold if one moved between the read and the commit? Reshapeable claims still design out (an interval becomes a row per interval claimed, refused by an exclusion constraint). A predicate over a *set* — a count, a sum — has no unique key to constrain: validate the read set at commit, or accept a locked counter row and name its cost.
+
 > **Locking is the admission that the conflict was left constructible; design-out is the decision that it never was.**

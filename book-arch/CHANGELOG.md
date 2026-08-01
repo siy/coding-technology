@@ -3,6 +3,59 @@
 All notable manuscript changes. Format: keep-a-changelog-ish; the top entry's version is
 what the build stamps on the PDF (single source of truth).
 
+## [1.1.0] — 2026-08-01
+
+Seven findings from building `next_step` against the book, applied. The engine was written
+by following the book literally; every place it had to invent something, guess, or accept a
+worked example that contradicted a card is a place the book was underspecified. This entry
+is that list, closed.
+
+### Added
+- **Card 2b — the ledger, printed** (*Appendix B*): the per-value `provides / via / costs`
+  entries for all six axes, plus the containment rungs and the boundary cost. `axes-and-ledger.md`
+  had forward-referenced these to the reference cards since the chapter was written, and Card 2
+  carried only axes and values, so the promise went unfulfilled and the priced entries existed
+  only in working notes. Numbered **2b** deliberately: inserting a Card 3 would have shifted
+  every "Card 5" and "Card 6" citation in the book, which is the exact failure the naming
+  change below exists to prevent.
+- **The sheet's normal form — one row per unit** (*The Answer Sheet*, under *Scoped*; echoed in
+  Card 5's step 1). Release cadence, read-model divergence, and the regulation-and-volume pair
+  all press on divergence *between* units, so a row answering for "the services" collectively
+  has averaged away the only thing those axes read. Step 1 was called *normalize* and did not
+  normalize.
+- **The UNKNOWN rule, stated** (*The Six Axes and the Ledger*; Card 5): an answer nobody
+  supplied presses nothing, is recorded with the position it leaves standing, and is never
+  guessed. The blind derivations had been leaning on this rule for months and citing it as
+  "rule 3" against a list that never contained it.
+- **The mechanism note as a third press outcome** (Card 5): a demand contained by a *named
+  mechanism* with no axis move — the regional profile's session-pinned reads. The card
+  previously offered only contained-inert and uncontained-record, and the worked example
+  produced a third thing.
+- **Read-model divergence elicited** (Card 1, second row): whether a read wants a *different
+  shape* from the write model, or only more of the same. Volume climbs the containment rungs;
+  only divergence reaches the top one — and by the book's own membership criterion, a fact that
+  decides an axis has to be asked for.
+
+### Changed
+- **Rules are cited by name, never by number** (*The Six Axes and the Ledger*, *Verification*,
+  Card 5, Card 6, Appendix A). Four documents had ordered the selection rule four different
+  ways, so "scope exclusion" was rule 5, rule 3, rule 2, or unnumbered depending on which one
+  you held; a second family (Card 6's arithmetic) was separately cited as "Rule N"; and one
+  citation resolved against no list at all. Each rule now carries a name, the names are the
+  contract, and the ordered lists remain only where they teach. An index is a citation that
+  expires.
+- **Q2 decomposed** (Card 1): the error budget is **per service or path**, criticality is **per
+  operation**. The card asked for both "per operation" while every worked example answered the
+  first at system scope — the bundle the entry gate's *decomposed* discipline exists to catch,
+  in the question list itself.
+- **"Shape" disambiguated** (*The Six Axes and the Ledger*, *Three Profiles*): the read chain's
+  top rung turns on **read-model divergence**, now named as such and kept clear of Card 3's
+  demand shapes. Two instruments had been sharing one word, and only one of them had a question.
+- **Part II opens with its experimental design** (*Three Profiles, One Domain*): hold the domain
+  fixed, vary only the answer sheet, and anything that differs between the vectors has one
+  possible source. This was previously a subordinate clause; a reader who finished the book
+  asked what it had been demonstrating.
+
 ## [1.0.1] — 2026-07-24
 
 Terminology pass, shared with the companion editions.

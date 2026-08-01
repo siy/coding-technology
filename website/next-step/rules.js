@@ -23,19 +23,19 @@ export const QUESTIONS = {
   q2: {
     title: 'Failure budget',
     numeric: true,
-    demand: 'per operation: error budget + criticality',
-    // PROVISIONAL RULING, reversible. Card 1 says "per operation", but Q2 bundles two
-    // answers that live at different scopes: an ERROR BUDGET, which is normally a
+    demand: 'error budget per service/path; criticality per operation',
+    // RESOLVED IN THE BOOK (2026-08-01). Card 1 previously said "per operation" while
+    // Q2 bundled two answers living at different scopes: an ERROR BUDGET, normally a
     // service-level commitment, and CRITICALITY, which genuinely is per operation. Both
     // published sheets that state a service-level availability target answer at system
     // scope — Companies House ("Digital services available for a minimum of 99.5%") and
     // the venue ("Service availability: 99.5%") — and Companies House then records
     // per-operation criticality separately as UNKNOWN, which is the honest shape.
     //
-    // So `system` is accepted here, and a note reports when per-operation criticality is
-    // unstated. The real fix is in the book: Q2 should be decomposed the way "audit" and
-    // "team independence" already are. Until then the gate follows the examples rather
-    // than refusing them.
+    // Card 1 now decomposes the two the way "audit" and "team independence" already are,
+    // so accepting `system`/`path` for the error budget and noting unstated per-operation
+    // criticality is the book's rule rather than this engine's workaround. Behavior
+    // unchanged; it is no longer provisional.
     scopes: ['operation', 'path', 'system'],
     priced: true,
     pricedAs: 'nines',

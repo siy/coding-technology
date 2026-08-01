@@ -602,6 +602,68 @@ intro positioning. One sentence.
 
 ---
 
+## 14. Read-write staleness — the case *Designing out contention* does not name (2026-08-01)
+
+**Source:** Rico Fritzsche, *The Command Context Consistency Principle* (2026-07-31), plus this
+session's analysis. Rides the next PFD pass. Additive: nothing shipped is wrong, one case is absent.
+
+**The finding.** `foundations.md:269-281` (*Designing out contention*) treats contention as a
+**write-write** problem throughout. Its five tactics — derive-don't-store, single-writer fields, the
+guarded transition, declarative constraints, serialized intake — all remove a race between two
+*writers*. The section's load-bearing sentence is `:78`: *"Every other field has one writer and needs
+no coordination at all."*
+
+That is true and it is silent about **read-write staleness**: operation A reads field X, which
+operation B owns, decides on the value, and commits after B has changed it. Single-writer ownership
+does not protect a read. Neither does design-out, unless the fact happens to carry a unique key.
+
+Four cases, and PFD currently answers three:
+
+| Conflict | PFD's answer today |
+|---|---|
+| write-write, different fields | single-writer ownership — no conflict by construction |
+| write-write, the state field | the guarded transition (design-out) |
+| read-write, fact with a unique key | declarative constraint (design-out) |
+| **read-write, predicate over a set** | **unaddressed** |
+
+The fourth row is the sharp one: *this guest has fewer than five active bookings*, *total reserved
+capacity is under N*, *no reservation overlaps this range*. There is no unique key to constrain, so
+design-out has nothing to bite on. Range overlap has an answer (an exclusion constraint); counts and
+sums do not. What is left is validating the read set at commit, or a materialized counter row you
+lock — which is an aggregate root wearing a different hat, and worth saying so out loud.
+
+**What to add** (one subsection in *Designing out contention*, after the tactics):
+
+1. Name the second kind of contention. A field with one writer cannot be *raced*; a decision that
+   *reads* it can still go stale. The tactics remove write-write races; they do not remove
+   read-write staleness.
+2. Keep the design-out-first stance where the fact is reshapeable. A declarative constraint over the
+   thing actually claimed (one row per occupied night) beats read-set validation around it — the
+   race is lost by construction rather than detected. This is the existing stance applied to the new
+   case, not a new stance.
+3. State the honest limit for the fourth row, and that a materialized counter is the fallback with
+   its cost named, so the reader is not left thinking the tactics cover everything.
+
+**Convergence note** (home: the change-driver lineage at `foundations.md:190`, or item 6's DDD
+stance). PFD dissolves the aggregate on **change-driver** grounds — `:86`, the aggregate fuses
+identity, lifecycle state, representation and policy, which vary independently. Fritzsche dissolves
+it on **concurrency** grounds: the aggregate is a static consistency boundary, while the facts a
+decision reads change from command to command. Independent arrival at one target from a different
+axis, and the same shape as Parnas / Löwy / Loth converging on change drivers. Worth one sentence,
+not a section.
+
+The complementarity is the useful part and belongs in whatever we write publicly: **PFD's ownership
+discipline removes most of the contexts his principle has to guard, at design time. What survives it
+is exactly the read-write staleness he addresses and PFD does not.** His approach is also
+retrofittable to a schema nobody designed this way, which PFD's is not.
+
+**Vocabulary parallel, noted not adopted.** His *Application State* and PFD's accretion model are
+the same refusal — facts keyed to identity with an owner, rather than an object loaded and saved
+(`:76`, *"a coordinate, not an object"*). His *context* is a read-set snapshot; PFD's accretion is an
+ownership map. Same substrate, different question asked of it.
+
+---
+
 ## Release scope & versions
 
 Target: **PFD 1.2.0 → 1.3.0**, **JBCT 4.1.2 → 4.2.0** (minor — feature additions, single-sourced from each

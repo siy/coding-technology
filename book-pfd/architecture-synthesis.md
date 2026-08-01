@@ -43,7 +43,7 @@ The last two never had an obvious home in the spiral. They get one here.
 | # | Question | Category |
 |---|---|---|
 | 1 | Time budget — latency per use case, usually P95/P99; completion windows for batch | SLO |
-| 2 | Failure budget — availability per use-case criticality | SLO |
+| 2 | Failure budget — error budget per service or path; criticality per operation | SLO |
 | 3 | Loss budget — durability, the recovery-point objective, retention | SLO |
 | 4 | Consistency contract, per data class (strict / read-your-writes / bounded-staleness / eventual) | SLO |
 | 5 | Load — magnitude at steady state and peak, shape per path (read-heavy, write-heavy, event-heavy, mixed), concentration, window | Substrate-shaping |
@@ -54,7 +54,7 @@ The last two never had an obvious home in the spiral. They get one here.
 
 These are the system's **qualities**, and they are not one kind of thing. The four categories above drive different decisions, so a single label flattens exactly the distinctions Phase 5 turns on. Substrate-shaping in particular earns its own category rather than hiding among constraints: multi-X partitions the data, and load's shape decides what the substrate has to be, before any single target is read.
 
-The answers attach at four scopes, and the scope is part of the answer. The time and failure budgets attach **per use case**: buying a ticket and quoting a price have different targets. The consistency contract and the loss budget attach **per data class**: a booking and a price quote tolerate very different staleness. Load attaches **per path**, because one system is routinely read-heavy at one tier and write-heavy at another. External constraints, release structure, the cost envelope, and multi-X attach **per domain**, describing the whole product rather than one operation. **A subsystem's target is rarely stated directly; it is the derived envelope of its workflows' targets, the tightest each axis demands.**
+The answers attach at four scopes, and the scope is part of the answer. The time budget attaches **per use case**: buying a ticket and quoting a price have different targets. The failure budget attaches at *two* scopes and must be answered at both — an **error budget** is a service-or-path commitment, while **criticality** is per operation; a single answer covering the pair is a bundle, and bundles press falsely. The consistency contract and the loss budget attach **per data class**: a booking and a price quote tolerate very different staleness. Load attaches **per path**, because one system is routinely read-heavy at one tier and write-heavy at another. External constraints, release structure, the cost envelope, and multi-X attach **per domain**, describing the whole product rather than one operation. **A subsystem's target is rarely stated directly; it is the derived envelope of its workflows' targets, the tightest each axis demands.**
 
 Phase 4 does not own the trigger. What makes a use case run is Phase-1 territory, settled when the use case was identified. When Phase 4 surfaces a use case nobody had written down, the response is **targeted insertion** — fold that one use case back into Phase 1 and re-derive only it. Not a full re-derivation. The minimal set is a floor, not a ceiling; contextual questions ride along when a domain demands them — recovery-time objectives, an explicitly contracted external dependency, a backwards-compatibility window, seasonal load, the shape of audits and disputes. They are illustrations, not a longer mandatory list.
 

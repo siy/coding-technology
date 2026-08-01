@@ -2,6 +2,9 @@
 
 Works cited in the text, alphabetical by author.
 
+**Fritzsche, Rico.** *The Command Context Consistency Principle: How Event Stores and Relational Databases Guard Business Decisions.* Level Up Coding, 2026. <https://blog.ricofritzsche.de/the-command-context-consistency-principle-c16fc19e9454>
+Dissolves the aggregate as a consistency boundary on concurrency grounds — a command reads facts in order to decide, and those facts must still hold when the outcome commits, a requirement with no inherent dependence on aggregates. Recognized in *Foundations* as an independent arrival at the same target this book reaches from change drivers, and as the source of the read-write staleness case the contention tactics do not remove.
+
 **King, Alexis.** *Parse, Don't Validate.* 2019. <https://lexi-lambda.github.io/blog/2019/11/05/parse-don-t-validate/>
 The discipline of parsing input into a type whose existence proves its validity, so that illegal states cannot be represented. Applied at every step boundary from Spiral Pass 1 onward.
 

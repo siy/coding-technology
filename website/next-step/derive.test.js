@@ -155,6 +155,41 @@ reshapeable = ["none"]
 });
 
 test('a halt outranks pending judgment points, and does not swallow them', () => {
+  // Spec §5 ranks halts (2) above pending judgment points (3). Force a real halt.
+  const result = derive(sheetOf(`${HEAD}
+[[answers.q6]]
+kind = "mandate"
+strikes = ["read_write:unified", "read_write:separated"]
+
+[[domain_shape]]
+operation = "reserve-seat"
+inverse = "release-seat"
+decays = true
+reshapeable = ["none"]
+`));
+  assert.equal(result.exitCode, 2);
+  assert.ok(result.halts.some(h => h.kind === 'contradiction'));
+  assert.equal(result.judgmentPoints.length, 1,
+    'the recovery tie must still be reported alongside the halt');
+});
+
+// --- Step 3: press must report the gap, not guess ---
+
+test('every axis value carries a ledger entry', () => {
+  const result = press(sheetOf(HEAD));
+  assert.equal(result.ran, true);
+  // LEDGER.md v0.2 prices all six axes, every value. An earlier version of ledger.js was
+  // reconstructed from chapter prose and reported four values unpriced; they were priced
+  // all along, in book-arch-meta/LEDGER.md.
+  assert.deepEqual(result.unpriced, []);
+});
+
+test('no unexplored-territory halt while the ledger is complete', () => {
+  const result = derive(sheetOf(HEAD));
+  assert.ok(!result.halts.some(h => h.kind === 'unexplored-territory'));
+});
+
+test('pending judgment points give exit code 3 once nothing halts', () => {
   const result = derive(sheetOf(`${HEAD}
 [[domain_shape]]
 operation = "reserve-seat"
@@ -162,36 +197,10 @@ inverse = "release-seat"
 decays = true
 reshapeable = ["none"]
 `));
-  // Spec §5 ranks halts (2) above pending judgment points (3), and press being blocked
-  // is itself a halt — so every derive returns 2 until the ledger is filled. Exit 3
-  // becomes reachable then. What must hold now: the halt does not hide the tie.
-  assert.equal(result.exitCode, 2);
-  assert.ok(result.halts.some(h => h.kind === 'unexplored-territory'));
-  assert.equal(result.judgmentPoints.length, 1,
-    'the recovery tie must still be reported alongside the halt');
-});
-
-// --- Step 3: press must report the gap, not guess ---
-
-test('press reports the axis VALUES the ledger cannot price', () => {
-  const result = press(sheetOf(HEAD));
-  assert.equal(result.ran, true);
-  // Values no published run exercises, so no entry was written against a recorded
-  // outcome. Recovery is absent: it derives from domain shape, not the ledger.
-  assert.deepEqual(result.unpriced.sort(), [
-    'persistence:sharded', 'substrate:streaming',
-    'topology:serverless', 'topology:unified runtime',
-  ]);
-  assert.ok(!result.unpriced.some(v => v.startsWith('recovery:')));
-});
-
-test('unpriced values surface as an unexplored-territory halt, not silence', () => {
-  const result = derive(sheetOf(HEAD));
-  const halt = result.halts.find(h => h.kind === 'unexplored-territory');
-  assert.ok(halt);
-  assert.match(halt.message, /ledger cannot price these/);
-  assert.ok(halt.values.includes('topology:unified runtime'),
-    'the position profile 3 records but the engine cannot reach');
+  // Reachable now that the ledger no longer forces a halt on every run.
+  assert.deepEqual(result.halts, []);
+  assert.equal(result.judgmentPoints.length, 1);
+  assert.equal(result.exitCode, 3);
 });
 
 test('same-shape read volume is inert: the read chain contains it below the axis move', () => {

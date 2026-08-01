@@ -141,13 +141,10 @@ test('the loss-budget UNKNOWN blocks distributed shared rather than forcing it',
   assert.match(block.because, /UNKNOWN/);
 });
 
-test('PENDING: four axis values remain unpriced by the ledger', () => {
+test('the Companies House run halts on nothing', () => {
   const result = derive(sheet);
-  const halt = result.halts.find(h => h.kind === 'unexplored-territory');
-  assert.deepEqual(halt.values.sort(), [
-    'persistence:sharded', 'substrate:streaming',
-    'topology:serverless', 'topology:unified runtime',
-  ]);
+  assert.deepEqual(result.halts, [],
+    'with the ledger complete, this sheet derives cleanly');
 });
 
 // --- The Q2 scope question, now ruled on ---

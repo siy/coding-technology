@@ -52,7 +52,7 @@ export const TICKETING_ENTERPRISE = {
   // Recorded but NOT yet reproduced, with the reason. These are the open edges.
   notReproduced: [
     { position: 'cores on a unified runtime',
-      reason: 'the ledger has no provides/mechanism/costs entry for unified runtime, so nothing can press toward it' },
+      reason: 'LEDGER.md:76-80 prices this value and gives its pressed-toward-by as "strongly-coupled cores plus uncertainty about future topology". No press rule reads those two facts yet, and the sheet has no field for either — a rule and a schema gap, not a ledger gap.' },
     { position: 'event-based across, direct within',
       reason: 'this sheet omits the cross-module event rows the chapter inherits from profile 2; a transcription gap, not an engine gap' },
     { position: 'per-component alongside polyglot',

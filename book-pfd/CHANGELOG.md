@@ -7,6 +7,14 @@ All notable changes to the PFD book, newest first. Format:
 `0.x` versions were preview editions; `1.0.0` marked the first edition released to
 readers, and `1.x` are its maintenance and expansion releases.
 
+## [2.4.1] - 2026-08-01
+
+### Fixed
+- **Q2's scope, corrected to match the companion** (*Architecture Synthesis module*): the failure budget bundled an **error budget**, which is a service-or-path commitment, with **criticality**, which is per operation, and attached both "per use case". The two answer at different scopes, so a single answer covering the pair is exactly the kind of bundle the entry gate exists to catch — in the question list itself. *Architecture Synthesis* 1.1.0 decomposed it after `next_step` had to accept worked examples that contradicted the card; the series crosswalk states that both books ask the same nine questions, so this edition follows.
+
+### Added
+- **Rico Fritzsche in the references**: *The Command Context Consistency Principle* (Level Up Coding, 2026), the source behind 2.4.0's read-write staleness section and the convergence note in *Foundations*. The note names the principle now that it is formally cited.
+
 ## [2.4.0] - 2026-08-01
 
 ### Added

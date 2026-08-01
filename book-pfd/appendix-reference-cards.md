@@ -104,6 +104,8 @@ Judged across four axes: reversibility · forward-progress value · domain shape
 
 **Where the invalidation is a race**, one principle: *move the contention to a single named coordination point, and make the conflicting state impossible to write rather than something detected after it is written.* Tactics: derive-don't-store · single-writer fields · the guarded transition · declarative constraints · serialized intake.
 
+**Those tactics remove write-write races only.** A field with one writer cannot be raced; a decision that *reads* it can still go stale — **read-write staleness**. Where the claim is reshapeable it still designs out: an interval becomes a row per interval claimed, and an exclusion constraint refuses the overlap. A predicate over a *set* — a count, a sum — has no unique key to constrain, and falls back to validating the read set at commit or to a locked counter row, which is an aggregate root under another name.
+
 > **Locking is the admission that the conflict was left constructible; design-out is the decision that it never was.**
 
 ## Card 8 — Attribution across contexts

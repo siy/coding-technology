@@ -4,17 +4,18 @@
 //   0 null vector   — implemented (ledger.js)
 //   1 normalize     — implemented (engine.js, the entry gate)
 //   2 prune         — implemented here; mechanical, binary, needs no containment data
-//   3 press         — BLOCKED: needs the ledger's provides/mechanism/costs entries,
-//                     which do not exist yet. Reported, never guessed.
+//   3 press         — implemented (press.js), against the ledger entries transcribed
+//                     from `book-arch-meta/LEDGER.md` v0.2 into ledger.js
 //   4 resolve       — recovery is implemented here (it reads domain-shape facts, not the
-//                     ledger); axis resolution waits on press.
-//   5 verify        — waits on a resolved vector.
+//                     ledger); axis resolution runs off press.
+//   5 verify        — implemented (verify.js), Card 6's five arithmetic rules
 //
 // Refusals are emitted, never resolved: "targets, recovery ties, contradiction choices,
 // product picks" (Card 5). A recovery tie is a judgment point in the output.
 
 import { AXES, NULL_VECTOR } from './ledger.js';
 import { press } from './press.js';
+import { verify } from './verify.js';
 
 const SCOPE_ORDER = ['system', 'data-class', 'path', 'operation', 'policy'];
 
@@ -207,6 +208,14 @@ export function derive(sheet) {
     value: r.value, scope: `operation:${r.operation}`, forcedBy: r.row, because: r.forcedBy,
   }));
 
+  // Step 5 — verify. Runs only when the sheet carries verification inputs; the exit
+  // gate never invents a floor, so a sheet without them is not "verified clean", it is
+  // unverified, and the result says which.
+  const verification = sheet && sheet.verification
+    ? verify(sheet, vector)
+    : { results: [], failures: [], unverified: [], passed: false, complete: false,
+        notAttempted: true };
+
   return {
     mode,
     start,
@@ -221,6 +230,7 @@ export function derive(sheet) {
     recovery: recovery.decided,
     judgmentPoints: recovery.judgmentPoints,
     pressRan: pressed.ran,
+    verification,
     halts,
     exitCode: halts.length ? 2 : (recovery.judgmentPoints.length ? 3 : 0),
   };

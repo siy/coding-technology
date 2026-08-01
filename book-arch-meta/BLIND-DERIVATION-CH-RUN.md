@@ -6,7 +6,7 @@ V₀ = null vector (no existing-architecture facts were supplied or used — thi
 
 Decomposition required: **Q9** splits into four independent pressures (three-registrar/one-search structure; four register types incl. ROE under a different Act; ACSP as new actor class; 7m-individual IDV backfill) — each checked separately, per the entry gate's "team independence is not primitive" discipline. **Q6/Q7** treated together per PROCESS-DESIGN's 2026-07-07 audit (Q7 merges into Q6 as external constraints; legal mandates press only by striking a value, never by cadence). **Q1+Q5** cross-read for shape: several Q1 figures (confirmation-statement 14-day, accounts penalty bands, ECCTA warning-notice 28-day, FOI 20-day, contact-centre 4-min) are *business-process* deadlines, not system-latency targets, and stay inert for Select mode; Q5's December/last-hour pattern is the one genuine Burst signal.
 
-UNKNOWN-inert (rule 3, stated explicitly per occurrence below): Q1 registrar query/reject turnaround; Q2 per-operation criticality tiering; Q3 RPO; Q4 accept-to-search staleness bound; Q6 data-residency relocation; Q7 release cadence; Q8 NAO value-for-money view.
+UNKNOWN-inert (the UNKNOWN-derives-a-null-position rule, stated explicitly per occurrence below): Q1 registrar query/reject turnaround; Q2 per-operation criticality tiering; Q3 RPO; Q4 accept-to-search staleness bound; Q6 data-residency relocation; Q7 release cadence; Q8 NAO value-for-money view.
 
 ## Pressure pass
 
@@ -21,8 +21,8 @@ UNKNOWN-inert (rule 3, stated explicitly per occurrence below): Q1 registrar que
 | ROE: different Act, 32,054 vs 5.43m entities, beneficial-ownership shape (ROE data class) | prune | — | 5 | per-component | diverged regulation + volume + shape simultaneously |
 | three registrars, one amalgamated search (jurisdiction scope) | split | — | 1, 5 | **inert** | sheet states unity at the search surface explicitly |
 | headcount 1,397→1,866 (org) | bound | — | 1 | **inert** | F21 (validated cross-derivation): team size presses cadence divergence only, not topology; Q7 gives none |
-| release structure UNKNOWN | bound | — | 1 | **inert** | rule 3 |
-| RPO UNKNOWN (durability) | prune | — | 5 | **inert** (blocks distributed-shared) | rule 3 |
+| release structure UNKNOWN | bound | — | 1 | **inert** | UNKNOWN derives a null position |
+| RPO UNKNOWN (durability) | prune | — | 5 | **inert** (blocks distributed-shared) | UNKNOWN derives a null position |
 | residency UNKNOWN + GDPR Art.49(1)(g) public-register exemption (sovereignty) | prune | — | 5 | **inert** (relief) | exemption removes the pressure it would otherwise create |
 | incorporation/dissolution "no simple inverse," restoration "deemed to have continued" | — | — | 6 | design-out | status-transition history, not technical rollback |
 | court-ordered rectification, 2–3 months (rare) | — | — | 6 | BER | per-case defined inverse, residuals remain |
@@ -40,7 +40,7 @@ UNKNOWN-inert (rule 3, stated explicitly per occurrence below): Q1 registrar que
 
 **Axis 4 (state storage).** Q4's append/layer pattern is the textbook trap the ledger names (F3): "we need audit" tempts event-sourcing, but no REPLAY/reconstruct-as-of-a-past-rule-version demand exists anywhere in the sheet — only WHO/WHAT/WHEN. Cheapest containing value wins outright: **current-state + audit-log-as-data**, one value for both the core register and ROE (their divergence is persistence-shape/volume/regulation, resolved on Axis 5, not a replay need).
 
-**Axis 5 (persistence).** Scope-exclusion-first (rule 5) applies before any hardening: ROE's demand is satisfied by narrowing scope (per-component, ROE only), not by hardening the whole store. Core register stays **single shared** — no ceiling-crossing volume evidence (5.43m companies, 14.7m filings/yr is hardware-rung territory per the F12 precedent), and RPO/sovereignty UNKNOWNs block the one value (distributed-shared) that would otherwise be tempting from the three-jurisdiction fact. The "one amalgamated search" demand (Q9) is satisfied by the Axis-3 separated read model materializing across both persistence components — the same mechanism does double duty as read-scaling and as the composition seam, which is the resolution's one unifying insight.
+**Axis 5 (persistence).** The scope-exclusion-before-hardening rule applies before any hardening: ROE's demand is satisfied by narrowing scope (per-component, ROE only), not by hardening the whole store. Core register stays **single shared** — no ceiling-crossing volume evidence (5.43m companies, 14.7m filings/yr is hardware-rung territory per the F12 precedent), and RPO/sovereignty UNKNOWNs block the one value (distributed-shared) that would otherwise be tempting from the three-jurisdiction fact. The "one amalgamated search" demand (Q9) is satisfied by the Axis-3 separated read model materializing across both persistence components — the same mechanism does double duty as read-scaling and as the composition seam, which is the resolution's one unifying insight.
 
 **Axis 1 (topology).** Every candidate pressure toward services (headcount, three registrars, four register types) resolves to inert or to a different axis (F21 for headcount; unified-search for jurisdictions; Axis-5 per-component for ROE). No release-cadence divergence is stated (Q7 explicitly, "not release cadence"). Resolution stays at **single deployable + modulith**, module seams along the domain lines Q9 actually names (company register, LLP/LP, ROE, IDV, ACSP admin, ECCTA case management, bulk export, search-serving) — modules buy ownership at zero deployment cost per the ledger; nothing here buys release independence.
 

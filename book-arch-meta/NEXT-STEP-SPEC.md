@@ -132,12 +132,18 @@ Schema notes:
   never invents enums the method doesn't have.
 - **Divergence fields carry the sheet's normal form.** Three axes press on divergence
   *between* units, which no single row can express, so the sheet spells it with
-  `read_shape` (per path), `diverges_on` and `diverges`. `answer-sheet.md`'s *Scoped*
-  discipline states the rule these implement — one row per unit — and names the concept
-  `read_shape` carries as **read-model divergence**; the field keeps its original
-  spelling. Renaming it to match the book is a mechanical follow-up that touches the
-  parser, all four corpus sheets and their expected files, and is deliberately not
-  bundled with the book fix.
+  `read_model` (per path), `diverges_on` and `diverges`. `answer-sheet.md`'s *Scoped*
+  discipline states the rule these implement — one row per unit — and Card 1's second row
+  elicits **read-model divergence** as of AS 1.1.0, so `read_model` is an asked-for fact
+  rather than an engine invention. (It was spelled `read_shape` until 2026-08-02, when the
+  field was renamed to match the book.)
+- **The normal form is specified but not yet enforced.** Card 5's normalize step calls for
+  one row per unit; the entry gate does not check it, and press reads `diverges` as an
+  assertion the sheet author makes rather than computing divergence across per-unit rows.
+  Nothing is wrong in the current corpus, which is hand-written and consistent — but the
+  book is ahead of the engine here, and closing the gap means an entry-gate check plus
+  rewriting the cadence and q9 rules to compare rows, which reshapes all four corpus
+  sheets. Deliberately its own piece of work.
 
 ## 4. Pipeline (mirrors Card 5 exactly)
 

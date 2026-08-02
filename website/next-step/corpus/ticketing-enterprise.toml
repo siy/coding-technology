@@ -74,7 +74,7 @@ status    = "answered"
 scope      = "path:quote"
 statement  = "Storm-scale quote reads against a contractual latency target."
 shape      = "volume"
-read_shape = "diverges"   # quotes are served from a projected shape, not the write model
+read_model = "diverges"   # quotes are served from a projected model, not the write model
 status     = "answered"
 
 [[answers.q5]]

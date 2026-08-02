@@ -72,7 +72,7 @@ status     = "answered"
 scope      = "path:availability-check"
 statement  = "Somewhat higher than bookings; read-moderate overall."
 shape      = "volume"
-read_shape = "same"   # reads and writes share one shape (two-teams.md:80)
+read_model = "same"   # reads and writes share one model (two-teams.md:80)
 status     = "answered"
 
 # ---- Q7 Release structure: one team releasing daily as one unit ----

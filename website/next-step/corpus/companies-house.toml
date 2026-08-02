@@ -91,7 +91,7 @@ status    = "UNKNOWN"
 scope     = "path:public-search"
 statement = "Register accessed 16.3 billion times; read to write on the order of 1,000 to 1."
 shape     = "volume"
-read_shape = "diverges"   # public search is redacted relative to the record of truth
+read_model = "diverges"   # public search is redacted relative to the record of truth
 status    = "answered"
 
 [[answers.q5]]
@@ -108,9 +108,9 @@ status    = "answered"
 
 [[answers.q5]]
 scope     = "path:bulk-data-export"
-statement = "Bulk export serves whole-register extracts, a read shape that diverges from the transactional record."
+statement = "Bulk export serves whole-register extracts, a read model that diverges from the transactional record."
 shape     = "volume"
-read_shape = "diverges"   # whole-register extract is not a transactional read
+read_model = "diverges"   # whole-register extract is not a transactional read
 status    = "answered"
 
 # ---- Q6 External constraints ----

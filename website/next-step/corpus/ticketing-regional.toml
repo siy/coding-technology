@@ -68,7 +68,7 @@ status          = "answered"
 scope      = "path:availability-check"
 statement  = "Read-heavy: availability checks dominate, per venue and varied."
 shape      = "volume"
-read_shape = "same"     # reads and writes share a shape: the top rung stays unclimbed
+read_model = "same"     # reads and writes share one model: the top rung stays unclimbed
 status     = "answered"
 
 [[answers.q5]]

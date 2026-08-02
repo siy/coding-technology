@@ -1,9 +1,14 @@
 // press.js — step 3. Each rule cites the book line that licenses it.
 //
-// A rule fires only on facts the sheet states. Where the book's condition depends on
-// something no question elicits — "a read shape that diverges from the write model" —
-// the sheet must declare it, exactly as prune requires an explicit `strikes` entry.
-// Inferring it from prose would be inventing the demand.
+// A rule fires only on facts the sheet states as structured fields, never on prose.
+// Read-model divergence, cadence divergence and the q9 divergence vocabulary are all
+// elicited — Card 1's second row asks for read-model divergence as of AS 1.1.0 — and the
+// sheet declares each explicitly, exactly as prune requires an explicit `strikes` entry.
+// Inferring any of them from a `statement` would be inventing the demand.
+//
+// What the engine does NOT yet do is compute divergence from per-unit rows. Card 5's
+// normalize step calls for one row per unit; `diverges` here remains an assertion the
+// sheet makes rather than a comparison the engine runs. Tracked in NEXT-STEP-SPEC.
 //
 // Contained demands are inert and are recorded as results, not discarded
 // (`derivation.md:19`). Inert rows matter as much as moves: an engine that presses one
@@ -196,27 +201,27 @@ const COMBINATIONS = [
         if (!answered(load) || scopeKind(load.scope) !== 'path') continue;
         // Read-side rows only. A burst on an intake path is write-side pressure and has
         // nothing to do with the read chain.
-        if (load.read_shape === undefined) continue;
+        if (load.read_model === undefined) continue;
         // The read chain contains same-shape volume up to replicas. Only a read whose
-        // SHAPE diverges from the write model reaches the top rung, which is the move.
+        // MODEL diverges from the write model reaches the top rung, which is the move.
         //
         // The divergence must be declared on the READ ROW itself. An earlier version
         // also accepted any data-class-scoped q6 row that reshaped reads, and that
         // spread one redaction mandate across every path in the sheet — applying a value
         // wider than its demanding scope, which axes-and-ledger.md:11 calls unforced
         // cost. The Companies House corpus caught it as two false projections.
-        if (load.read_shape !== 'diverges') {
+        if (load.read_model !== 'diverges') {
           // Each rung contains a different shape; the top rung is the axis move and this
           // demand does not reach it. Name where the climb stopped, so the vector records
           // replicas as a mechanism rather than silently implying nothing happened.
           pressures.push({ inert: true, row: load.id, rung: 'replicas',
-            because: 'same-shape read volume: the chain climbs cache, coalescing, replicas and stops there. The top rung — projections — is the axis move, and the read shape has not diverged.' });
+            because: 'same-shape read volume: the chain climbs cache, coalescing, replicas and stops there. The top rung — projections — is the axis move, and the read model has not diverged.' });
           continue;
         }
         pressures.push({
           axis: 'read_write', toward: 'separated', scope: load.scope,
           mechanism: 'projection pipeline', row: load.id, combination: true,
-          because: 'read volume and a read shape that diverges from the write model converge: the chain goes past replicas to projections, and that top rung is the axis move',
+          because: 'read volume and a read model that diverges from the write model converge: the chain goes past replicas to projections, and that top rung is the axis move',
         });
       }
       return pressures;

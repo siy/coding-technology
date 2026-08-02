@@ -209,7 +209,7 @@ test('same-shape read volume is inert: the read chain contains it below the axis
 scope = "path:search"
 statement = "500k req/s peak"
 shape = "volume"
-read_shape = "same"
+read_model = "same"
 `));
   assert.deepEqual(result.vector.read_write, [{ value: 'unified', scope: 'system', moved: false }],
     'volume alone must not reach the projections rung');

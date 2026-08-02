@@ -404,7 +404,7 @@ One of the [six axes](#six-axes): unified (reads served from the same model as w
 *Defined in: AS*
 
 **Read-Write Staleness** {#read-write-staleness}
-The contention single-writer ownership does not remove: an operation reads a field another operation owns, decides on the value it saw, and commits after that value has moved. Nothing is written twice — the write that happened was authorized by an expired fact. Where the claim is reshapeable, [design-out](#design-out) still applies (an interval becomes a row per interval claimed, refused by an exclusion constraint); a predicate over a *set* — a count, a sum — has no unique key to constrain, and is the honest limit of the contention tactics.
+The contention single-writer ownership does not remove: an operation reads a field another operation owns, decides on the value it saw, and commits after that value has moved. Nothing is written twice — the write that happened was authorized by an expired fact. Where the claim is reshapeable, [design-out](#design-out) applies directly (an interval becomes a row per interval claimed, refused by an exclusion constraint). A predicate over a *set* — a count, a sum — includes rows that do not exist yet, so no constraint or lock over the counted rows covers it; it designs out only by materializing the predicate as one guarded field, at the price of every capability that changes it maintaining that field in the same transaction.
 *Defined in: PFD*
 
 **Record** {#record}

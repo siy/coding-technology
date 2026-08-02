@@ -7,6 +7,18 @@ All notable changes to the PFD book, newest first. Format:
 `0.x` versions were preview editions; `1.0.0` marked the first edition released to
 readers, and `1.x` are its maintenance and expansion releases.
 
+## [2.4.2] - 2026-08-02
+
+### Fixed
+- **The predicate-over-a-set case was misclassified** (*Foundations*, both appendices, both glossaries). 2.4.0 filed it as the limit where "design-out has nothing to bite on" and offered "a materialized counter that writers **lock**" — while the same section closes by calling locking *"the admission that the conflict was left constructible."* The book condemned locking and then prescribed it. Design-out does reach this case: materialize the predicate as one guarded field and put the guard in the write (`where count < limit`, rejecting when it matches nothing), which is the **guarded transition** applied to a count rather than to a workflow state. The reshape was never into rows — counts genuinely do not become rows — but into a single field a guard can sit on.
+- **The reason the interval reshape fails here, stated correctly**: the set includes rows that *do not exist yet*, so no constraint can hold one and no lock over the rows already counted covers the one a concurrent operation is about to add. The earlier account blamed a missing unique key, which is a symptom rather than the cause.
+
+### Changed
+- **The honest limit, relocated to where it actually is** (*Foundations*): a collision between two of the book's own tactics rather than an absence of any. *Derive, don't store* says the count should not exist; *the guarded transition* says it must, because a guard needs a field. Materializing it obliges every capability that can change the predicate to maintain it in the same transaction, and one that forgets leaves the stored count and the facts quietly disagreeing — the drift derive-don't-store exists to prevent. Read-set validation is the alternative that keeps the facts authoritative and pays in carrying them forward instead. Noted with it: an append-only log gets this case cheaply, because a query over events already selects the event that would invalidate the decision, phantom included.
+- **What remains is named as real** rather than as a shortfall: two operations competing for one guest's booking budget genuinely conflict, and serializing them at that one field is the domain's own truth, not a lock standing in for a design nobody did.
+
+All of the above follows a reply from Rico Fritzsche to a question about this exact case; the references entry records it.
+
 ## [2.4.1] - 2026-08-01
 
 ### Fixed

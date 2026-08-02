@@ -94,7 +94,7 @@ The methodology's vocabulary, defined once. These terms are the shared spine the
 
 ## R
 
-**Read-write staleness.** The contention single-writer ownership does not remove: an operation reads a field another operation owns, decides on the value it saw, and commits after that value has moved. Nothing is written twice — the write that happens was authorized by an expired fact. Reshapeable claims still design out; a predicate over a set (a count, a sum) has no unique key to constrain and is the tactics' honest limit. (Designing out contention.)
+**Read-write staleness.** The contention single-writer ownership does not remove: an operation reads a field another operation owns, decides on the value it saw, and commits after that value has moved. Nothing is written twice — the write that happens was authorized by an expired fact. Reshapeable claims design out; a predicate over a set (a count, a sum) includes rows that do not exist yet, and designs out only by materializing the predicate as one guarded field, which every capability changing it must then maintain. (Designing out contention.)
 
 **Recovery triple.** The three responses to an invalidated step — BER (compensate), FER (continue degraded), and design-out (make the invalidation impossible) — where most discourse names only the first. (The recovery triple.)
 

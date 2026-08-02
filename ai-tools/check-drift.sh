@@ -104,6 +104,23 @@ if [ -n "$stale_hdr" ]; then
   printf '%s\n' "$stale_hdr"
 fi
 
+# --- 5b. CLAUDE.md's version table agrees with each book's CHANGELOG ---
+# CLAUDE.md is loaded into every session, so a stale version there is an invisible wrong
+# answer, exactly like a stale skill. The table drifted two releases before this existed.
+for entry in "book:jbct-v" "book-pfd:pfd-v" "book-arch:arch-v" "book-aether:aether-v"; do
+  dir="${entry%%:*}"; prefix="${entry##*:}"
+  [ -f "../$dir/CHANGELOG.md" ] || continue
+  real=$(sed -n 's/^## \[\([0-9][0-9.]*\)\].*/\1/p' "../$dir/CHANGELOG.md" | head -1)
+  [ -n "$real" ] || continue
+  row=$(grep -F "\`$dir/\`" ../CLAUDE.md | grep -F "\`$prefix\`") || true
+  [ -n "$row" ] || continue
+  case "$row" in
+    *"| $real "*|*"| $real ("*) ;;
+    *) fail "CLAUDE.md version table disagrees with $dir/CHANGELOG.md ($real):"
+       printf '%s\n' "$row" ;;
+  esac
+done
+
 # --- 6. Chapter cross-references resolve to a numbered chapter ---
 # The AS manuscript cites chapters by number ("Chapter 8's subject"). Both renderers
 # print those numbers over the twelve chapters below; front matter, the closing, the

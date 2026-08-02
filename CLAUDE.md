@@ -16,12 +16,14 @@ Java sources and no `pom.xml` — the only build here is the website.
 | Book | Source | Version | Tag prefix |
 |------|--------|---------|------------|
 | Java Backend Coding Technology | `book/` | 4.3.1 | `jbct-v` |
-| Process-First Design | `book-pfd/` | 2.3.1 | `pfd-v` |
-| Architecture Synthesis | `book-arch/` | 1.0.1 | `arch-v` |
+| Process-First Design | `book-pfd/` | 2.4.1 | `pfd-v` |
+| Architecture Synthesis | `book-arch/` | 1.1.0 | `arch-v` |
 | Aether | `book-aether/` | 0.1.0 (draft) | `aether-v` |
 
 Each book's own `CHANGELOG.md` is the **single source of truth** for its version: the
-build script reads the top entry to stamp the title page. The root `CHANGELOG.md` covers
+build script reads the top entry to stamp the title page. The versions above are a
+convenience copy, and `check-drift.sh` fails if one disagrees with its changelog — it
+drifted two releases before that check existed. The root `CHANGELOG.md` covers
 the repository and shared assets — tooling, skills, build scripts. See
 `BOOK-VERSIONING.md`.
 
@@ -90,6 +92,14 @@ meaningful tasks over many trivial ones.
   [--publish]`, key in `../.env-pub`. The publish call prints a harmless "Unexpected
   Server Error" even on success — always verify `last_published_at` moved. The `/release`
   skill carries the full workflow.
+- **Publishing is not notifying.** `--publish` makes a new version live and emails
+  nobody: Leanpub's `publish[email_readers]` defaults to `false` for books, and the
+  script sends no parameters. Notifying readers is a separate, irreversible call that
+  needs an explicit ask — `curl -d "api_key=$LEANPUB_API_KEY" -d
+  "publish[email_readers]=true" -d "publish[release_notes]=..."
+  https://leanpub.com/<slug>/publish.json`, confirmed by `job_status.json` reporting
+  `EmailReadersJob`. A moved `last_published_at` proves a version went live, never that
+  a reader was told. (Courses default the flag to *true*; books do not.)
 - **PR merged** → check the current branch; if it is not `main`, switch and pull.
 - **`jbct-coder.md` header**: preserve during edits. Update the description if needed;
   ask before changing other fields.

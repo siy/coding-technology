@@ -111,7 +111,13 @@ fi
 upload_file "$PDF"
 [[ -n "$EPUB" ]] && upload_file "$EPUB"
 
-# Publishing is outward-facing (new live version, may email readers): separate confirm.
+# Publishing releases a new live version. It does NOT email readers: Leanpub's
+# publish[email_readers] defaults to false for books, and the POST below sends no
+# parameters, so this is exactly their "publish without notifying readers" form.
+# Notifying is a separate, deliberate call:
+#   curl -d "api_key=$LEANPUB_API_KEY" -d "publish[email_readers]=true" \
+#        -d "publish[release_notes]=..." https://leanpub.com/$SLUG/publish.json
+# (Courses default the flag to true; books do not. Don't carry it across.)
 if [[ $DO_PUBLISH == 1 ]]; then
   if [[ $DRY_RUN == 1 ]]; then
     echo "[dry-run] would POST $API/$SLUG/publish.json"

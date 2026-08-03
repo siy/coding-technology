@@ -1,0 +1,144 @@
+# Shopify, pod era (~2015-2021) — the fifth corpus sheet.
+#
+# Transcribed from book-arch-meta/BLIND-DERIVATION-SHOPIFY.md, which derived this vector
+# from published demands before comparing against the outcome, with predictions
+# pre-registered in BLIND-DERIVATION-PREDICTIONS.md (2026-07-07). Every prediction graded
+# HIT. Answer numbers below are that document's (#1..#11).
+#
+# This sheet exists because BLIND-DERIVATION-SO.md:73 names Shopify as "the sharded value
+# the other runs never touched". It is the only run in the corpus that reaches `sharded`,
+# and it also carries three refusals the other sheets cannot exercise:
+#
+#   - 1000+ developers press ownership and press NOTHING on topology, because the cadence
+#     is uniform by choice (one train, ~40 deploys/day). The modulith holds at the largest
+#     team in the corpus, which is F21.
+#   - The storefront's 11 TB/s read load stops at the replicas rung, because the reads are
+#     the write model at higher volume. Volume alone never reaches projections.
+#   - The flash-sale row is CONTENTION at a scope that also carries a partition key. It
+#     must not press sharded: more sharding cannot help a conflict inside one tenant.
+
+schema_version = "0.1"
+
+[meta]
+system = "shopify"
+era    = "pod-era-2015-2021"
+author = "siy"
+mode   = "greenfield"
+source = "book-arch-meta/BLIND-DERIVATION-SHOPIFY.md"
+
+# ---- Q1 Time budget ----
+
+[[answers.q1]]
+scope     = "path:storefront"
+statement = "Server processing under 200 ms is 'satisfying' (#4)."
+shape     = "system-clock"
+price     = "storefront conversion falls with response time"
+status    = "answered"
+
+# ---- Q2 Failure budget ----
+
+[[answers.q2]]
+scope     = "system"
+statement = "'Absolutely vital to avoid anything that would put our merchants at risk of downtime' (#5). No published numeric target."
+price     = "a merchant's storefront down is that merchant's revenue stopped"
+status    = "answered"
+
+# ---- Q3 Loss budget ----
+
+[[answers.q3]]
+scope     = "data-class:orders"
+statement = "Orders and money movements are not losable; payments want exactly-once semantics (#6)."
+status    = "answered"
+
+# ---- Q4 Consistency contract ----
+
+[[answers.q4]]
+scope     = "data-class:orders"
+statement = "Checkout stays strict: oversell is prevented by reserving inventory during payment (#6)."
+contract  = "strict"
+status    = "answered"
+
+[[answers.q4]]
+scope     = "path:storefront"
+statement = "The storefront read path is staleness-tolerant (#10)."
+contract  = "eventual"
+status    = "answered"
+
+# ---- Q5 Load ----
+
+[[answers.q5]]
+scope               = "data-class:shop-data"
+statement           = "BFCM 2021: 11M queries/s and 11 TB/s read I/O, past any single store's economics (#1). Merchants are isolated from each other and no cross-shop actions exist, so the demand set carries a natural partition key (#7)."
+shape               = "volume"
+exceeds_single_node = true
+partition_key       = "shop"
+status              = "answered"
+
+[[answers.q5]]
+scope      = "path:storefront"
+statement  = "Read-dominant at 11 TB/s, staleness-tolerant. The reads are the write model at higher volume (#10)."
+shape      = "volume"
+read_model = "same"   # no divergence: the chain must stop at replicas, not reach projections
+status     = "answered"
+
+[[answers.q5]]
+scope     = "path:checkout"
+statement = "A drop sells out in seconds with every step of the flow modifying the same record (#2, #10). One sale used 20%+ of total compute."
+shape     = "contention"
+status    = "answered"
+
+[[answers.q5]]
+scope     = "path:flash-arrival"
+statement = "Celebrity merchants 'hurl Super Bowl-sized traffic, often without notice' — Black Friday every seven or eight days (#2)."
+shape     = "burst"
+status    = "answered"
+
+# ---- Q6 External constraints ----
+
+[[answers.q6]]
+scope     = "data-class:card-data"
+kind      = "mandate"
+statement = "PCI: 'we keep the Shopify monolith out of scope. We just don't let it see any card data' (#6). The demand is contained by narrowing where it applies, not by hardening the store."
+status    = "answered"
+
+# ---- Q7 Release structure: the largest team in the corpus, and one train ----
+
+[[answers.q7]]
+scope     = "system"
+statement = "1000+ developers, 2.8M lines, ~400 commits/day, deployed around 40 times a day on one uniform train by choice (#8). Ownership is demanded; release independence is not."
+cadence   = "40-a-day-one-train"
+status    = "answered"
+
+# ---- Q8 Cost & capacity envelope ----
+
+[[answers.q8]]
+scope     = "system"
+statement = "Cannot pre-provision 'for sales that might not happen' (#9)."
+status    = "answered"
+
+# ---- Q9 Multi-X ----
+
+[[answers.q9]]
+scope     = "system"
+statement = "Merchants are isolated from each other; no cross-shop actions are needed (#7). Active plus recovery DC per pod scope; no residency demands published (#11)."
+status    = "answered"
+
+# ---- Domain shape, per effectful operation ----
+
+[[domain_shape]]
+operation   = "reserve-inventory"
+inverse     = "release the reservation"
+decays      = true
+reshapeable = ["idempotent"]
+
+[[domain_shape]]
+operation   = "capture-payment"
+inverse     = "refund or void"
+decays      = false
+reshapeable = ["none"]
+
+[[domain_shape]]
+operation   = "place-order"
+inverse     = "cancel the order"
+decays      = false
+reshapeable = ["idempotent"]

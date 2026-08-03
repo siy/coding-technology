@@ -57,9 +57,16 @@ export const QUESTIONS = {
     title: 'Load',
     numeric: true,
     demand: 'magnitude (steady/peak), shape per path, concentration, window',
-    // The whole load answer is per path, not merely its shape:
-    // "load answers are only meaningful per path" (answer-sheet.md:35).
-    scopes: ['path'],
+    // Load attaches at TWO scopes, and the book's own example is why. A request path
+    // carries a rate; a data class carries the volume a store must hold and absorb.
+    // `answer-sheet.md:35` describes a system "read-dominated at the HTTP tier and
+    // write-majority at the store, simultaneously" — the tier is a path, the store is a
+    // data class, and a sheet with only the first cannot say the second. Two ledger
+    // values are conditioned on the data-class half: `sharded` (write volume past one
+    // node's ceiling) and `streaming` (the one data class whose volume earns a
+    // partitioned log). Corrected 2026-08-03, when the Shopify corpus sheet could not
+    // state the fact its own derivation turns on.
+    scopes: ['path', 'data-class'],
     requiresShape: true,
   },
   q6: {

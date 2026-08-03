@@ -15,25 +15,30 @@ import { CONTAINMENT } from './ledger.js';
 // Values a press rule can currently reach, with the rule that reaches them.
 const IMPLEMENTED = {
   'substrate:event-based': ['burst-to-event-based', 'fanout-to-event-based'],
+  'substrate:streaming': ['volume-plus-replay-to-streaming'],
   'read_write:separated': ['volume-plus-shape-to-separated'],
   'state:event-sourced': ['replay-to-event-sourced'],
   'topology:multiple deployables': ['cadence-divergence-to-multiple'],
   'persistence:distributed shared': ['unique-container-distributed-shared'],
+  'persistence:sharded': ['partitionable-write-volume-to-sharded'],
   'persistence:per-component': ['scope-excluded-divergence'],
   'persistence:polyglot': ['scope-excluded-divergence'],
 };
 
-// Values LEDGER.md prices and no rule can reach yet. Each needs a rule, and most need a
-// sheet field to carry the fact the rule would read.
-const UNREACHED = {
+// Values LEDGER.md prices that NO derivation has ever forced.
+//
+// This is a different kind of gap from a missing rule, and the distinction is the point.
+// The other nine values were reached by writing a rule for a pressure some run actually
+// produced. For these two, no run in the corpus, no worked example in the book, and no
+// blind derivation has ever produced the forcing pressure — so a rule here would not be
+// implementing the method, it would be inventing a demand and then obeying it. The
+// engine's standing discipline is that no axis moves without a citing pressure; these
+// stay unreached until a real system supplies one.
+const UNFORCED = {
   'topology:unified runtime':
-    'strongly-coupled cores plus topology uncertainty — no field carries either fact',
+    'strongly-coupled cores plus uncertainty about future topology. No run has produced this pressure: the systems in the corpus all knew their topology, and the one product in this class is the author\'s own, which the book discloses precisely so no derivation leans on it.',
   'topology:serverless':
-    'spiky, low-duty-cycle workloads plus a minimal ops budget — Q5 has no duty-cycle field',
-  'substrate:streaming':
-    'the one data class whose volume earns a partitioned log; replay-from-position',
-  'persistence:sharded':
-    'write volume past one node WITH a natural partition key — no field carries the key',
+    'spiky, low-duty-cycle workloads plus a minimal ops budget. No run has produced this pressure: every corpus system carries sustained load, which is the condition serverless prices badly.',
 };
 
 // The null values carry a pressedBy too, but theirs describes when the null HOLDS, not
@@ -51,28 +56,33 @@ function pressableValues() {
   return out;
 }
 
-test('every value with a pressedBy list is either implemented or listed as unreached', () => {
+test('every value with a pressedBy list is either implemented or listed as unforced', () => {
   const unaccounted = pressableValues()
-    .filter(v => !IMPLEMENTED[v] && !UNREACHED[v]);
+    .filter(v => !IMPLEMENTED[v] && !UNFORCED[v]);
   assert.deepEqual(unaccounted, [],
     'a ledger value gained a pressedBy and nobody decided whether a rule reaches it');
 });
 
-test('coverage is 7 of 11 pressable values', () => {
-  assert.equal(Object.keys(IMPLEMENTED).length, 7);
-  assert.equal(Object.keys(UNREACHED).length, 4);
-  assert.equal(Object.keys(IMPLEMENTED).length + Object.keys(UNREACHED).length,
+test('coverage is 9 of 11 pressable values', () => {
+  assert.equal(Object.keys(IMPLEMENTED).length, 9);
+  assert.equal(Object.keys(UNFORCED).length, 2);
+  assert.equal(Object.keys(IMPLEMENTED).length + Object.keys(UNFORCED).length,
     pressableValues().length);
 });
 
-test('separated is under-implemented against its three conditions', () => {
-  // LEDGER.md:121 requires own tight SLO AND own scale shape AND tolerable staleness.
-  // volume-plus-shape-to-separated reads the shape divergence only, so it can move the
-  // axis on a path that carries no SLO of its own and tolerates no staleness.
+test('separated is two conditions, and staleness is not one of them', () => {
+  // Corrected 2026-08-03. The ledger used to demand own-tight-SLO AND own-scale-shape
+  // AND tolerable-staleness together — a rule neither the book nor either graded blind
+  // run used. Companies House separates a public-search path whose staleness answer is
+  // UNKNOWN and which carries no path-level target, and the grader called it a HIT.
+  // Staleness is the price of the move, checked at resolve, not a condition for it.
   const entry = CONTAINMENT.read_write.separated;
-  assert.equal(entry.pressedBy.length, 3);
-  assert.match(entry.pressedBy[0], /own tight SLO/);
-  assert.match(entry.pressedBy[2], /tolerable staleness/);
+  assert.equal(entry.pressedBy.length, 2);
+  assert.match(entry.pressedBy[0], /divergence/);
+  assert.match(entry.pressedBy[1], /volume/);
+  assert.ok(!entry.pressedBy.some(p => /staleness/.test(p)),
+    'staleness belongs in the costs column, where it already was');
+  assert.ok(entry.costs.some(c => /stalen/i.test(c)));
 });
 
 test('null values are not pressed toward — they are where you start', () => {

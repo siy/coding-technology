@@ -17,7 +17,7 @@ Java sources and no `pom.xml` — the only build here is the website.
 |------|--------|---------|------------|
 | Java Backend Coding Technology | `book/` | 4.3.1 | `jbct-v` |
 | Process-First Design | `book-pfd/` | 2.4.2 | `pfd-v` |
-| Architecture Synthesis | `book-arch/` | 1.1.0 | `arch-v` |
+| Architecture Synthesis | `book-arch/` | 1.1.1 | `arch-v` |
 | Aether | `book-aether/` | 0.1.0 (draft) | `aether-v` |
 
 Each book's own `CHANGELOG.md` is the **single source of truth** for its version: the

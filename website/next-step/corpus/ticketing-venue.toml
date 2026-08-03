@@ -79,8 +79,8 @@ status     = "answered"
 
 [[answers.q7]]
 scope     = "system"
-statement = "Daily deploys; one team releasing as one unit. No cadence divergence between any parts."
-diverges  = false
+statement = "Daily deploys; one team releasing as one unit."
+cadence   = "daily"
 status    = "answered"
 
 # ---- Q8 Cost & capacity envelope ----

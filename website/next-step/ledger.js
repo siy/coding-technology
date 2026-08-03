@@ -159,7 +159,7 @@ export const CONTAINMENT = {
               'projection machinery to build, monitor and backfill', 'dual schema evolution'],
       // Three conditions together, not one: own tight SLO + own scale shape + tolerable
       // staleness. "and only that path separates."
-      pressedBy: ['a read path with its own tight SLO', 'its own scale shape', 'tolerable staleness'],
+      pressedBy: ['read-model divergence on a path', 'the volume to justify a second copy'],
       source: 'LEDGER.md:117-121',
     },
   },

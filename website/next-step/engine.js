@@ -243,6 +243,20 @@ export function check(sheet, lines = {}) {
       message: 'era-pinning is mandatory — a sheet without an era cannot be compared to an outcome' });
   }
 
+  // Normal form (Card 5 step 1): one row per unit. Three axes press on divergence
+  // BETWEEN units, so a sheet that asserts divergence instead of stating the units has
+  // done the deriving itself — the engine would be reading a conclusion, not a demand.
+  // These two fields were how that assertion used to be spelled.
+  for (const [q, field] of [['q7', 'diverges'], ['q9', 'diverges_on']]) {
+    for (const row of (answers[q] || [])) {
+      if (row && row[field] !== undefined) {
+        add('UNNORMALIZED', row.id, `\`${field}\` asserts a divergence instead of stating the units it holds between. `
+          + `Give each unit its own row with its own comparable attributes, and the derivation computes the divergence.`,
+          'Card 5 step 1');
+      }
+    }
+  }
+
   const effectful = new Set();
   const shaped = new Set(
     ((sheet && sheet.domain_shape) || []).map(row => row && row.operation).filter(Boolean)

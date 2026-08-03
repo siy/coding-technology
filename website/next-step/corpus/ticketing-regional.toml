@@ -99,7 +99,7 @@ status    = "answered"
 [[answers.q7]]
 scope     = "system"
 statement = "Several teams need ownership boundaries. Release cadence is one weekly blue-green train for everyone: no cadence divergence between any parts."
-diverges  = false
+cadence   = "weekly-blue-green"
 status    = "answered"
 
 # ---- Q8 Cost & capacity envelope ----

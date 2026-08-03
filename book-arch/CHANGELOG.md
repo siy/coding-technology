@@ -3,6 +3,11 @@
 All notable manuscript changes. Format: keep-a-changelog-ish; the top entry's version is
 what the build stamps on the PDF (single source of truth).
 
+## [1.1.2] — 2026-08-03
+
+### Fixed
+- **Q5 attaches at two scopes, and the book stated one** (*The Answer Sheet*; Card 1). Load was elicited *per path* only, while two ledger values are conditioned on load *per data class*: `sharded` on write volume past one node's ceiling, and `streaming` on the one data class whose volume earns a partitioned log. A sheet built to the stated rule cannot express the fact those values turn on. The book's own sentence already carried the counterexample — Part II's system is "read-dominated at the HTTP tier and write-majority at the store, simultaneously", and the tier is a path while the store is a data class. Both halves now belong on the sheet: a path carries a rate, a data class carries the volume a store must hold and absorb. Found by building a corpus sheet for the Shopify derivation, which could not state the 11 TB/s figure its own recorded vector turns on. Same shape as the Q2 scope bundle corrected in 1.1.0.
+
 ## [1.1.1] — 2026-08-03
 
 ### Fixed

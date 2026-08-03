@@ -8,7 +8,7 @@
 2. **Failure budget** — error budget **per service or path**; criticality **per operation**. The two answer at *different scopes*, and one answer covering both is bundled: decompose it. 99.5% ≈ 44 h/yr · 99.9% ≈ 8.8 h/yr · 99.99% ≈ 53 min/yr.
 3. **Loss budget** — per data class: RPO, retention, never-lose set.
 4. **Consistency contract** — per data class/path: strict / bounded (named bound) / eventual; read-your-writes where?
-5. **Load** — magnitude (steady/peak), shape **per path**, concentration, window.
+5. **Load** — magnitude (steady/peak), concentration, window, at **two scopes**: rate **per path**, and the volume a store holds and absorbs **per data class**. The second is what `sharded` and `streaming` read; a sheet carrying only the first cannot state what they turn on.
 6. **External constraints** — audit (*who/what/when*) vs replay (*state under past rules*); residency pins; mandates that strike values.
 7. **Release structure** — cadence **divergence**; deploy safety. The count presses nothing; divergence presses everything.
 8. **Cost & capacity envelope** — money + *who operates*.

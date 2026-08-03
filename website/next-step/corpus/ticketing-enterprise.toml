@@ -115,7 +115,6 @@ status    = "answered"
 scope     = "path:quote"
 statement = "The read path carries its own cadence, released independently of the cores."
 cadence   = "independent"
-diverges  = true
 status    = "answered"
 
 [[answers.q7]]
@@ -139,10 +138,18 @@ statement = "Multi-region, multi-country, multi-tenant."
 status    = "answered"
 
 [[answers.q9]]
-scope       = "data-class:event-management"
-statement   = "Event management carries document-shaped and relational-shaped data together."
-diverges_on = ["data shape", "access pattern"]
-status      = "answered"
+scope          = "data-class:event-management"
+statement      = "Event descriptions, media and venue layouts are document-shaped and read whole."
+data_shape     = "document"
+access_pattern = "read whole by id"
+status         = "answered"
+
+[[answers.q9]]
+scope          = "data-class:event-management"
+statement      = "Scheduling, pricing rules and allocations are relational, queried across rows."
+data_shape     = "relational"
+access_pattern = "queried across rows"
+status         = "answered"
 
 # ---- Domain shape ----
 

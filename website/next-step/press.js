@@ -141,46 +141,160 @@ const SINGLE = [
   },
   {
     id: 'cadence-divergence-to-multiple',
-    source: 'Card 1 q7; axes-and-ledger.md:41',
-    // "The count presses nothing; divergence presses everything." Release independence
-    // is the one thing no single artifact buys. The sheet must state the divergence.
-    apply(row) {
+    source: 'Card 1 q7; axes-and-ledger.md:41; Card 5 step 1 (normal form)',
+    // "The count presses nothing; divergence presses everything." Release independence is
+    // the one thing no single artifact buys.
+    //
+    // Divergence is COMPUTED, not asserted. The sheet's normal form is one row per unit,
+    // each stating that unit's cadence; this rule compares them. The sheet used to carry
+    // a `diverges` boolean instead, which made the author the deriver — the entry gate
+    // now rejects it.
+    apply(row, sheet) {
       if (row.q !== 'q7') return null;
-      if (!row.diverges) {
+      const stated = rowsOf(sheet, 'q7')
+        .filter(r => answered(r) && typeof r.cadence === 'string' && r.cadence);
+      const distinct = new Set(stated.map(r => r.cadence));
+
+      if (!stated.length) {
         return { inert: true, row: row.id,
-          because: 'no cadence divergence is stated; the count of parts presses nothing' };
+          because: 'no unit states a cadence, so divergence is unknowable rather than absent' };
       }
+      if (distinct.size < 2) {
+        return { inert: true, row: row.id,
+          because: `every unit that states a cadence states the same one (${[...distinct][0]}); the count of parts presses nothing` };
+      }
+
+      // The system row is the baseline the units are read against.
+      const baseline = stated.find(r => scopeKind(r.scope) === 'system');
+      if (scopeKind(row.scope) === 'system') {
+        return { inert: true, row: row.id,
+          because: 'the baseline cadence; the divergence is carried by the units that differ from it' };
+      }
+      if (typeof row.cadence !== 'string' || !row.cadence) {
+        return { inert: true, row: row.id,
+          because: 'this unit states no cadence, so it cannot be compared against the baseline' };
+      }
+      if (baseline && row.cadence === baseline.cadence) {
+        return { inert: true, row: row.id,
+          because: `this unit releases on the baseline cadence (${row.cadence})` };
+      }
+      const against = baseline ? baseline.cadence : 'the other units';
       return { axis: 'topology', toward: 'multiple deployables', scope: row.scope,
         mechanism: 'second pipeline', row: row.id,
-        because: 'cadence divergence: release independence is what no single artifact buys' };
+        because: `the read path carries its own cadence: this unit releases ${row.cadence} against a baseline of ${against}, and cadence divergence is what no single artifact buys` };
     },
   },
   {
     id: 'scope-excluded-divergence',
-    source: 'axes-and-ledger.md:63; Card 5 resolve',
+    source: 'axes-and-ledger.md:63; Card 5 resolve and step 1 (normal form)',
     // Scope exclusion before hardening: a demand confined to one data class is met by
-    // narrowing scope, not by hardening the whole store. The sheet declares the
-    // divergence rather than the engine reading it out of prose.
-    apply(row) {
-      if (row.q !== 'q9' || !Array.isArray(row.diverges_on)) return null;
-      if (row.diverges_on.length < 2 || scopeKind(row.scope) === 'system') return null;
-      // Two destinations, one rule. Polyglot provides "stores shaped to their data"; it
-      // is earned when the divergence is about STORAGE shape — document beside
-      // relational. Per-component provides "independent evolution"; it is earned when
-      // the divergence is across a component boundary.
-      //
-      // `diverges_on` is a controlled vocabulary, matched exactly. Substring matching
-      // cannot separate these: Companies House lists "shape" meaning the
-      // beneficial-ownership entity shape of a separate register (per-component), while
-      // profile 3 lists "data shape" meaning document beside relational (polyglot).
-      // Anything not in STORAGE_SHAPE falls to per-component, which is the cheaper value.
-      const STORAGE_SHAPE = ['data shape', 'storage shape', 'access pattern'];
-      const onStorageShape = row.diverges_on.some(
-        d => STORAGE_SHAPE.includes(String(d).trim().toLowerCase()));
-      const toward = onStorageShape ? 'polyglot' : 'per-component';
-      return { axis: 'persistence', toward, scope: row.scope,
+    // narrowing scope, not by hardening the whole store.
+    //
+    // Divergence is COMPUTED by comparing units. Each q9 row is one unit stating its own
+    // comparable attributes; the system-scoped row is the baseline. This replaces a
+    // `diverges_on` vocabulary matched by exact string, which could not tell Companies
+    // House's "shape" (a separate register's entity shape — per-component) from profile
+    // 3's "data shape" (document beside relational — polyglot), and reclassified one of
+    // them the first time substring matching was tried. Comparing typed fields cannot
+    // make that mistake.
+    apply(row, sheet) {
+      if (row.q !== 'q9') return null;
+      const ATTRS = ['regulation', 'volume', 'data_shape', 'access_pattern'];
+      const stated = a => row[a] !== undefined && row[a] !== null && row[a] !== '';
+
+      if (scopeKind(row.scope) === 'system') {
+        return { inert: true, row: row.id,
+          because: 'the baseline the per-unit rows are compared against; a baseline presses nothing by itself' };
+      }
+      if (!ATTRS.some(stated)) {
+        return { inert: true, row: row.id,
+          because: 'states no comparable attribute, so divergence against the baseline cannot be computed' };
+      }
+
+      const peers = rowsOf(sheet, 'q9').filter(r => answered(r) && r.id !== row.id);
+
+      // Same unit, two storage shapes -> polyglot: "stores shaped to their data".
+      // Pressed once per unit, on the first row of the group, so a two-row group does
+      // not press twice.
+      const sameUnit = peers.filter(r => r.scope === row.scope);
+      const shapeSplit = row.data_shape !== undefined
+        && sameUnit.some(r => r.data_shape !== undefined && r.data_shape !== row.data_shape);
+      if (shapeSplit) {
+        const group = [row, ...sameUnit].filter(r => r.data_shape !== undefined)
+          .sort((a, b) => String(a.id).localeCompare(String(b.id)));
+        if (group[0].id !== row.id) {
+          return { inert: true, row: row.id,
+            because: `a second storage shape for ${row.scope}; the divergence is recorded once, on ${group[0].id}` };
+        }
+        const shapes = [...new Set(group.map(r => r.data_shape))];
+        return { axis: 'persistence', toward: 'polyglot', scope: row.scope,
+          mechanism: 'store', row: row.id, scopeExclusion: true,
+          because: `one data class carries ${shapes.join(' beside ')}; a store shaped to each beats one store shaped to neither, at this scope only` };
+      }
+
+      // A unit differing from the baseline on two or more attributes is extracted.
+      // One attribute is a variation; two at once is a different animal.
+      const baseline = rowsOf(sheet, 'q9')
+        .find(r => answered(r) && scopeKind(r.scope) === 'system');
+      if (!baseline) {
+        return { inert: true, row: row.id,
+          because: 'no system-scoped baseline row, so this unit has nothing to diverge from' };
+      }
+      const differing = ATTRS.filter(a =>
+        stated(a) && baseline[a] !== undefined && baseline[a] !== row[a]);
+      if (differing.length < 2) {
+        return { inert: true, row: row.id,
+          because: differing.length
+            ? `differs from the baseline on ${differing[0]} alone; one attribute is a variation, not a second animal`
+            : 'states nothing the baseline also states, so no divergence is computable' };
+      }
+      return { axis: 'persistence', toward: 'per-component', scope: row.scope,
         mechanism: 'store', row: row.id, scopeExclusion: true,
-        because: `${row.diverges_on.join(', ')} diverge simultaneously at one scope; scope exclusion is tested before hardening the whole store` };
+        because: `scope exclusion before hardening: ${differing.join(', ')} diverge from the baseline simultaneously, so this unit's demand is met by narrowing scope rather than hardening the whole store` };
+    },
+  },
+  {
+    id: 'partitionable-write-volume-to-sharded',
+    source: 'axes-and-ledger.md:49; LEDGER.md sharded; Shopify (Part II)',
+    // Two conditions, and the second is what the industry skips. Write volume past one
+    // node is the pressure; a NATURAL partition key is what makes sharding able to
+    // contain it. Volume without a key is a cost problem, not an axis move — and
+    // sharding a contention problem "buys hardware and keeps the melt".
+    apply(row) {
+      if (row.q !== 'q5' || row.exceeds_single_node !== true) return null;
+      if (row.shape === 'contention') {
+        return { inert: true, row: row.id,
+          because: 'contention, not volume: one record has one home regardless of fleet size, so sharding buys hardware and keeps the melt' };
+      }
+      if (!row.partition_key) {
+        return { inert: true, row: row.id,
+          because: 'write volume past one node with no natural partition key: sharding has nothing to shard along, so this stays a capacity and cost problem rather than an axis move' };
+      }
+      return { axis: 'persistence', toward: 'sharded', scope: row.scope,
+        mechanism: 'partitioned store', row: row.id,
+        because: `write volume past a single node's ceiling with a natural partition key (${row.partition_key}): sharding scales writes along it, and the key becomes load-bearing` };
+    },
+  },
+  {
+    id: 'volume-plus-replay-to-streaming',
+    source: 'axes-and-ledger.md:43; LEDGER.md streaming',
+    // "Ordered, replayable, consumer-paced consumption for the ONE data class whose
+    // volume earns a partitioned log." Both halves are required: replay-from-position
+    // without the volume is an event log, and volume without replay is absorbed by the
+    // event-based substrate already.
+    apply(row) {
+      if (row.q !== 'q5' || row.replay_from_position !== true) return null;
+      if (scopeKind(row.scope) !== 'data-class') {
+        return { inert: true, row: row.id,
+          because: 'replay-from-position is stated, but not at data-class scope: streaming is earned by one data class, not by a path or a system' };
+      }
+      if (row.shape !== 'volume') {
+        return { inert: true, row: row.id,
+          because: `replay-from-position on a ${row.shape || 'unstated'} shape: without the volume that earns a partitioned log, the event-based substrate already contains this` };
+      }
+      return { axis: 'substrate', toward: 'streaming', scope: row.scope,
+        mechanism: 'partitioned log', row: row.id,
+        because: 'this one data class carries both the volume that earns a partitioned log and a replay-from-position need; the log is applied at its scope and nowhere else' };
     },
   },
 ];
@@ -194,7 +308,20 @@ const SINGLE = [
 const COMBINATIONS = [
   {
     id: 'volume-plus-shape-to-separated',
-    source: 'axes-and-ledger.md:35,45; derivation.md:21',
+    source: 'axes-and-ledger.md:35,45; derivation.md:21; LEDGER.md:121',
+    // TWO conditions, and staleness is a COST rather than a third.
+    //
+    // The book, the ledger and the published runs disagreed about this rule: the book
+    // asked for a contractual target plus a divergent model, the ledger asked for a tight
+    // SLO plus a scale shape plus tolerable staleness, and the two graded blind runs
+    // derived it from volume plus a divergent model. The runs are what reproduced
+    // reality — Companies House's public-search separation was graded a HIT with its
+    // staleness answer UNKNOWN and no path-level target on the sheet — so the rule
+    // follows them, and the book and ledger were corrected to match.
+    //
+    // Staleness stays what the ledger already calls it in its costs column: a price. It
+    // is checked here only where the sheet says the price cannot be paid, which is a
+    // strict contract on the very scope being separated.
     apply(sheet) {
       const pressures = [];
       for (const load of rowsOf(sheet, 'q5')) {
@@ -216,6 +343,22 @@ const COMBINATIONS = [
           // replicas as a mechanism rather than silently implying nothing happened.
           pressures.push({ inert: true, row: load.id, rung: 'replicas',
             because: 'same-shape read volume: the chain climbs cache, coalescing, replicas and stops there. The top rung — projections — is the axis move, and the read model has not diverged.' });
+          continue;
+        }
+        // Second condition: the volume that makes a second copy worth building. A
+        // divergent model on a path nobody reads hard is a schema opinion, not a demand.
+        if (load.shape !== 'volume') {
+          pressures.push({ inert: true, row: load.id,
+            because: `the read model diverges but the load shape is ${load.shape || 'unstated'}, not volume: divergence alone does not earn projection machinery` });
+          continue;
+        }
+        // The cost check. Separation buys its scaling with a staleness window, so a scope
+        // contracted to strict consistency cannot pay for it.
+        const strict = rowsOf(sheet, 'q4').find(r =>
+          answered(r) && r.scope === load.scope && r.contract === 'strict');
+        if (strict) {
+          pressures.push({ inert: true, row: load.id,
+            because: `this path is contracted strict (${strict.id}), and separation is paid for in a staleness window: the price cannot be paid at this scope` });
           continue;
         }
         pressures.push({

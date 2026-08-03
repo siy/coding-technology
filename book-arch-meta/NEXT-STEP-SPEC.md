@@ -130,20 +130,22 @@ Schema notes:
   audit vs replay; team-independence rows force ownership vs release fields).
 - Anything the book marks judgment stays **prose in `statement`** — the schema
   never invents enums the method doesn't have.
-- **Divergence fields carry the sheet's normal form.** Three axes press on divergence
-  *between* units, which no single row can express, so the sheet spells it with
-  `read_model` (per path), `diverges_on` and `diverges`. `answer-sheet.md`'s *Scoped*
-  discipline states the rule these implement — one row per unit — and Card 1's second row
-  elicits **read-model divergence** as of AS 1.1.0, so `read_model` is an asked-for fact
-  rather than an engine invention. (It was spelled `read_shape` until 2026-08-02, when the
-  field was renamed to match the book.)
-- **The normal form is specified but not yet enforced.** Card 5's normalize step calls for
-  one row per unit; the entry gate does not check it, and press reads `diverges` as an
-  assertion the sheet author makes rather than computing divergence across per-unit rows.
-  Nothing is wrong in the current corpus, which is hand-written and consistent — but the
-  book is ahead of the engine here, and closing the gap means an entry-gate check plus
-  rewriting the cadence and q9 rules to compare rows, which reshapes all four corpus
-  sheets. Deliberately its own piece of work.
+- **The normal form is enforced (2026-08-03).** Card 5's one-row-per-unit rule is now a
+  gate check and a computation, not a convention. `diverges` and `diverges_on` are
+  rejected as `UNNORMALIZED`: a sheet that asserts divergence has done the deriving
+  itself, and the engine would be reading a conclusion rather than a demand. Divergence
+  is computed instead — q7 by comparing each unit's `cadence` against the system-scoped
+  baseline, q9 by comparing typed attributes (`regulation`, `volume`, `data_shape`,
+  `access_pattern`) against that baseline, with two storage shapes on one unit pressing
+  polyglot and a unit differing from the baseline on two or more attributes pressing
+  per-component. Comparing typed fields also retired the exact-match vocabulary that
+  could not tell Companies House's "shape" from profile 3's "data shape". All four
+  corpus sheets reproduce their recorded derivations with the assertions removed, which
+  is the evidence that the divergence was always computable from what the sheets already
+  stated.
+- **Silence is distinguished from absence.** A sheet where no unit states a cadence now
+  reports divergence as *unknowable* rather than as *no divergence* — the two were
+  previously the same output, and only one of them is honest.
 
 ## 4. Pipeline (mirrors Card 5 exactly)
 

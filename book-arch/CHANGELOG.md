@@ -3,6 +3,11 @@
 All notable manuscript changes. Format: keep-a-changelog-ish; the top entry's version is
 what the build stamps on the PDF (single source of truth).
 
+## [1.1.1] — 2026-08-03
+
+### Fixed
+- **The `separated` rule had three incompatible statements, and the book carried two of them** (*The Six Axes and the Ledger*; Card 2b). `axes-and-ledger.md:45` asked for a contractual target plus a divergent shape; the working ledger asked for a tight SLO plus a scale shape plus tolerable staleness; and both graded blind derivations used neither, moving the axis on read-model divergence plus volume. The runs are what reproduced reality — Part II's Companies House separation was graded a HIT with its staleness answer UNKNOWN and no path-level target on the sheet — so the book now states the rule the derivations actually apply: **read-model divergence plus the volume to justify a second copy**. Staleness returns to being the *price*, which is where the costs column always had it: it decides whether the move can be afforded, and a scope contracted strict cannot pay it. An earlier edition listing it among the forcing conditions had the direction backwards.
+
 ## [1.1.0] — 2026-08-01
 
 Seven findings from building `next_step` against the book, applied. The engine was written

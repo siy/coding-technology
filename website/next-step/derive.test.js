@@ -228,3 +228,119 @@ reshapeable = ["none"]
   assert.equal(result.judgmentPoints.length, 1);
   assert.equal(JSON.stringify(result).includes('postgres'), false);
 });
+
+// --- separated: two conditions, and staleness as a cost ---
+
+const SEP_HEAD = `${HEAD}
+[[answers.q5]]
+scope = "path:report"
+statement = "heavy reporting reads"
+`;
+
+test('separated needs volume too: a divergent model on a quiet path is a schema opinion', () => {
+  const result = derive(sheetOf(`${SEP_HEAD}shape = "burst"
+read_model = "diverges"
+status = "answered"
+`));
+  assert.deepEqual(result.pressures.filter(p => p.toward === 'separated'), [],
+    'divergence without volume must not buy projection machinery');
+  assert.ok(result.inert.some(i => /divergence alone does not earn/.test(i.because || '')));
+});
+
+test('separated is refused where the path is contracted strict — the price cannot be paid', () => {
+  const result = derive(sheetOf(`${SEP_HEAD}shape = "volume"
+read_model = "diverges"
+status = "answered"
+
+[[answers.q4]]
+scope = "path:report"
+statement = "strict on this path"
+contract = "strict"
+status = "answered"
+`));
+  assert.deepEqual(result.pressures.filter(p => p.toward === 'separated'), [],
+    'separation is paid for in staleness; a strict scope cannot pay');
+  assert.ok(result.inert.some(i => /price cannot be paid/.test(i.because || '')));
+});
+
+test('volume plus a divergent model does press separated', () => {
+  const result = derive(sheetOf(`${SEP_HEAD}shape = "volume"
+read_model = "diverges"
+status = "answered"
+`));
+  const p = result.pressures.find(x => x.toward === 'separated');
+  assert.ok(p, 'both conditions met, so the top rung is reached');
+  assert.equal(p.scope, 'path:report');
+});
+
+// --- sharded and streaming: two conditions each ---
+
+test('write volume past one node WITH a natural key presses sharded', () => {
+  const result = derive(sheetOf(`${HEAD}
+[[answers.q5]]
+scope = "data-class:orders"
+statement = "write volume past a single node"
+shape = "volume"
+exceeds_single_node = true
+partition_key = "shop_id"
+status = "answered"
+`));
+  const p = result.pressures.find(x => x.toward === 'sharded');
+  assert.ok(p);
+  assert.match(p.because, /shop_id/);
+});
+
+test('REFUSAL: write volume past one node with NO key is a cost problem, not an axis move', () => {
+  const result = derive(sheetOf(`${HEAD}
+[[answers.q5]]
+scope = "data-class:orders"
+statement = "write volume past a single node, nothing to partition on"
+shape = "volume"
+exceeds_single_node = true
+status = "answered"
+`));
+  assert.deepEqual(result.pressures.filter(p => p.toward === 'sharded'), []);
+  assert.ok(result.inert.some(i => /nothing to shard along/.test(i.because || '')));
+});
+
+test('REFUSAL: sharding a contention problem buys hardware and keeps the melt', () => {
+  const result = derive(sheetOf(`${HEAD}
+[[answers.q5]]
+scope = "data-class:seats"
+statement = "one row, many claimants"
+shape = "contention"
+exceeds_single_node = true
+partition_key = "seat_id"
+status = "answered"
+`));
+  assert.deepEqual(result.pressures.filter(p => p.toward === 'sharded'), [],
+    'a partition key must not rescue a contention row');
+  assert.ok(result.inert.some(i => /keeps the melt/.test(i.because || '')));
+});
+
+test('volume plus replay-from-position on one data class presses streaming', () => {
+  const result = derive(sheetOf(`${HEAD}
+[[answers.q5]]
+scope = "data-class:telemetry"
+statement = "continuous high-volume feed, consumers replay from a position"
+shape = "volume"
+replay_from_position = true
+status = "answered"
+`));
+  const p = result.pressures.find(x => x.toward === 'streaming');
+  assert.ok(p);
+  assert.equal(p.scope, 'data-class:telemetry', 'applied at the earning class, nowhere else');
+});
+
+test('REFUSAL: replay-from-position without the volume stays on the event substrate', () => {
+  const result = derive(sheetOf(`${HEAD}
+[[answers.q5]]
+scope = "data-class:telemetry"
+statement = "replay wanted, but bursty rather than sustained"
+shape = "burst"
+replay_from_position = true
+status = "answered"
+`));
+  assert.deepEqual(result.pressures.filter(p => p.toward === 'streaming'), []);
+  assert.ok(result.inert.some(i => /already contains this/.test(i.because || '')));
+});

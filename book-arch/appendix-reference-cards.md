@@ -61,7 +61,7 @@ Per-value pricing is Card 2b.
 | Value | Provides | Via | Costs |
 |---|---|---|---|
 | **unified** *(null)* | read-your-writes for free; zero projection machinery; one schema to evolve | the write model serves reads | read scaling and read model coupled to the write model; read storms compete with writes |
-| **separated** | independent read scaling on the read path's own model | projections maintained from write-side changes | a staleness window; machinery to build and backfill; dual schema evolution. Earned only by a read path with its own contractual target **and** its own model |
+| **separated** | independent read scaling on the read path's own model | projections maintained from write-side changes | a staleness window; machinery to build and backfill; dual schema evolution. Earned by **read-model divergence plus the volume to justify a second copy**; the staleness is the price, and a scope contracted strict cannot pay it |
 
 **Axis 4 — State storage**
 

@@ -139,7 +139,6 @@ status    = "answered"
 [[answers.q7]]
 scope     = "system"
 statement = "UNKNOWN from the demand side: no cadence divergence is stated between any named parts. Only legislative dates are known (identity verification from 18 November 2025, iXBRL from 1 April 2027)."
-diverges  = false
 status    = "UNKNOWN"
 
 # ---- Q8 Cost & capacity envelope ----
@@ -152,15 +151,20 @@ status    = "answered"
 # ---- Q9 Multi-X ----
 
 [[answers.q9]]
-scope     = "system"
-statement = "Three registrars (England and Wales, Scotland, Northern Ireland) distinguished only by company-number prefix, presented through one amalgamated public search."
-status    = "answered"
+scope      = "system"
+statement  = "Three registrars (England and Wales, Scotland, Northern Ireland) distinguished only by company-number prefix, presented through one amalgamated public search. The main register is the baseline the other register types are read against."
+regulation = "Companies Act 2006"
+volume     = "5.43m entities"
+data_shape = "company record"
+status     = "answered"
 
 [[answers.q9]]
-scope     = "data-class:roe"
-statement = "Register of Overseas Entities: a different Act, 32,054 entities against 5.43m companies, and a beneficial-ownership shape. Regulation, volume and shape diverge simultaneously."
-diverges_on = ["regulation", "volume", "shape"]
-status    = "answered"
+scope      = "data-class:roe"
+statement  = "Register of Overseas Entities: a different Act, 32,054 entities against 5.43m companies, and a beneficial-ownership shape."
+regulation = "ECCTA 2022"
+volume     = "32054 entities"
+data_shape = "beneficial ownership"
+status     = "answered"
 
 # ---- Domain shape, per effectful operation ----
 

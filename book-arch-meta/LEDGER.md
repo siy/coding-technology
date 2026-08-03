@@ -120,7 +120,7 @@ Mechanisms that contain demands *without moving any axis*. The ledger must price
 - Provides: independent read scaling on the read path's own shape; read-optimized denormalized views; independent latency tuning (#1 on that path); read storms isolated from the write side (blast radius).
 - Via: projections maintained from write-side changes (events or CDC).
 - Costs: staleness window (projection lag) — RYW needs an explicit mechanism; projection machinery to build, monitor, and backfill; dual schema evolution.
-- Pressed toward by: a read path with its own tight SLO + own scale shape + tolerable staleness (#1 + #11 divergence, #4 permitting) — and only that path separates.
+- Pressed toward by: **read-model divergence on a path, plus the volume to justify a second copy** — and only that path separates. Staleness is the *cost*, not a condition: it decides affordability, and a scope contracted strict (#4) cannot pay it. (Corrected 2026-08-03. This entry previously demanded own-tight-SLO + own-scale-shape + tolerable-staleness together, which neither the book nor either graded blind run used: the CH public-search separation was graded a HIT with staleness UNKNOWN and no path-level target on the sheet. The rule now matches the runs, and `axes-and-ledger.md:45` was corrected to match it.)
 
 ## Axis 4 — State storage (null: current-state)
 

@@ -7,6 +7,55 @@ All notable changes to the JBCT book, newest first. Format:
 Earlier history (1.x–2.x) predates per-book changelogs and lives in the
 repository root `CHANGELOG.md`.
 
+## [4.4.0] - 2026-08-05
+
+A testing pass. Every change below came from implementing the book's own testing advice
+against real code and finding where it stopped giving answers -- the same method that
+produced the *Architecture Synthesis* corrections, applied reflexively.
+
+### Added
+- **`PriceCalculator`, implemented and tested** (*PlaceOrder*): the interface was declared
+  in Step 5 and never implemented, and *Testing in Practice* named `PricingEngine` as its
+  illustration of a complex leaf without ever working one. It is now the book's worked
+  example of counting a decision space: eighteen nominal combinations, of which three are
+  structurally impossible (an order over the large-order threshold, discounted by at most
+  10%, always clears free shipping), leaving fifteen rows in a table. Paired with the one
+  test that belongs at the composition -- that the calculated total is the total actually
+  charged -- which needs an interaction assertion, because the total never appears in the
+  use case's response.
+- **An adapter contract test** (*PlaceOrder*, `InventoryChecker`): the book prescribed
+  contract tests and no worked example contained one, which left every stub in every
+  example an unverified assumption about a boundary. The third case is the load-bearing
+  one: a transport exception translated into a typed domain failure is the adapter's whole
+  job and the one thing no use case test can reach.
+- **Two rules the worked examples already followed silently** (*Testing Philosophy*).
+  *Assert on the outcome, except where the effect is invisible in it* -- a transfer that
+  retried looks identical to one that did not, which is why `TransferFunds` and
+  `PublishArticle` capture calls and the others do not. The rule is neither "avoid mocks"
+  nor "verify interactions": assert on the effect where it is visible and on the call only
+  where it is not. And *one composition test for propagation, N cheap vectors for the
+  space*, which is what `RegisterUser` has been doing by testing validation at two levels.
+
+### Changed
+- **Count decisions, not branches** (*Testing in Practice*). The "3+ branches" guideline is
+  kept -- checked against an independent JBCT-structured codebase, it predicted every
+  isolate-or-not decision correctly -- but it fails in one direction: a branch count cannot
+  see a decision expressed as *data*. A limit resolved by looking up two enumerations,
+  seven types against five tiers, is thirty-five answers wrapped in four conditionals, and
+  rates borderline by branch count while being the most combinatorial rule in the system.
+- **"100% coverage" retired as the target for value objects** (*Testing Philosophy*). Four
+  hand-picked strings reach 100% line coverage of `Email`; so would two. A metric that
+  reports the same number for a careful suite and a lucky one is measuring the paths the
+  code has, not the space it decides over. Replaced with a three-way split by space type:
+  examples where the space is small and enumerable, a table where it is a finite grid, and
+  a stated invariant where it is unbounded. Property-based testing is named as the tool
+  class for the third case and deliberately not taught; writing the invariant down is what
+  stops four examples from being mistaken for coverage of an infinite space.
+- **A branch the composition cannot reach is a design finding** (*Testing in Practice*): a
+  two-branch rule reading `Instant.now()` is not cheap-to-reach, it is unreachable, and the
+  suite silently changes its answer at the cutoff. The fix is the undeclared dependency,
+  not a unit test.
+
 ## [4.3.1] - 2026-07-24
 
 Reconciliation with the merged rc3 lint rules.

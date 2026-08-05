@@ -15,7 +15,7 @@ Java sources and no `pom.xml` — the only build here is the website.
 
 | Book | Source | Version | Tag prefix |
 |------|--------|---------|------------|
-| Java Backend Coding Technology | `book/` | 4.3.1 | `jbct-v` |
+| Java Backend Coding Technology | `book/` | 4.4.0 | `jbct-v` |
 | Process-First Design | `book-pfd/` | 2.4.2 | `pfd-v` |
 | Architecture Synthesis | `book-arch/` | 1.1.2 | `arch-v` |
 | Aether | `book-aether/` | 0.1.0 (draft) | `aether-v` |

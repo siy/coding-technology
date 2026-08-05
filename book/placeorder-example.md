@@ -496,15 +496,81 @@ public record PaymentConfirmation(
 
 ### PriceCalculator
 
+The only leaf in this use case with a decision space worth counting. Everything else here
+either validates one field or calls one adapter; this one combines three independent rules
+and has to resolve what happens when two of them apply at once.
+
 ```java
 package com.example.shop.usecase.placeorder;
 
 import com.example.shop.domain.shared.Money;
+import com.example.shop.domain.shared.ProductId;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+
+/** Unit prices and product facts. Products are known to exist: CheckInventory ran first. */
+public interface PriceList {
+    Money unitPrice(ProductId productId);
+    boolean isOversized(ProductId productId);
+}
 
 public interface PriceCalculator {
     Money calculate(ValidOrderRequest request);
+
+    Money FLAT_SHIPPING      = new Money(new BigDecimal("9.99"));
+    Money OVERSIZED_SHIPPING = new Money(new BigDecimal("49.99"));
+    BigDecimal FREE_SHIPPING_THRESHOLD = new BigDecimal("500.00");
+    BigDecimal LARGE_ORDER_THRESHOLD   = new BigDecimal("1000.00");
+
+    static PriceCalculator priceCalculator(PriceList prices) {
+        return request -> {
+            var subtotal = request.lines()
+                                  .stream()
+                                  .map(line -> prices.unitPrice(line.productId())
+                                                     .multiply(line.quantity().value()))
+                                  .reduce(Money.ZERO, Money::add)
+                                  .value();
+
+            var itemCount = request.lines()
+                                   .stream()
+                                   .mapToInt(line -> line.quantity().value())
+                                   .sum();
+
+            // Rule 1: volume, by item count.
+            var volumeRate = itemCount >= 50 ? new BigDecimal("0.10")
+                           : itemCount >= 20 ? new BigDecimal("0.05")
+                           : BigDecimal.ZERO;
+
+            // Rule 2: order value.
+            var valueRate = subtotal.compareTo(LARGE_ORDER_THRESHOLD) >= 0
+                            ? new BigDecimal("0.05")
+                            : BigDecimal.ZERO;
+
+            // Rule 3: they do not stack. The customer gets the better of the two.
+            var discounted = subtotal.multiply(BigDecimal.ONE.subtract(volumeRate.max(valueRate)));
+
+            // Rule 4: shipping, decided after the discount.
+            var oversized = request.lines()
+                                   .stream()
+                                   .anyMatch(line -> prices.isOversized(line.productId()));
+            var shipping = oversized                                          ? OVERSIZED_SHIPPING.value()
+                         : discounted.compareTo(FREE_SHIPPING_THRESHOLD) >= 0 ? BigDecimal.ZERO
+                                                                              : FLAT_SHIPPING.value();
+
+            return new Money(discounted.add(shipping).setScale(2, RoundingMode.HALF_UP));
+        };
+    }
 }
 ```
+
+**Count the decisions before writing tests.** Three volume bands, two order-value bands,
+three shipping outcomes: **eighteen combinations**, and the stacking rule is only
+observable in the ones where both discounts are non-zero and unequal.
+
+That number is what decides how this leaf gets tested, and it is available before a single
+test exists. A branch count would say seven or eight; line coverage would go green well
+short of eighteen. Neither instrument sees the space.
 
 ---
 
@@ -726,6 +792,145 @@ class QuantityTest {
     }
 }
 ```
+
+### Complex Leaf Tests: the decision space
+
+`PriceCalculator` has eighteen nominal combinations. Counting them first pays off twice:
+it tells you how many vectors you need, and it tells you which cells cannot happen.
+
+**Three of the eighteen are structurally impossible.** An order of 1000 or more, after a
+discount of at most 10%, is still 900 or more, which always clears the free-shipping
+threshold. A large order can never pay flat shipping. That is not a gap in the tests; it
+is a fact about the rules, and you only see it because you counted.
+
+Fifteen remain, and they go in a table, where a missing row is a visible hole:
+
+```java
+class PriceCalculatorTest {
+
+    @ParameterizedTest
+    @CsvSource({
+        // unit,  items, oversized, expected  -- subtotal / volume band / value band / shipping
+        "  20.00,     5, false,      109.99",  //   100 / none / low  / flat
+        "   4.00,    25, false,      104.99",  //   100 / 5%   / low  / flat
+        "   2.00,    50, false,       99.99",  //   100 / 10%  / low  / flat
+        " 120.00,     5, false,      600.00",  //   600 / none / low  / free
+        "  24.00,    25, false,      570.00",  //   600 / 5%   / low  / free
+        "  12.00,    50, false,      540.00",  //   600 / 10%  / low  / free
+        "  20.00,     5, true,       149.99",  //   100 / none / low  / oversized
+        "   4.00,    25, true,       144.99",  //   100 / 5%   / low  / oversized
+        "   2.00,    50, true,       139.99",  //   100 / 10%  / low  / oversized
+        " 200.00,     5, false,      950.00",  //  1000 / none / high / free
+        "  40.00,    25, false,      950.00",  //  1000 / 5% vs 5%: equal, so no stacking
+        "  20.00,    50, false,      900.00",  //  1000 / 10% beats 5%: volume wins
+        " 200.00,     5, true,       999.99",  //  1000 / none / high / oversized
+        "  40.00,    25, true,       999.99",  //  1000 / 5%   / high / oversized
+        "  20.00,    50, true,       949.99",  //  1000 / 10%  / high / oversized
+    })
+    void calculate_computesTotal_acrossTheDecisionSpace(BigDecimal unitPrice,
+                                                        int items,
+                                                        boolean oversized,
+                                                        BigDecimal expected) {
+        var prices = priceListOf(unitPrice, oversized);
+
+        assertEquals(expected, PriceCalculator.priceCalculator(prices)
+                                              .calculate(orderOf(items))
+                                              .value());
+    }
+
+    /** Every unit costs the same, so the subtotal is unit price times item count. */
+    static PriceList priceListOf(BigDecimal unitPrice, boolean oversized) {
+        return new PriceList() {
+            public Money unitPrice(ProductId id)  { return new Money(unitPrice); }
+            public boolean isOversized(ProductId id) { return oversized; }
+        };
+    }
+}
+```
+
+Two rows carry the stacking rule on their own: at 1000 and 25 items both discounts are 5%,
+so an implementation that added them would return 900.00 instead of 950.00. At 1000 and 60
+items the volume rule wins. Neither fact is visible from any single row.
+
+### The one test that belongs at the composition
+
+The table cannot see whether the calculated price is the price actually charged. That is a
+fact about the chain, so it needs exactly one test in `PlaceOrderTest` -- and it needs an
+**interaction assertion**, because the total does not appear in the use case's response:
+
+```java
+@Test
+void execute_chargesTheCalculatedTotal() {
+    var charged = new AtomicReference<Money>();
+
+    PlaceOrder.ProcessPayment processPayment = (reserved, total) -> {
+        charged.set(total);
+        return Promise.success(new PaymentConfirmation("tx-456", Instant.now()));
+    };
+    // The REAL PriceCalculator, over the same price list the table uses:
+    // 4.00 a unit, not oversized. Twenty-five items is 100.00, less 5% volume,
+    // plus flat shipping.
+    var priceCalculator = PriceCalculator.priceCalculator(
+        PriceCalculatorTest.priceListOf(new BigDecimal("4.00"), false));
+    // ... remaining stubs
+
+    useCase.execute(orderRequestOf(25))
+           .await()
+           .onFailure(Assertions::fail)
+           .onSuccess(_ -> assertEquals(new BigDecimal("104.99"), charged.get().value()));
+}
+```
+
+**One composition test, fifteen isolated vectors.** Run the arithmetic the other way and
+the cost is obvious: each composition vector needs six stubs, a request with lines and an
+address, and an `await()` -- roughly fourteen lines against one row in a table. Fifteen of
+those is about two hundred lines that assemble the whole use case to check a multiplication,
+and every failure reports "PlaceOrder failed" rather than naming the rule that broke.
+
+### Adapter Contract Tests
+
+Every stub above is an assumption about a boundary. `checkInventory` returning
+`Promise.success` asserts that the real `InventoryChecker` succeeds that way, and nothing
+in the use case tests checks it. **That is what adapter contract tests are for, and a suite
+without them is a suite whose stubs nobody has verified.**
+
+Adapters get success and error modes -- not thirty repetitions of the happy path:
+
+```java
+class InventoryCheckerTest {
+    @Test
+    void apply_succeeds_whenAllItemsInStock() {
+        var checker = new InventoryChecker(stockOf(PRODUCT, 10));
+
+        checker.apply(requestFor(PRODUCT, 2))
+               .await()
+               .onFailure(Assertions::fail);
+    }
+
+    @Test
+    void apply_fails_whenAnItemIsOutOfStock() {
+        var checker = new InventoryChecker(stockOf(PRODUCT, 1));
+
+        checker.apply(requestFor(PRODUCT, 2))
+               .await()
+               .onSuccess(Assertions::fail);
+    }
+
+    @Test
+    void apply_wrapsTheFailure_whenTheInventoryServiceIsDown() {
+        var checker = new InventoryChecker(failingClient(new IOException("connection reset")));
+
+        checker.apply(requestFor(PRODUCT, 2))
+               .await()
+               .onSuccess(Assertions::fail)
+               .onFailure(cause -> assertInstanceOf(OrderError.InventoryUnavailable.class, cause));
+    }
+}
+```
+
+The third one matters most: it pins the translation from an exception at the boundary to a
+typed failure inside the domain. That translation is the adapter's entire job, and it is
+the one thing no use case test can reach.
 
 ### Use Case Integration Test
 

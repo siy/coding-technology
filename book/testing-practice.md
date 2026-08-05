@@ -172,6 +172,40 @@ static Price applyTax(Price base) {
 
 **Guideline:** If leaf has 3+ branches or 20+ lines, write unit tests.
 
+**Count decisions, not branches.** The guideline is a serviceable proxy, and it fails in
+one direction: a branch count cannot see a decision expressed as *data*. A rule that
+resolves a limit by looking up two enumerations -- seven loan types against five credit
+tiers -- is thirty-five distinct answers wrapped in three or four conditionals. By branch
+count it rates borderline. By decision count it is the most combinatorial thing in the
+system.
+
+Ask instead: **how many distinct outcomes can this reach, and over what input space?** The
+number takes thirty seconds to work out, it is available before any test exists, and it
+tells you two things a branch count cannot -- how many vectors you need, and which
+combinations cannot occur at all. `PriceCalculator` in
+[PlaceOrder](placeorder-example.md) has eighteen nominal combinations, of which three are
+structurally impossible; the fifteen that remain go in a table, where a missing row is a
+hole you can see.
+
+**A branch the composition cannot reach is usually a design problem, not a testing one.**
+Occasionally a branch goes untested for a reason that is not cost. Consider a two-branch
+rule that reads the clock:
+
+```java
+// inside the use case
+var sameDay = cutoffPolicy.acceptsSameDay(Instant.now());
+```
+
+Two branches, so the guideline says skip it. But a composition test reaches exactly one of
+them, and *which* one depends on what time the suite runs. The after-hours path is not
+expensive to reach; it is unreachable, and the suite quietly changes its mind at the
+cutoff.
+
+The fix is not a unit test for a two-branch leaf. It is that the clock is an undeclared
+dependency -- and once it is a parameter like any other step, both branches are reachable
+at the composition and the guideline's original answer turns out to be right after all.
+The test you could not write is how you found the hidden dependency.
+
 **3. Use Cases: 90%+ Coverage (Integration Test Vectors)**
 
 ```java
@@ -205,6 +239,17 @@ class JooqUserRepositoryTest {
 ```
 
 **In use case tests:** Stub adapters. Don't test database interaction 30 times.
+
+**And note what that stubbing owes.** Every stub in a use case test is an *assumption about
+a boundary*: that the real adapter succeeds that way, fails that way, and translates a
+transport exception into that typed failure. Nothing in the use case tests checks any of
+it. The contract test is what makes the stub honest, and a suite of integration-first tests
+without adapter contract tests is a suite whose stubs nobody has verified.
+
+The third case above is the one that matters most, and it is the one most often missing:
+the translation from an exception at the boundary to a typed failure inside the domain is
+the adapter's entire job, and no use case test can reach it. Worked in full for
+`InventoryChecker` in [PlaceOrder](placeorder-example.md).
 
 ---
 

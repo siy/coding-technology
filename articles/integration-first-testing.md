@@ -1,104 +1,136 @@
 ---
 tags: [testing, java, softwaredevelopment, architecture]
-canonical_url: https://pragmatica.dev/articles/counting-the-decision-space
-description: Test boundaries follow from the shape of the code, and most teams already place them correctly. The failure is one level down, in how coverage gets decided once you are inside an isolated suite.
+canonical_url: https://pragmatica.dev/articles/tests-you-cant-see-missing
+description: Line coverage and branch counts both measure the shape of your code. Neither can see how much it decides, which is why the missing tests are the ones nobody notices.
 published: false
 ---
 
-# 33 Tests for a 35-Cell Table
+# The Tests You Can't See Missing
 
-**Your test boundaries are derived. Your coverage is a guess.**
-
----
-
-## An anomaly in a good codebase
-
-A loan origination service. 212 source files, 569 tests, written to a strict functional discipline: typed steps, errors as values, use cases composed from small pieces.
-
-One of its business rules decides the maximum debt-to-income ratio a borrower may carry. It decides by looking up two enumerations -- seven loan types, five credit tiers. Thirty-five cells.
-
-Its test suite contains 33 hand-written test methods. They cover two columns.
-
-Nothing else about this codebase is sloppy. The value objects are exhaustively tested. The use cases are tested as compositions, with only adapters stubbed. Where an effect could not be observed from a return value, the tests capture the call instead -- which is exactly right, and most codebases get that wrong.
-
-And the pattern is not local to one rule. Across the whole codebase: **536 plain test methods, 33 parameterized ones.** Every parameterized test is in a value object -- the one place the team's own guidance explicitly recommended them.
-
-So this is not a story about a team that does not know how to test. It is a story about the point where a good discipline stops giving answers, and judgment quietly takes over.
+**Both of your instruments are blind to the same thing**
 
 ---
 
-## The part that is derived
+Thirty-five cells.
 
-Most testing advice arrives as a shape: the pyramid, 70/20/10, "mostly unit tests." The ratio is the input, and your code is expected to conform.
+The rule decides the maximum debt-to-income ratio a borrower may carry. It decides by looking up two enumerations: seven loan types, five credit tiers. Seven times five. Thirty-five distinct answers.
 
-But if your code has a particular shape, several testing decisions stop being preferences and start being consequences. Three of them:
+Its test suite has thirty-three test methods.
 
-**The default is to isolate nothing.** The cheapest possible test instantiates the thing and calls it. You depart from that only when something on the path *cannot run* -- it does I/O, opens a socket, reads a clock. So the set of things you must fake is not a matter of taste. Given a codebase whose I/O lives at adapters, that set is *the adapters*, and someone with different opinions about testing would compute the same set.
-
-**Error-path tests can only live at the composition.** If failures short-circuit through a `Result` chain, then "step three fails, so the use case returns that failure" is a fact about the chain. Testing step three alone cannot observe it, because propagation does not exist inside one step.
-
-**Interaction assertions are forced exactly when the effect is invisible from the outcome.** A successful money transfer looks identical whether it retried twice or not at all. An audited transfer looks identical whether the audit entry was written or dropped. In those cases, asserting on the return value cannot see the behaviour under test, and capturing the call is the only oracle that can. Everywhere else, capturing the call couples your test to the implementation for nothing.
-
-That third rule is worth dwelling on, because it inverts the usual advice. "Don't mock" is a style preference. *Mock exactly when the effect is unobservable* is a rule with a reason, and it produces a much smaller number of interaction assertions than most codebases contain -- and a non-zero one, which the anti-mock camp gets wrong.
-
-Here is the striking part. In the loan codebase, and in the worked examples of the methodology it follows, **these boundary decisions are made correctly and consistently.** Which leaves the isolate-or-not question, and the honest answer there is that the usual heuristic works too.
+That sounds close. It isn't. The thirty-three cover two columns.
 
 ---
 
-## The part that is a guess
+## This is a good codebase
 
-The usual heuristic is a count: *if a unit has three or more branches, give it its own tests.* It is serviceable, and in the codebase above it predicts every isolation decision correctly.
+That is the part worth sitting with.
 
-Then you are inside the isolated suite, and the discipline has nothing more to say. How many test vectors? Which ones? Nothing forces the answer, so someone picks examples.
+212 source files, 569 tests, written to a strict functional discipline. The value objects are exhaustively tested. The use cases are tested as compositions, with only adapters stubbed. Where an effect could not be observed from a return value, the tests capture the call instead -- which is correct, and which most codebases get wrong in both directions.
 
-Picking examples is where it goes wrong, and it goes wrong invisibly, because **both of the instruments we use to check ourselves measure the shape of the code rather than the size of its decision space.**
+Nobody was lazy here. Nobody skipped the tests. Someone sat down and wrote thirty-three careful test methods for that rule.
 
-Take a value object that accepts an integer between 1 and 100. A typical suite has five tests: a valid value, the maximum, zero, a negative, one over the limit. That is careful boundary thinking, and it will be reported at **100% line coverage**.
+And the pattern is not local to it. Across the whole codebase: **536 plain test methods, 33 parameterized ones.** Every single parameterized test is in a value object -- the one place the team's own written guidance recommended them.
 
-It would also be reported at 100% line coverage with **two** tests. The metric cannot distinguish the careful suite from the lucky one, because the code has two paths and the decision space has an infinite number of inputs across one boundary condition. Coverage measured what the code looks like. It never asked what the code decides.
+If your system has a rule keyed on two enums -- a pricing matrix, a permission check, a shipping table, a routing decision -- you have one of these too.
 
-Now take the 35-cell table. A branch count sees four conditionals, because the decisions do not live in control flow at all -- they live in a switch expression over two enums, returning constants. **A branch count cannot see a decision that is expressed as data.** By that instrument, the most combinatorial rule in the entire system rates as marginal. It cleared the "three or more" threshold by luck, not by measurement.
+The question is whether you would know.
 
-Both instruments agree the suite is fine. The suite tests two columns of thirty-five.
+---
+
+## Start with what they got right
+
+Because they got most of it right, and the reason matters.
+
+If your code has a particular shape, several testing decisions stop being preferences and start being consequences.
+
+**The default is to isolate nothing.** The cheapest test instantiates the thing and calls it. You depart from that only when something on the path *cannot run* -- it does I/O, opens a socket, reads a clock. So the set of things you must fake is not a matter of taste. If your I/O lives at adapters, that set is the adapters. Someone with completely different opinions about testing would compute the same set.
+
+**Error-path tests can only live at the composition.** If failures short-circuit through a `Result` chain, then "step three fails, so the use case returns that failure" is a fact about the chain. Testing step three alone cannot observe it. Propagation does not exist inside one step.
+
+**Interaction assertions are forced exactly when the effect is invisible from the outcome.** A successful transfer looks identical whether it retried twice or not at all. An audited transfer looks identical whether the audit entry was written or dropped. There, capturing the call is the only oracle that can see the behaviour. Everywhere else it couples your test to the implementation for nothing.
+
+That last one inverts the usual advice, and it is worth saying plainly. "Don't mock" is a preference. *Mock exactly when the effect is unobservable* is a rule with a reason -- and it yields a much smaller number of interaction assertions than most codebases carry, and a firmly non-zero one, which the anti-mock camp gets wrong.
+
+The loan codebase follows all three. Consistently.
+
+So how do you write thirty-three tests for thirty-five cells and never notice?
+
+---
+
+## Because you checked, and both instruments said yes
+
+You have two ways to find out whether a suite is thin. Reach for either one.
+
+**Reach for coverage first.**
+
+Consider a value object that accepts an integer between 1 and 100. A typical suite has five tests: a valid value, the maximum, zero, a negative, one over the limit. Careful boundary thinking. It reports **100% line coverage**.
+
+It would also report 100% line coverage with two tests.
+
+The code has two paths. The decision space has one boundary condition across an unbounded input range. Coverage measured the paths, because paths are what code is made of. It never asked what the code *decides*.
+
+A metric that gives the same answer for a careful suite and a lucky one is not measuring care.
+
+**Reach for the branch count instead.**
+
+The common heuristic: three or more branches, write dedicated tests. Run it against the thirty-five-cell rule.
+
+It scores four.
+
+Not thirty-five. Four -- because the decisions are a switch expression over two enums returning constants, and there are only a handful of conditionals wrapped around it.
+
+A branch count cannot see a decision expressed as data.
+
+By that instrument, the most combinatorial rule in the entire system rates as borderline. It cleared the "three or more" bar by luck, not by measurement.
+
+So: both instruments were consulted. Both said fine. The suite tests two columns of thirty-five.
+
+They agree because they share a blind spot. **Line coverage and branch counting both measure the shape of the code. Neither one can see the size of what it decides.**
 
 ---
 
 ## Count the decision space
 
-The fix is not a new methodology. It is one question, asked before you write vectors:
+The fix is not a methodology. It is one question, asked before you write a single vector:
 
-> **How many distinct decisions can this unit make?**
+> **How many distinct decisions can this thing make?**
 
-Not how many lines. Not how many `if` statements. How many distinct outcomes are reachable, and across what input space.
+Not lines. Not conditionals. Distinct reachable outcomes, and across what input space.
 
 - A range check on an integer: one boundary condition, unbounded inputs.
-- A lookup keyed on two enumerations: the product of their sizes. Seven times five is thirty-five, and you can count it before writing a single test.
-- A rule that combines a volume discount, a customer tier and a promotional code: the product of the three, plus the interactions where they overlap.
+- A lookup keyed on two enumerations: the product of their sizes. Seven times five. You can count that before writing anything.
+- A rule combining a volume discount, a customer tier and a promo code: the product of all three, plus the overlaps where they interact.
 
-Once you have the number, the vector strategy follows from it, and this is the second thing that stops being a preference:
+Thirty seconds per unit. And once you have the number, the strategy follows from it:
 
-| Decision space | Strategy | Why |
+| Decision space | Write | Because |
 |---|---|---|
-| Genuinely small and enumerable | Hand-written examples | The space *is* the examples |
-| A finite grid over enums or ranges | A table -- parameterized, one row per cell | The cell count is known, so partial coverage is a visible omission rather than an invisible one |
-| Unbounded over a property | A property test | Examples sample an infinite space arbitrarily; a property states the invariant that must hold across it |
+| Small and enumerable | Examples | The space *is* the examples |
+| A finite grid | A table, one row per cell | The cell count is known, so a gap is visible |
+| Unbounded over a property | A property test | Examples sample an infinite space arbitrarily |
 
-The 35-cell table wants a table. Written as 35 rows, an omission is *visible* -- the rows are simply not there. Written as 33 hand-picked methods, the omission is invisible, and it stayed invisible through code review, through 100% coverage reporting, and through a branch-count heuristic that rated the rule marginal.
+That middle row is the whole article.
 
-The range check wants a property: *every accepted value satisfies the invariant, and every rejected value violates it.* That is exhaustive over the stated bound in a way that five examples are not, and it does not go stale when the bound changes.
+Write the thirty-five-cell rule as a table and the missing rows are *missing*. They are a hole you can see, in a structure whose size you declared. Write it as thirty-three hand-picked methods and the hole is invisible -- and it stayed invisible through code review, through a green coverage report, and through a heuristic that rated the rule borderline.
 
----
-
-## What this does not claim
-
-I checked one codebase, carefully, and it did not falsify the branch-count heuristic. The heuristic predicted every isolate-or-not decision correctly. If you came here expecting an argument that your boundary rules are wrong, they are probably fine, and that is the more useful finding.
-
-I am also not claiming that hand-written examples are always wrong. Where the decision space is genuinely small, examples are the clearest thing you can write, and a table for three cases is ceremony.
-
-The claim is narrower and, I think, more actionable: **the boundary decisions in a well-structured codebase are already derived from the structure, and teams get them right. The coverage decisions are not derived from anything, and that is where the gaps are.** Both of the instruments we use to reassure ourselves -- line coverage and branch counting -- measure the shape of the code and are blind to the size of what it decides.
-
-Counting the decision space takes about thirty seconds per unit. It costs nothing, it happens before you write the tests, and it is the difference between a suite that covers two columns and one that covers thirty-five.
+Same tests. Same coverage number. Completely different chance of noticing.
 
 ---
 
-*The functional discipline this article assumes -- typed steps, errors as values, use cases composed from small pieces, I/O confined to adapters -- is described in [Java Backend Coding Technology](https://leanpub.com/jbct-book). The boundary rules discussed here fall out of that structure; they are not a testing philosophy layered on top of it.*
+## What I am not claiming
+
+I checked one codebase carefully, and it did not falsify the branch-count heuristic. On the isolate-or-not question it predicted every decision correctly. If you came for an argument that your boundaries are wrong: they are probably fine, and that is the more useful result.
+
+Hand-written examples are not always the wrong answer either. Where the space is genuinely small, examples are the clearest thing you can write, and a table for three cases is ceremony.
+
+The claim is narrower. In a well-structured codebase the boundary decisions are already derived from the structure, and teams get them right. The coverage decisions are derived from nothing at all -- and that is where the gaps live, protected by two instruments that agree with each other because they are blind to the same thing.
+
+---
+
+Go and look at the most combinatorial rule in your system. The pricing matrix, the permission table, the one keyed on two enums.
+
+Count its cells. Then count its tests.
+
+---
+
+*The functional discipline assumed here -- typed steps, errors as values, use cases composed from small pieces, I/O confined to adapters -- is described in [Java Backend Coding Technology](https://leanpub.com/jbct-book). The boundary rules fall out of that structure. They are not a testing philosophy layered on top of it.*

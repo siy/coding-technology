@@ -1,449 +1,104 @@
 ---
-tags: [testing, java, softwaredevelopment, bestpractices]
-canonical_url: https://pragmatica.dev/integration-first-testing
-description: Why testing composition beats testing components, and how to build reliable test suites
-published: true
+tags: [testing, java, softwaredevelopment, architecture]
+canonical_url: https://pragmatica.dev/articles/counting-the-decision-space
+description: Test boundaries follow from the shape of the code, and most teams already place them correctly. The failure is one level down, in how coverage gets decided once you are inside an isolated suite.
+published: false
 ---
 
-# Integration-First Testing: Why You Should Test Composition, Not Components
+# 33 Tests for a 35-Cell Table
 
-**The case against unit test obsession**
-
----
-
-## The Unit Testing Trap
-
-The traditional testing pyramid tells us: lots of unit tests, fewer integration tests, even fewer end-to-end tests. The reasoning seems sound--unit tests are fast, isolated, and pinpoint failures precisely.
-
-But there's a problem. In practice, many teams with high unit test coverage still have unreliable systems. Tests pass, but production breaks. Why?
-
-**Unit tests verify components work in isolation. They don't verify components work together.**
-
-Consider a typical service:
-
-```java
-public class OrderService {
-    private final InventoryService inventoryService;
-    private final PaymentService paymentService;
-    private final NotificationService notificationService;
-
-    public OrderResult processOrder(Order order) {
-        InventoryReservation reservation = inventoryService.reserve(order);
-        PaymentResult payment = paymentService.charge(order, reservation);
-        notificationService.notify(order, payment);
-        return new OrderResult(order.id(), payment.transactionId());
-    }
-}
-```
-
-The unit test approach mocks each dependency:
-
-```java
-@Test
-void processOrder_success() {
-    // Arrange: mock everything
-    when(inventoryService.reserve(any())).thenReturn(mockReservation);
-    when(paymentService.charge(any(), any())).thenReturn(mockPayment);
-    doNothing().when(notificationService).notify(any(), any());
-
-    // Act
-    OrderResult result = orderService.processOrder(order);
-
-    // Assert
-    verify(inventoryService).reserve(order);
-    verify(paymentService).charge(order, mockReservation);
-    verify(notificationService).notify(order, mockPayment);
-}
-```
-
-This test passes. But what does it actually verify?
-
-- That `inventoryService.reserve()` is called? The mock guarantees that.
-- That the services work together correctly? No--we mocked away all real behavior.
-- That the data flows correctly between steps? Only superficially.
-
-We've written a test that verifies our code calls methods in a certain order. We haven't tested that processing an order *actually works*.
+**Your test boundaries are derived. Your coverage is a guess.**
 
 ---
 
-## The Integration-First Alternative
+## An anomaly in a good codebase
 
-What if we flipped the pyramid? Instead of testing components in isolation, test the *composition* of components:
+A loan origination service. 212 source files, 569 tests, written to a strict functional discipline: typed steps, errors as values, use cases composed from small pieces.
 
-```java
-@Test
-void processOrder_reservesInventoryAndChargesPayment() {
-    // Real inventory logic, real payment logic
-    // Only external I/O (database, HTTP) is stubbed
+One of its business rules decides the maximum debt-to-income ratio a borrower may carry. It decides by looking up two enumerations -- seven loan types, five credit tiers. Thirty-five cells.
 
-    InventoryService inventory = new InMemoryInventoryService(initialStock);
-    PaymentService payment = new StubPaymentService(PaymentResult::success);
-    NotificationService notifications = new RecordingNotificationService();
+Its test suite contains 33 hand-written test methods. They cover two columns.
 
-    OrderService orderService = new OrderService(inventory, payment, notifications);
+Nothing else about this codebase is sloppy. The value objects are exhaustively tested. The use cases are tested as compositions, with only adapters stubbed. Where an effect could not be observed from a return value, the tests capture the call instead -- which is exactly right, and most codebases get that wrong.
 
-    OrderResult result = orderService.processOrder(order);
+And the pattern is not local to one rule. Across the whole codebase: **536 plain test methods, 33 parameterized ones.** Every parameterized test is in a value object -- the one place the team's own guidance explicitly recommended them.
 
-    // Assert real behavior
-    assertThat(inventory.getStock(product)).isEqualTo(initialStock - order.quantity());
-    assertThat(notifications.getSent()).contains(expectedNotification);
-}
-```
-
-This test verifies:
-- Inventory is actually reserved (not just that a method was called)
-- Payment processes with the reserved inventory
-- Notification is sent with correct data
-- The entire flow works as a unit
+So this is not a story about a team that does not know how to test. It is a story about the point where a good discipline stops giving answers, and judgment quietly takes over.
 
 ---
 
-## Why This Works Better
+## The part that is derived
 
-### 1. Tests Verify Behavior, Not Implementation
+Most testing advice arrives as a shape: the pyramid, 70/20/10, "mostly unit tests." The ratio is the input, and your code is expected to conform.
 
-Mock-heavy unit tests are tightly coupled to implementation. Refactor the internals, and tests break--even if behavior is unchanged.
+But if your code has a particular shape, several testing decisions stop being preferences and start being consequences. Three of them:
 
-Integration tests verify outcomes. Refactor freely; if behavior is preserved, tests pass.
+**The default is to isolate nothing.** The cheapest possible test instantiates the thing and calls it. You depart from that only when something on the path *cannot run* -- it does I/O, opens a socket, reads a clock. So the set of things you must fake is not a matter of taste. Given a codebase whose I/O lives at adapters, that set is *the adapters*, and someone with different opinions about testing would compute the same set.
 
-### 2. Real Bugs Surface
+**Error-path tests can only live at the composition.** If failures short-circuit through a `Result` chain, then "step three fails, so the use case returns that failure" is a fact about the chain. Testing step three alone cannot observe it, because propagation does not exist inside one step.
 
-The bugs that escape to production are rarely "this method doesn't work." They're:
-- Data passed incorrectly between components
-- Edge cases in component interaction
-- Ordering dependencies
-- State management across operations
+**Interaction assertions are forced exactly when the effect is invisible from the outcome.** A successful money transfer looks identical whether it retried twice or not at all. An audited transfer looks identical whether the audit entry was written or dropped. In those cases, asserting on the return value cannot see the behaviour under test, and capturing the call is the only oracle that can. Everywhere else, capturing the call couples your test to the implementation for nothing.
 
-Integration tests catch these. Unit tests with mocks don't.
+That third rule is worth dwelling on, because it inverts the usual advice. "Don't mock" is a style preference. *Mock exactly when the effect is unobservable* is a rule with a reason, and it produces a much smaller number of interaction assertions than most codebases contain -- and a non-zero one, which the anti-mock camp gets wrong.
 
-### 3. Fewer Tests, More Coverage
-
-One integration test through `OrderService.processOrder()` exercises:
-- Input validation
-- Inventory reservation logic
-- Payment processing logic
-- Notification formatting
-- Error handling paths
-
-Compare to unit tests: separate tests for each component, each mock scenario, each edge case--exponentially more tests for the same coverage.
-
-### 4. Easier Refactoring
-
-When you refactor with unit tests, you often rewrite tests too. With integration tests, you verify the refactored code still produces correct outcomes. Tests become refactoring enablers, not obstacles.
+Here is the striking part. In the loan codebase, and in the worked examples of the methodology it follows, **these boundary decisions are made correctly and consistently.** Which leaves the isolate-or-not question, and the honest answer there is that the usual heuristic works too.
 
 ---
 
-## The Stub Strategy
+## The part that is a guess
 
-"But integration tests are slow!" They don't have to be.
+The usual heuristic is a count: *if a unit has three or more branches, give it its own tests.* It is serviceable, and in the codebase above it predicts every isolation decision correctly.
 
-The key is **stubbing at the right boundary**: external I/O only.
+Then you are inside the isolated suite, and the discipline has nothing more to say. How many test vectors? Which ones? Nothing forces the answer, so someone picks examples.
 
-```
-+---------------------------------------------+
-|  Your Application                           |
-|  +---------------------------------------+  |
-|  |  Business Logic (tested fully)        |  |
-|  |  - Use cases                          |  |
-|  |  - Domain services                    |  |
-|  |  - Value objects                      |  |
-|  +------------------+--------------------+  |
-|                     |                       |
-|  +------------------v--------------------+  |
-|  |  Adapters (stubbed in tests)          |  |
-|  |  - Database repositories              |  |
-|  |  - HTTP clients                       |  |
-|  |  - Message queues                     |  |
-|  +---------------------------------------+  |
-+---------------------------------------------+
-```
+Picking examples is where it goes wrong, and it goes wrong invisibly, because **both of the instruments we use to check ourselves measure the shape of the code rather than the size of its decision space.**
 
-**Stub adapters, test everything else.**
+Take a value object that accepts an integer between 1 and 100. A typical suite has five tests: a valid value, the maximum, zero, a negative, one over the limit. That is careful boundary thinking, and it will be reported at **100% line coverage**.
 
-Adapters are thin--they translate between your domain and external systems. Their logic is minimal: convert domain objects to SQL, parse HTTP responses, format messages. Stub them with simple implementations:
+It would also be reported at 100% line coverage with **two** tests. The metric cannot distinguish the careful suite from the lucky one, because the code has two paths and the decision space has an infinite number of inputs across one boundary condition. Coverage measured what the code looks like. It never asked what the code decides.
 
-```java
-// In-memory repository stub
-public class InMemoryUserRepository implements UserRepository {
-    private final Map<UserId, User> users = new ConcurrentHashMap<>();
+Now take the 35-cell table. A branch count sees four conditionals, because the decisions do not live in control flow at all -- they live in a switch expression over two enums, returning constants. **A branch count cannot see a decision that is expressed as data.** By that instrument, the most combinatorial rule in the entire system rates as marginal. It cleared the "three or more" threshold by luck, not by measurement.
 
-    @Override
-    public Promise<Option<User>> findById(UserId id) {
-        return Promise.success(Option.option(users.get(id)));
-    }
-
-    @Override
-    public Promise<UserId> save(User user) {
-        users.put(user.id(), user);
-        return Promise.success(user.id());
-    }
-}
-```
-
-These stubs are fast (no I/O), deterministic (no network flakes), and exercise real logic paths.
+Both instruments agree the suite is fine. The suite tests two columns of thirty-five.
 
 ---
 
-## The Evolutionary Testing Process
+## Count the decision space
 
-Integration-first doesn't mean "write integration tests and hope." It's a systematic process:
+The fix is not a new methodology. It is one question, asked before you write vectors:
 
-### Phase 1: Stub Everything, Verify Composition
+> **How many distinct decisions can this unit make?**
 
-Start with all adapters stubbed. Test that the use case composes correctly:
+Not how many lines. Not how many `if` statements. How many distinct outcomes are reachable, and across what input space.
 
-```java
-@Test
-void registerUser_happyPath() {
-    // All stubs return success
-    CheckEmailUniqueness checkEmail = req -> Promise.success(req);
-    HashPassword hashPassword = pwd -> Result.success(new HashedPassword("hashed"));
-    SaveUser saveUser = user -> Promise.success(new UserId("user-123"));
+- A range check on an integer: one boundary condition, unbounded inputs.
+- A lookup keyed on two enumerations: the product of their sizes. Seven times five is thirty-five, and you can count it before writing a single test.
+- A rule that combines a volume discount, a customer tier and a promotional code: the product of the three, plus the interactions where they overlap.
 
-    RegisterUser useCase = RegisterUser.create(checkEmail, hashPassword, saveUser);
+Once you have the number, the vector strategy follows from it, and this is the second thing that stops being a preference:
 
-    useCase.execute(validRequest)
-        .await()
-        .onFailure(Assertions::fail)
-        .onSuccess(response -> {
-            assertEquals("user-123", response.userId().value());
-        });
-}
-```
+| Decision space | Strategy | Why |
+|---|---|---|
+| Genuinely small and enumerable | Hand-written examples | The space *is* the examples |
+| A finite grid over enums or ranges | A table -- parameterized, one row per cell | The cell count is known, so partial coverage is a visible omission rather than an invisible one |
+| Unbounded over a property | A property test | Examples sample an infinite space arbitrarily; a property states the invariant that must hold across it |
 
-### Phase 2: Add Failure Scenarios
+The 35-cell table wants a table. Written as 35 rows, an omission is *visible* -- the rows are simply not there. Written as 33 hand-picked methods, the omission is invisible, and it stayed invisible through code review, through 100% coverage reporting, and through a branch-count heuristic that rated the rule marginal.
 
-Replace stubs with failure-producing versions one at a time:
-
-```java
-@Test
-void registerUser_failsWhenEmailExists() {
-    CheckEmailUniqueness failingCheck = req ->
-        RegistrationError.EMAIL_EXISTS.promise();
-
-    // ... other stubs succeed
-
-    useCase.execute(validRequest)
-        .await()
-        .onSuccess(Assertions::fail);  // Should not succeed
-}
-```
-
-### Phase 3: Replace Stubs with Real Logic
-
-As you implement adapter logic, replace stubs with real implementations:
-
-```java
-@Test
-void registerUser_withRealPasswordHashing() {
-    CheckEmailUniqueness checkEmail = req -> Promise.success(req);
-    HashPassword hashPassword = new BCryptHashPassword(encoder);  // Real implementation
-    SaveUser saveUser = new InMemoryUserRepository();  // Still stubbed I/O
-
-    // Test now exercises real password hashing
-}
-```
-
-### Phase 4: Production Configuration
-
-Eventually, your production wiring uses real adapters:
-
-```java
-@Configuration
-public class ProductionConfig {
-    @Bean
-    RegisterUser registerUser(
-        JooqUserRepository repository,
-        BCryptHashPassword hasher,
-        SmtpEmailSender emailSender
-    ) {
-        return RegisterUser.create(
-            new DatabaseEmailChecker(repository),
-            hasher,
-            repository
-        );
-    }
-}
-```
+The range check wants a property: *every accepted value satisfies the invariant, and every rejected value violates it.* That is exhaustive over the stated bound in a way that five examples are not, and it does not go stale when the bound changes.
 
 ---
 
-## Organizing Many Tests
+## What this does not claim
 
-Integration-first generates many test scenarios. Organize them systematically:
+I checked one codebase, carefully, and it did not falsify the branch-count heuristic. The heuristic predicted every isolate-or-not decision correctly. If you came here expecting an argument that your boundary rules are wrong, they are probably fine, and that is the more useful finding.
 
-### Nested Classes by Scenario Type
+I am also not claiming that hand-written examples are always wrong. Where the decision space is genuinely small, examples are the clearest thing you can write, and a table for three cases is ceremony.
 
-```java
-class RegisterUserTest {
+The claim is narrower and, I think, more actionable: **the boundary decisions in a well-structured codebase are already derived from the structure, and teams get them right. The coverage decisions are not derived from anything, and that is where the gaps are.** Both of the instruments we use to reassure ourselves -- line coverage and branch counting -- measure the shape of the code and are blind to the size of what it decides.
 
-    @Nested
-    class HappyPath {
-        @Test void succeeds_withValidInput() { }
-        @Test void succeeds_withOptionalReferralCode() { }
-    }
-
-    @Nested
-    class ValidationFailures {
-        @Test void fails_withInvalidEmail() { }
-        @Test void fails_withWeakPassword() { }
-        @Test void fails_withMissingRequiredFields() { }
-    }
-
-    @Nested
-    class StepFailures {
-        @Test void fails_whenEmailAlreadyExists() { }
-        @Test void fails_whenPasswordHashingFails() { }
-        @Test void fails_whenDatabaseUnavailable() { }
-    }
-}
-```
-
-### Parameterized Tests for Input Variations
-
-```java
-@ParameterizedTest
-@MethodSource("invalidEmails")
-void rejectsInvalidEmailFormats(String invalidEmail) {
-    var request = validRequest().withEmail(invalidEmail);
-    useCase.execute(request).await().onSuccess(Assertions::fail);
-}
-
-static Stream<String> invalidEmails() {
-    return Stream.of(
-        "not-an-email",
-        "@missing-local.com",
-        "missing-domain@",
-        "spaces in@email.com",
-        ""
-    );
-}
-```
-
-### Test Data Builders
-
-```java
-class RequestBuilder {
-    private String email = "valid@example.com";
-    private String password = "ValidPassword123";
-
-    RequestBuilder withEmail(String email) {
-        this.email = email;
-        return this;
-    }
-
-    Request build() {
-        return new Request(email, password);
-    }
-}
-
-// Usage
-var request = new RequestBuilder().withEmail("invalid").build();
-```
+Counting the decision space takes about thirty seconds per unit. It costs nothing, it happens before you write the tests, and it is the difference between a suite that covers two columns and one that covers thirty-five.
 
 ---
 
-## When Unit Tests Still Make Sense
-
-Integration-first doesn't mean zero unit tests. Unit tests are valuable for:
-
-### Pure Functions with Complex Logic
-
-```java
-// This is pure computation--unit test it
-public Money calculateDiscount(Order order, DiscountRules rules) {
-    // Complex discount calculation logic
-}
-
-@Test
-void calculateDiscount_appliesPercentageToSubtotal() { }
-
-@Test
-void calculateDiscount_capsAtMaximumDiscount() { }
-
-@Test
-void calculateDiscount_stacksMultipleRules() { }
-```
-
-### Value Object Validation
-
-```java
-@Test
-void email_rejectsInvalidFormat() {
-    Email.email("not-an-email").onSuccess(Assertions::fail);
-}
-
-@Test
-void email_normalizesToLowercase() {
-    Email.email("USER@EXAMPLE.COM")
-        .onSuccess(email -> assertEquals("user@example.com", email.value()));
-}
-```
-
-### Edge Cases in Algorithms
-
-```java
-@Test
-void pricingAlgorithm_handlesEmptyCart() { }
-
-@Test
-void pricingAlgorithm_handlesSingleItem() { }
-
-@Test
-void pricingAlgorithm_handlesMaximumItems() { }
-```
-
-The pattern: unit test *pure logic*, integration test *composed behavior*.
-
----
-
-## Metrics That Matter
-
-How do you know your test suite is effective?
-
-**Not useful:**
-- Line coverage (you can have 100% coverage with useless tests)
-- Number of unit tests (more isn't better)
-
-**Useful:**
-- **Failure detection rate**: Do tests catch bugs before production?
-- **False positive rate**: How often do tests fail for non-bugs (flaky tests, refactoring)?
-- **Time to failure**: How fast do you know something is broken?
-- **Debugging time**: When a test fails, how quickly can you find the bug?
-
-Integration tests optimized for these metrics beat unit test suites optimized for coverage.
-
----
-
-## Getting Started
-
-1. **Pick one use case** in your system.
-
-2. **Write one integration test** that exercises the happy path with stubbed adapters.
-
-3. **Add failure scenarios** for each step that can fail.
-
-4. **Compare** to existing unit tests: which gives you more confidence?
-
-5. **Expand** to more use cases as you see the benefits.
-
----
-
-## Conclusion
-
-The traditional testing pyramid optimizes for the wrong things: speed of individual tests and isolation of components. But software fails at the seams--where components meet.
-
-Integration-first testing optimizes for what matters: confidence that your system works as a whole.
-
-- Test composed behavior, not isolated components
-- Stub at I/O boundaries, not between domain objects
-- Verify outcomes, not method calls
-- Write fewer tests that cover more behavior
-
-Your tests should answer one question: "Does this system do what it's supposed to do?" Integration tests answer that question directly. Unit tests with mocks answer a different question: "Does this component call other components correctly?"
-
-Focus on the question that matters.
-
----
-
-*Want to learn more about testing strategies for functional composition? Check out [Java Backend Coding Technology](https://pragmatica.dev) for a complete methodology including evolutionary testing approaches.*
+*The functional discipline this article assumes -- typed steps, errors as values, use cases composed from small pieces, I/O confined to adapters -- is described in [Java Backend Coding Technology](https://leanpub.com/jbct-book). The boundary rules discussed here fall out of that structure; they are not a testing philosophy layered on top of it.*

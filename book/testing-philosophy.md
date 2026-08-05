@@ -104,6 +104,33 @@ class EmailTest {
 
 **Why unit test here?** Value objects have zero dependencies. They're pure functions. Unit testing is natural.
 
+**But "100% coverage" is the wrong target, and the example above shows why.** Four
+hand-picked strings reach 100% line coverage of `Email`. So would two. The metric reports
+the same number for a careful suite and a lucky one, because it measures the paths the code
+has rather than the space it decides over.
+
+Count the space instead, and let it choose the shape of the tests:
+
+| The space | Write | Because |
+|---|---|---|
+| Small and enumerable (a status enum, a three-way branch) | examples | the space *is* the examples |
+| A finite grid (an enum against an enum, banded ranges) | a table -- `@ParameterizedTest` with one row per cell | the cell count is known, so a missing row is a visible hole |
+| Unbounded (any string, any `BigDecimal`, any timestamp) | state the invariant | examples sample an infinite space arbitrarily, and four are as arbitrary as one |
+
+`Email` is the third kind. Four strings do not cover the space of malformed addresses; they
+cover four of them. The honest form of the test is the property the parser guarantees --
+that normalization is idempotent, that no accepted value fails the invariant -- which is
+what the tools called *property-based testing* libraries exist to check by generating
+inputs rather than listing them. This book does not teach them, and you do not need one to
+benefit: writing down the invariant, even as a comment above four examples, is what stops
+the four from being mistaken for coverage of the space.
+
+`Quantity` (1..100) is the *first* kind wearing the clothes of the third. It has 102
+interesting values including the boundaries, and boundary examples genuinely cover it.
+
+The worked case is `PriceCalculator` in [PlaceOrder](placeorder-example.md) -- eighteen
+nominal combinations, three of them structurally impossible, fifteen rows in a table.
+
 **2. Business Leaves: Unit Tests if Complex**
 
 Simple business leaves (single calculation, simple transformation) don't need isolated tests - they're covered by use case integration tests.
@@ -151,6 +178,42 @@ class UserLoginTest {
 ```
 
 This tests **real behavior**: validation -> credentials -> status -> token, with error propagation.
+
+### Two rules the examples in this book follow
+
+Both are visible in the worked examples, and neither is obvious enough to leave unstated.
+
+**Assert on the outcome, except when the effect is invisible in it.**
+
+A stub tells you what a step returned. It does not tell you the step was called. Most of
+the time that is fine -- if the outcome is right, the steps ran. But some behavior leaves
+no trace in the response:
+
+- A transfer that retried twice looks exactly like one that never retried.
+- A transfer that wrote an audit entry looks exactly like one that dropped it.
+- An article routed to immediate publication differs from one routed to review by *which
+  step was called*, not by the value returned.
+
+There, capturing the call is the only oracle that can see the behavior under test, and
+[TransferFunds](transferfunds-example.md) and [PublishArticle](publisharticle-example.md)
+both do exactly that.
+
+Everywhere else, capturing calls couples the test to the implementation for nothing. The
+rule is not "avoid mocks" and it is not "verify interactions" -- it is **assert on the
+effect where the effect is visible, and on the call only where it is not.** That yields
+far fewer interaction assertions than a mock-first habit produces, and a firmly non-zero
+number, which a no-mocks rule gets wrong.
+
+**One composition test for propagation, N cheap vectors for the space.**
+
+[RegisterUser](registeruser-example.md) tests validation twice: directly against
+`ValidRequest`, and through `execute`. That looks like duplication and is not.
+
+The composition adds exactly one fact -- that a validation failure short-circuits the
+remaining steps -- and one test establishes it. The rest of the input space belongs where
+the vectors are cheap, which is the isolated level. Splitting them that way costs one test
+and buys the whole space; testing the space at the composition costs a full assembly per
+vector, and every failure names the use case rather than the rule.
 
 ---
 

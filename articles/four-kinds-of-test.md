@@ -5,9 +5,9 @@ description: A complete backend test strategy - four kinds of test, each one der
 published: false
 ---
 
-# Four Kinds of Test, and Where Each One Comes From
+# Every Test Can Name Why It Exists
 
-**A strategy you derive instead of adopt**
+**Four kinds of test, each derived from a property of the code**
 
 ---
 

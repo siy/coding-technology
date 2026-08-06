@@ -20,7 +20,7 @@ Order optimized for funnel: pain → solution → practical → advanced → con
 | 5 | ⏳ | Jan 12, 2025 | Value Objects Cookbook | `value-objects-cookbook.md` | 1,567 |
 | 6 | ⏳ | Jan 16, 2025 | Single Level of Abstraction | `single-level-of-abstraction.md` | 1,259 |
 | 7 | ⏳ | Jan 19, 2025 | Patterns as Business Vocabulary | `patterns-as-business-vocabulary.md` | 1,338 |
-| 8 | ⏳ | Jan 23, 2025 | Every Test Can Name Why It Exists | `four-kinds-of-test.md` | 2,001 |
+| 8 | ⏳ | Jan 23, 2025 | Every Test Can Name Why It Exists | `every-test-can-name-why-it-exists.md` | 1,993 |
 | 9 | ⏳ | Jan 26, 2025 | Result\<Option\<T\>\> Pattern | `result-option-pattern.md` | 1,296 |
 | 10 | ⏳ | Jan 30, 2025 | Legacy Adoption Strategy | `legacy-adoption-strategy.md` | 1,441 |
 

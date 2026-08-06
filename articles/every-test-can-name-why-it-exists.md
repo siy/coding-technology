@@ -1,6 +1,6 @@
 ---
 tags: [testing, java, softwaredevelopment, architecture]
-canonical_url: https://pragmatica.dev/articles/four-kinds-of-test
+canonical_url: https://pragmatica.dev/articles/every-test-can-name-why-it-exists
 description: A complete backend test strategy - four kinds of test, each one derived from a property of the code rather than chosen from a convention, plus the rules that fall out and why the result beats picking a ratio.
 published: false
 ---
@@ -20,12 +20,10 @@ the proportions come out wherever they come out.
 
 Here is the whole strategy up front:
 
-| Test | Covers | Isolation |
-|---|---|---|
-| **Value object** | one type's invariant | none needed -- it is pure |
-| **Complex leaf** | one rule's decision space | none needed -- it is pure |
-| **Use case** | the composition: ordering, propagation, branching | adapters stubbed |
-| **Adapter contract** | success, failure, and the translation between worlds | the real dependency |
+- **Value object tests** -- cover one type's invariant. No isolation needed; the thing is pure.
+- **Complex leaf tests** -- cover one rule's decision space. No isolation needed; the thing is pure.
+- **Use case tests** -- cover the composition: ordering, propagation, branching. Adapters stubbed, everything else real.
+- **Adapter contract tests** -- cover success, failure, and the translation between worlds. Run against the real dependency.
 
 Four kinds. Nothing else. The rest of this is where each one comes from, and why the list
 is not longer or shorter.
@@ -68,13 +66,15 @@ nothing to reach.
 is free here -- there is no assembly to do and nothing to fake.
 
 **How many tests, though?** That is the question people answer by habit, and habit is
-where the gaps come from. Count the decision space first:
+where the gaps come from. Count the decision space first, and let the count choose the
+shape:
 
-| The space | Write | Because |
-|---|---|---|
-| Small and enumerable -- a status enum, a three-way branch | examples | the space *is* the examples |
-| A finite grid -- an enum against an enum, banded ranges | a table, one row per cell | the cell count is known, so a missing row is a hole you can see |
-| Unbounded -- any string, any `BigDecimal`, any timestamp | state the invariant | four examples sample an infinite space as arbitrarily as one does |
+- **Small and enumerable** -- a status enum, a three-way branch. Write examples: the space
+  *is* the examples.
+- **A finite grid** -- an enum against an enum, banded ranges. Write a table, one row per
+  cell: the cell count is known, so a missing row is a hole you can see.
+- **Unbounded** -- any string, any `BigDecimal`, any timestamp. State the invariant: four
+  examples sample an infinite space as arbitrarily as one does.
 
 `Quantity` accepting 1..100 is the first kind: boundary examples genuinely cover it.
 `Email` is the third. Four malformed strings do not cover the space of malformed

@@ -2,7 +2,7 @@
 tags: [testing, java, softwaredevelopment, architecture]
 canonical_url: https://pragmatica.dev/articles/every-test-can-name-why-it-exists
 description: A complete backend test strategy - four kinds of test, each one derived from a property of the code rather than chosen from a convention, plus the rules that fall out and why the result beats picking a ratio.
-published: false
+published: true
 ---
 
 # Every Test Can Name Why It Exists

@@ -16,11 +16,15 @@ Domain-Driven Design ships as one book, and most people treat it as one method. 
 The strategic half -- bounded contexts, context maps, core and supporting and generic
 subdomains -- is about *where the boundaries in a business are*. The tactical half --
 aggregates, entities, value objects, repositories -- is about *how you build inside one*.
-Evans has said he would put the strategic material first if he were writing it again, which
-is a strong hint that the second half does not rest on the first.
 
-It does not. And that has a consequence people rarely take: **the two halves come apart,
-so you can keep one and replace the other.**
+Notice what does not connect them. Nothing in a context map presupposes an aggregate.
+Nothing in an aggregate presupposes a context map. You can draw the first without committing
+to the second, and teams do it constantly in both directions: shops that map their contexts
+carefully and then build anemic services inside them, shops that build textbook aggregates
+with no map above them at all.
+
+The halves come apart. And that has a consequence people rarely take: **you can keep one and
+replace the other.**
 
 This matters because the contested half is the tactical one. Arguments about DDD are almost
 always arguments about aggregates -- their size, their transactional boundary, whether they

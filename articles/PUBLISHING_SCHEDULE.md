@@ -23,7 +23,7 @@ Order optimized for funnel: pain → solution → practical → advanced → con
 | 8 | ⏳ | Jan 23, 2025 | Every Test Can Name Why It Exists | `every-test-can-name-why-it-exists.md` | 1,993 |
 | 9 | ⏳ | Jan 26, 2025 | Result\<Option\<T\>\> Pattern | `result-option-pattern.md` | 1,296 |
 | 10 | ⏳ | Jan 30, 2025 | Legacy Adoption Strategy | `legacy-adoption-strategy.md` | 1,441 |
-| 11 | ⏳ | TBD | Keep the Context Map. Replace the Aggregates. | `keep-the-context-map.md` | 1,633 |
+| 11 | ⏳ | TBD | Keep the Context Map. Replace the Aggregates. | `keep-the-context-map.md` | 1,644 |
 
 ## Published URLs
 

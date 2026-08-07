@@ -23,7 +23,7 @@ Order optimized for funnel: pain → solution → practical → advanced → con
 | 8 | ✅ | Aug 7, 2026 | Every Test Can Name Why It Exists | `every-test-can-name-why-it-exists.md` | 1,993 |
 | 9 | ⏳ | Jan 26, 2025 | Result\<Option\<T\>\> Pattern | `result-option-pattern.md` | 1,296 |
 | 10 | ⏳ | Jan 30, 2025 | Legacy Adoption Strategy | `legacy-adoption-strategy.md` | 1,441 |
-| 11 | ⏳ | TBD | Keep the Context Map. Replace the Aggregates. | `keep-the-context-map.md` | 1,644 |
+| 11 | ✅ | Aug 8, 2026 | Keep the Context Map. Replace the Aggregates. | `keep-the-context-map.md` | 1,644 |
 
 ## Published URLs
 
@@ -39,6 +39,7 @@ Order optimized for funnel: pain → solution → practical → advanced → con
 | 8 | https://dev.to/siy/every-test-can-name-why-it-exists-24bo | https://medium.com/@sergiy-yevtushenko/every-test-can-name-why-it-exists-902f88b642e0 |
 | 9 | | |
 | 10 | | |
+| 11 | https://dev.to/siy/keep-the-context-map-replace-the-aggregates-1fj8 | https://medium.com/@sergiy-yevtushenko/keep-the-context-map-replace-the-aggregates-72f2da71b5f0 |
 
 ## Per-Article Checklist
 

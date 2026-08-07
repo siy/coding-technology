@@ -2,7 +2,7 @@
 tags: [ddd, architecture, softwaredesign, programming]
 canonical_url: https://pragmatica.dev/articles/keep-the-context-map
 description: Strategic DDD does not rest on tactical DDD, which means you can keep one and replace the other. Here is how to annotate a context map so it feeds a change-driver decomposition instead of an aggregate model.
-published: false
+published: true
 ---
 
 # Keep the Context Map. Replace the Aggregates.

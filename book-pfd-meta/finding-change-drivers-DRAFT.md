@@ -57,17 +57,24 @@ Supporting questions:
 
 ### Measure backward (existing codebase)
 
-The git history does not lie about how the system actually changes.
+The git history records how the system actually changed.
 - **Co-change / change coupling** — files that change together in the same commits share a driver. Rule
   of thumb: co-change in more than ~30% of the commits that touch either file. If those files live in
   different modules, a driver is cutting across your boundary.
 - **Hotspots** — rank files by (change-frequency × size); the top is where drivers concentrate, the
   first place to look.
+- **Read it with one correction: co-change is partly endogenous.** Files change together partly
+  *because the current decomposition forces them to*, so raw co-change is downstream of the structure
+  it is being used to judge. Measure the co-change that **crosses a boundary**, and trust the coupling
+  that **survives a known restructure** — what vanishes with the restructure was an artifact of it.
 - Tools: `code-maat` automates the coupling analysis; group commits by author in a 24h window first to
-  tame messy histories.
+  tame messy histories. The measurement is not new — logical coupling goes back to Gall (1998) and
+  Zimmermann (2004) in the mining-software-repositories literature; Tornhill later productized it as
+  change coupling.
 
 Empirical detection turns "where are the drivers?" from speculation into measurement, and lets you
-*check* a proposed cut against the system's actual behaviour.
+*check* a proposed cut against the system's actual behaviour — provided the check is read with the
+endogeneity correction above.
 
 ## Where-to-look taxonomy (checklist)
 

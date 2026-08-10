@@ -1,6 +1,6 @@
 # Leaf Pattern
 
-**Purpose**: Atomic operations that cannot be decomposed further. Single responsibility, no composition.
+**Purpose**: Atomic operations that cannot be decomposed further. One operation, no composition.
 
 ## Definition
 
@@ -141,12 +141,12 @@ private User mapToUser(ResultSet rs) throws SQLException {
 
 ## Critical Rules
 
-### 1. Single Responsibility
+### 1. One Operation Per Leaf
 
 Each leaf does ONE thing:
 
 ```java
-// ❌ WRONG - Multiple responsibilities
+// ❌ WRONG - two operations in one leaf
 public Promise<User> loadAndValidateUser(UserId id) {
     return Promise.lift(() -> {
         User user = repository.findById(id);
@@ -344,7 +344,7 @@ public Promise<List<User>> loadUsers(List<UserId> ids) {
 
 ## Anti-Patterns
 
-### ❌ Mixed Responsibilities
+### ❌ Several Operations In One Leaf
 
 ```java
 // DON'T - Business logic + I/O in same leaf

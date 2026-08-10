@@ -321,7 +321,7 @@ Advanced patterns (Sequencer, Fork-Join, Aspects) covered in [Advanced Patterns]
 **Rationale (by criteria):**
 - **Mental Overhead**: Atomic operations have no internal steps to track - immediate comprehension (+2)
 - **Business/Technical Ratio**: Business leaves are pure domain logic; adapter leaves isolate technical concerns (+2)
-- **Complexity**: Single responsibility per leaf - no hidden interactions (+2)
+- **Complexity**: One operation per leaf - no hidden interactions (+2)
 - **Reliability**: Pure business leaves are deterministic and easily testable (+1)
 
 ### Business Leaves

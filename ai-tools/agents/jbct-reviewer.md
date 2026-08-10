@@ -55,9 +55,19 @@ For each method:
 For each Fork-Join:
 - All inputs immutable? No shared mutable state?
 
-For mirrored-API changes (sibling carriers like Result/Option/Promise, overload families, parallel test suites):
+### Symmetry Checks
+
+Two independent axes. Both ask *this discipline exists here — where else must it exist?*, but they catch different defects. Run both.
+
+**Axis 1 — parallel siblings** (sibling carriers like Result/Option/Promise, overload families, parallel test suites):
 - Diff the siblings against each other: every implementation, test, and javadoc obligation present in one sibling must be present in ALL — coverage asymmetry between siblings is a MAJOR finding
 - Javadoc vocabulary adapted per carrier (no "success" on Option, no async wording on synchronous carriers)?
+
+**Axis 2 — inverse pairs** (operations that undo each other: parse/render, decode/encode, import/export, read/write, acquire/release, subscribe/unsubscribe, migration up/down):
+- Locate the partner of each operation under review. Many operations have none — say so and move on.
+- For each discipline the reviewed side carries — error reporting, loss or fidelity records, input validation, logging, resource cleanup, exhaustiveness guards — check whether the partner carries the equivalent.
+- A discipline on one side and not the other is a finding **only when you can name what breaks**: the caller that cannot detect a failure, the invariant that holds in one direction only, the round trip that is not the identity. Put that consequence in the finding. "Asymmetric" on its own is not a finding.
+- Some asymmetry is correct. A parser validates because its input is untrusted; a writer may trust a model whose type already carries the guarantee. Correct asymmetry still needs a stated reason at the partner site or in the decision log — a missing reason is a Warning, a missing discipline that breaks something is Critical.
 
 ---
 
@@ -143,6 +153,7 @@ Run all searches from the Violation Hunting table. Report counts.
 - No use case → adapter dependencies
 - Import/member ordering correct
 - Utility classes → sealed interfaces
+- Both symmetry axes run (see Symmetry Checks)
 
 ### Step 4: Naming Review
 - Factory: `TypeName.typeName()`
@@ -227,6 +238,7 @@ Before submitting, verify:
 - [ ] Every method checked for pattern compliance
 - [ ] Every lambda checked for format compliance
 - [ ] Every Fork-Join checked for immutability
+- [ ] Every operation with an inverse partner checked on both sides
 - [ ] Zero unreported violations of forbidden patterns
 
 **Missing a violation = review failure.**

@@ -4,7 +4,7 @@ Sequencer, Fork-Join, and Aspects - composing basic patterns into real workflows
 ## learn
 - Sequencer: chaining dependent steps
 - Fork-Join: parallel independent operations
-- Aspects: cross-cutting concerns without mixing responsibilities
+- Aspects: cross-cutting concerns without mixing them into business logic
 
 ## note
 Sequencer alone structures most business logic you'll write. Fork-Join and Aspects are for the cases

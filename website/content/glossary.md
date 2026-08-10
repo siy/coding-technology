@@ -139,7 +139,7 @@ One page per axis move, written as the derivation runs rather than reconstructed
 The taxonomy that decides which mechanism family contains a load, answered by one diagnostic — *would a second copy help?* **Volume** (yes: sizing, cache, replicas, sharding). **Contention** (no — one record, one winner: admission control, coalescing, design-out; never sharding). **Burst** (a peak with tolerable settling delay: a buffer). **Deadline** (finish inside a window: windowed throughput, resumable batch).
 *Defined in: AS*
 
-**Dependency Inversion** {#dependency-inversion}
+**Dependency Direction** {#dependency-direction}
 Dependencies point at abstractions, not implementations. In JBCT, use cases depend on step interfaces; adapters implement them.
 *Defined in: JBCT*
 

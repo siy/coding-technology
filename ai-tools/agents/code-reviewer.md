@@ -29,7 +29,7 @@ Expert code reviewer for scripts, configurations, UI code, infrastructure, and m
 - Resource management (connection pools, file handles)
 
 ### Architecture
-- SOLID violations, anti-patterns, coupling/cohesion
+- Anti-patterns, coupling/cohesion, dependency direction
 - API design, error handling, dependency management
 
 ### Code Quality

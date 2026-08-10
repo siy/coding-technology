@@ -90,7 +90,7 @@ private Cause orderNotFound(ValidCancelOrderRequest validRequest) {
 - Intent is explicit: convert Option to Result with specific error, then lift to Promise
 - Error factory returns `Cause` (pure data), not `Promise<T>` (no async wrapping for error creation)
 - Linear flow: `toResult` → `async` → `flatMap`
-- Each operation has one responsibility
+- Each operation does one thing
 
 **Alternative (async with Cause):**
 ```java
@@ -248,7 +248,7 @@ private static SharedLibraryClassLoader createSharedLibraryLoader(AetherNodeConf
 - Nested fold eliminated
 - Side effects (logging) separated from transformations
 - Fallback value explicit with `.or()`
-- Each line has single responsibility
+- Each line does one thing
 
 **Note:** The outer fold remains because Option's empty case creates a different instance than the inner Result's fallback. This is intentional - the outer fold distinguishes "no config" from "config failed to load."
 

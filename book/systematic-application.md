@@ -320,7 +320,7 @@ static Step validate(Validator validator) {
 1. **Scan for lambdas** (`->`) - apply Checkpoint 1
 2. **Scan for return types** - apply Checkpoint 2
 3. **Scan for factories** - apply Checkpoint 3
-4. **Scan for mixed responsibilities** - apply Checkpoint 4
+4. **Scan for classes that do several things** - apply Checkpoint 4
 5. **Scan for logging** - apply Checkpoint 6
 6. **Final verification** - apply Checkpoint 7
 

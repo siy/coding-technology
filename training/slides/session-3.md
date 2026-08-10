@@ -59,7 +59,7 @@ public Bid evaluateBid(BidRequest request, BidResponse response) {
 }
 ```
 
-**50+ lines, 4 responsibilities, hard to test**
+**50+ lines, four separate jobs, hard to test**
 
 ---
 
@@ -67,7 +67,7 @@ public Bid evaluateBid(BidRequest request, BidResponse response) {
 
 > Here's what most code looks like. One method doing everything. Validation, business logic, calculations, all mixed together.
 >
-> 50 lines. Multiple responsibilities. You want to test targeting logic? You need the whole method. You want to change floor handling? Hope you don't break validation.
+> 50 lines. Four unrelated jobs. You want to test targeting logic? You need the whole method. You want to change floor handling? Hope you don't break validation.
 >
 > This is the "God method" anti-pattern. JBCT patterns break it into composable pieces.
 
@@ -80,7 +80,7 @@ public Bid evaluateBid(BidRequest request, BidResponse response) {
 > A **Leaf** is a method that does ONE thing with NO side effects and returns a Result/Option/Promise
 
 ### Characteristics:
-- **Single responsibility** - one clear purpose
+- **One operation** - one clear purpose
 - **Pure function** - same inputs → same outputs
 - **5-15 lines** - fits on one screen
 - **Named for what it does** - verb phrase
@@ -402,7 +402,7 @@ Result<Output> process(Input input) {
 
 ### Rules:
 - **2-5 steps** - more than 5? Break into sub-sequencers
-- **Each step is a Leaf** - single responsibility
+- **Each step is a Leaf** - one operation
 - **Named descriptively** - sequence name describes the workflow
 
 ---

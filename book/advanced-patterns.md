@@ -4,7 +4,7 @@
 
 - **Sequencer**: The workhorse pattern for chaining dependent steps
 - **Fork-Join**: Parallel composition for independent operations
-- **Aspects**: Adding cross-cutting concerns without mixing responsibilities
+- **Aspects**: Adding cross-cutting concerns without mixing them into business logic
 
 **Prerequisites:** [Basic Patterns & Structure](basic-patterns.md)
 
@@ -365,7 +365,7 @@ Model the "best-effort" case explicitly with proper types.
 **Definition:** Aspects are higher-order functions that wrap steps or use cases to add cross-cutting concerns - retry, timeout, logging, metrics - without changing business semantics.
 
 **Rationale (by criteria):**
-- **Mental Overhead**: Cross-cutting concerns separated from business logic - clear responsibilities (+3)
+- **Mental Overhead**: Cross-cutting concerns separated from business logic - each reads independently (+3)
 - **Business/Technical Ratio**: Business logic stays pure; technical concerns isolated in decorators (+3)
 - **Complexity**: Composable aspects via higher-order functions - no framework magic (+2)
 - **Design Impact**: Business logic independent of retry/metrics/logging - testable separately (+3)

@@ -130,12 +130,17 @@ Keep two operations distinct: **within-altitude composition** is the patterns, a
 **Two ways, and they check each other.**
 
 - **Ask forward, at the desk:** who or what would ask for this to change? Parnas sharpens it — what is the riskiest decision here, the one that would ripple widest? Löwy sharpens it again — what varies over time for one user, and across users now; what would a competitor do differently?
-- **Measure backward, on an existing codebase:** version-control history does not lie about how the system actually changes. Files changing together in the same commits share a driver. Cadence is a further tell — parts that change weekly do not belong with parts that change yearly.
+- **Measure backward, on an existing codebase:** version-control history records how the system actually changed. Files changing together in the same commits share a driver. Cadence is a further tell — parts that change weekly do not belong with parts that change yearly. **Read it with one correction — co-change is partly endogenous**, since the current structure forces some of it: measure the co-change that crosses a boundary, and trust the coupling that survives a known restructure.
 
 Two cautions, mirror images of each other:
 
 - **Similarity is not a change driver.** Code that looks alike, even identical today, may answer to different drivers; merging it couples what the domain leaves separate.
 - **A cohesive unit may legitimately answer to more than one driver.** An adapter changes when either side changes, and splitting it destroys the mediation it exists for. Cohesion is not about the *number* of drivers but about carrying exactly the ones the job requires.
+
+And two limits inside the book's scope band, where a relation other than change governs:
+
+- **A trust boundary can require splitting what changes together.** Merging them by change attribution would be the vulnerability; the boundary outranks cohesion.
+- **A concern that co-changes with everything partitions nothing.** Telemetry is the standard case: a driver that touches every use case selects no subset.
 
 **Why attribution rather than comparison.** Deciding cohesion pairwise is quadratic in the number of use cases and re-run from scratch every time one is added. Attribute each use case to its driver once and cohesion stops being a comparison and becomes a sort — one pass to attach the labels, then the use cases sharing a driver fall out as the groups. That is **quasi-linear cohesion**, and it is why the register scales.
 

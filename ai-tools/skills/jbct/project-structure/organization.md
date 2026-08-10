@@ -142,7 +142,7 @@ com.example.adapter.persistence/
 3. `unused` record (always last—prevents implementation)
 <!-- /book:member-ordering -->
 
-## Layer Responsibilities
+## What Each Layer Holds
 
 ### Use Case Layer
 

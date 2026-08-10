@@ -7,6 +7,12 @@ All notable changes to the PFD book, newest first. Format:
 `0.x` versions were preview editions; `1.0.0` marked the first edition released to
 readers, and `1.x` are its maintenance and expansion releases.
 
+## [2.5.0] - 2026-08-10
+### Fixed
+- **The backward-measurement claim was too strong** (*Foundations*, both appendices). The book said the version-control history *does not lie* about how the system changes, and rested the measure-backward instrument on that. It does mislead, in one specific and correctable way: **co-change is partly endogenous** — files change together partly *because the current decomposition forces them to* — so raw co-change is downstream of the very structure it is being used to judge, and a decomposition that disagrees with the history may be indicting the history. The instrument survives with two adjustments, both formulation-level and neither requiring tooling: measure the co-change that **crosses a boundary**, where coupling indicates a misattribution whether the change was forced by the domain or induced by the structure; and treat restructurings as **natural experiments**, since co-change that survives a known restructure answers to a real driver, while co-change that vanishes with it was an artifact of the structure just removed. The claim gets narrower and the instrument gets sharper.
+### Added
+- **Where the criterion does not govern** (*Foundations*, both appendices). The change-driver criterion was stated as general while the Closing quietly bounded it, so the bound is now attached where the criterion is asserted rather than left to a later chapter. The Closing's scope band already excludes the domains that answer to deadlines, hardware budgets, memory access, or mathematics — hard real-time, embedded firmware, game engines, numerical pipelines — but two exceptions sit *inside* the band and went unnamed. A **trust boundary** can require splitting things that change together, because merging them by change attribution would be the vulnerability itself; there the boundary outranks cohesion. A **concern that co-changes with everything** — telemetry is the standard case — partitions nothing, because a driver that touches every use case selects no subset of them. Neither is a failure of the criterion; both are places where a different relation governs, and the honest move is to say which. The desk references carry the compressed form, so they do not teach the gap.
+
 ## [2.4.2] - 2026-08-02
 
 ### Fixed

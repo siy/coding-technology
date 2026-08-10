@@ -1,4 +1,15 @@
+---
+tags: [architecture, softwaredesign, programming, engineering]
+canonical_url: https://pragmatica.dev/articles/engineering-is-the-checkable-fraction
+description: Type inference has refused to guess for fifty years. Build systems learned it. Decomposition methods never did - feed them an underspecified system and you always get a diagram. Three clauses, what they forbid, and a definition of engineering stated as a ratio rather than a badge.
+published: true
+---
+
 # Engineering Is the Checkable Fraction of Your Practice
+
+**Craft externalizes nothing and transfers by apprenticeship. Engineering writes the governing relation down where someone else can find it wrong.**
+
+---
 
 Four times now I have written the same three sentences in different notations, for four problems
 that looked unrelated: a design method, a coding technology, an architecture-derivation procedure,
@@ -72,11 +83,11 @@ If a claimed application of this forbids none of the five, it is not an applicat
 Each of these stands on its own argument, worked out in full at the links. What they have in
 common is the third clause -- each one has an output that is not an answer.
 
-- [Process-First Design](https://pragmaticalabs.io/method/pfd/) decomposes by change driver, and
+- [Process-First Design](https://pragmatica.dev/method/pfd/) decomposes by change driver, and
   will not draw a boundary when the drivers are unknown.
-- [Java Backend Coding Technology](https://pragmaticalabs.io/java/jbct/) shapes test suites by the
+- [Java Backend Coding Technology](https://pragmatica.dev/java/jbct/) shapes test suites by the
   code property under test, and will not write a test whose only justification is coverage.
-- [Architecture Synthesis](https://pragmaticalabs.io/method/architecture-synthesis/) returns
+- [Architecture Synthesis](https://pragmatica.dev/method/architecture-synthesis/) returns
   *underdetermined* instead of a recommendation when the inputs do not support one.
 - A contract-modelling tool, built recently by someone working from the question "as a contract
   artifact, what could be better?" and almost none of the above, reports every fidelity loss
@@ -208,7 +219,7 @@ underdetermines. I am not ready to claim the broader version, because every inst
 change relation and one sentence of generalization is easy to write and hard to earn.
 
 If you work in one of these domains, or a fourth, the specific case is what I want:
-[/method/counterexamples/](https://pragmaticalabs.io/method/counterexamples/) takes one system,
+[/method/counterexamples/](https://pragmatica.dev/method/counterexamples/) takes one system,
 one derivation, and the place where the answer and reality parted ways.
 
 ## Lineage

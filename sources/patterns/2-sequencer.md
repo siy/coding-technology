@@ -54,7 +54,7 @@ The key characteristics here:
        .map(this::formatOutput);
    ```
 
-2. **Separation of Concerns**: Each step in the sequence can focus on a single responsibility
+2. **Separation of Concerns**: Each step in the sequence can focus on one operation
 
 3. **Composability**: Sequences can be composed of smaller sequences
 

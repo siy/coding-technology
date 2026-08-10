@@ -604,7 +604,7 @@ private Promise<Order> saveOrder(ChargedOrder charged) {
 
 **Line count:** ~20 lines. Business steps: 4. Ratio: 5:1.
 
-**Business logic visibility:** In the Coding Technology version, you can read the top-level method and immediately understand the business process. Each helper method has a single responsibility that matches a business concept. Technical mechanics (async, error handling) are encoded in types.
+**Business logic visibility:** In the Coding Technology version, you can read the top-level method and immediately understand the business process. Each helper method does one thing that matches a business concept. Technical mechanics (async, error handling) are encoded in types.
 
 ## The Compiler as Coordination Engine
 

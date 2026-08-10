@@ -27,19 +27,26 @@ Before reporting completion, you MUST:
    - Fully-qualified class names in method bodies (add the import instead)
    - `void` methods you wrote without `@Contract`; `return null` without `@NullReturn` (see Intent Annotations)
    - Predicate lambdas duplicating a `Verify.Is` catalog predicate (null/blank/length/range/regex checks)
-4. **Symmetry matrix check** — if the task touches N parallel variants (carriers like
+4. **Symmetry matrix check (parallel siblings)** — if the task touches N parallel variants (carriers like
    Result/Option/Promise, overload families, sibling test suites), enumerate the
    variant × obligation matrix (implementation, tests, javadoc) and verify EVERY cell is
    filled; report any cell intentionally left empty
-5. **Neighbor-skeleton check** — for every new member, locate the most similar existing member
+5. **Inverse-pair check** — if you implemented one direction of a pair (parse/render,
+   decode/encode, import/export, read/write, acquire/release), list the disciplines your side
+   carries — error reporting, loss records, validation, cleanup, exhaustiveness guards — and for
+   each one either carry the equivalent on the partner or record why not, in a comment at the
+   partner's declaration. **A stated reason is a complete answer; silence is not.** Do not build
+   an unrequested partner, or reporting machinery nobody asked for, to satisfy this check — the
+   point is that the asymmetry is deliberate and legible, not that it is absent.
+6. **Neighbor-skeleton check** — for every new member, locate the most similar existing member
    in the same file; replicate its javadoc boilerplate and structural conventions; adapt
    vocabulary to the carrier/file (no "success" wording on Option, no "waits"/async wording on
    synchronous carriers)
-6. **Run the narrowest test scope covering your changes** — must be green before reporting;
+7. **Run the narrowest test scope covering your changes** — must be green before reporting;
    include the counts in your report
-7. **Fix all violations found** — do not report them, fix them
-8. **Only then** return the file summary
-9. **Backreference to spec/plan** — if a spec, plan, or requirements document was provided:
+8. **Fix all violations found** — do not report them, fix them
+9. **Only then** return the file summary
+10. **Backreference to spec/plan** — if a spec, plan, or requirements document was provided:
    - Re-read the spec/plan
    - Verify every requirement is addressed in code
    - Confirm no shortcuts, omissions, or assumptions that deviate from spec
@@ -149,7 +156,7 @@ Every function implements exactly ONE of six patterns. The patterns come from th
 
 | Pattern | Purpose | Key Rule |
 |---------|---------|----------|
-| Leaf | Single atomic operation | 1 responsibility |
+| Leaf | Single atomic operation | No composition |
 | Sequencer | 2-5 dependent steps | Each step = Leaf or sub-pattern |
 | Fork-Join | Independent parallel ops | All inputs MUST be immutable |
 | Condition | Routing only | No transformation in condition itself |

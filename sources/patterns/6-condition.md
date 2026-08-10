@@ -528,7 +528,7 @@ private Sequencer<Order, Order> processStandardOrder(Order order) {
 
 1. **Clean Abstraction Levels**: Each method maintains a single level of abstraction
 2. **Improved Readability**: Breaking complex conditions into named functions clarifies intent
-3. **Better Testability**: Smaller functions with clear responsibilities are easier to test
+3. **Better Testability**: Smaller functions doing one thing each are easier to test
 4. **Reduced Complexity**: Function extraction prevents deep nesting of conditions
 5. **Enhanced Maintainability**: Changes to business logic are isolated to specific functions
 
@@ -582,6 +582,6 @@ private Result<ShipmentStatus> createFullBackorder(Order order) {
 }
 ```
 
-Thank you for pointing this out. This revision now properly maintains a single level of abstraction everywhere, including inside the `flatMap` operation. Each method has exactly one responsibility and implements a single pattern, making the code more maintainable and easier to reason about.
+Thank you for pointing this out. This revision now properly maintains a single level of abstraction everywhere, including inside the `flatMap` operation. Each method performs one operation and implements a single pattern, making the code more maintainable and easier to reason about.
 
 The key change was extracting the condition logic from inside the `flatMap` parameter into its own dedicated method `decideFulfillmentStrategy`, and further extracting the nested transformation in the partial shipment case to its own method `createBackorderForPartialShipment`. This way, each method follows the single level of abstraction principle.

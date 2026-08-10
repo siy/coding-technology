@@ -114,3 +114,28 @@ the announcement lands on the new front door. Course production is decoupled: th
 redesign can ship with JBCT course only (or even landing-first if the course slips —
 but the JBCT web edition cutover then waits for the course, since removal without
 replacement breaks the free-education promise).
+
+## Backlog 2026-08-10: prose rendering of a derived vector (`next-step` playground)
+
+The playground reports a vector as axis/value pairs (`topology: single deployable`,
+`substrate: direct`, `read_write: unified`, `state: current-state`, `persistence:
+single shared`). Values are the ledger's internal names — precise, and opaque to a
+reader who has not read Chapter 3.
+
+Add a **human-readable rendering** alongside the axis table: one sentence naming what
+the vector actually *is*. For the independent venue (the null vector), roughly —
+"a monolith with direct method invocation; the API can write then read on the same
+read/write path; state stored as-is in the database; one shared database."
+
+Notes for whoever picks this up:
+- Applies to any derived vector, not just the null one; the null vector is the clearest
+  example because every axis is at its cheapest position.
+- Scoped moves complicate it — an axis can hold different values at different scopes
+  (`booking` stays current-state while `pricing` goes event-sourced). The prose form
+  needs to say so rather than pick one.
+- Recovery has no null and is derived per effectful operation; it either gets its own
+  clause or stays in the table.
+- The phrasing is a *view* over the vector, never the artifact — the axis/value table
+  stays the thing that is checked and cited.
+
+Not scheduled. Ships whenever the next-step page is next touched.

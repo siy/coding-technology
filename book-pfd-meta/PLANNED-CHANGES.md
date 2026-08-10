@@ -394,7 +394,7 @@ From the DDD debate; each a short, named addition placed where it fits, not a ne
 - **Value object vs aggregate** `[PFD + JBCT]` — both encapsulate representation; the aggregate
   *additionally* absorbs policy and becomes multi-driver. Say it so PFD is not read as "rejects encapsulation."
 - **Additive vs modificative change** `[PFD]` — new behavior in PFD = *add* a use case (old paths
-  untouched, open-closed, risk-isolated); in the aggregate = *modify* the shared class. The safer-regression argument.
+  untouched, extended rather than modified, risk-isolated); in the aggregate = *modify* the shared class. The safer-regression argument.
 - **Derive, don't store** `[PFD -> JBCT/Aether]` — prefer deriving from authoritative facts over storing
   redundant state that can drift ("free" was never a column). Elevate the existing recomputable-value gate
   to a named principle; ties to "can't bribe a derivation."

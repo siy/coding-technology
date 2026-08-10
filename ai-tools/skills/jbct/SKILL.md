@@ -464,7 +464,7 @@ JBCT's six patterns come from the process side — the data dependency graph's o
 
 | Pattern | Role |
 |---------|------|
-| Leaf | Atomic operation, one responsibility |
+| Leaf | Atomic operation, no composition |
 | Sequencer | Dependent steps in order |
 | Fork-Join | Independent concurrent operations |
 | Condition | Routing, no transformation |
@@ -472,7 +472,7 @@ JBCT's six patterns come from the process side — the data dependency graph's o
 | Aspects | Cross-cutting concerns wrapping logic |
 
 ### 1. Leaf Pattern
-Atomic unit - single responsibility, no composition:
+Atomic unit - one operation, no composition:
 ```java
 public Promise<User> findUser(UserId id) {
     return Promise.lift(

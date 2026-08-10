@@ -24,7 +24,7 @@ Order optimized for funnel: pain → solution → practical → advanced → con
 | 9 | ⏳ | Jan 26, 2025 | Result\<Option\<T\>\> Pattern | `result-option-pattern.md` | 1,296 |
 | 10 | ⏳ | Jan 30, 2025 | Legacy Adoption Strategy | `legacy-adoption-strategy.md` | 1,441 |
 | 11 | ✅ | Aug 8, 2026 | Keep the Context Map. Replace the Aggregates. | `keep-the-context-map.md` | 1,644 |
-| 12 | ⏳ | Aug 10, 2026 | Engineering Is the Checkable Fraction of Your Practice | `engineering-is-the-checkable-fraction.md` | 2,155 |
+| 12 | ✅ | Aug 10, 2026 | Engineering Is the Checkable Fraction of Your Practice | `engineering-is-the-checkable-fraction.md` | 2,155 |
 
 ## Published URLs
 
@@ -41,7 +41,7 @@ Order optimized for funnel: pain → solution → practical → advanced → con
 | 9 | | |
 | 10 | | |
 | 11 | https://dev.to/siy/keep-the-context-map-replace-the-aggregates-1fj8 | https://medium.com/@sergiy-yevtushenko/keep-the-context-map-replace-the-aggregates-72f2da71b5f0 |
-| 12 | | |
+| 12 | https://dev.to/siy/engineering-is-the-checkable-fraction-of-your-practice-328m | https://medium.com/@sergiy-yevtushenko/engineering-is-the-checkable-fraction-of-your-practice-9af71d7da99f |
 
 ## Per-Article Checklist
 

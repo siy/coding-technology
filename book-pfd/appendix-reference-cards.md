@@ -64,7 +64,7 @@ Asynchrony **emerges from leaves** — any operation touching I/O is a `Promise`
 
 **A change driver is a reason code changes: a force that, when it moves, forces the code to move with it.** A boundary is right when everything inside changes for the same reason, and nothing outside changes for that reason.
 
-**Two ways to find it.** *Ask forward* — who or what would ask for this to change? Each independent decision authority is a driver. *Measure backward* — version-control history does not lie; files changing together share a driver, and cadence is a further tell.
+**Two ways to find it.** *Ask forward* — who or what would ask for this to change? Each independent decision authority is a driver. *Measure backward* — version-control history records how the system actually changed; files changing together share a driver, and cadence is a further tell. **Co-change is partly endogenous**, since the current structure forces some of it: measure the co-change that *crosses a boundary*, and trust the coupling that survives a known restructure.
 
 **The cohesion test, both directions at once:** does this one change force ***all*** of these, and ***only*** these, to change? (Completeness · Purity.)
 
@@ -73,6 +73,8 @@ Asynchrony **emerges from leaves** — any operation touching I/O is a `Promise`
 **The register** — a plain table, use case against driver. Triple duty: the grouping itself; the completeness-and-purity checklist; and what version-control history can confirm. A use case in two columns is a sighting, not an error — an adapter or a boundary.
 
 **Two cautions.** Similarity is not a change driver. And a cohesive unit may legitimately answer to more than one — cohesion is carrying exactly the drivers the job requires, not the fewest.
+
+**And two in-band limits.** A trust boundary can require splitting what changes together — there the boundary governs. A concern that co-changes with everything (telemetry) partitions nothing.
 
 *Convergent lineage:* Parnas (hide what is likely to change) · Löwy (decompose by what varies) · Loth (the Independent Variation Principle).
 

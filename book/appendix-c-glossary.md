@@ -50,7 +50,7 @@ A structural pattern for routing based on a discriminator value. Implemented wit
 
 ## D
 
-**Dependency Inversion**
+**Dependency Direction**
 Dependencies point toward abstractions, not implementations. In JBCT, use cases depend on step interfaces (abstractions), adapters implement them.
 
 **Domain Zone**

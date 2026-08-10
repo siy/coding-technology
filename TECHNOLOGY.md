@@ -35,7 +35,7 @@ Monadic Conventions
 Validation Model (parse, don’t validate)
 - Per‑field parsing: each field has a VO/Domain type with a static factory named after the type (lowerCamel): e.g., `email(String) -> Result<Email>`.
 - Optional fields: if presence is optional and validation may fail, factories return `Result<Option<T>>` (None = absent, Failure = invalid).
-- Aggregate input: define a validated internal type with two (or more) factories using chain‑of‑responsibility:
+- Aggregate input: define a validated internal type with two (or more) factories that delegate:
   - From raw input: parse per‑field VOs, then delegate to the component‑based factory.
   - From components: perform cross‑field checks, then construct; returns `Result<ValidRequest>`.
 - Cross‑field checks: break into small `Result<Unit>` checks and combine via `Result.all(...).map(_ -> this)` to get aggregated `CompositeCause`.

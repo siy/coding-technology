@@ -2179,7 +2179,7 @@ interface Result<T> {
 
 7. **Immutability**: The `Category` class is immutable with defensive copying.
 
-8. **Clear Class Responsibilities**:
+8. **What Each Class Handles**:
     - `CategoryParser`: Handles parsing JSON into domain objects
     - `Category`: Domain model with its own business logic
     - `ParseException`: Specific exception for parsing errors

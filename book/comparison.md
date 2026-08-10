@@ -69,7 +69,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
 ### What JBCT Keeps
 
-- Separation of concerns (different responsibility per layer)
+- Separation of concerns (each layer changes for different reasons)
 - Controllers at the boundary
 - Repository pattern for data access
 
@@ -138,7 +138,7 @@ public class JpaUserRepository implements UserRepository {
 - **Ports concept** → Step interfaces
 - **Adapters concept** → Adapter leaves
 - **Domain at center** → Use cases with pure business logic
-- **Dependency inversion** → Steps injected into use case factory
+- **Dependencies point at abstractions** → Steps injected into use case factory
 
 ### What JBCT Adds
 

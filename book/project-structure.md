@@ -293,14 +293,22 @@ public sealed interface ValidationUtils {
 ```
 
 **Key points:**
-- `sealed` marks the interface as a namespace rather than a type. It is an intent marker more than
-  a guard: interface static methods are not inherited, so `class X implements ValidationUtils {}`
-  gains X nothing in the first place. What sealing buys is that the intent is stated, not that a
-  harmful act is blocked.
+- **Less ceremony than a utility class.** A class needs `private ValidationUtils() {}` to stop
+  instantiation, `public static` on every method, and `public static final` on every constant. The
+  interface needs one placeholder record, `static` on methods, and a bare declaration for constants,
+  because interface members are implicitly public and interface fields implicitly `static final`.
+  The placeholder costs less than the private constructor it replaces, and the saving grows with
+  every member.
+- **`sealed` prevents the constant-interface antipattern.** Interface *fields are* inherited by
+  implementors, so without `sealed` a `class X implements ValidationUtils {}` pulls `PHONE_PATTERN`
+  into X's own namespace — the misuse *Effective Java* names. Static *methods* are not inherited, so
+  on a utility interface holding only methods `sealed` states intent rather than blocking anything;
+  the moment one constant appears it is a real guard. Seal them uniformly and the distinction never
+  has to be relitigated per file.
 - `unused` record satisfies the permit requirement every sealed type carries — without it the file
-  does not compile. The name is a compiler-forced placeholder and is exempt from the naming rules;
-  see *Compiler-Forced Declarations* in Basic Patterns.
-- No visibility modifiers needed (implicit `public`)
+  does not compile, failing with *sealed class must have subclasses*. The name is a compiler-forced
+  placeholder and is exempt from the naming rules; see *Compiler-Forced Declarations* in Basic
+  Patterns.
 
 ### Section Separation
 

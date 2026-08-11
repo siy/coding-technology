@@ -52,11 +52,21 @@ corpora disagreed, the corpora were right.
   own table runs about 9 of 13 in real use. The hand-written list is deleted rather than updated;
   the synced block is now the single source, and the new predicate rule is synced too rather than
   hand-copied.
-- **What `sealed` actually buys on a utility interface, stated honestly** (*Project Structure*).
-  The key points claimed it "prevents external implementation" — true, and close to worthless as
-  a guarantee, because interface static methods are not inherited, so implementing a utility
-  interface never gained the implementor anything. Sealing is an intent marker: it says *namespace,
-  not type*. The idiom is unchanged; only the justification is now accurate.
+- **Why the utility interface is worth its placeholder, stated with the actual numbers**
+  (*Project Structure*). The section asserted that utility interfaces replace utility classes
+  without saying what the trade buys. It buys more than it costs: a class needs a private
+  constructor, `public static` on every method and `public static final` on every constant, where
+  the interface needs one placeholder record and bare declarations, since interface members are
+  implicitly public and its fields implicitly `static final`. The saving grows with every member;
+  the placeholder is a fixed one-line cost.
+- **What `sealed` prevents, corrected** (*Project Structure*). The key points said it "prevents
+  external implementation" without saying what that was worth. It is worth more than it looks:
+  interface **fields are inherited** by implementors, so an unsealed utility interface lets
+  `class X implements ValidationUtils {}` pull `PHONE_PATTERN` into X's namespace — the
+  constant-interface antipattern. Static **methods** are not inherited, so on a methods-only
+  utility interface `sealed` states intent rather than blocking anything. Both halves are now
+  stated, along with the reason to seal uniformly anyway: the distinction then never has to be
+  relitigated per file.
 
 
 

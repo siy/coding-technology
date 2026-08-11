@@ -7,7 +7,47 @@ All notable changes to the JBCT book, newest first. Format:
 Earlier history (1.x–2.x) predates per-book changelogs and lives in the
 repository root `CHANGELOG.md`.
 
-## [4.4.0] - 2026-08-05
+## [4.5.0] - 2026-08-11
+
+A naming pass, driven by a grammar-based census of two real JBCT codebases (194 files) rather
+than by review. The measurement is what produced every entry below; where the book and the
+corpora disagreed, the corpora were right.
+
+### Changed
+- **The Zone-verb tables are illustrative, and now say so** (*Basic Patterns*, skill). They were
+  written as if closed, and the census found the enumerated verbs head roughly 1.4% of naming
+  contributions across both corpora — the vocabulary is overwhelmingly domain terms the list
+  could never contain. The tables stay, because the distinction needs something concrete to
+  stand on, but they are labelled representative and the reader is told a verb absent from both
+  lists is *unlisted, not wrong*. Ten verbs the tables never mentioned account for 419
+  occurrences between them.
+- **The zone, not the list, is stated as the constraint**, with the distinction that does the
+  work named explicitly: **Zone 2 names the intent, Zone 3 names the mechanism.** A step says
+  what the workflow needs to happen; a leaf says how it is done. This is what makes a Zone-3
+  verb on a step interface a defect rather than a style preference, and it is checkable without
+  consulting any table.
+- **The mixed-zone anti-pattern is promoted to the primary test**, from a footnote under the
+  tables. It is the part of the rule that catches real defects — it found two in the case-study
+  repository — and unlike table membership it does not depend on the list being complete.
+
+### Added
+- **`find`, `create`, `build`, and `insert` to the Zone 3 table** — the four highest-frequency
+  observed verbs the tables omitted (`create` alone occurs 175 times).
+- **Predicate naming** (*Basic Patterns*, skill): methods returning `boolean` take `is`, `has`,
+  or `can`, and that set is closed. 77 occurrences across the corpora follow this convention and
+  the book had never written it down. A predicate never takes a zone verb — `checkExpiry()`
+  returning `boolean` should be `isExpired()`.
+
+### Fixed
+- **The skill carried a second, larger, contradicting verb list.** `ai-tools/skills/jbct/SKILL.md`
+  held a hand-written 31-verb list (11 Zone 2, 20 Zone 3) twenty lines above the synced block
+  containing the book's 13, inherited from the external article the zone idea was adapted from
+  and never reconciled. Most of the census's "dead" verbs were its, not the book's — the book's
+  own table runs about 9 of 13 in real use. The hand-written list is deleted rather than updated;
+  the synced block is now the single source, and the new predicate rule is synced too rather than
+  hand-copied.
+
+
 
 A testing pass. Every change below came from implementing the book's own testing advice
 against real code and finding where it stopped giving answers -- the same method that

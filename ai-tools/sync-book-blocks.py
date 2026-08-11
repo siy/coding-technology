@@ -43,6 +43,12 @@ BLOCKS = [
         'dest': 'skills/jbct/SKILL.md',
     },
     {
+        'id': 'predicate-naming',
+        'source': '../book/basic-patterns.md',
+        'heading': '### Predicate Naming',
+        'dest': 'skills/jbct/SKILL.md',
+    },
+    {
         'id': 'test-naming',
         'source': '../book/basic-patterns.md',
         'heading': '### Test Naming',

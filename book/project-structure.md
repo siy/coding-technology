@@ -293,8 +293,13 @@ public sealed interface ValidationUtils {
 ```
 
 **Key points:**
-- `sealed` prevents external implementation
-- `unused` record satisfies permit requirement
+- `sealed` marks the interface as a namespace rather than a type. It is an intent marker more than
+  a guard: interface static methods are not inherited, so `class X implements ValidationUtils {}`
+  gains X nothing in the first place. What sealing buys is that the intent is stated, not that a
+  harmful act is blocked.
+- `unused` record satisfies the permit requirement every sealed type carries — without it the file
+  does not compile. The name is a compiler-forced placeholder and is exempt from the naming rules;
+  see *Compiler-Forced Declarations* in Basic Patterns.
 - No visibility modifiers needed (implicit `public`)
 
 ### Section Separation

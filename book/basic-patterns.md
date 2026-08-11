@@ -239,13 +239,16 @@ Maintaining "single level of abstraction" becomes mechanical when you think of y
 
 **Zone 2 (Orchestration Level)** - Coordinating steps that break down the goal:
 - Step interfaces in Sequencer/Fork-Join patterns
-- Verbs: `validate`, `process`, `handle`, `transform`, `apply`, `check`, `load`, `save`, `manage`, `configure`, `initialize`
+- Names the **intent** — what the workflow needs to happen
 - Examples: `ValidateInput.apply()`, `ProcessPayment.apply()`, `HandleNotification.apply()`
 
 **Zone 3 (Implementation Level)** - Concrete technical operations:
 - Business and adapter leaves
-- Verbs: `get`, `set`, `fetch`, `parse`, `calculate`, `convert`, `hash`, `format`, `encode`, `decode`, `extract`, `split`, `join`, `log`, `send`, `receive`, `read`, `write`, `add`, `remove`
+- Names the **mechanism** — how it is actually done
 - Examples: `hashPassword()`, `parseJson()`, `fetchFromDatabase()`, `calculateTax()`
+
+Representative verbs for each zone, and the test for catching a mixed one, are in *Naming
+Conventions* later in this chapter. The zone is the constraint; no list of verbs is closed.
 
 **The key insight:** Functions at each zone should only call functions from the same zone or one level down. Zone 2 functions call other Zone 2 steps or Zone 3 leaves. Zone 3 leaves perform atomic operations. This creates natural layering.
 

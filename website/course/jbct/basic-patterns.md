@@ -5,7 +5,7 @@ The three basic patterns - Leaf, Condition, Iteration - and mechanical rules for
 - When to extract functions (mechanical rules, not judgment calls)
 - Single level of abstraction
 - Leaf, Condition, Iteration
-- Zone-based naming conventions
+- Zone-based naming: the zone is the constraint, not a verb list
 
 ## note
 Most of your daily code is Leaf, Condition, and Iteration. Master these three before moving on to

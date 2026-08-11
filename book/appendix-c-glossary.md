@@ -217,7 +217,10 @@ A test double that returns predetermined values. In JBCT, typically lambdas impl
 ## T
 
 **Three Zones**
-JBCT's architectural model: External (outside systems), Adapter (boundary translation), Domain (pure business logic).
+JBCT's architectural model: External (outside systems), Adapter (boundary translation), Domain (pure business logic). Distinct from the Three-Zone Framework below, which numbers levels of abstraction rather than layers of architecture; the two share a name and answer different questions.
+
+**Three-Zone Framework**
+JBCT's abstraction-level model, used to keep a function at one level: Zone 1 is the use case entry point, Zone 2 is orchestration (step interfaces), Zone 3 is implementation (leaves). A function may call its own zone or one level down. Zone 2 names the *intent* of an operation, Zone 3 names the *mechanism* — which is why a step interface called `FetchUserData` is a defect and `LoadUserData` is not. Not the same as Three Zones above.
 
 **TimeSpan**
 Pragmatica Core's duration type. Created with fluent API: `TimeSpan.timeSpan(5).seconds()`.

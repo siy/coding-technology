@@ -67,6 +67,18 @@ corpora disagreed, the corpora were right.
   utility interface `sealed` states intent rather than blocking anything. Both halves are now
   stated, along with the reason to seal uniformly anyway: the distinction then never has to be
   relitigated per file.
+- **A second, contradicting verb list inside the book itself** (*Basic Patterns*, The Three-Zone
+  Framework). The 31 verbs the skill carried were not the skill's invention — they were copied from
+  this section, 390 lines above the naming tables, presented as `Verbs: ...` and reading as closed.
+  Removing the skill's copy therefore did not make the book single-source; two book sections still
+  disagreed. The inline lists are gone, replaced by what the zones actually mean — Zone 2 names the
+  intent, Zone 3 names the mechanism — with a pointer to *Naming Conventions* for representative
+  verbs.
+- **Two different things were both called "three zones"** (glossary, both editions). The
+  architectural model (External / Adapter / Domain) had a glossary entry; the abstraction-level
+  model (Zone 1 / 2 / 3) that the naming rules refer to had none, so a reader looking up "Zone 2"
+  found layers of architecture instead of levels of abstraction. Both are now defined and each
+  points at the other.
 
 
 

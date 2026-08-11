@@ -504,7 +504,11 @@ The methodology's organizing structure: the same vocabulary at successive scales
 *Defined in: PFD*
 
 **Three Zones** {#three-zones}
-JBCT's architectural model: [External](#external-zone) (outside systems), [Adapter](#adapter-zone) (boundary translation), [Domain](#domain-zone) (pure business logic).
+JBCT's architectural model: [External](#external-zone) (outside systems), [Adapter](#adapter-zone) (boundary translation), [Domain](#domain-zone) (pure business logic). Distinct from the [Three-Zone Framework](#three-zone-framework), which numbers levels of abstraction rather than layers of architecture — the two share a name and answer different questions.
+*Defined in: JBCT*
+
+**Three-Zone Framework** {#three-zone-framework}
+JBCT's abstraction-level model, used to keep a function at one level: **Zone 1** is the use case entry point, **Zone 2** is orchestration (step interfaces), **Zone 3** is implementation (leaves). A function may call its own zone or one level down. Zone 2 names the *intent* of an operation, Zone 3 names the *mechanism* — which is why a step interface called `FetchUserData` is a defect and `LoadUserData` is not. Not the same as the [Three Zones](#three-zones) architectural model.
 *Defined in: JBCT*
 
 **TimeSpan** {#timespan}

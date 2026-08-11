@@ -633,7 +633,19 @@ record ValidatedRequest(...)
 
 ### Zone-Based Naming Vocabulary
 
-**Zone 2 Verbs (Step Interfaces - Orchestration):**
+**The zone is the constraint; the verb lists below are illustrative, not exhaustive.** A name is
+correct when its verb matches the altitude it is declared at, not when it appears in a table. The
+tables name representative verbs for each zone so the distinction has something concrete to stand
+on — they were never meant as a closed vocabulary, and a census of real JBCT codebases found the
+majority of production method names heading verbs no list contained.
+
+The distinction that does the work is this: **Zone 2 names the intent, Zone 3 names the mechanism.**
+A step interface says *what the workflow needs to happen*; a leaf says *how it is done*. `LoadUser`
+is a step because loading is the intent; `fetchFromDatabase` and `findByEmail` are leaves because
+fetching over a network and searching an index are mechanisms. This is why the anti-pattern below
+is a real defect rather than a style preference.
+
+**Zone 2 verbs (step interfaces — orchestration), representative:**
 
 | Verb | When to Use | Example |
 |------|-------------|---------|
@@ -644,17 +656,42 @@ record ValidatedRequest(...)
 | `save` | Persisting changes | `SaveOrder` |
 | `check` | Verifying conditions | `CheckInventory` |
 
-**Zone 3 Verbs (Leaves - Implementation):**
+**Zone 3 verbs (leaves — implementation), representative:**
 
 | Verb | Typical Use | Example |
 |------|-------------|---------|
 | `get` | Retrieve a value | `getTimestamp()` |
 | `fetch` | Pull from external source | `fetchWeatherData()` |
+| `find` | Search for a value that may be absent | `findByEmail()` |
 | `parse` | Break down structured input | `parseJson()` |
 | `calculate` | Perform computation | `calculateTax()` |
+| `create` | Construct a value from parts | `createInvoice()` |
+| `build` | Assemble a value incrementally | `buildQuery()` |
+| `insert` | Write a new row or entry | `insertPayment()` |
 | `hash` | Cryptographic transformation | `hashPassword()` |
 | `format` | Build structured output | `formatDate()` |
 | `send` | Transmit over network | `sendEmail()` |
+
+**The primary test — do not mix zones.** A step interface that uses a Zone 3 verb has named a
+mechanism where it owed an intent, and the mismatch is checkable without consulting any list: a step
+interface named `FetchUserData` should be `LoadUserData`, because `fetch` commits the orchestration
+layer to *how* the data arrives. This test catches real defects. Absence from a table does not — a
+verb missing from both lists is unlisted, not wrong.
+
+### Predicate Naming
+
+Methods returning `boolean` take an `is`, `has`, or `can` prefix, and the set is closed — these
+three, no others:
+
+```java
+boolean isExpired()        // state of the receiver
+boolean hasBalance()       // possession of a part or property
+boolean canWithdraw()      // permission or capability
+```
+
+The prefix says which question is being asked, so a caller reading `if (account.canWithdraw())`
+knows a permission is being checked rather than a state inspected. Predicates never take a verb from
+the zone tables: `checkExpiry()` returning `boolean` should be `isExpired()`.
 
 ### Acronym Naming
 

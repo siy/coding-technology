@@ -693,6 +693,22 @@ The prefix says which question is being asked, so a caller reading `if (account.
 knows a permission is being checked rather than a state inspected. Predicates never take a verb from
 the zone tables: `checkExpiry()` returning `boolean` should be `isExpired()`.
 
+### Compiler-Forced Declarations
+
+Some declarations exist only to satisfy the language and say nothing about the domain. The naming
+rules do not reach them, and inventing a meaningful name for one is worse than leaving it
+conspicuously empty.
+
+The case this book uses is the utility interface's placeholder (see *Project Structure*). A `sealed`
+type must have at least one permitted subtype — `sealed interface Foo {}` alone does not compile,
+it fails with *sealed class must have subclasses* — so a namespace of static methods declares
+`record unused() implements Foo {}` in order to compile at all. `unused` is the canonical name for
+it. It is lowercase, it is not a domain concept, and it should stay easy to skip: a reader who meets
+`record unused()` should recognise the idiom and move on.
+
+**The test is whether the declaration would survive a change of language.** If it is there because
+of the compiler rather than because of the business, it is outside the naming rules.
+
 ### Acronym Naming
 
 Treat acronyms as normal words in camelCase, not all-uppercase. This makes identifiers flow smoothly and read faster.

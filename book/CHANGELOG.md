@@ -37,6 +37,12 @@ corpora disagreed, the corpora were right.
   or `can`, and that set is closed. 77 occurrences across the corpora follow this convention and
   the book had never written it down. A predicate never takes a zone verb — `checkExpiry()`
   returning `boolean` should be `isExpired()`.
+- **Compiler-forced declarations are outside the naming rules** (*Basic Patterns*). The census
+  flagged the utility interface's `record unused()` placeholder as a name fitting no convention,
+  which is correct and is the point: a `sealed` type must have a permitted subtype or it does not
+  compile, so the record exists to satisfy javac and says nothing about the domain. `unused` is
+  named as the canonical form, and the general test is stated — if a declaration would not survive
+  a change of language, the naming rules do not reach it.
 
 ### Fixed
 - **The skill carried a second, larger, contradicting verb list.** `ai-tools/skills/jbct/SKILL.md`
@@ -46,6 +52,11 @@ corpora disagreed, the corpora were right.
   own table runs about 9 of 13 in real use. The hand-written list is deleted rather than updated;
   the synced block is now the single source, and the new predicate rule is synced too rather than
   hand-copied.
+- **What `sealed` actually buys on a utility interface, stated honestly** (*Project Structure*).
+  The key points claimed it "prevents external implementation" — true, and close to worthless as
+  a guarantee, because interface static methods are not inherited, so implementing a utility
+  interface never gained the implementor anything. Sealing is an intent marker: it says *namespace,
+  not type*. The idiom is unchanged; only the justification is now accurate.
 
 
 

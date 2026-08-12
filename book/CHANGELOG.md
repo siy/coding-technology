@@ -80,7 +80,7 @@ corpora disagreed, the corpora were right.
   found layers of architecture instead of levels of abstraction. Both are now defined and each
   points at the other.
 
-
+## [4.4.0] - 2026-08-05
 
 A testing pass. Every change below came from implementing the book's own testing advice
 against real code and finding where it stopped giving answers -- the same method that

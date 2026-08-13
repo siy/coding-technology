@@ -179,9 +179,9 @@ class UserLoginTest {
 
 This tests **real behavior**: validation -> credentials -> status -> token, with error propagation.
 
-### Two rules the examples in this book follow
+### Three rules the examples in this book follow
 
-Both are visible in the worked examples, and neither is obvious enough to leave unstated.
+All three are visible in the worked examples, and none is obvious enough to leave unstated.
 
 **Assert on the outcome, except when the effect is invisible in it.**
 
@@ -214,6 +214,40 @@ remaining steps -- and one test establishes it. The rest of the input space belo
 the vectors are cheap, which is the isolated level. Splitting them that way costs one test
 and buys the whole space; testing the space at the composition costs a full assembly per
 vector, and every failure names the use case rather than the rule.
+
+**Four facts live at the composition, and nothing else does.**
+
+The rule above says the composition adds one fact about validation. Asked in general -- which
+facts does a composition establish that no leaf test can? -- the answer is four kinds, and they
+were the same four in every use case examined while writing this section:
+
+- **The success path.** The steps are wired in the intended order and the response is assembled
+  from what they returned.
+- **The validation failure.** Malformed input is rejected before any step runs.
+- **Each I/O failure, separately.** A step that reaches outside the process can be unavailable,
+  and each such step is its own case: a use case that loads an account and then persists a
+  payment owes two tests, not one.
+- **Each absorbed failure.** Where a step's failure is deliberately dropped -- BER, FER, or
+  design-out, from [The Recovery Triple](null-policy-recovery.md) -- the absorption leaves no
+  trace in the response, which by the first rule above is precisely when to assert on the call.
+
+Everything else belongs to the leaf, and two candidates that look like composition obligations
+are worth naming because they are not:
+
+**Failure propagation, step by step.** It is tempting to test that a failure at step four
+prevents step five, and then to do it for every step. But short-circuiting is `flatMap`'s
+behavior, established once by the library, not a fact about your use case. What the composition
+can get wrong is the wiring -- a step omitted, `map` where `flatMap` was meant -- and the success
+path already catches that.
+
+**The content of a step's failure.** If a step can fail only by delegating to a rule, test the
+rule. Assert that the disbursement rules reject a bad principal; do not assert that their
+rejection travels up the chain.
+
+One shape rules itself out. A step whose every return is `.success(...)` is not fallible at all,
+and its failure test cannot be written. That is a return-kind violation rather than a missing
+test -- the signature claims a contract the body does not have, and the fix is to return the
+plain value and chain it with `map`.
 
 ---
 

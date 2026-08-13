@@ -7,6 +7,46 @@ All notable changes to the JBCT book, newest first. Format:
 Earlier history (1.x–2.x) predates per-book changelogs and lives in the
 repository root `CHANGELOG.md`.
 
+## [4.6.0] - 2026-08-13
+
+A second testing pass, and the first derived from reading other people's finished suites rather
+than from writing new ones. Seven use cases were read end to end across three codebases — a loan
+slice, a ticketing system, and a multi-module loan processor — comparing the obligations a
+composition's structure implies against the tests that actually exist.
+
+### Added
+- **Four facts live at the composition** (*Testing Philosophy*, third rule). The existing second
+  rule said a composition adds exactly one fact about validation; asked in general, the answer is
+  four kinds, and they were the same four in all seven use cases: the success path, the validation
+  failure, **each** I/O failure separately, and **each** absorbed failure. The two per-each clauses
+  are the ones suites short-change — a use case that loads an account and then persists a payment
+  owes two I/O tests, and five of the seven suites examined got that right while two did not.
+  Absorbed failures tie back to the first rule: a dropped failure leaves no trace in the response,
+  which is exactly the condition under which that rule calls for an interaction assertion.
+- **The obligation checklist** (*Testing in Practice*, use-case coverage). The operational form:
+  walk the chain, check off four rows, note which are per-step. Stated as what the 90% figure
+  should be *made of*, since a percentage reports how much ran, not whether the right things were
+  established.
+
+### Changed
+- **Two candidates are named as *not* composition obligations**, because both look like duties and
+  neither is. Testing that a failure at step four stops step five tests `flatMap`, which the
+  library establishes once; what a composition can actually get wrong is its wiring, and the
+  success path already catches that. And the *content* of a step's failure belongs to the rule that
+  produces it — assert that the disbursement rules reject a bad principal, not that the rejection
+  travels up the chain. Measured against real suites, the mechanical expansion of one failure test
+  per step would have produced roughly twice as many tests as anyone wanted.
+- **A step that cannot fail is a return-kind violation, not a missing test** (*Testing Philosophy*).
+  A method returning `Promise<T>` whose every return is `.success(...)` is neither fallible nor
+  asynchronous; its failure test cannot be written at all. The signature is claiming a contract the
+  body does not have, and the fix is a plain return value chained with `map`. Found in real code
+  while reading the sample.
+
+**Scope.** Seven use cases, three codebases, all written by or under the direction of this book's
+author. The rule survived contact with all seven and found genuine gaps in two of them, which is
+evidence it is not trivial — but it has not yet met a stranger's code, and that is the test that
+would make it general.
+
 ## [4.5.0] - 2026-08-11
 
 A naming pass, driven by a grammar-based census of two real JBCT codebases (194 files) rather

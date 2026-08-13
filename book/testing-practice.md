@@ -228,6 +228,40 @@ class RegisterUserTest {
 
 **Why 90%+?** Use cases are the behavior. Incomplete coverage = incomplete understanding.
 
+**What the number should be made of.** A percentage says how much was executed, not whether the
+right things were established. Walk the composition chain and check off four items, which is the
+operational form of *four facts live at the composition* from [Testing Philosophy](testing-philosophy.md):
+
+| Obligation | One per | Present when |
+|---|---|---|
+| Success path | use case | the chain runs end to end and the response is assembled |
+| Validation failure | use case | malformed input is rejected before any step runs |
+| I/O failure | **each** step reaching outside the process | that step is unavailable and the use case says so |
+| Absorbed failure | **each** dropped failure | the drop is asserted on the call, since it leaves no trace in the response |
+
+The two "per each" rows are the ones most often short-changed. A use case that loads an account
+and then persists a payment has two I/O obligations, and covering one of them is not covering
+both:
+
+```java
+class ProcessRepaymentTest {
+    @Test void execute_succeeds_forRegularPayment() { }        // success path
+
+    @Test void execute_fails_forNegativePayment() { }          // validation
+    @Test void execute_fails_forZeroPayment() { }
+
+    @Test void execute_fails_whenAccountNotFound() { }         // I/O #1 -- the load
+    @Test void execute_fails_whenPersistenceFails() { }        // I/O #2 -- the write
+
+    // ... plus the domain behavior that belongs here rather than at a leaf
+}
+```
+
+What is **not** on the list is as important. Do not add a failure test per step: short-circuiting
+belongs to `flatMap` and the failure's content belongs to the rule that produces it. A chain of
+nine steps does not owe nine failure tests -- the one above owes four, and the rest of its suite
+earns its place by testing behavior, not plumbing.
+
 **4. Adapters: Success + Error Modes (Contract Tests)**
 
 ```java

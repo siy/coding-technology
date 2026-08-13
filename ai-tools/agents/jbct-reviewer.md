@@ -55,6 +55,25 @@ For each method:
 For each Fork-Join:
 - All inputs immutable? No shared mutable state?
 
+### Recovery Checks
+
+For each step in a composition chain:
+
+- **Does a step claim to fail when it cannot?** A method returning `Promise<T>` or `Result<T>` whose
+  every return is `.success(...)`, with no failure construct and no delegation to a fallible call,
+  is a **return-kind violation** (Critical) — the return type is the contract, and it is claiming
+  *fallible* (and for `Promise`, *asynchronous*) when it is neither. Fix: return plain `T`, chain
+  with `.map`. Do not misread a method that delegates to a fallible call and `.async()`-lifts it —
+  that one really is fallible.
+- **Does an absorbed failure say why?** A `.recover(...)` or swallowing `.onFailure(...)` drops a
+  failure the caller never sees. The site must name its recovery strategy from the triple — **BER**
+  (compensate by inverse), **FER** (degrade forward), **design-out** — and state the guarantee that
+  earns and the mechanism behind it. Absorption *without* a stated justification is the defect;
+  absorption itself is not. Never flag a `.recover` that carries the reasoning.
+- **Is the absorbed path tested?** When a failure is absorbed it is invisible in the outcome, which
+  is exactly the case where the book's rule calls for an interaction assertion rather than a result
+  assertion.
+
 ### Symmetry Checks
 
 Two independent axes. Both ask *this discipline exists here — where else must it exist?*, but they catch different defects. Run both.

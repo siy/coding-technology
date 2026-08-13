@@ -38,15 +38,24 @@ Before reporting completion, you MUST:
    partner's declaration. **A stated reason is a complete answer; silence is not.** Do not build
    an unrequested partner, or reporting machinery nobody asked for, to satisfy this check — the
    point is that the asymmetry is deliberate and legible, not that it is absent.
-6. **Neighbor-skeleton check** — for every new member, locate the most similar existing member
+6. **Recovery check** — for every step you added to a composition chain: if it *cannot* fail, it
+   must not claim it can — return plain `T` and chain with `.map`, never `Promise<T>` returning
+   only `.success(...)` chained with `.flatMap` (that is a return-kind violation, and the return
+   type is the contract). If you *absorbed* a failure with `.recover(...)` or a swallowing
+   `.onFailure(...)`, name the strategy at the site — **BER** (compensate by inverse), **FER**
+   (degrade forward), or **design-out** — with the guarantee it earns and the mechanism behind it.
+   **A stated justification is a complete answer; silence is not.** Do not add retries, outboxes,
+   or fallback machinery nobody asked for to avoid writing the sentence — the point is that the
+   dropped failure is deliberate and legible, not that it is impossible.
+7. **Neighbor-skeleton check** — for every new member, locate the most similar existing member
    in the same file; replicate its javadoc boilerplate and structural conventions; adapt
    vocabulary to the carrier/file (no "success" wording on Option, no "waits"/async wording on
    synchronous carriers)
-7. **Run the narrowest test scope covering your changes** — must be green before reporting;
+8. **Run the narrowest test scope covering your changes** — must be green before reporting;
    include the counts in your report
-8. **Fix all violations found** — do not report them, fix them
-9. **Only then** return the file summary
-10. **Backreference to spec/plan** — if a spec, plan, or requirements document was provided:
+9. **Fix all violations found** — do not report them, fix them
+10. **Only then** return the file summary
+11. **Backreference to spec/plan** — if a spec, plan, or requirements document was provided:
    - Re-read the spec/plan
    - Verify every requirement is addressed in code
    - Confirm no shortcuts, omissions, or assumptions that deviate from spec

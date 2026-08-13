@@ -49,6 +49,12 @@ BLOCKS = [
         'dest': 'skills/jbct/SKILL.md',
     },
     {
+        'id': 'recovery-triple',
+        'source': '../book/null-policy-recovery.md',
+        'heading': '## The Recovery Triple: BER, FER, Design-Out',
+        'dest': 'skills/jbct/SKILL.md',
+    },
+    {
         'id': 'test-naming',
         'source': '../book/basic-patterns.md',
         'heading': '### Test Naming',

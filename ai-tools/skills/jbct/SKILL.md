@@ -600,6 +600,38 @@ Result.lift(
 );
 ```
 
+## Recovery: What To Do When A Step Fails
+
+**Absorbing a failure requires saying why.** A `.recover(...)` or swallowing `.onFailure(...)` in a
+composition drops a failure the caller will never see, so the site must name which recovery strategy
+it is using and what guarantee that earns. Absorption without a stated justification is the defect —
+not absorption itself.
+
+```java
+// FER: the buy is already committed by the time the fact is published, so a publish failure is
+// swallowed rather than reported to a buyer who has been charged. Guarantee earned: the response
+// is truthful about the purchase, not about the fact. Mechanism: a single attempt -- no retry and
+// no outbox, so a lost fact leaves downstream projections stale until the next fact or an
+// operator re-drive.
+private Promise<Response> publishSold(Confirmation confirmation) {
+    return seatSold.publish(confirmation.fact())
+                   .recover(_ -> Unit.unit())
+                   .map(_ -> confirmation.response());
+}
+```
+
+Name the triple, the guarantee, and the mechanism. The rule and its vocabulary are book-owned:
+
+<!-- book:recovery-triple -->
+The patterns above answer "this operation failed — what value do I return instead?" A harder question sits one level up: a step fails *after earlier steps already changed state* — a seat is held, an authorization placed — and that state is now invalid. There are exactly three responses, and naming all three keeps the choice deliberate instead of defaulting to the first.
+
+- **BER — Backward Error Recovery.** Series long name: *compensate-by-inverse*. Undo by an inverse action: release the held seat, void the authorization, reverse the ledger entry. The classic rollback or saga shape. Reach for it when the change is reversible and correctness demands the system look as if nothing happened — money, inventory.
+- **FER — Forward Error Recovery.** Series long name: *degrade-and-continue*. Do not undo; continue with degraded state. Queue a confirmation email for retry while the booking stands; let a cached value decay `fresh -> stale -> expired` rather than fail outright. The `.or(...)` and graceful-degradation patterns above are FER. Reach for it when forward progress is worth more than perfect consistency — telemetry, notifications, optional enrichment.
+- **Design-out.** Change the model so the invalidation cannot arise: a reservation type where two bookings of one seat is structurally impossible; an idempotent write safe to repeat; an append-only log corrected by appending. The failure mode is removed rather than handled — the strongest option, when the model permits it.
+
+Which applies is a judgment — reversibility, the value of partial progress, the domain's shape, coordination cost — and mixed strategies are normal: one booking flow can use BER for the payment, FER for the confirmation email, and design-out for the seat model, all at once. Name the triple for each step that changes state, and recovery becomes a design decision rather than an afterthought.
+<!-- /book:recovery-triple -->
+
 ## Naming Conventions
 
 - **Factory methods**: `TypeName.typeName(...)` (lowercase-first)

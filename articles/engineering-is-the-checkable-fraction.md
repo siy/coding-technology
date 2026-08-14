@@ -1,5 +1,6 @@
 ---
 tags: [architecture, softwaredesign, programming, engineering]
+canonical_url: https://pragmatica.dev/articles/engineering-is-the-checkable-fraction
 description: Type inference has refused to guess for fifty years. Build systems learned it. Decomposition methods never did - feed them an underspecified system and you always get a diagram. Three clauses, what they forbid, and a definition of engineering stated as a ratio rather than a badge.
 published: true
 ---

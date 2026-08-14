@@ -531,6 +531,39 @@ const LANDING_PAGES = [
       { href: '/method/architecture-synthesis/course/', label: 'Architecture Synthesis course', note: 'back to contents' },
       { href: '/method/architecture-synthesis/reference/', label: 'Reference cards', note: 'the method as a deck' }
     ]
+  },
+  {
+    src: 'website/content/articles.md', out: 'articles/index.html', fallbackTitle: 'Articles',
+    crumb: crumbTop('Articles'), nav: '',
+    description: 'Shorter pieces from Pragmatica Labs: each takes a single argument from the books and works it out at article length. The canonical copies live here.',
+    related: [
+      { href: '/method/', label: 'The Method', note: 'the books behind the arguments' },
+      { href: '/java/', label: 'The Java Realization', note: 'how it is written in code' }
+    ]
+  },
+  {
+    src: 'articles/engineering-is-the-checkable-fraction.md', out: 'articles/engineering-is-the-checkable-fraction/index.html',
+    fallbackTitle: 'Engineering Is the Checkable Fraction of Your Practice',
+    crumb: crumbSub('/articles/', 'Articles', 'The Checkable Fraction'), nav: '',
+    related: [{ href: '/articles/', label: 'All articles', note: 'back to the list' }]
+  },
+  {
+    src: 'articles/keep-the-context-map.md', out: 'articles/keep-the-context-map/index.html',
+    fallbackTitle: 'Keep the Context Map. Replace the Aggregates.',
+    crumb: crumbSub('/articles/', 'Articles', 'Keep the Context Map'), nav: '',
+    related: [{ href: '/articles/', label: 'All articles', note: 'back to the list' }]
+  },
+  {
+    src: 'articles/every-test-can-name-why-it-exists.md', out: 'articles/every-test-can-name-why-it-exists/index.html',
+    fallbackTitle: 'Every Test Can Name Why It Exists',
+    crumb: crumbSub('/articles/', 'Articles', 'Every Test Can Name Why It Exists'), nav: '',
+    related: [{ href: '/articles/', label: 'All articles', note: 'back to the list' }]
+  },
+  {
+    src: 'articles/pattern-based-code-review-article-v2.md', out: 'articles/pattern-based-code-review/index.html',
+    fallbackTitle: 'From Subjective Opinions to Systematic Analysis: Pattern-Based Code Review',
+    crumb: crumbSub('/articles/', 'Articles', 'Pattern-Based Code Review'), nav: '',
+    related: [{ href: '/articles/', label: 'All articles', note: 'back to the list' }]
   }
 ];
 
@@ -773,6 +806,8 @@ function buildRedirects() {
   lines.push('/book/appendix-a-api-reference.html /java/jbct/reference/ 301');
   lines.push('/book/appendix-b-exercises.html /java/jbct/course/ 301');
   lines.push('/book/appendix-c-glossary.html /method/glossary/ 301');
+  // Article #1 was published with a canonical_url lacking the /articles/ prefix; honour it.
+  lines.push('/pattern-based-code-review /articles/pattern-based-code-review/ 301');
   lines.push('/book/index.html /java/jbct/course/ 301');
   lines.push('/book/CHANGELOG.html /java/jbct/course/ 301');
   lines.push('/book/chapter-summaries.html /java/jbct/course/ 301');

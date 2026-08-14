@@ -1,9 +1,8 @@
 ---
-title: "Why Interface + Factory? The Java Pattern That Makes Everything Replaceable"
 tags: [java, architecture, design-patterns, functional-programming]
 canonical_url: https://pragmatica.dev/articles/interface-factory-pattern
-published: true
 description: "Interfaces with static factory methods aren't just convention. They make implementations disposable, testing trivial, and coupling impossible."
+published: true
 ---
 
 # Why Interface + Factory? The Java Pattern That Makes Everything Replaceable

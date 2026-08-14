@@ -564,6 +564,54 @@ const LANDING_PAGES = [
     fallbackTitle: 'From Subjective Opinions to Systematic Analysis: Pattern-Based Code Review',
     crumb: crumbSub('/articles/', 'Articles', 'Pattern-Based Code Review'), nav: '',
     related: [{ href: '/articles/', label: 'All articles', note: 'back to the list' }]
+  },
+  {
+    src: 'articles/jbdt-process-first-methodology.md', out: 'articles/jbdt-process-first-methodology/index.html',
+    fallbackTitle: 'Java Backend Design Technology: A Process-First Methodology',
+    crumb: crumbSub('/articles/', 'Articles', 'Java Backend Design Technology'), nav: '',
+    related: [{ href: '/articles/', label: 'All articles', note: 'back to the list' }]
+  },
+  {
+    src: 'articles/no-framework-no-pain.md', out: 'articles/no-framework-no-pain/index.html',
+    fallbackTitle: 'No Framework, No Pain: Writing Aether Slices',
+    crumb: crumbSub('/articles/', 'Articles', 'No Framework, No Pain'), nav: '',
+    related: [{ href: '/articles/', label: 'All articles', note: 'back to the list' }]
+  },
+  {
+    src: 'articles/aether-let-java-be-java.md', out: 'articles/aether-let-java-be-java/index.html',
+    fallbackTitle: 'Pragmatica Aether: Let Java Be Java',
+    crumb: crumbSub('/articles/', 'Articles', 'Let Java Be Java'), nav: '',
+    related: [{ href: '/articles/', label: 'All articles', note: 'back to the list' }]
+  },
+  {
+    src: 'articles/interface-factory-pattern.md', out: 'articles/interface-factory-pattern/index.html',
+    fallbackTitle: 'Why Interface + Factory? The Java Pattern That Makes Everything Replaceable',
+    crumb: crumbSub('/articles/', 'Articles', 'Interface + Factory'), nav: '',
+    related: [{ href: '/articles/', label: 'All articles', note: 'back to the list' }]
+  },
+  {
+    src: 'articles/fail-safe-legacy.md', out: 'articles/fail-safe-legacy/index.html',
+    fallbackTitle: 'Fail-Safe Your Legacy Java in One Sprint',
+    crumb: crumbSub('/articles/', 'Articles', 'Fail-Safe Your Legacy Java'), nav: '',
+    related: [{ href: '/articles/', label: 'All articles', note: 'back to the list' }]
+  },
+  {
+    src: 'articles/slices.md', out: 'articles/slices/index.html',
+    fallbackTitle: 'Slices: The Right Size for Microservices',
+    crumb: crumbSub('/articles/', 'Articles', 'Slices'), nav: '',
+    related: [{ href: '/articles/', label: 'All articles', note: 'back to the list' }]
+  },
+  {
+    src: 'articles/six-patterns-that-cover-everything.md', out: 'articles/six-patterns-that-cover-everything/index.html',
+    fallbackTitle: 'The Six Patterns That Cover Everything',
+    crumb: crumbSub('/articles/', 'Articles', 'The Six Patterns'), nav: '',
+    related: [{ href: '/articles/', label: 'All articles', note: 'back to the list' }]
+  },
+  {
+    src: 'articles/underlying-process.md', out: 'articles/underlying-process/index.html',
+    fallbackTitle: 'The Underlying Process of Request Processing',
+    crumb: crumbSub('/articles/', 'Articles', 'The Underlying Process'), nav: '',
+    related: [{ href: '/articles/', label: 'All articles', note: 'back to the list' }]
   }
 ];
 

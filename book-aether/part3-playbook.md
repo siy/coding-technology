@@ -1295,18 +1295,30 @@ and asks nothing of your code beyond purity of the single mutator.
 Operations fail in a typed channel, like every Aether resource:
 
 ```java
-public sealed interface EntityCause extends Cause {
-    record EntityAlreadyExists(String key) implements EntityCause {}
-    record EntityNotFound(String key)      implements EntityCause {}
-    record EntityTerminated(String key)    implements EntityCause {}
-    record StaleOwnerEpoch(String key)     implements EntityCause {}
-    record EntityNotTerminal(String key)   implements EntityCause {}
-    record TimerNotFound(String key, DurableEntity.TimerToken token) implements EntityCause {}
+public sealed interface EntityError extends Cause {
+    String key();   // every variant names the offending key
+
+    record EntityAlreadyExists(String key) implements EntityError {}
+    record EntityNotFound(String key) implements EntityError {}
+    record TimerNotFound(String key, DurableEntity.TimerToken token) implements EntityError {}
+    record TimerNotSupported(String key) implements EntityError {}
+    record StaleOwnerEpoch(String key, String presentedEpoch) implements EntityError {}
+    record StorageFailed(String key, Cause cause) implements EntityError {}
+    record NotCurrentOwner(String key, String committedOwner) implements EntityError {}
+    record OwnershipNotYetCommitted(String key, String keyspace, int partition) implements EntityError {}
+    record StaleEpochRead(String key, String presentedEpoch, String highWaterEpoch) implements EntityError {}
+    record LinearizableUnavailable(String key) implements EntityError {}
 }
 ```
 
 `StaleOwnerEpoch` is the one to recognize: it is the fence speaking, and it is transient. It means a
 handover was in flight, the runtime retries against the new owner, and the author rarely sees it.
+
+> _Not yet available: there is no terminal-state predicate on the entity, and so no typed failure
+> for operating on a finished entity or for collecting one that is not finished. Earlier drafts of
+> this listing carried `EntityTerminated` and `EntityNotTerminal`; neither is implemented, and
+> neither is shown above because a sealed interface's variants are exhaustive — a `switch` over
+> `EntityError` must match the ten above and nothing else._
 
 One observation pays off immediately. A fenced single writer per key is a lease. If a slice needs a
 distributed lock, a leader for some resource, or a guarantee that only one worker touches an account

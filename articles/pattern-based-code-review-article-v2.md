@@ -1,6 +1,6 @@
 ---
 tags: [codereview, java, patterns, bestpractices]
-canonical_url: https://pragmatica.dev/pattern-based-code-review
+canonical_url: https://pragmatica.dev/articles/pattern-based-code-review
 description: How structural patterns transform code review from art into engineering
 published: true
 ---
@@ -142,41 +142,51 @@ Once you recognize a function's pattern, you apply pattern-specific review crite
 
 ### Reviewing a Leaf
 
-- **Single Responsibility** -- Does it do exactly one thing?
-- **Purity (Business)** -- No side effects? Same inputs -> same output?
-- **Error Handling (Adapter)** -- Are low-level exceptions wrapped in domain exceptions?
-- **Naming** -- Does the name describe the transformation?
-- **Size** -- Small enough to understand at a glance?
+| Check | Question |
+|-------|----------|
+| **Single Responsibility** | Does it do exactly one thing? |
+| **Purity (Business)** | No side effects? Same inputs -> same output? |
+| **Error Handling (Adapter)** | Are low-level exceptions wrapped in domain exceptions? |
+| **Naming** | Does the name describe the transformation? |
+| **Size** | Small enough to understand at a glance? |
 
 ### Reviewing a Sequencer
 
-- **Step Count** -- 2-5 steps? (More suggests extraction needed)
-- **Dependency** -- Does each step genuinely depend on the previous?
-- **Single Pattern** -- No hidden Fork-Join or Condition inside steps?
-- **Abstraction Level** -- Are all steps at the same abstraction level?
-- **Error Flow** -- Is it clear what happens when each step fails?
+| Check | Question |
+|-------|----------|
+| **Step Count** | 2-5 steps? (More suggests extraction needed) |
+| **Dependency** | Does each step genuinely depend on the previous? |
+| **Single Pattern** | No hidden Fork-Join or Condition inside steps? |
+| **Abstraction Level** | Are all steps at the same abstraction level? |
+| **Error Flow** | Is it clear what happens when each step fails? |
 
 ### Reviewing a Fork-Join
 
-- **Independence** -- Are branches truly independent? No shared mutable state?
-- **Thread Safety** -- Are all inputs immutable or thread-safe?
-- **Completeness** -- Does the combiner handle all branch results?
-- **Error Handling** -- What happens if one branch fails?
-- **Infrastructure** -- Any hidden dependencies (DB locks, rate limits, connection pools)?
+| Check | Question |
+|-------|----------|
+| **Independence** | Are branches truly independent? No shared mutable state? |
+| **Thread Safety** | Are all inputs immutable or thread-safe? |
+| **Completeness** | Does the combiner handle all branch results? |
+| **Error Handling** | What happens if one branch fails? |
+| **Infrastructure** | Any hidden dependencies (DB locks, rate limits, connection pools)? |
 
 ### Reviewing a Condition
 
-- **Exhaustiveness** -- Are all cases covered? Is there a sensible default?
-- **Balance** -- Are branches roughly equal in complexity?
-- **Extraction** -- Should complex branches be extracted to named methods?
-- **Nesting** -- Are conditions nested too deeply? (Max 2 levels)
+| Check | Question |
+|-------|----------|
+| **Exhaustiveness** | Are all cases covered? Is there a sensible default? |
+| **Balance** | Are branches roughly equal in complexity? |
+| **Extraction** | Should complex branches be extracted to named methods? |
+| **Nesting** | Are conditions nested too deeply? (Max 2 levels) |
 
 ### Reviewing an Iteration
 
-- **Transformation Clarity** -- Is the mapping operation obvious?
-- **Filter Predicate** -- Is the filter condition clear or should it be a named method?
-- **Side Effects** -- No side effects inside map/filter/forEach?
-- **Null Safety** -- Are null elements handled?
+| Check | Question |
+|-------|----------|
+| **Transformation Clarity** | Is the mapping operation obvious? |
+| **Filter Predicate** | Is the filter condition clear or should it be a named method? |
+| **Side Effects** | No side effects inside map/filter/forEach? |
+| **Null Safety** | Are null elements handled? |
 
 ---
 
@@ -385,33 +395,18 @@ Read through the method body. Are all statements at the same level of abstractio
 
 Having a vocabulary of pattern-based feedback makes reviews faster and more actionable:
 
-### Leaf
-
-- **Does too much** -- "This leaf has multiple responsibilities. Extract X into a separate method."
-- **Side effects in business logic** -- "This calculation method logs/saves data. Extract side effects."
-
-### Sequencer
-
-- **Too many steps** -- "This has 8 steps. Group related steps into higher-level methods."
-- **Independent steps** -- "Steps 2 and 3 don't depend on each other. Consider parallel execution."
-
-### Fork-Join
-
-- **Shared mutable state** -- "These parallel branches share mutable state. Make inputs immutable."
-- **Missing error handling** -- "What happens if one future fails? Add error handling strategy."
-
-### Condition
-
-- **Deep nesting** -- "3+ levels of nesting. Extract inner conditions to named methods."
-- **Unbalanced branches** -- "The else branch is 50 lines. Extract to a method."
-
-### Iteration
-
-- **Side effects in loop** -- "This forEach modifies external state. Consider using reduce or extract the mutation."
-
-### Mixed Patterns
-
-- **Multiple patterns** -- "This method contains Sequencer + Condition + Iteration. Extract each pattern."
+| Pattern | Common Issue | Review Comment |
+|---------|--------------|----------------|
+| **Leaf** | Does too much | "This leaf has multiple responsibilities. Extract X into a separate method." |
+| **Leaf** | Side effects in business logic | "This calculation method logs/saves data. Extract side effects." |
+| **Sequencer** | Too many steps | "This has 8 steps. Group related steps into higher-level methods." |
+| **Sequencer** | Independent steps | "Steps 2 and 3 don't depend on each other. Consider parallel execution." |
+| **Fork-Join** | Shared mutable state | "These parallel branches share mutable state. Make inputs immutable." |
+| **Fork-Join** | Missing error handling | "What happens if one future fails? Add error handling strategy." |
+| **Condition** | Deep nesting | "3+ levels of nesting. Extract inner conditions to named methods." |
+| **Condition** | Unbalanced branches | "The else branch is 50 lines. Extract to a method." |
+| **Iteration** | Side effects in loop | "This forEach modifies external state. Consider using reduce or extract the mutation." |
+| **Mixed** | Multiple patterns | "This method contains Sequencer + Condition + Iteration. Extract each pattern." |
 
 ---
 

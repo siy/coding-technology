@@ -1,8 +1,7 @@
 ---
-title: "Java Backend Design Technology: A Process-First Methodology"
-description: "From Requirements to Code in Eight Questions"
 tags: [java, architecture, design, programming]
-canonical_url: https://pragmatica.dev/
+canonical_url: https://pragmatica.dev/articles/jbdt-process-first-methodology
+description: "From Requirements to Code in Eight Questions"
 published: true
 ---
 
@@ -193,7 +192,7 @@ A lending system needs to make a credit decision. The process:
 
 As a data dependency graph:
 
-```
+```plaintext
 CreditDecision = ApplyPolicy(
                      Assess(
                          ALL(

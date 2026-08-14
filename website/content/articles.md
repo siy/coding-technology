@@ -1,36 +1,53 @@
 # Articles
 
-Shorter pieces, published here first and mirrored to dev.to and Medium. Each one takes a single
-argument from the books and works it out at article length — the canonical copy lives here.
+Shorter pieces, mirrored to dev.to and Medium. Each takes a single argument from the books and
+works it out at article length — the canonical copy lives here.
 
-## Engineering Is the Checkable Fraction of Your Practice
+## The method
 
-Type inference has refused to guess for fifty years, and build systems learned the habit.
-Decomposition methods never did: feed one an underspecified system and you always get a diagram.
-Three clauses, the five things they forbid, and a definition of engineering stated as a ratio
-rather than a badge.
+**[Engineering Is the Checkable Fraction of Your Practice](/articles/engineering-is-the-checkable-fraction/)**
+Type inference has refused to guess for fifty years and build systems learned the habit;
+decomposition methods never did. Three clauses, the five things they forbid, and a definition of
+engineering stated as a ratio rather than a badge.
 
-[Read it](/articles/engineering-is-the-checkable-fraction/)
+**[Java Backend Design Technology: A Process-First Methodology](/articles/jbdt-process-first-methodology/)**
+The design phase of the technology: deriving structure from the process rather than from a model
+of the nouns.
 
-## Keep the Context Map. Replace the Aggregates.
+**[Keep the Context Map. Replace the Aggregates.](/articles/keep-the-context-map/)**
+Strategic domain-driven design does not rest on tactical DDD, so you can keep one and replace the
+other. How to annotate a context map so it feeds a change-driver decomposition.
 
-Strategic domain-driven design does not rest on tactical DDD, which means you can keep one and
-replace the other. How to annotate a context map so it feeds a change-driver decomposition instead
-of an aggregate model.
+**[The Underlying Process of Request Processing](/articles/underlying-process/)**
+What every backend request actually does, underneath the framework that hides it.
 
-[Read it](/articles/keep-the-context-map/)
+## Patterns and code
 
-## Every Test Can Name Why It Exists
+**[The Six Patterns That Cover Everything](/articles/six-patterns-that-cover-everything/)**
+Leaf, Sequencer, Fork-Join, Condition, Iteration, Aspects — and why the list is closed.
 
-A complete backend test strategy: four kinds of test, each derived from a property of the code
-rather than chosen from a convention, plus the rules that fall out and why the result beats
-picking a ratio.
-
-[Read it](/articles/every-test-can-name-why-it-exists/)
-
-## From Subjective Opinions to Systematic Analysis: Pattern-Based Code Review
-
+**[From Subjective Opinions to Systematic Analysis: Pattern-Based Code Review](/articles/pattern-based-code-review/)**
 How structural patterns turn code review from a matter of taste into something two reviewers can
-agree on — the first article in the series.
+agree on.
 
-[Read it](/articles/pattern-based-code-review/)
+**[Why Interface + Factory? The Java Pattern That Makes Everything Replaceable](/articles/interface-factory-pattern/)**
+The smallest structural decision in the technology, and what it buys.
+
+**[Every Test Can Name Why It Exists](/articles/every-test-can-name-why-it-exists/)**
+Four kinds of test, each derived from a property of the code rather than chosen from a convention.
+
+## Adoption
+
+**[Fail-Safe Your Legacy Java in One Sprint](/articles/fail-safe-legacy/)**
+The smallest change to an existing codebase that pays for itself immediately.
+
+**[Slices: The Right Size for Microservices](/articles/slices/)**
+Neither a monolith nor a service per noun — the unit that follows from the process.
+
+## Aether
+
+**[Pragmatica Aether: Let Java Be Java](/articles/aether-let-java-be-java/)**
+A runtime that removes the framework instead of adding one.
+
+**[No Framework, No Pain: Writing Aether Slices](/articles/no-framework-no-pain/)**
+What writing a slice actually looks like, end to end.

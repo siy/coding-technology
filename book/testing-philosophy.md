@@ -249,6 +249,39 @@ and its failure test cannot be written. That is a return-kind violation rather t
 test -- the signature claims a contract the body does not have, and the fix is to return the
 plain value and chain it with `map`.
 
+**Why the leaf, and not the composition: that is where the branches are.**
+
+The allocation above can be argued from the combinators -- `flatMap` short-circuits, so the
+composition adds propagation and nothing else. It can also be measured, and the measurement is
+blunter than the argument.
+
+Mutation testing seeds a program with small syntactic faults -- negate a conditional, move a
+boundary by one, change an operator -- and reports which ones a test suite fails to detect. The
+seeding is mechanical: a mutant can only be planted where the bytecode makes a decision. Run that
+over a JBCT codebase and the mutants map the decidable surface, whatever anyone believes about
+where the logic is.
+
+Across two JBCT codebases of comparable size -- different domains, different structural idioms,
+one of them written before this rule existed -- **441 logic mutants were generated, and not one
+of them landed in a composition.** Every branch a fault could hide in sat in a value-object
+predicate, a rule, a gate, or a classifier. The composition layer is not merely a poor place to
+spend testing effort; there is nothing there to get wrong. Its faults are wiring faults -- a step
+omitted, a step in the wrong order -- and the success path catches those.
+
+That is what makes the four facts a boundary rather than a budget. They are the whole of what a
+composition can establish, because they are the whole of what a composition can do.
+
+**A caution the same measurement raises.** Mutation testing answers the question this chapter
+otherwise leaves open -- whether a test *discharges* an obligation or merely *exercises* it, since
+a test asserting only that a call failed will survive a mutant that changes which failure it was.
+It is a diagnostic and not a target. Two thirds of the raw mutants generated over the codebases
+above were replacements of return values with `null` or empty defaults, which in code that forbids
+null is noise rather than signal; filtering the mutation operators to the ones that model real
+faults is a precondition, not a refinement. And a codebase that composes its predicates from a
+tested library rather than writing them inline generates very few mutants indeed -- not because its
+logic is simple, but because its decisions have moved into code the tool does not mutate. A near
+empty mutation report is a question, not a result.
+
 ---
 
 ## The Evolutionary Testing Process

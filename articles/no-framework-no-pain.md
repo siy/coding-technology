@@ -290,7 +290,7 @@ private Promise<Availability> checkInventory(OrderRequest request) {
 
 The outer call is now clean JBCT. The inner calls are still wrapped. Tests pass at every step. Stop anywhere -- mixed JBCT and legacy code works fine. The remaining `lift()` calls mark exactly where legacy code lives. When they're all gone, you have a clean slice. But there's no deadline. Each peeling step delivers value on its own.
 
-The [full migration walkthrough](https://dev.to/siy/fail-safe-your-legacy-java-in-one-sprint-p5l) covers the complete path -- from initial wrapping through fault tolerance to clean JBCT code.
+The [full migration walkthrough](https://pragmatica.dev/articles/fail-safe-legacy) covers the complete path -- from initial wrapping through fault tolerance to clean JBCT code.
 
 ## The Shift
 
@@ -306,4 +306,4 @@ No framework. No pain.
 
 - [Pragmatica Aether](https://pragmaticalabs.io/aether.html) -- distributed Java runtime
 - [GitHub Repository](https://github.com/pragmaticalabs/pragmatica) -- source code
-- [Slice Development Guide](https://github.com/pragmaticalabs/pragmatica/blob/main/aether/docs/slice-developers/development-guide.md) -- full reference
+- [Slice Development Guide](https://github.com/pragmaticalabs/pragmatica/blob/main/aether/docs/slice-developers/README.md) -- full reference

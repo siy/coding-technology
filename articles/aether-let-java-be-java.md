@@ -58,7 +58,7 @@ A method call via imported interface is the only visible contract. The only hint
 
 Everything else is the environment's job: resource provisioning, scaling, transport, discovery, retries, circuit breakers, configuration, observability, logging, tracing, monitoring, security. None of these are application concerns and none should be handled at the business logic level.
 
-The [JBCT Leaf pattern](https://dev.to/siy/the-six-patterns-that-cover-everything-4d8a) serves two purposes here: it documents the design ("what we expect from an external implementation") and encourages exactly one interface per dependency. Different implementations may have different technical properties — performance, latency, memory consumption — but as long as they're compatible with the interface, business logic works unchanged.
+The [JBCT Leaf pattern](https://pragmatica.dev/articles/six-patterns-that-cover-everything) serves two purposes here: it documents the design ("what we expect from an external implementation") and encourages exactly one interface per dependency. Different implementations may have different technical properties — performance, latency, memory consumption — but as long as they're compatible with the interface, business logic works unchanged.
 
 You write basically pure business logic that scales from your local computer to a global multi-zone distributed deployment, transparently.
 
@@ -125,9 +125,9 @@ private Promise<Report> generateReport(ReportRequest request) {
 
 One line to enter the Aether world. `Promise.lift()` wraps the legacy call, catches exceptions, and returns a proper `Result` inside a `Promise`. Your legacy code keeps running. Call sites don't change. You haven't added risk — the initial deployment in Ember runs in the same JVM as your existing application, which means it's no worse than what you have today. You've laid the foundation for removing risk, not adding it. Moving from Ember to a full Aether cluster is a configuration change, not a code change — and that's when the 50% rule starts to apply.
 
-From there, it's the strangler fig pattern. Extract a hot path, deploy it as a slice, route traffic, repeat. Each extracted slice can be gradually refactored using the [peeling pattern](https://dev.to/siy/fail-safe-your-legacy-java-in-one-sprint-p5l): first wrap everything in `Promise.lift()`, then decompose into a Sequencer with each step still wrapped, then peel individual steps into clean JBCT patterns. Tests pass at every step. The `lift()` calls mark exactly where legacy code remains, making progress visible and remaining work obvious.
+From there, it's the strangler fig pattern. Extract a hot path, deploy it as a slice, route traffic, repeat. Each extracted slice can be gradually refactored using the [peeling pattern](https://pragmatica.dev/articles/fail-safe-legacy): first wrap everything in `Promise.lift()`, then decompose into a Sequencer with each step still wrapped, then peel individual steps into clean JBCT patterns. Tests pass at every step. The `lift()` calls mark exactly where legacy code remains, making progress visible and remaining work obvious.
 
-No rewrite required. No big bang migration. One sprint to first slice in production. The [migration article](https://dev.to/siy/fail-safe-your-legacy-java-in-one-sprint-p5l) covers the full path in detail — from initial wrapping through gradual peeling to clean JBCT code.
+No rewrite required. No big bang migration. One sprint to first slice in production. The [migration article](https://pragmatica.dev/articles/fail-safe-legacy) covers the full path in detail — from initial wrapping through gradual peeling to clean JBCT code.
 
 ### Greenfield Development
 
@@ -135,13 +135,13 @@ For new projects, slices enable a granularity that's impossible with traditional
 
 Each slice can be as lean as a single method — and that's the recommended approach. There are no operational or complexity tradeoffs for small slices because Aether handles all the infrastructure overhead. No container to configure, no load balancer to provision, no monitoring to set up per service. You get per-use-case scaling: one slice serving 50 instances during peak load while another idles at minimum. That kind of granularity would be operationally insane with traditional microservices — each needing its own container, load balancer, monitoring, and deployment pipeline. With Aether, it's the default.
 
-[JBCT patterns](https://dev.to/siy/the-six-patterns-that-cover-everything-4d8a) — Leaf, Sequencer, Fork-Join, Condition, Iteration, Aspects — compose naturally within slices. Each slice method is a [data transformation pipeline](https://dev.to/siy/the-underlying-process-of-request-processing-1od4): parse input, gather data, process, respond. The patterns provide consistent structure within slices. [Slices provide consistent boundaries](https://dev.to/siy/slices-the-right-size-for-microservices-5cco) between them.
+[JBCT patterns](https://pragmatica.dev/articles/six-patterns-that-cover-everything) — Leaf, Sequencer, Fork-Join, Condition, Iteration, Aspects — compose naturally within slices. Each slice method is a [data transformation pipeline](https://dev.to/siy/the-underlying-process-of-request-processing-1od4): parse input, gather data, process, respond. The patterns provide consistent structure within slices. [Slices provide consistent boundaries](https://pragmatica.dev/articles/slices) between them.
 
 ### The Spectrum
 
 Same slice model, different granularity. A service slice wraps an entire legacy component. A lean slice implements a single method. Both coexist in the same cluster, deployed and scaled independently.
 
-[Slice is the executable unit](https://dev.to/siy/slices-the-right-size-for-microservices-5cco). It can be big or small as necessary and convenient. The architecture accommodates both monolith migration and greenfield development simultaneously. Your legacy system gains fault tolerance while new features get maximum deployment flexibility.
+[Slice is the executable unit](https://pragmatica.dev/articles/slices). It can be big or small as necessary and convenient. The architecture accommodates both monolith migration and greenfield development simultaneously. Your legacy system gains fault tolerance while new features get maximum deployment flexibility.
 
 ## Scaling: Two Levels, Three Tiers of Intelligence
 

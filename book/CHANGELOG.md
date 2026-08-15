@@ -7,6 +7,19 @@ All notable changes to the JBCT book, newest first. Format:
 Earlier history (1.x–2.x) predates per-book changelogs and lives in the
 repository root `CHANGELOG.md`.
 
+## [4.7.0] - 2026-08-16
+
+### Added
+- **Testing Philosophy** — measured basis for the four-facts rule: mutation testing over two JBCT
+  codebases generated 441 logic mutants, none of them in a composition. Every branch sat in a
+  value-object predicate, rule, gate, or classifier. The composition's faults are wiring faults,
+  which the success path already covers.
+- **Testing Philosophy** — mutation testing named as the diagnostic for whether a test discharges
+  an obligation or only exercises it. Stated as a diagnostic, not a target, with three limits:
+  two thirds of raw mutants are null/empty return replacement and must be filtered out; a codebase
+  composing predicates from a library generates few mutants because its decisions move into code
+  the tool does not mutate; a near-empty report is a question, not a result.
+
 ## [4.6.0] - 2026-08-13
 
 A second testing pass, and the first derived from reading other people's finished suites rather

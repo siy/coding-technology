@@ -300,6 +300,16 @@ public record ValidRegistration(Email email, Password password, Age age) {
 
 ## Pragmatica Core Validation Utilities
 
+**Reach for a predicate from the catalog before writing the comparison by hand.** A predicate
+from `Verify.Is` is tested once, in the library, for every codebase that calls it. The same
+comparison written inline is tested here, by you, and can be wrong here. Both forms produce
+the same `Result<T>`, so the choice costs nothing at the call site and moves decidable surface
+out of code you own into code that already carries its own tests.
+
+The exception is narrow and real: a condition specific to your domain has no catalog
+equivalent and is written inline. That is a business leaf like any other, and it owes a leaf's
+tests.
+
 **Verify.Is Predicates:**
 ```java
 // Instead of custom lambdas:

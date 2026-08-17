@@ -188,6 +188,8 @@ private List<Alert> filterUrgentAlerts(List<Alert> alerts) {
 
 Now the top-level chain reads linearly: fetch -> check access -> load dashboard -> build response. Each step is named, testable, and at a single abstraction level.
 
+**The rule has a testability consequence with a number attached.** A credit-score adjustment written as a single method carries 37 conditional branches, every one reachable only by assembling the whole service and entering through that one method. Decomposed to this rule's standard, the same computation is six named methods — `paymentHistoryAdjustment`, `creditHistoryAdjustment`, `scoreAdjustment`, `inquiryAdjustment`, `collectionsAdjustment`, `publicRecordsAdjustment` — totalling 35 branches. The decision surface is the same size, because it belongs to the domain and not to the structure. What changes is that a test reaches six of them directly, each named for the business fact it decides.
+
 ### Allowed in Lambdas
 
 **Method references:**

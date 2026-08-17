@@ -49,3 +49,4 @@ in the manuscript carries numbers. Insert or move a chapter by editing this list
 - [Appendix A: Pragmatica Core API Reference](appendix-a-api-reference.md)
 - [Appendix B: Exercises and Solutions](appendix-b-exercises.md)
 - [Appendix C: Glossary](appendix-c-glossary.md)
+- [Appendix D: The Use Case Worksheet](appendix-d-worksheet.md)

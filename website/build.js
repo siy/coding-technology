@@ -78,8 +78,8 @@ const COURSES = [
     tocTitle: 'JBCT Course — pragmatica.dev',
     tocDescription: 'The full JBCT method, chapter by chapter: six parts, twenty-two lessons, each pairing book prose with a short exercise. Free, no account required.',
     tocIntro: 'Twenty-two lessons across six parts. Each pairs the book’s prose with a short exercise; progress is tracked locally in your browser, no account required.',
-    footerLinks: '<a href="/java/jbct/reference/">API reference</a> &middot; <a href="https://leanpub.com/jbct-book" target="_blank" rel="noopener">Get the book</a> &middot; ',
-    nonLessonSlugs: new Set(['appendix-a-api-reference', 'appendix-b-exercises', 'appendix-c-glossary'])
+    footerLinks: '<a href="/java/jbct/reference/">API reference</a> &middot; <a href="/java/jbct/worksheet/">Worksheet</a> &middot; <a href="https://leanpub.com/jbct-book" target="_blank" rel="noopener">Get the book</a> &middot; ',
+    nonLessonSlugs: new Set(['appendix-a-api-reference', 'appendix-b-exercises', 'appendix-c-glossary', 'appendix-d-worksheet'])
   },
   {
     id: 'pfd',
@@ -530,6 +530,16 @@ const LANDING_PAGES = [
     related: [
       { href: '/method/architecture-synthesis/course/', label: 'Architecture Synthesis course', note: 'back to contents' },
       { href: '/method/architecture-synthesis/reference/', label: 'Reference cards', note: 'the method as a deck' }
+    ]
+  },
+  {
+    src: 'book/appendix-d-worksheet.md', out: 'java/jbct/worksheet/index.html', fallbackTitle: 'The JBCT Use Case Worksheet',
+    crumb: crumbDeep([{ href: '/java/', label: 'The Java Realization' }, { href: '/java/jbct/course/', label: 'JBCT course' }], 'Worksheet'),
+    nav: 'java',
+    description: 'The JBCT use case worksheet: specify a process by its six properties, parse the input, choose a return kind per step, place each step in a zone and a pattern, name the recovery response, and check the four composition test obligations.',
+    related: [
+      { href: '/java/jbct/course/', label: 'JBCT course', note: 'back to contents' },
+      { href: '/java/jbct/reference/', label: 'API reference', note: 'the types and combinators' }
     ]
   },
   {

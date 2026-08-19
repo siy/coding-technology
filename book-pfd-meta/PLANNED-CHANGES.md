@@ -682,6 +682,21 @@ needs an authorial decision, not an edit. `ruled` — decided in the 2026-08-19 
 
 **Editor notes** are this session's assessment of the discussion, not part of it.
 
+**The enumeration, closed (2026-08-19).** The source discussion left "the author stated the whole
+materializes on *several* occasions" as its most valuable open thread. The author has since confirmed he
+knows of **two**; the read path is a third raised in discussion rather than by him. So the list is closed
+at three, not open-ended, and the three split by whether the assembled whole has a *writer*:
+
+| Occasion | Writer? | Status | Sub-item |
+|---|---|---|---|
+| Read path — reports, exports, any query spanning owners | none | harmless; this is what the reformulation makes explicit | 15.2 |
+| A cross-field invariant spanning owners | one, the new parent | the real concession, and bounded by the closure rather than by the id | 15.3 |
+| Erasure | universal, and keyed by a different identity | the pressure case | 15.6 |
+
+That the three map one-to-one onto three sub-items is the argument for item 16's chapter having a spine
+rather than being a bag of additions. It is also better news than an open list: "several" was an
+overcount.
+
 **Cost warning that applies to the whole item.** Every sub-item below is an *addition*, and none was
 priced. *Foundations* is already 320 lines and the densest chapter in the book; 15.1, 15.3, 15.4, 15.5,
 15.8 and 15.9 all want space in it. Nothing here ships until item 16 settles where the material lives.
@@ -717,8 +732,24 @@ Proposed reformulation: **the whole materializes only where it has no writer, an
 coupling.** The chapter's point was never that assembly does not happen; it was that assembly never
 creates a shared write path.
 
-Knock-on: makes the write/read asymmetry explicit, which the chapter currently leaves implicit. Whether
-to name the CQRS neighbourhood is an authorial choice — flag it, do not make it.
+**The asymmetry, stated plainly.** "The whole never materializes" does two jobs in one sentence. On the
+*write* side it says no process writes the whole record — true, and load-bearing: it is what makes the
+record a coordinate and what removes the need to coordinate. On the *read* side it says nothing assembles
+the whole — false, and refutable by any report. Because the chapter never separates the two, the
+refutable half drags the true half down with it. The property that actually does the work is
+**decomposition constrains write authority, not read shape.**
+
+**The book already says it.** `foundations.md:100` — "each field owned by the operation that produces it,
+**written by that one owner and read by anyone**." That is the asymmetry, complete, sitting in *How
+ownership moves*, one section downstream of the claim in *Where data comes from* that needs it. So this
+is not new material; it is promoting an existing half-sentence to the place where it is load-bearing.
+
+**Do not name CQRS — the book already carries the idea in its own vocabulary.** *Architecture Synthesis*
+has read/write model as a Phase-5 axis (`unified / separated`), and `architecture-synthesis.md:175`
+already gives the rule for when to separate. The clean layering is: *Foundations* states the property
+(writes owned, reads open), *Architecture Synthesis* turns it into a decision (unified or separated, per
+path). No acronym is needed, the PFD overlay's ban on framework names is not tested, and a seam between
+two chapters that currently do not reference each other on this closes.
 
 Placement: rewrite of the paragraph beginning "The whole never materializes."
 

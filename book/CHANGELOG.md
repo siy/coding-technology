@@ -7,7 +7,7 @@ All notable changes to the JBCT book, newest first. Format:
 Earlier history (1.x–2.x) predates per-book changelogs and lives in the
 repository root `CHANGELOG.md`.
 
-## [4.8.0] - 2026-08-17
+## [4.8.0] - 2026-08-20
 
 ### Added
 - **Appendix D: The Use Case Worksheet** — the method at operating altitude, in two parts. Part A

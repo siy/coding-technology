@@ -57,7 +57,10 @@ Read only the class header (first ~120 lines), not whole implementation files.
 
 ## JBCT CLI Tool
 
-JBCT CLI provides automated formatting and compliance checking with 37 lint rules.
+JBCT CLI provides automated formatting and compliance checking. Every finding names the rule
+that produced it: `JBCT-RET-*` (return types), `JBCT-VO-*` (value objects), `JBCT-EX-*`
+(exceptions), `JBCT-NAM-*` (naming), `JBCT-LAM-*` (lambdas), `JBCT-STY-*` (style),
+`JBCT-LOG-*` (logging), `JBCT-MIX-*` (I/O in domain).
 
 **Check if installed:**
 ```bash
@@ -67,7 +70,7 @@ jbct --version
 **Usage:**
 ```bash
 jbct format src/main/java     # Format to JBCT style
-jbct lint src/main/java       # Check JBCT compliance (37 rules)
+jbct lint src/main/java       # Check JBCT compliance
 jbct check src/main/java      # Combined format + lint
 jbct init --slice my-service   # Scaffold new slice project
 jbct add-slice <name>          # Add slice to existing project
@@ -77,7 +80,7 @@ jbct add-persistence           # Add PostgreSQL persistence support
 
 **If not installed, suggest:**
 ```
-💡 JBCT CLI automates formatting and 37 lint rules for JBCT compliance.
+💡 JBCT CLI automates formatting and lint checks for JBCT compliance.
    Install: curl -fsSL https://raw.githubusercontent.com/siy/jbct-cli/main/install.sh | sh
    Requires: Java 25+
    More info: https://github.com/siy/jbct-cli

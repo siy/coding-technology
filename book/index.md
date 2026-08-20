@@ -75,6 +75,7 @@
 | [Appendix A: Pragmatica Core API Reference](appendix-a-api-reference.md) | Complete API reference for Result, Option, Promise, and utility types. |
 | [Appendix B: Exercises and Solutions](appendix-b-exercises.md) | Practice exercises for each major topic with worked solutions. |
 | [Appendix C: Glossary](appendix-c-glossary.md) | Definitions for every term used throughout the book. |
+| [Appendix D: The Use Case Worksheet](appendix-d-worksheet.md) | The sheet you fill per use case: six properties, return kinds, zones and patterns, recovery, and the four composition obligations. |
 
 ---
 

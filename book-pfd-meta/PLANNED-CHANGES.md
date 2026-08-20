@@ -13,6 +13,13 @@ open:** item 7's single running example carried across all three books (PFD / JB
 glossary spine half is done, the shared conference-booking worked example is not. The detailed
 register below is retained for reference.
 
+**Added (2026-08-19):** items **15** (PFD viewed from the data-structures side — nine sub-items out of
+a chat discussion, every one `proposed` or `open` except 15.7, which the author ruled) and **16** (a
+proposed chapter for the data question). **Item 16 gates item 15:** six of item 15's sub-items want
+space in *Foundations*, which is already the book's densest chapter, so nothing in 15 is placed until
+the chapter question is settled. 15.8 should merge into item 9's objections register rather than being
+tracked twice.
+
 ---
 
 ## 12. Series-review retrofits (2026-07-12) — POSTPONED to next PFD/JBCT revisions; specified now
@@ -662,6 +669,313 @@ retrofittable to a schema nobody designed this way, which PFD's is not.
 the same refusal — facts keyed to identity with an owner, rather than an object loaded and saved
 (`:76`, *"a coordinate, not an object"*). His *context* is a read-set snapshot; PFD's accretion is an
 ownership map. Same substrate, different question asked of it.
+
+## 15. PFD viewed from the data-structures side (2026-08-19)
+
+**Source:** chat discussion 19 Aug 2026, handed over for `pfd-editor`. Primary text: *Foundations* —
+*Where data comes from*, *How ownership moves*, *The shapes*.
+
+**Status tags.** `proposed` — raised in discussion by the assistant, not ruled on by the author.
+`affirmed` — the author stated the underlying point himself. `open` — a question with no answer yet;
+needs an authorial decision, not an edit. `ruled` — decided in the 2026-08-19 session.
+**Nothing below is accepted into the book. Do not promote a `proposed` item to prose without a ruling.**
+
+**Editor notes** are this session's assessment of the discussion, not part of it.
+
+**The enumeration, closed (2026-08-19).** The source discussion left "the author stated the whole
+materializes on *several* occasions" as its most valuable open thread. The author has since confirmed he
+knows of **two**; the read path is a third raised in discussion rather than by him. So the list is closed
+at three, not open-ended, and the three split by whether the assembled whole has a *writer*:
+
+| Occasion | Writer? | Status | Sub-item |
+|---|---|---|---|
+| Read path — reports, exports, any query spanning owners | none | harmless; this is what the reformulation makes explicit | 15.2 |
+| A cross-field invariant spanning owners | one, the new parent | the real concession, and bounded by the closure rather than by the id | 15.3 |
+| Erasure | universal, and keyed by a different identity | the pressure case | 15.6 |
+
+That the three map one-to-one onto three sub-items is the argument for item 16's chapter having a spine
+rather than being a bag of additions. It is also better news than an open list: "several" was an
+overcount.
+
+**Cost warning that applies to the whole item.** Every sub-item below is an *addition*, and none was
+priced. *Foundations* is already 320 lines and the densest chapter in the book; 15.1, 15.3, 15.4, 15.5,
+15.8 and 15.9 all want space in it. Nothing here ships until item 16 settles where the material lives.
+
+### 15.1 Prior art for the accretion model — 6NF and its descendants — `proposed`
+
+The persisted-state model in *Where data comes from* (id as seed, fields fastened by their owning
+operation, the record as a coordinate rather than an object) is structurally sixth normal form. Named
+neighbours worth citing: Date and Darwen's irreducible relations, anchor modeling, Datomic's EAV model,
+bitemporal ledger designs. Each attribute its own relation with its own writer; the entity a join, never
+authored as a whole.
+
+Editorial value: the chapter derives the shape from ownership alone, which reads as novel and therefore
+unsupported. The same shape was reached decades earlier from update anomalies, and citing the
+convergence turns an assertion into corroboration — the move the chapter already makes with Parnas,
+Löwy and Loth on change drivers.
+
+Placement: *Where data comes from*, after "The entity is an accretion, not a schema."
+
+**Editor note — needs one distinction or it backfires.** PFD's accretion normalizes *write authority*;
+6NF decomposes *relations*. The chapter explicitly blesses co-location: "two processes that write
+different fields of one row are uncoupled at runtime, sharing only a schema." A 6NF-literate reader
+answers "you permit a wide row, that is not 6NF," and the corroboration becomes a liability. Cite the
+convergence as ownership-shaped, or do not cite it.
+
+### 15.2 Reformulate "the whole never materializes" — `proposed` — highest-value item
+
+The claim is falsifiable as written: the whole does materialize on the read path, in reports, exports,
+and any query spanning owners. 6NF's documented cost is exactly this — anchor modeling pays for the
+decomposition in generated views and query rewriting.
+
+Proposed reformulation: **the whole materializes only where it has no writer, and therefore no
+coupling.** The chapter's point was never that assembly does not happen; it was that assembly never
+creates a shared write path.
+
+**The asymmetry, stated plainly.** "The whole never materializes" does two jobs in one sentence. On the
+*write* side it says no process writes the whole record — true, and load-bearing: it is what makes the
+record a coordinate and what removes the need to coordinate. On the *read* side it says nothing assembles
+the whole — false, and refutable by any report. Because the chapter never separates the two, the
+refutable half drags the true half down with it. The property that actually does the work is
+**decomposition constrains write authority, not read shape.**
+
+**The book already says it.** `foundations.md:100` — "each field owned by the operation that produces it,
+**written by that one owner and read by anyone**." That is the asymmetry, complete, sitting in *How
+ownership moves*, one section downstream of the claim in *Where data comes from* that needs it. So this
+is not new material; it is promoting an existing half-sentence to the place where it is load-bearing.
+
+**Do not name CQRS — the book already carries the idea in its own vocabulary.** *Architecture Synthesis*
+has read/write model as a Phase-5 axis (`unified / separated`), and `architecture-synthesis.md:175`
+already gives the rule for when to separate. The clean layering is: *Foundations* states the property
+(writes owned, reads open), *Architecture Synthesis* turns it into a decision (unified or separated, per
+path). No acronym is needed, the PFD overlay's ban on framework names is not tested, and a seam between
+two chapters that currently do not reference each other on this closes.
+
+Placement: rewrite of the paragraph beginning "The whole never materializes."
+
+**Editor note — the falsifiable sentence is not the headline.** It is the one after it: "no process ever
+needs the entire record." A report is a process by the chapter's own gate, so the counterexample is
+internal to the book rather than imported.
+
+**Editor note — 15.2 and 15.3 are one edit, not two.** "Materializes only where it has no writer" is
+*false* in the absorption case, which materializes and writes. It is true only of the *closure*, not the
+*whole*. Ship 15.3 first or 15.2 is wrong.
+
+### 15.3 Invariant closure, not entity-wide invariants — `affirmed` (the substance) / `proposed` (the term)
+
+The author affirmed that the whole materializes where genuine cross-field invariants exist, phrased as
+"entity-wide invariants." The discussion argued *entity-wide* concedes a boundary the invariant never
+asked for. What an invariant forces together is its own closure: the fields it spans, plus anything
+transitively bound by another invariant sharing a field — normally a proper subset of what hangs off the
+id.
+
+Proposed term: **invariant closure**. The entity, on this reading, is what you get by assuming all
+closures on an id are one closure. Consistent with the chapter's existing "the seam appears exactly at
+the invariant and nowhere else," and makes that sentence load-bearing rather than passing.
+
+**Formal support for the honest limit.** Decomposition into single-attribute relations is lossless with
+respect to *data* and lossy with respect to *constraints*. A predicate over one attribute survives the
+split; a predicate over several must be re-imposed as an inter-relation constraint, requiring a join or a
+spanning transaction. This is the mechanism behind the honest-limit paragraph (ledger, tax engine),
+which currently asserts the limit without explaining it.
+
+Placement: term in *How ownership moves* under Absorption; formal support in the honest-limit paragraph
+of *Where data comes from*.
+
+**Editor note.** The formal support is the strongest single paragraph the discussion produced. It is
+also the part that does not depend on adopting the term, so it can ship alone.
+
+### 15.4 Three responses to a spanning invariant, ranked — `proposed`
+
+The chapter presents absorption as though it were the only response. Three, in increasing order of how
+much decomposition they preserve:
+
+1. **Materialize the closure** — absorption. A new owner, one guard, one commit.
+2. **Push it into the store** — uniqueness or exclusion constraint. The application never assembles a
+   whole; the store refuses the write. Already in the chapter as a design-out tactic, but not connected
+   to the invariant discussion.
+3. **Change the invariant's modality** — hold it at reconciliation rather than at every commit, with a
+   detecting process and forward error recovery.
+
+Materialization is forced only when all three fail: the closure covers most of the record, must hold at
+every commit, and is not declaratively expressible. That is the ledger corner the chapter already names,
+so this framing *narrows* the concession rather than widening it.
+
+Placement: *How ownership moves*, alongside absorption; cross-reference from *Designing out contention*.
+
+**Editor note — option 3 is a weaker guarantee, not a free win.** Held at reconciliation, the invariant
+is observably violated inside the window. The item must name the window and who is exposed during it, or
+three options read as equally available. Consistency-lens applies: state the guarantee per option and
+the mechanism that earns it.
+
+### 15.5 Retention as a field property — `proposed`
+
+Retention attaches to a field's purpose, not to a record's identity: financial fields answer to a tax
+obligation of years, contact fields to purpose limitation and expire sooner, consent records must
+outlive what they consented to. Entity-first gives the whole row one lifecycle and then fights it;
+per-field ownership yields per-field lifespan directly. The discussion proposed extending the four
+things each attached field carries with a fifth — **retention: how long it may be kept, and under whose
+authority.**
+
+Placement: *Where data comes from*, at "Each attached field carries four things."
+
+**Editor note — derive it, do not append it.** The four things are each a consequence of "some operation
+writes it and some operation reads it." Retention is a consequence of *which* operation owns it, so it
+follows from ownership rather than joining the list. Appending a fifth to a derived list of four weakens
+the derivation; deriving retention from ownership strengthens it — and the derivation is the better
+argument for accretion, which is what this item wants. Strongest *supporting* evidence in the
+discussion; currently unused by the chapter either way.
+
+### 15.6 Erasure — where the model is under real pressure — `proposed`; severance is `open`
+
+Erasure breaks two of the model's rules at once:
+
+- **It is keyed differently.** The accretion is keyed by an id a process minted (booking, payment,
+  ticket). Erasure is keyed by the *data subject*, an identity cutting across all of those plus logs,
+  queues, warehouse and backups. Establishing which facts belong to one subject is the cross-cutting
+  linkage map the method says you never have to draw.
+- **It is a universal writer.** Every other field has one owning operation. Erasure writes all of them
+  regardless of owner, so the single-writer property that made coordination unnecessary fails for
+  exactly this process.
+
+Three tactics in the book's own vocabulary:
+
+- **Fan-out** — erasure as a Fork-Join over per-owner `forget(subject)` Leaves. The whole exists only in
+  the change-driver register, a design-time artifact. The faithful answer, and it must be *proved*
+  complete: completeness and purity applied to data rather than to use cases.
+- **Crypto-shredding** — design-out. Encrypt subject-linked fields under a per-subject key; erasure
+  destroys the key. A universal write collapses to a single-writer write on one field.
+- **Severance** — usually the facts cannot be removed at all (the booking survives for accounting); only
+  the link between identity and accretion is destroyed.
+
+**The contradiction this exposes is real and locatable.** `foundations.md:269` offers "an immutable log
+corrected by appending rather than overwriting" as a design-out tactic. A right to erasure cannot be
+honoured against it. Crypto-shredding is the only listed tactic that reaches immutable backups and
+append-only logs. The text does not currently acknowledge the collision.
+
+**Open question as posed:** is severance a third motion of ownership alongside absorption and
+emancipation? It fits neither — the fields do not change owner; the identity that gave them meaning is
+withdrawn, and they degrade to anonymous aggregate. It is also the only motion whose driver is not the
+business.
+
+**Editor note — proposed answer: severance is not an ownership motion at all.** The item concedes the
+fields do not change owner. What is withdrawn is the *identity*, so it belongs beside "The id is the
+seed" in *Where data comes from*, not beside absorption and emancipation — and the "one of two things
+happens to it" sentence in *How ownership moves* survives untouched. If accepted, the open question
+closes without a fourth moment.
+
+**Editor note — this is the only sub-item that could change the method rather than the prose.** Erasure
+falsifies a specific claim the book makes: that the cross-cutting linkage map never has to be drawn. It
+does, for this one process. Worth resolving whether or not any of the rest ships.
+
+### 15.7 Cardinality and the four shapes — `ruled` (2026-08-19)
+
+Raised as `open`: the four shapes carry existence, absence, typed failure and time, and no cardinality;
+`List<T>`, non-empty and bounded collections are domain statements of the same kind, and the Iteration
+pattern presupposes them. *Foundations* calls the vocabulary closed, which made the silence conspicuous.
+
+**Author's ruling: `List<T>` is `T`-shaped.** A collection is a value that exists unconditionally, and
+an empty list is a legitimate value of it rather than an absence. `Option<List<T>>` is therefore
+redundant in this model: the empty list already carries "nothing there" as a domain fact, and wrapping
+it adds a second absence channel that says the same thing twice.
+
+Consequence: **cardinality is not a fifth shape.** The four are a vocabulary of *effects* — existence,
+absence, failure, time — and cardinality is a property of the value sitting inside one of them.
+Non-empty and bounded are claims enforced at construction, which is the parse-don't-validate ladder the
+chapter already carries.
+
+**Editor note — the real gap is that none of this is written down.** Neither book states the empty-list
+rule anywhere: grep finds no treatment in `book-pfd/foundations.md` or in JBCT's *Four Return Types*,
+whose forbidden-nesting matrix lists `Promise<Result<T>>`, `Result<Result<T>>` and `Option<Option<T>>`
+and is silent on `Option<List<T>>`. That silence is what made the question look open. Two edits:
+
+1. PFD, *The shapes* — one sentence saying the vocabulary is effects-only and cardinality lives inside
+   it, with the empty-list rule stated.
+2. JBCT, *Four Return Types* — a row for `Option<List<T>>`. **Needs a ruling on strength:** the author's
+   phrasing was "does not need wrapping," which is *discouraged*; the matrix's other entries are
+   *forbidden*. Marked as an open sub-decision rather than guessed.
+
+### 15.8 has-a / is-a — where the OO heuristic lands — `proposed`
+
+"Model has-a as composition, is-a as inheritance" is *not applicable* rather than wrong: both halves are
+heuristics about the shape of a noun graph, applicable only once entities are the unit of design. PFD
+does not refute the advice, it removes its subject — a stronger dismissal than "favour composition over
+inheritance," which concedes the framing and then argues about which arrow to draw.
+
+- **has-a is three fused things**, which PFD separates: a field fastened to an id (co-location, no
+  containment); a reference by shared primitive (different owner, different lifecycle); and genuine
+  part-whole, which is absorption. Only the third is composition in any real sense, and PFD supplies a
+  criterion for when it occurs — a cross-field invariant summons a parent — where the OO advice supplies
+  none.
+- **is-a splits in two.** Classification dies outright: types belong to processes, so there is no shared
+  `Customer` for a `PremiumCustomer` to subtype, and a taxonomy fuses drivers into one tree and
+  fossilizes the way the aggregate does. Substitutability survives by a different route — typed
+  Condition plus an independent step whose implementation is chosen at the edge. Dispatch without a
+  hierarchy, already in the vocabulary.
+- **Below the Leaf the advice still holds.** How a value type's representation is assembled from parts
+  is a real question; PFD's floor is the Leaf and does not reach inside. Above the Leaf the heuristic is
+  replaced by two sharper tests — invariant closure for has-a, change driver for grouping — sharper
+  because both are falsifiable and neither of the originals is.
+- **Brownfield keeps it.** An existing hierarchy records where someone believed drivers cohered. Reading
+  it is evidence-gathering, not design.
+
+**Editor note — merge with existing backlog rather than tracking twice.** This is largely item 1.7's
+territory ("Change-locality vs the aggregate — THE central DDD objection", shipped into *Edge Cases* in
+PFD 1.6.0) and its natural home is the objections register at item 9, not *Foundations*. It is too long
+for a Foundations sidebar and it is a reader-facing objection, which is what that register is for.
+
+### 15.9 Expression problem as a recurring frame — `proposed`
+
+The chapter's contrast — new behaviour as an addition while old use cases stay untouched, versus the
+aggregate modified in place — is the functional side of the expression problem, chosen at architecture
+granularity rather than type granularity. Naming it gives readers a known handle, and imports the dual
+cost honestly: adding a *case* (a new variant of an existing operation that every use case must now
+handle) is the expensive direction for process-first, as adding an operation is for entity-first.
+
+Placement: the counterexamples page may be the right home rather than the book.
+
+**Editor note — state it as an analogy, and say so.** The expression problem is about variants versus
+operations over a fixed set; the lift to architecture granularity is loose, and a pedantic reader will
+say so. The honest import of the dual cost is the part worth keeping and is the strongest reason to run
+it — it is a counterexample shape the book supplies against itself.
+
+
+## 16. Proposed: a chapter for the data question — "Process-first, but what about the data?" (2026-08-19)
+
+**Status:** `open` — structural proposal, needs an authorial ruling before any of item 15 is placed.
+
+**The problem it solves.** Data material is currently spread across four places in one chapter —
+*Where data comes from*, *How ownership moves*, *Designing out contention* and its read-write staleness
+subsection — plus the recovery triple. A reader arriving with the standard objection has no single place
+to be sent, and item 15 has six sub-items all queueing for space in a 320-line chapter that is already
+the book's densest. Those two facts are the same fact.
+
+**Proposed content:** the accretion model and its prior art (15.1), the write/read asymmetry (15.2),
+invariant closure and the constraint-losslessness limit (15.3), the three responses to a spanning
+invariant (15.4), retention (15.5), erasure and severance (15.6), ownership dynamics, race-condition
+elimination and the contention tactics, and the honest limits of all of it.
+
+**Framing:** title it as the objection it answers. The book already closes *Edge Cases* with an
+objections-answered register, so answering a predictable challenge head-on is established form.
+
+**Editor note — recommendation: split, do not move.** The risk is specific and worth stating. *Foundations*
+derives data as *residue*, mid-argument, immediately after "a process gathers knowledge" — and that
+derivation is load-bearing for process-first itself, not just for the data question. Lifting it into its
+own chapter re-creates the thing the book argues against: a data-modelling step, in its own box, that a
+reader can treat as separable and schedule independently. That would hand the objection back its premise.
+
+So: *Foundations* keeps the derivation and nothing more — data is residue, the id is the seed, the
+creatability gate, one writer per field. The new chapter takes everything *downstream* of it: ownership
+dynamics, invariant closure, the three responses, retention, erasure, contention design-out, the honest
+limits. Foundations gains a one-line forward pointer, which the layering discipline permits (visible,
+non-blocking).
+
+**Placement:** the part-3 band with *Architecture Synthesis*, *Edge Cases* and *Brownfield* — after the
+reader has seen all four altitudes, since ownership dynamics and erasure both need the telescope. Not
+between *Foundations* and Spiral Pass 1, which would interrupt the spiral.
+
+**Second-order benefit.** A chapter with this title is the most linkable thing the book could publish for
+the free web edition; the objection is a search query people actually type.
 
 ---
 

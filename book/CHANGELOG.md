@@ -7,6 +7,26 @@ All notable changes to the JBCT book, newest first. Format:
 Earlier history (1.x–2.x) predates per-book changelogs and lives in the
 repository root `CHANGELOG.md`.
 
+## [4.8.0] - 2026-08-20
+
+### Added
+- **Appendix D: The Use Case Worksheet** — the method at operating altitude, in two parts. Part A
+  is filled per use case: the six properties, input parsing into value objects, typed failures,
+  return kind per step, zone and pattern per step, recovery response per state-changing step, and
+  the four composition obligations. Part B carries the tables consulted while filling it — the four
+  return kinds and their allowed nestings, the three zones, the patterns, the recovery triple, and
+  what a stub owes. Added to the spine (`root.md`), the appendix table (`index.md`), and the web
+  edition at `/java/jbct/worksheet/`.
+- **Parse, Don't Validate** (*Pragmatica Core Validation Utilities*) — the predicate preference
+  stated: reach for a predicate from the `Verify.Is` catalog before writing the comparison by hand.
+  A catalog predicate is tested once in the library; the inline comparison is tested locally. The
+  exception is a condition specific to the domain, which is written inline as a business leaf and
+  owes a leaf's tests.
+- **Basic Patterns** (*Single Level of Abstraction*) — the testability consequence of the rule,
+  with branch counts. A credit-score adjustment written as a single method carries 37 conditional
+  branches; the same computation decomposed to the rule's standard is six named methods totalling
+  35. The decision surface does not shrink; a test reaches six targets directly rather than one.
+
 ## [4.7.0] - 2026-08-16
 
 ### Added

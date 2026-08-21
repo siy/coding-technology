@@ -13,6 +13,15 @@ open:** item 7's single running example carried across all three books (PFD / JB
 glossary spine half is done, the shared conference-booking worked example is not. The detailed
 register below is retained for reference.
 
+**Shipped (2026-08-21):** item **16** landed as `book-pfd/data-question.md` in **PFD 2.6.0**, carrying
+15.1-15.6 with it; 15.7's PFD half shipped in the same release and its JBCT half is recorded as item 1
+of `book/PLANNED-CHANGES.md`. **Still open from item 15:** 15.8 (has-a / is-a — merge into item 9's
+objections register, not *Foundations*) and 15.9 (the expression problem — counterexamples page, stated
+as an analogy). *Foundations* went 10,934 to 9,537 words; the module is 4,495 (between *Edge Cases* at 3,382 and
+*Architecture Synthesis* at 8,172). **Note for a later pass:** the voice overlay bands *Foundations* at
+5-6K words. It was at 10.9K before this split and is at 9.5K after, so the overage predates the split
+and the split did not resolve it.
+
 **Added (2026-08-19):** items **15** (PFD viewed from the data-structures side — nine sub-items out of
 a chat discussion, every one `proposed` or `open` except 15.7, which the author ruled) and **16** (a
 proposed chapter for the data question). **Item 16 gates item 15:** six of item 15's sub-items want
@@ -670,7 +679,7 @@ the same refusal — facts keyed to identity with an owner, rather than an objec
 (`:76`, *"a coordinate, not an object"*). His *context* is a read-set snapshot; PFD's accretion is an
 ownership map. Same substrate, different question asked of it.
 
-## 15. PFD viewed from the data-structures side (2026-08-19)
+## 15. PFD viewed from the data-structures side (2026-08-19) — 15.1-15.7 SHIPPED in PFD 2.6.0; 15.8-15.9 still open
 
 **Source:** chat discussion 19 Aug 2026, handed over for `pfd-editor`. Primary text: *Foundations* —
 *Where data comes from*, *How ownership moves*, *The shapes*.
@@ -943,7 +952,7 @@ say so. The honest import of the dual cost is the part worth keeping and is the 
 it — it is a counterexample shape the book supplies against itself.
 
 
-## 16. Proposed: a chapter for the data question — "Process-first, but what about the data?" (2026-08-19)
+## 16. A chapter for the data question (2026-08-19) — SHIPPED in PFD 2.6.0 as *The Data Question*
 
 **Status:** `open` — structural proposal, needs an authorial ruling before any of item 15 is placed.
 

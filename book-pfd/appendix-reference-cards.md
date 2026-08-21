@@ -92,6 +92,12 @@ Asynchrony **emerges from leaves** — any operation touching I/O is a `Promise`
 
 **Ownership has a lifecycle:** *mint* → *accrete* → *transition* → **absorb** (a spanning invariant summons a parent that takes the parts as steps — a spanning rule adds a parent; it does not edit the children) or **emancipate** (a field acquires a second independent reason to change and leaves its old owner).
 
+**The whole assembles freely; what never assembles is a shared write path.** Reads may assemble anything, writes stay partitioned by owner. The whole materializes on exactly three occasions: the **read path** (no writer, so no cost), a **spanning invariant** (one writer, the new parent), and **erasure** (a universal writer, keyed by the data subject).
+
+**A spanning rule binds its *invariant closure***, not the entity — the fields it spans plus anything transitively bound by an invariant sharing a field. Three responses, cheapest first: change the invariant's **modality** (hold it at reconciliation; price the window), push it into the **store** (a constraint refuses the write), or **materialize the closure** (absorption). Materialization is forced only when all three fail.
+
+**Retention follows ownership** — a field's lifespan is set by the authority its owning operation answers to, so lifespan is per-field. **Severance** withdraws the identity while the facts stay: a motion of the seed, not of ownership.
+
 *The honest limit:* in a domain dense with invariants spanning many fields — a ledger, a tax engine — stored state has real structure and a record genuinely earns its place. The claim changes magnitude there; it does not break.
 
 ## Card 7 — Recovery, and designing out contention

@@ -73,13 +73,13 @@ Each attached field carries four things: a name, an owner (the operation that cr
 
 This gate is sometimes misread as a ban on keeping data for later — on analytics, audit trails, the column captured now because some future report will want it. It is no such ban. Capturing-for-later is itself a process: its trigger is the event worth recording, its outcome is the stored fact, and its eventual consumer is the report or the audit that reads it. That data has a producer and a reader, so it passes the gate cleanly. What the gate forbids is the *orphan* — a field no operation writes, or no operation will ever read, carried because a diagram had a box for it. Foresight is allowed; the gate only asks that the foresight name the process that will produce the data and the one that will consume it. That is the whole difference between a captured fact and a speculative column.
 
-**The whole never materializes.** Because each field is fastened by the step that owns it, no process ever needs the entire record. The buy process sees a booking as something to create; the cancel process sees the same id as something to close. Each reads and writes only the fields it owns. The record is a place where independent processes park what they each know, keyed by a shared id: a coordinate, not an object. There is no shared `Booking` class, because nothing in the business needs one.
+**No process ever writes the whole record.** Because each field is fastened by the step that owns it, the buy process sees a booking as something to create; the cancel process sees the same id as something to close. Each writes only the fields it owns, and reads whatever it needs. **Reads may assemble anything; writes stay partitioned by owner** — an asymmetry the *Data Question* module takes up, together with the three occasions on which the whole does come together. The record is a place where independent processes park what they each know, keyed by a shared id: a coordinate, not an object. There is no shared `Booking` class, because nothing in the business needs one.
 
 The only field several processes write is, almost always, the one that carries the workflow's state: free, held, confirmed, cancelled. That field is a state machine, and writing it is a transition, not an overwrite. So the single point that needs coordination is the transition, and the way to coordinate it is to design the conflict out, not to lock. Every other field has one writer and needs no coordination at all.
 
 What couples two processes, then, is never an object or a service. It is a shared primitive: the id, the state enum, the value type of a field they both touch. And every such primitive is a word the business actually says. You share the seat's identity because it is the same seat; you share its reservation state because that state is a real shared fact. Co-location is not coupling: two processes that write different fields of one row are uncoupled at runtime, sharing only a schema, which is a coordination point touched at migration time, deliberately and rarely. The coupling that remains is the business's own, and only the business's own.
 
-**When a record earns its place. One case looks like a counterexample. A new feature appears that must write two field-groups together, under an invariant that spans both.** This does not break the model; it grows it. The feature is a new owner, and it absorbs those groups as subcomponents. The processes that wrote them before now write through it. The seam appears exactly at the invariant and nowhere else, and the realization that *these have to move together now* is itself a change in the business: the discovery of a governance boundary that did not exist yesterday.
+**When a record earns its place. One case looks like a counterexample. A new feature appears that must write two field-groups together, under an invariant that spans both.** This does not break the model; it grows it. The feature is a new owner, and it absorbs those groups as subcomponents. The processes that wrote them before now write through it. The seam appears exactly at the invariant and nowhere else, and the realization that *these have to move together now* is itself a change in the business: the discovery of a governance boundary that did not exist yesterday. Absorption is one of three responses to a rule that spans owners, and the *Data Question* module takes all three in order of cost.
 
 The familiar aggregate is the fossil of one such absorption: a write-need that once justified a boundary, frozen into a noun that persists after the need has moved. Process-first keeps the boundary a verb, an owning operation, so when the need moves the ownership moves with it and nothing fossilizes. This is why aggregates rot: they record an absorption and then stop recording.
 
@@ -87,23 +87,9 @@ The familiar aggregate is the fossil of one such absorption: a write-need that o
 
 **The same dissolution is reachable from another axis.** Rico Fritzsche's *command context consistency* principle reaches it on concurrency grounds — an aggregate is a *static* consistency boundary, while the facts any one decision actually reads change from command to command — where this book reaches it on change-driver grounds. The ownership discipline that follows removes most of the contexts such a principle has to guard; what survives it is the read-write staleness named later in this chapter.
 
-**There is an honest limit. In a domain dense with invariants that span many fields at once, a ledger or a tax engine, the stored state has real structure that is not just per-process accretion, and a record genuinely earns its place.** That is the same corner where an entity carries cross-field invariants of its own. Data is not eliminated there; it is minimized to the invariants that genuinely span. The claim does not break at that edge; it changes magnitude. Most line-of-business software lives at the other end, process-rich and invariant-poor, and has been modeled entity-first out of habit rather than fit.
+**There is an honest limit. In a domain dense with invariants that span many fields at once, a ledger or a tax engine, the stored state has real structure that is not just per-process accretion, and a record genuinely earns its place.** Data is not eliminated there; it is minimized to the invariants that genuinely span, and the claim changes magnitude rather than breaking. Most line-of-business software lives at the other end, process-rich and invariant-poor, and has been modeled entity-first out of habit rather than fit. The *Data Question* module works the edge in full.
 
 What is left when the data-modeling step is gone is a system whose stored state is the residue of its processes, whose every field has a creator, and whose every coupling is a word the business says. The architecture has no content the business did not put there.
-
----
-
-## How ownership moves
-
-The previous section fixed who owns a field at the moment it is created. **Ownership is not frozen there. It has a lifecycle, and that lifecycle is what lets the model grow without rewriting itself.**
-
-A datum is *minted* when an operation first needs an identity to remember past its own run: the id, owned by the operation that creates it. It *accretes* as later operations fasten fields to that id, each field owned by the operation that produces it, written by that one owner and read by anyone. It *transitions* when its workflow state changes — the state machine is ownership in motion, each transition owned by the operation that performs it, all of them coordinated at the single state field. And over the system's life one of two things happens to it: it is absorbed, or it is emancipated.
-
-**Absorption is the growth of the previous section, seen as a motion.** A record earns its place when a cross-field invariant summons a new owner that absorbs the field-groups; said as a motion, the pieces are not rewritten. A new owning process appears above them and takes them as its parts — it owns the cross-part invariant and the right to read the parts, and nothing else; the parts keep their own write-logic untouched and run inside the new process as steps. The only new code is the guard the invariant requires. **A spanning rule adds a parent; it does not edit the children.** That is the whole answer to the worry that a new rule forces a rewrite of everything the rule touches.
-
-**Emancipation is the same motion run backward.** A field one operation owned acquires a second, independent reason to change — another authority now writes it too, or it starts to vary on its own cadence. It leaves its old owner and becomes its own, the others reaching it through the shared primitive it has become. Absorption gathers the pieces an invariant binds; emancipation releases the piece a driver has split. What restructures in both is the ownership, not the data's existence — the field's values persist; their owner changes. Where the new owner lives in a different store, that re-home is a schema migration: the deliberate, rare, costed coordination point the data section named, never a free byproduct of the redraw. In a system already built, emancipation is a refactoring move with a name: the god-object is a field-cluster several drivers came to own at once, and prying loose the one whose driver has diverged is this same motion performed after the fact.
-
-**The hierarchy absorption builds is the telescope, read from the data side.** A part is owned data together with the process that owns it, and a part is a Leaf to its parent — the same fractal the altitudes are made of. And the invariant that summoned the parent is a change driver: it is the single reason all the parts must now change together. So absorption is an altitude emerging, driven from the data rather than from policy, and the force that groups use cases into a workflow is the force that gathers fields under a record. Where data comes from, how the telescope is built, and how the change driver is found are three views of one structure.
 
 ---
 
@@ -117,6 +103,8 @@ A datum is *minted* when an operation first needs an identity to remember past i
 - **`Promise<T>` — the value arrives later, and may fail; `Promise<T>` carries both the asynchrony and the failure.**
 
 Asynchrony emerges from leaves: any operation that touches I/O is a `Promise`, and the `Promise` propagates outward through everything that depends on it. It is not a decision made at the top; it is a fact that rises from the bottom.
+
+**The four shapes describe effects, not contents.** Existence, absence, failure and time are what they carry; how *many* of something there is belongs to the value inside them. A collection is a `T` — it exists unconditionally, and an empty collection is a legitimate value of it rather than an absence, so wrapping one in `Option` states the same thing twice. Non-empty, bounded, exactly-one-of-each: these are claims a type makes at construction, enforced by the ladder below, not a fifth shape.
 
 A type carries a claim — a `CustomerId` claims to be a valid identifier, a `Money` claims to be a non-negative amount in a known currency — and construction is where the claim is enforced. **This is *parse, don't validate*: the value cannot exist in an invalid state, so code that receives it can trust it without re-checking.** The enforcement has levels, strongest to weakest, and the methodology's commitment is identical across all of them; only the teeth differ:
 
@@ -272,48 +260,9 @@ One caution belongs with the borrowed history a startup leans on. A founder's pr
 
 ---
 
-## Designing out contention
-
-Design-out earns a second look where the invalidation is a race — two processes reaching for the same state at once. The recovery triple's instinct, change the model so the bad state cannot arise, has a specific shape here, and it is one principle with a small family of tactics. The principle: **move the contention to a single named coordination point, and make the conflicting state impossible to write rather than something detected after it is written.**
-
-The tactics are the ways to make it impossible:
-
-- **Derive, don't store — a value you can recompute from authoritative facts is not stored at all, so it has no second copy to fall out of step; availability is the absence of an active reservation, never a flag that says *free*.**
-- **Single-writer fields — a field with exactly one owning operation needs no coordination, because nothing else can race it.**
-- **The guarded transition — the one field several processes do write, the workflow's state, changes only as a guarded transition, so the conflict is resolved at the single point it lives and nowhere else.**
-- **Declarative constraints** — push the impossibility into the store: a uniqueness or exclusion constraint makes two bookings of one seat a write the database refuses, so the race is lost by construction, not by a check.
-- **Serialized intake** — where order itself is the hazard, a per-entity queue makes a new event meet only a fully-processed prior one, never a half-applied one.
-
-Each tactic removes a race by removing the thing that could be in two states at once. What is left needing coordination is the irreducible business contention, and the methodology funnels it to one visible transition where it is designed out rather than locked around. **Locking is the admission that the conflict was left constructible; design-out is the decision that it never was.**
-
-### The contention the tactics do not remove
-
-The five tactics all remove a race between two *writers*, and single-writer ownership is the very thing that hides the second kind. **A field with one writer cannot be raced; a decision that *reads* it can still go stale.** Operation A reads a field that operation B owns, decides on the value it saw, and commits after B has moved it. Nothing was written twice — the write that did happen was authorized by a fact that had already expired. Call it **read-write staleness**, to keep it apart from the write-write races above.
-
-Four cases, and the tactics answer three:
-
-| Conflict | The answer |
-|---|---|
-| Write-write, on different fields | single-writer ownership — no conflict to resolve |
-| Write-write, on the workflow's state | the guarded transition |
-| Read-write, on a fact with a unique key | a declarative constraint |
-| **Read-write, on a predicate over a set** | **design-out, but by materializing the predicate — see below** |
-
-**Where the claim is reshapeable, design-out still wins** — and that is the existing stance applied to a new case, not a new stance. *No booking overlaps these dates* is a predicate only until the thing actually claimed is written down as a row per interval claimed, at which point an exclusion constraint refuses the overlap and the race is lost by construction rather than detected after the fact. Reach for the reshape before reaching for a check around it.
-
-The fourth row is where the interval reshape runs out, and where two of the tactics above pull against each other. *This customer holds fewer than six tickets for this event*, *reserved capacity is still under the cap* — a claim about a **set**, and the set includes rows that do not exist yet. A constraint cannot hold a row that has not been written, and a lock taken over the rows you counted does not cover the one a concurrent operation is about to add. The guard is narrower than the decision, which is why the interval reshape has nothing to work with here: counts and sums do not become rows.
-
-**Design-out still reaches it, by a different tactic.** Materialize the predicate as one guarded field and put the guard in the write: an update that increments a stored count *and* carries `where count < limit` in the same statement, rejecting when it matches nothing. That is the guarded transition, applied to a count rather than to a workflow state, and the race is lost by construction exactly as it is there. The reshape was never into rows; it is into a single field one guard can sit on.
-
-The price is the honest limit, and it is a collision between two tactics rather than an absence. **Derive, don't store** says the count should not exist, because it is recomputable from the bookings themselves. **The guarded transition** says it must exist, because a guard needs a field. Storing it means every capability that can change the predicate has to maintain it in the same transaction — a cancellation decrements only when its own guarded transition succeeds — and a capability that forgets leaves the stored count and the facts quietly disagreeing, which is the drift derive-don't-store exists to prevent. The alternative keeps the facts authoritative and pays elsewhere: validate the read set at commit, carrying the facts the decision rested on into the write and failing if any of them moved. An append-only log gets this one cheaply, since a query over events already selects the event that would invalidate it, phantom included; a mutable store has to be given the handle deliberately.
-
-Either way, what is left is real. Two operations competing for one guest's booking budget genuinely conflict, and serializing them at that one field is the domain's own truth rather than a lock standing in for a design nobody did. **The tactics are a discipline, not a closure: they remove every race that can be designed away, and what remains is small, named, and priced rather than assumed absent.**
-
----
-
 ## Reading the spiral
 
-**That is the whole vocabulary.** The spiral now applies it — four passes through one running example, event ticketing, at successive altitudes. Pass 1 takes a single use case, *buy a ticket*, and answers the decisions Spiral 0 raised, in full. Pass 2 lets workflows emerge as use cases multiply. Pass 3 lets subsystems emerge as workflows cluster. Pass 4 reaches the whole platform.
+**That is the whole vocabulary the spiral needs.** One module still owes the reader an answer: what all of this does to the data, which the *Data Question* takes up after the spiral has been walked. The spiral now applies the vocabulary — four passes through one running example, event ticketing, at successive altitudes. Pass 1 takes a single use case, *buy a ticket*, and answers the decisions Spiral 0 raised, in full. Pass 2 lets workflows emerge as use cases multiply. Pass 3 lets subsystems emerge as workflows cluster. Pass 4 reaches the whole platform.
 
 **One thing to watch as you read: how little is new after the first pass.** The vocabulary does not grow; each altitude reuses it and adds only the small delta that altitude makes visible. The passes get shorter as they climb, and that is deliberate — not the book running out of things to say, but the telescope doing exactly what it claims. Keep that in view; by the end it will be the clearest evidence the methodology offers about itself.
 

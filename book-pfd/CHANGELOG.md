@@ -7,6 +7,48 @@ All notable changes to the PFD book, newest first. Format:
 `0.x` versions were preview editions; `1.0.0` marked the first edition released to
 readers, and `1.x` are its maintenance and expansion releases.
 
+## [2.6.0] - 2026-08-21
+
+### Added
+- **The Data Question** (*new module, between Architecture Synthesis and Edge Cases*): the standard
+  objection answered end to end. The whole record materializes on exactly three occasions, sorted by
+  whether the assembled whole has a writer — the read path (none, so no cost), a cross-field invariant
+  (one, the new parent), and erasure (universal, and keyed by the data subject). Carries the three
+  responses to a spanning invariant in order of cost (change the modality, push it into the store,
+  materialize the closure), *How ownership moves* and *Designing out contention* relocated from
+  *Foundations*, and the prior-art convergence with sixth normal form.
+- **Invariant closure** (*The Data Question*, glossary, Card 6): what a spanning rule actually binds —
+  the fields it spans plus anything transitively bound by an invariant sharing a field, normally a
+  proper subset of what hangs off the id. The entity is what you get by assuming every closure on an
+  id is one closure.
+- **The constraint-losslessness mechanism** (*The Data Question*): decomposing state by owner is
+  lossless with respect to data and lossy with respect to constraints. A predicate over one field
+  survives the split; a predicate over several must be re-imposed. This is the mechanism behind the
+  honest limit, which the book previously asserted without explaining.
+- **Severance** (*The Data Question*, glossary): the withdrawal of an identity from an accretion that
+  survives it. Not a motion of ownership, since no field changes owner, but a motion of the seed — and
+  the only motion in the model whose driver is a regulation rather than the business.
+- **Retention** (*The Data Question*, glossary, Card 6): how long a field may be kept and under whose
+  authority, derived from ownership rather than added as a fifth field property. Lifespan is per-field
+  because ownership is.
+- **Erasure** (*The Data Question*): named as the case that breaks two of the model's rules at once —
+  keyed by the data subject rather than by a minted id, and a universal writer. Three tactics: fan-out
+  as a Fork-Join over per-owner leaves, crypto-shredding as design-out, and severance. Records the
+  collision the book previously left unacknowledged: an immutable log corrected by appending is a
+  design-out tactic that a right to erasure cannot be honoured against.
+
+### Changed
+- **The write/read asymmetry is stated where it is load-bearing** (*Foundations*, *Where data comes
+  from*). "The whole never materializes" was refutable by any report; the claim that does the work is
+  that no process ever *writes* the whole record. Reads may assemble anything; writes stay partitioned
+  by owner. The book already carried the asymmetry in passing in *How ownership moves* — written by
+  that one owner and read by anyone — one section downstream of the claim that needed it.
+- **Foundations sheds the data consequences and keeps the derivation** (10,900 to 9,500 words). *How
+  ownership moves* and *Designing out contention*, including read-write staleness, move to the new
+  module. What stays is the derivation itself: data as residue, the id as seed, accretion, the
+  creatability gate, one writer per field. Absorption and the honest limit keep a compressed statement
+  in place with the full treatment forward.
+
 ## [2.5.0] - 2026-08-10
 ### Fixed
 - **The backward-measurement claim was too strong** (*Foundations*, both appendices). The book said the version-control history *does not lie* about how the system changes, and rested the measure-backward instrument on that. It does mislead, in one specific and correctable way: **co-change is partly endogenous** — files change together partly *because the current decomposition forces them to* — so raw co-change is downstream of the very structure it is being used to judge, and a decomposition that disagrees with the history may be indicting the history. The instrument survives with two adjustments, both formulation-level and neither requiring tooling: measure the co-change that **crosses a boundary**, where coupling indicates a misattribution whether the change was forced by the domain or induced by the structure; and treat restructurings as **natural experiments**, since co-change that survives a known restructure answers to a real driver, while co-change that vanishes with it was an artifact of the structure just removed. The claim gets narrower and the instrument gets sharper.

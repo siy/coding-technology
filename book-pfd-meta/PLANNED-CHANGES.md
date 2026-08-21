@@ -891,9 +891,12 @@ and is silent on `Option<List<T>>`. That silence is what made the question look 
 
 1. PFD, *The shapes* — one sentence saying the vocabulary is effects-only and cardinality lives inside
    it, with the empty-list rule stated.
-2. JBCT, *Four Return Types* — a row for `Option<List<T>>`. **Needs a ruling on strength:** the author's
-   phrasing was "does not need wrapping," which is *discouraged*; the matrix's other entries are
-   *forbidden*. Marked as an open sub-decision rather than guessed.
+2. JBCT, *Four Return Types* — a **Forbidden (Double-Monad Nesting)** row for `Option<List<T>>`.
+   **Ruled 2026-08-21: forbidden**, alongside `Promise<Result<T>>`, `Result<Result<T>>` and
+   `Option<Option<T>>`. Reason to give in the matrix: a collection already carries emptiness as a
+   value, so the `Option` is a second absence channel saying the same thing twice. The rule then
+   generalizes cleanly — *each concern appears at most once in a return type*, and emptiness is the
+   collection's own concern.
 
 ### 15.8 has-a / is-a — where the OO heuristic lands — `proposed`
 
@@ -969,6 +972,20 @@ creatability gate, one writer per field. The new chapter takes everything *downs
 dynamics, invariant closure, the three responses, retention, erasure, contention design-out, the honest
 limits. Foundations gains a one-line forward pointer, which the layering discipline permits (visible,
 non-blocking).
+
+**Grounding measured 2026-08-21.**
+
+- **The material to move is ~95 of *Foundations*' 320 lines** (~30%): *Where data comes from* (54-95),
+  *How ownership moves* (96-109), *Designing out contention* + its staleness subsection (275-313).
+- **The worked examples already exist**, in *Edge Cases*: cancellation residue, derived availability,
+  the owned guarded transition, presence intervals, the range-exclusion constraint, owned-vs-orphan
+  residue. So this is substantially a reorganization, not 200 lines of new prose — and *Edge Cases*
+  becomes the worked-example half of the chapter's argument rather than a competitor to it.
+- **The appendices mirror *Foundations*' section structure** — `appendix-reference-cards.md:81` is
+  "Card 6 — Where data comes from", and Card 7 carries contention. A move re-points both cards, which
+  is the five-place rule biting exactly as item 14 established.
+- **Size fits the band.** PFD chapters run 94-494 lines; *Foundations* is 320, Spiral 1 is 494. A
+  250-350 line data chapter would be the fourth longest and is unremarkable for this book.
 
 **Placement:** the part-3 band with *Architecture Synthesis*, *Edge Cases* and *Brownfield* — after the
 reader has seen all four altitudes, since ownership dynamics and erasure both need the telescope. Not

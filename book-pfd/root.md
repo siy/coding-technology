@@ -9,7 +9,7 @@ In-progress draft. Read top-to-bottom; each piece is written to land naturally f
 
 ## Spiral 0 — the entry ramp
 - [Spiral 0 — The Decisions a Use Case Forces](spiral-0-decisions.md) — what every use case forces a designer to settle, named without code.
-- [Foundations](foundations.md) — the small vocabulary the spiral reuses: four shapes, six properties, six patterns, the telescope, the recovery triple, two axes of cohesion.
+- [Foundations](foundations.md) — the small vocabulary the spiral reuses: four shapes, six properties, six patterns, the telescope, the recovery triple, two axes of cohesion, and where data comes from.
 
 ## Spiral — methodology walked at four altitudes
 - [Spiral Pass 1 — Use Case Altitude](spiral-1-use-case.md) — one trigger, one outcome, *buy ticket* end to end.
@@ -19,6 +19,7 @@ In-progress draft. Read top-to-bottom; each piece is written to land naturally f
 
 ## Synthesis and application
 - [Architecture Synthesis](architecture-synthesis.md) — Phase 4 elicitation, the six-axis Phase-5 vector, recovery selection, Phase 5/6 boundary, continuous-transformation framework, three-profile ticketing walkthrough.
+- [The Data Question](data-question.md) — process-first answered on the data: the three occasions the whole record materializes, invariant closure, ownership over time, severance, retention, erasure, and designing out contention.
 - [Edge Cases](edge-cases.md) — the methodology stress-tested against adversarial booking scenarios (group atomicity, premium auto-buy, conference schedules, cancellation residue, time-shared seats, change-locality vs the aggregate) and the recurring high-level objections answered.
 - [Brownfield](brownfield.md) — the methodology applied in reverse to an inherited **payroll/HR** system (a second domain, deliberately not ticketing); four common failure modes; the distributed-monolith walkthrough; methodology informs, business decides.
 

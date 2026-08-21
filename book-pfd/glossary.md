@@ -70,6 +70,8 @@ The methodology's vocabulary, defined once. These terms are the shared spine the
 
 **Information hiding.** Parnas's criterion: decompose by hiding the design decisions most likely to change, so the module list follows the change list rather than the flowchart. (Finding the change driver.)
 
+**Invariant closure.** What a cross-field invariant actually binds: the fields it spans, plus anything transitively bound by another invariant sharing a field. Normally a proper subset of what hangs off an id — the entity is what you get by assuming every closure on an id is one closure. (The closure, not the entity.)
+
 **Iteration.** The pattern for a step applied across a collection. (The patterns.)
 
 ## L
@@ -96,9 +98,13 @@ The methodology's vocabulary, defined once. These terms are the shared spine the
 
 **Read-write staleness.** The contention single-writer ownership does not remove: an operation reads a field another operation owns, decides on the value it saw, and commits after that value has moved. Nothing is written twice — the write that happens was authorized by an expired fact. Reshapeable claims design out; a predicate over a set (a count, a sum) includes rows that do not exist yet, and designs out only by materializing the predicate as one guarded field, which every capability changing it must then maintain. (Designing out contention.)
 
+**Retention.** How long a field may be kept and under whose authority — a consequence of ownership rather than a fifth property beside it, since the operation that creates a field creates it for a purpose that answers to an authority. Lifespan is per-field because ownership is; a row has one lifecycle and an entity model must pick one. (Retention.)
+
 **Recovery triple.** The three responses to an invalidated step — BER (compensate), FER (continue degraded), and design-out (make the invalidation impossible) — where most discourse names only the first. (The recovery triple.)
 
 ## S
+
+**Severance.** The withdrawal of an identity from an accretion that survives it: the facts stay, correct and owned as before, and the link between them and a person is destroyed. Not a motion of ownership — no field changes owner — but a motion of the seed, and the only one in the model whose driver is a regulation rather than the business. (Severance.)
 
 **Semantic potential.** William Jackson's term for a type's capacity to carry a business statement rather than merely a layout; the shapes are the first place the methodology spends it. (Foundations.)
 

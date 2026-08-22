@@ -90,3 +90,98 @@ clause working, and it is the first evidence for it from outside the author's ow
 Claims-ledger row: *claim — the AS design space is complete; instrument — `derive()` over out-of-corpus
 systems; result — **partial, 1 of 3 targets**, 5/6 axes reproduced, one missing input identified;
 caveat — a single target, and the outcome was known to the sheet's author.*
+
+---
+
+# Run 4 complete — Segment and Monzo (2026-08-22)
+
+Sheets: `corpus/segment-split.toml`, `corpus/segment-reversal.toml`, `corpus/monzo.toml`. All written
+from published demands with outcomes not encoded.
+
+## Segment — both eras derive the same vector
+
+| | split-era sheet | reversal-era sheet |
+|---|---|---|
+| topology | single deployable | single deployable |
+| substrate / read_write / state / persistence | null vector | null vector |
+| pressures recorded | **none** | **none** |
+
+The two sheets differ only in Q8, where the reversal sheet states the operating ceiling that actually
+drove the reversal. **The engine derives an identical vector from both.**
+
+> **P3 (Segment).** I predict the engine derives materially different vectors from the two sheets.
+
+**MISS.** They are identical. But the direction matters more than the grade: the engine derives **single
+deployable in both eras** — which is the architecture Segment returned to after roughly two years of
+running 140 services. From demands alone, and with the outcome withheld, the method declines the split
+that a competent team made and later undid.
+
+That is one case and it is retrospective, so it proves nothing on its own. It is still the first
+instance in this project of the method disagreeing with a real team's decision **in the direction the
+team itself later moved**.
+
+## Monzo — one step of decomposition, and it stops
+
+| Axis | Derived | Pressed by |
+|---|---|---|
+| topology | **multiple deployables** | cadence divergence, `unit:payments` (independent vs continuous baseline) and `unit:lending` (weekly) |
+| substrate / read_write / state / persistence | null vector | nothing |
+
+> **P4 (Monzo).** The engine will **not** force 1,600 services. I predict it stops at a small number of
+> subsystem boundaries and that the residual is organizational.
+
+**HIT.** Topology moves exactly one step, on cadence divergence alone, and nothing else moves. The
+remaining 1,598 boundaries are not derivable from demands — which is consistent with the book taking the
+enterprise altitude as an input rather than deriving it.
+
+> **P1.** At least one of the three produces an **inexpressible** result.
+
+**HIT.** Two, and both are *missing inputs* rather than missing values (see below).
+
+> **P5.** At least one axis receives no pressure at all from any sheet.
+
+**HIT**, and broadly: `substrate`, `read_write`, `state` and `persistence` received **zero** pressure
+across all four sheets. Weak evidence, since four sheets is a small probe.
+
+## The two gaps this run found
+
+**G1 — blast-radius containment presses nothing.** Segment's `answers.q2[1]` states the demand that
+actually drove its split: *"One failing or throttling destination must not degrade delivery to the other
+99."* The engine reports **"no rule in the ledger prices this row against the current position."**
+
+`CONTAINMENT` exists in `ledger.js` as a concept, and no press rule reads a per-path isolation demand
+against it. Topology moves on **cadence divergence and nothing else**. So a system whose decomposition
+is driven by fault isolation is invisible to the derivation — and fault isolation is one of the most
+common real reasons teams split services.
+
+**G2 — recovery time does not reach state storage.** From the LMAX run above: `event-sourced` is pressed
+by replay-or-audit obligations, and LMAX event-sources to rebuild in-memory state after failover. The
+demand is on the sheet, in Q2, and no rule reads it against `state`.
+
+Both are the same shape: **a real demand, statable on the sheet, that no rule prices.** That is the
+`missing input` category of the pre-registered taxonomy, and it is the category the probe was least
+expecting to dominate.
+
+## Sheet defects, disclosed
+
+The gate flagged `NO_CRITICALITY` on all four sheets, and `UNTRIAGED` / `UNSCOPED` on Monzo's q7 unit
+rows. My sheets are imperfect; a reader who thinks a verdict is wrong should attack the sheet first.
+
+## Final grading
+
+| | Prediction | Result |
+|---|---|---|
+| P1 | at least one inexpressible result | **HIT** (two, both missing inputs) |
+| P2 | LMAX topology MISS via a missing axis | **MISS** — prediction wrong, engine right |
+| P3 | Segment's two eras derive different vectors | **MISS** — identical |
+| P4 | Monzo not forced to extreme decomposition | **HIT** |
+| P5 | at least one axis unpressed | **HIT** |
+
+Three hits, two misses. **Both misses were mine, not the engine's**, which is the outcome a probe
+designed to break something should report honestly: I predicted two failures and the engine survived
+both, then found two gaps I had not predicted at all.
+
+Claims-ledger row: *claim — the AS design space is complete; instrument — `derive()` over four
+out-of-corpus sheets; result — **two missing inputs found** (blast-radius containment; recovery-time to
+state), design space otherwise expressed all four outcomes; caveat — four sheets, outcomes known to
+their author, sheets carry gate warnings.*

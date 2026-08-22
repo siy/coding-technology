@@ -1,0 +1,102 @@
+# Monzo (~2019-2022) — Run 4 target 3. Written from published demands (engineering blog,
+# QCon talks on the service platform). Outcome (1,600+ services) deliberately not encoded.
+schema_version = "0.1"
+[meta]
+system = "monzo"
+era    = "2019-2022"
+author = "siy"
+mode   = "greenfield"
+source = "book-arch-meta/DESIGN-SPACE-PROBE-PREDICTIONS.md"
+
+[[answers.q1]]
+scope     = "path:card-authorisation"
+statement = "Respond to a card authorisation within 100 ms; the scheme times out beyond that."
+shape     = "external-clock"
+price     = "a timed-out authorisation is a declined payment at the till"
+status    = "answered"
+
+[[answers.q2]]
+scope     = "system"
+statement = "99.99%: a bank that cannot authorise payments is a regulatory incident."
+price     = "regulatory reporting and customer harm"
+status    = "answered"
+
+[[answers.q3]]
+scope     = "data-class:ledger"
+statement = "RPO 0 on the money ledger."
+status    = "answered"
+
+[[answers.q4]]
+scope     = "data-class:ledger"
+statement = "Strictly consistent: a balance must never permit double-spend."
+status    = "answered"
+
+[[answers.q4]]
+scope     = "data-class:feed"
+statement = "Eventual is fine for the customer activity feed."
+status    = "answered"
+
+[[answers.q5]]
+scope      = "data-class:ledger"
+statement  = "Order of 10,000,000 accounts with continuous card traffic."
+shape      = "volume"
+read_model = "same"
+status     = "answered"
+
+[[answers.q6]]
+scope     = "data-class:ledger"
+kind      = "audit"
+statement = "FCA and PRA obligations: transaction history must be reconstructable for regulatory reporting."
+status    = "answered"
+
+[[answers.q6]]
+scope     = "system"
+kind      = "residency"
+statement = "UK regulatory regime; customer data resides in the UK."
+status    = "answered"
+
+[[answers.q7]]
+scope     = "system"
+statement = "Baseline: the platform releases continuously."
+cadence   = "continuous"
+status    = "answered"
+
+[[answers.q7]]
+scope     = "unit:payments"
+statement = "Payments teams release on their own schedule, independently of lending and of the app backend."
+cadence   = "independent"
+status    = "answered"
+
+[[answers.q7]]
+scope     = "unit:lending"
+statement = "Lending releases on its own schedule, gated by credit-risk review."
+cadence   = "weekly"
+status    = "answered"
+
+[[answers.q8]]
+scope     = "system"
+statement = "Several hundred engineers with a dedicated platform team operating shared infrastructure."
+status    = "answered"
+
+[[answers.q9]]
+scope     = "system"
+statement = "One currency, one regulatory regime, one region."
+status    = "answered"
+
+[[domain_shape]]
+operation   = "authorise-payment"
+inverse     = "reverse the authorisation"
+decays      = false
+reshapeable = ["none"]
+
+[[domain_shape]]
+operation   = "post-ledger-entry"
+inverse     = "none: corrected by a compensating entry"
+decays      = false
+reshapeable = ["append-only"]
+
+[[domain_shape]]
+operation   = "update-activity-feed"
+inverse     = "none"
+decays      = true
+reshapeable = ["none"]

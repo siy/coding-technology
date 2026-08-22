@@ -134,3 +134,59 @@ change-driver decomposition.
 The claims-ledger row for this run reads: *claim — units sharing a change driver change together;
 instrument — co-change over a documented restructure; result — **run failed, design defective, claim
 untested**; caveat — see the four design defects above.*
+
+---
+
+# Addendum — detector v2 and re-screen (2026-08-22)
+
+Run 2's selection used git rename detection, which missed restructures outright. Detector v2
+(`cochange-detect2.py`) tracks **directory membership by basename across tree snapshots** instead, and
+filters test/doc/CI/tooling paths *before* detection, so the criteria are applied by the instrument
+rather than by hand afterwards.
+
+## The two detectors have complementary blind spots
+
+Neither is a superset of the other, which was not anticipated.
+
+- **Rename-based** misses files rewritten as they moved, removed-and-re-added, or moved to another
+  repository. It missed ansible's collections migration and home-assistant's restructure entirely.
+- **Basename-based** misses restructures that leave **backward-compatibility shims**, because the old
+  path keeps a file of the same name and the basename is no longer unique. It missed scrapy's `contrib`
+  dissolution — the very restructure the first detector found — for exactly that reason.
+
+**A re-registered Run 2 must screen with the union of both.**
+
+## New candidates surfaced
+
+| Repo | Window | Event | Assessment |
+|---|---|---|---|
+| **rails** | 2013-06..10 | `actionpack/lib` → `actionview/lib`, 83 files | **Strongest candidate found.** ActionView extracted from ActionPack: documented, domain-driven, a true split |
+| **ipython** | 2009-03..07 | flat `IPython` → `core` / `utils` / `deathrow` / `quarantine` | genuine re-partition of a flat package |
+| sklearn | 2011-08..12 | `scikits/learn` → `sklearn/*` | needs depth-3 re-assessment; may be a namespace rename |
+| ansible | 2015 | `plugins/inventory` → `contrib/inventory` | borderline; the `v2/ansible` half is a version migration |
+
+Rejected on inspection: numpy (`core` → `_core`), matplotlib (vendored `agg24` relocation), twisted and
+pytest (both `src/` layout), symfony and home-assistant (nothing over threshold).
+
+## Two criteria the study still lacks
+
+**C1 — the restructure must re-partition.** `numpy/core` → `numpy/_core` moved 261 files and qualifies
+under every criterion as written, while carrying **zero information for the metric**: a wholesale
+directory rename maps one module to one module, so every cross-boundary pair stays cross-boundary with
+relabelled endpoints. The criteria must require that the restructure maps one source module to two or
+more targets, or two or more sources to one target.
+
+**C2 — module depth is per-repository.** Fixed `depth=2` is wrong wherever the package root is not at
+depth 1. For sklearn's pre-rename `scikits/learn/svm/foo.py`, depth 2 collapses every file into one
+module and manufactures an apparent re-partition that is really a top-level rename. Depth must be set
+from where the repository's package root sits.
+
+## Is Run 2 salvageable
+
+Plausibly. The candidate pool goes from 3 to about 5 with rails as the strongest addition, and rails is
+the first candidate whose restructure is both well documented and a genuine split.
+
+**The binding constraint is unchanged and unsolved: co-change density.** scrapy produced 17 cross-
+boundary pairs and ipython 21, against a threshold of 30, and that is a property of the pre-window
+definition rather than of the detector. C1 and C2 above, plus the four defects recorded earlier, are all
+prerequisites to a re-registration — six fixes in total, of which execution has now demonstrated five.

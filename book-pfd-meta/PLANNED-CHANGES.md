@@ -1005,6 +1005,97 @@ the free web edition; the objection is a search query people actually type.
 
 ---
 
+## 17. External assessment intake (2026-08-22)
+
+**Source:** an independent review of the public site, the course editions and the *Keep the Context Map*
+dev.to article, run in another assistant and handed over as an opinion rather than as guidance. Status
+tags per item 15's convention. **Provenance caveat:** the reviewer saw only public material — not the
+books, the corpora, or any measurement — and revised two severity ratings by two notches after reading a
+single article. **Weight its first-order observations; discount its rankings.**
+
+### 17.1 The one-line definition of the project — `proposed` `[ecosystem]`
+
+Offered: *a methodology for reducing discretionary decisions in software engineering by replacing them
+with derivations from explicitly recorded constraints*, with "functional" as an implementation
+consequence rather than the defining idea. Better than anything currently on the front door, and it
+converges with the conceptual-space exchange from a different direction.
+
+**Correction it needs, and the correction is the point.** The distinguishing move is not reducing
+discretionary decisions — every methodology claims that. It is **refusing to fake the ones that remain**:
+`next_step` returns *underdetermined* rather than choosing. Taken as written, a reader expects the method
+to decide more; its actual signature is deciding less, and marking the boundary. Home: *Closing*, or the
+site front door. Not a methodology chapter.
+
+### 17.2 Completeness of the input set, at both ends — `proposed` `[ecosystem]` — highest value
+
+The review's first gap is that PFD has no completeness criterion for the *operation set*: the method says
+what to do with an operation, never how to know you have them all. `architecture-synthesis-review.md:158`
+says the same thing at the other end — the book "defines an optimization procedure over a chosen
+architectural design space rather than proving that the design space itself is complete."
+
+**That is one gap wearing two faces**, and two independent reviewers reached it from opposite directions,
+which is the strongest signal in the intake. Naming it once as a property of the whole pipeline is more
+honest and more economical than patching each end. It is also the natural seed for the standing
+"register of what the methodology deliberately leaves open" gap.
+
+### 17.3 Architecture delta as re-derivation — `proposed` `[AS / next_step]`
+
+Offered as a research direction: `architecture_delta = derive(R_new) - derive(R_old)`. It is not research
+— `next_step` is already a pure function from answer sheet to vector, so the delta is a diff over an
+existing engine's output. **Cheapest item in the intake, not "medium."**
+
+**Missing piece:** a raw vector diff is not an architecture delta. Two derivations can differ in a value
+costing a config flag or one costing a migration. It needs reversibility pricing, which `brownfield.md`
+already supplies — additions reverse, splits do not at any practical cost.
+
+### 17.4 Use-case elicitation from context-map crossings — `proposed` `[PFD]`
+
+The proposed procedure is mostly circular: "enumerate externally observable outcomes" relocates the
+completeness problem from operations to outcomes, and its stated criterion is circular unless
+responsibilities are enumerable. (It also uses *responsibility* as a technical noun, which is banned
+vocabulary here; any adoption rewrites that.)
+
+**One clause is genuinely non-circular and worth keeping: *repeat from every context-map crossing*.**
+Crossings are finite and given by the input contract, and each implies at least one operation on each
+side. That is a real completeness lever over a bounded set, and it is the only part of the procedure that
+does not smuggle the question. Relates to 17.2.
+
+### 17.5 Cadence is sufficient, not necessary — `proposed` `[article; book already correct]`
+
+The review calls *"cadence divergence is what forces release independence, not the count of teams"*
+overreach, on the counterexample of two teams at identical frequency with independent schedules. The
+precise correction is **sufficiency, not wrongness**: cadence divergence is sufficient evidence of
+independent drivers; cadence convergence is not evidence of shared ones. Its "synchronization / temporal
+coupling" is nearer the necessary condition.
+
+**This lands on the dev.to article, not the book.** `appendix-worksheet.md` already states cadence as
+*"a further tell"* — evidence, not criterion. Fix the article's phrasing; the book needs nothing.
+
+### 17.6 The co-change feedback loop needs the endogeneity term — `proposed` `[PFD]`
+
+The review's best structural observation: PFD does not merely consume Strategic DDD, it can *test* it —
+predicted independence against observed co-change, with persistent mismatch as evidence a bounded-context
+boundary is wrong.
+
+**Circular as stated**, and the correction is already ours: co-change is partly endogenous, because the
+map shaped the layout that shaped what co-changes. Measure what crosses a boundary; trust the coupling
+that survives a known restructure. Same correction sent to conceptual-space discussion #16. With the
+endogeneity term the loop is sound and is, as the review says, more interesting than the article's
+headline.
+
+### Deliberately not taken
+
+- **The adversarial-domain list** (collaborative editors, blockchains, industrial control, real-time
+  multiplayer). It contradicts the review's own approving note that PFD declares a bounded applicability
+  domain. A scoped claim is not falsified by out-of-scope systems; the right targets are hard *enterprise
+  backends*. The instinct — *find the smallest system where the rules produce the wrong architecture* —
+  survives and is worth keeping.
+- **The elicitation procedure as written** — see 17.4; only the crossings clause survives.
+- **Any suggestion the book should own enterprise discovery.** Declining that stage and specifying an
+  input contract instead was the stronger move, as the review itself concludes.
+- **The Entity-Relationship discussion from the same session** — ruled by the author as a side discussion,
+  explicitly not book material. Not recorded here, deliberately.
+
 ## Release scope & versions
 
 **Historical — this block planned the 1.3.0 round and is kept for the record.** Each book's version is

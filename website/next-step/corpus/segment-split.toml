@@ -1,0 +1,80 @@
+# Segment, at the point services were adopted (~2016) — Run 4 target 2, sheet A.
+# Written from published demands ("Goodbye Microservices", Noonan 2018, describing the
+# situation that motivated the split). Outcome deliberately not encoded.
+schema_version = "0.1"
+[meta]
+system = "segment"
+era    = "split-2016"
+author = "siy"
+mode   = "greenfield"
+source = "book-arch-meta/DESIGN-SPACE-PROBE-PREDICTIONS.md"
+
+[[answers.q1]]
+scope     = "path:event-forwarding"
+statement = "Events reach a destination within 5 seconds of acceptance under normal conditions."
+shape     = "system-clock"
+price     = "customers see stale data in their analytics tools"
+status    = "answered"
+
+[[answers.q2]]
+scope     = "system"
+statement = "99.9% on the ingest path: dropped events are customer data that cannot be recovered."
+price     = "lost customer data and contractual exposure"
+status    = "answered"
+
+[[answers.q2]]
+scope     = "path:destination-delivery"
+statement = "One failing or throttling destination must not degrade delivery to the other 99."
+price     = "one slow third party stalls every customer's whole pipeline"
+status    = "answered"
+
+[[answers.q3]]
+scope     = "data-class:events"
+statement = "RPO 0 on accepted events: retry until delivered or explicitly dead-lettered."
+status    = "answered"
+
+[[answers.q4]]
+scope     = "data-class:events"
+statement = "Eventual is fine; per-destination ordering is not contractually promised."
+status    = "answered"
+
+[[answers.q5]]
+scope      = "data-class:events"
+statement  = "Order of 100,000,000,000 events per month, fanned out across destinations."
+shape      = "volume"
+read_model = "same"
+status     = "answered"
+
+[[answers.q6]]
+scope     = "system"
+kind      = "mandate"
+statement = "Over 100 third-party destination APIs, each with its own rate limits, error semantics and outage behaviour, none under our control."
+status    = "answered"
+
+[[answers.q7]]
+scope     = "system"
+statement = "One engineering team releasing the pipeline as a single unit."
+cadence   = "daily"
+status    = "answered"
+
+[[answers.q8]]
+scope     = "system"
+statement = "A single small team operates the whole pipeline."
+status    = "answered"
+
+[[answers.q9]]
+scope     = "system"
+statement = "Over 100 destinations, each with its own API contract; one region."
+status    = "answered"
+
+[[domain_shape]]
+operation   = "accept-event"
+inverse     = "none: an accepted event is durable"
+decays      = false
+reshapeable = ["none"]
+
+[[domain_shape]]
+operation   = "deliver-to-destination"
+inverse     = "none: delivery is retried, not undone"
+decays      = false
+reshapeable = ["idempotency-key"]

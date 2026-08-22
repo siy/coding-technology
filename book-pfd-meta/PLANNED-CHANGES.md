@@ -13,6 +13,10 @@ open:** item 7's single running example carried across all three books (PFD / JB
 glossary spine half is done, the shared conference-booking worked example is not. The detailed
 register below is retained for reference.
 
+**Added (2026-08-22):** items **17** (external assessment intake) and **18** (the runs — six measured
+experiments with a binding pre-registration protocol). Item 18's Run 2 is pre-registered in
+`COCHANGE-VALIDATION-PREDICTIONS.md`; **no data has been touched.**
+
 **Shipped (2026-08-21):** item **16** landed as `book-pfd/data-question.md` in **PFD 2.6.0**, carrying
 15.1-15.6 with it; 15.7's PFD half shipped in the same release and its JBCT half is recorded as item 1
 of `book/PLANNED-CHANGES.md`. **Still open from item 15:** 15.8 (has-a / is-a — merge into item 9's
@@ -1095,6 +1099,92 @@ headline.
   input contract instead was the stronger move, as the review itself concludes.
 - **The Entity-Relationship discussion from the same session** — ruled by the author as a side discussion,
   explicitly not book material. Not recorded here, deliberately.
+
+## 18. The runs — measuring what the books assert (2026-08-22) `[ecosystem]`
+
+**Origin:** the observation that adversarial review had stopped producing findings. The counter-argument
+accepted by the author: that is a fact about the reviewer, not about the methodology. Every genuine
+defect this project has found in the last month came from *running* something — the derivation engine
+found the Q5 scope bug and the four-way `separated` contradiction, mutation testing found a return-kind
+violation in shipped code, the naming census found the zone-verb tables covering 1.4% of real naming,
+grep found the 37-vs-66 lint drift. **Reading finds nothing; running finds things.**
+
+**The framing, stated so it is not overclaimed later.** Nothing makes a methodology air-tight. What these
+runs do is convert asserted claims into measured ones with predictions registered in advance and misses
+published. That is the AS blind-run protocol generalized to the ecosystem, and it is the milestone worth
+claiming — falsifiability at ecosystem scale, not the absence of gaps.
+
+| # | Run | Claim under test | Instrument | Gate |
+|---|---|---|---|---|
+| 1 | Convergence | deterministic structure (`from-process-to-patterns.md:251`) | shape-census + PIT | after Run 3 |
+| 2 | Co-change validation | driver decomposition predicts independence | git history | **ready** |
+| 3 | External shape-census | "every corpus is the author's" | shape-census over public repos | build first |
+| 4 | Design-space probe | AS space completeness | `next_step` | **ready** |
+| 5 | Crossings completeness | item 17.4's elicitation lever | manual, one system | **ready** |
+| 6 | Stranger's code | four-facts rule beyond the author | obligation checklist | after Run 3 |
+
+### Run 1 — Convergence
+
+One design spec, N independent implementers, identical inputs, no shared context. Compare shape
+histograms, method-name census, mutation fingerprints. **Requires a control:** same spec, same model,
+same prompt minus the methodology — otherwise convergence shows only that language models are similar.
+This is a fair control (absence of treatment), unlike the Spring comparison this project already refused
+to publish. Grading is mechanical, which is the run's real strength: classifier output and a name census
+cannot be graded with a thumb on the scale.
+
+### Run 2 — Co-change validation — pre-registered
+
+**Pre-registration committed before any data was touched:**
+`book-pfd-meta/COCHANGE-VALIDATION-PREDICTIONS.md`. Natural-experiment design over repositories with a
+documented restructure; the endogeneity correction is the whole design rather than a caveat — within-
+boundary co-change is discarded, cross-boundary co-change is the signal, and the new boundaries are the
+outcome. Excludes any repository the author has contributed to. Tests item 17.5's cadence refinement as
+P3/P4, with P4 deliberately predicting a null.
+
+### Run 3 — External shape-census
+
+Build `shape-census` (`../oss/tmp/jbct-cli-analysis-spec.md`, deliverable 1), run over public Java
+repositories. It does not measure JBCT; it establishes the **base rate**. The Spring control put 23 of
+365 logic mutants in orchestration, and external corpora say whether 6% is typical or an artifact of one
+author's control. Unblocks Runs 1 and 6 and retires the standing corpus objection without needing a
+volunteer.
+
+### Run 4 — Design-space probe
+
+Attacks `architecture-synthesis-review.md:158` directly. Take architectures from outside the corpus —
+public postmortems, engineering writeups with enough detail — and attempt to express each as a ledger
+vector. **The target is failure:** an inexpressible architecture is a missing axis or a missing value.
+Register "all N expressible" and see what breaks.
+
+### Run 5 — Crossings completeness
+
+Tests the one non-circular clause of item 17.4. Derive candidate operations from context-map crossings
+alone for a system with a known public surface; compare against its actual operation set. A large
+residual kills the crossings lever, which is a result worth having either way.
+
+### Run 6 — Stranger's code
+
+`book/CHANGELOG.md` 4.6.0 says the four-facts rule "has not yet met a stranger's code, and that is the
+test that would make it general." Apply the obligation checklist to public repositories using functional
+error handling; report whether it finds genuine gaps or misfires.
+
+### Protocol — binding on every run
+
+1. **Pre-register predictions before running.** `book-arch-meta/BLIND-DERIVATION-PREDICTIONS.md` is the
+   format; the pre-registration is committed before data is touched.
+2. **Mechanical grading wherever possible** — it is what makes a self-run experiment credible.
+3. **Publish the misses**, per the AS precedent where a wrong prediction was the point.
+4. **State the control and why it is fair.**
+5. **One run, one claim.** The mutation research was burned letting a run answer a question it was not
+   designed for; class-name classification reversed two conclusions before the author caught it.
+6. **Each run writes one row in the claims ledger** — claim, instrument, result, scope caveat. The runs
+   populate the register of what is measured versus asserted, which closes three standing gaps at once:
+   no register of what the methodology leaves open, evidence standards differing per book and never
+   stated, and every corpus being the author's.
+
+**Sequencing:** Runs 2, 4 and 5 need no new code. Run 3 is the gate for half the programme. If only one
+runs, it is **Run 2** — it tests the claim the whole pipeline rests on, uses an instrument that already
+exists, and is the only run whose result would interest someone who does not care about this methodology.
 
 ## Release scope & versions
 

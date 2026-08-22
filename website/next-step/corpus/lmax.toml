@@ -1,0 +1,107 @@
+# LMAX — Run 4 design-space probe, target 1.
+#
+# Written from PUBLISHED DEMANDS ONLY (Fowler's LMAX Architecture article; the Disruptor
+# technical paper). The outcome is known to the author and is deliberately NOT encoded here:
+# the sheet carries what the exchange had to achieve, not what it built.
+#
+# Chosen because LMAX sits at the opposite extreme from every corpus entry: extreme
+# throughput and latency answered by ONE machine and ONE thread. Pre-registered prediction
+# P2 (DESIGN-SPACE-PROBE-PREDICTIONS.md) is that the engine MISSES topology here.
+
+schema_version = "0.1"
+
+[meta]
+system = "lmax"
+era    = "2010-2012"
+author = "siy"
+mode   = "greenfield"
+source = "book-arch-meta/DESIGN-SPACE-PROBE-PREDICTIONS.md"
+
+# ---- Q1 Time budget ----
+
+[[answers.q1]]
+scope     = "path:order-matching"
+statement = "Order-to-acknowledgement under 1 millisecond; internal handoffs budgeted in microseconds."
+shape     = "system-clock"
+price     = "a slower venue loses order flow to a faster one; latency is the product"
+status    = "answered"
+
+# ---- Q2 Failure budget ----
+
+[[answers.q2]]
+scope     = "system"
+statement = "99.99% during trading hours, with failover to a hot replica measured in seconds."
+price     = "a halted market is a regulatory and reputational event"
+status    = "answered"
+
+# ---- Q3 Loss budget ----
+
+[[answers.q3]]
+scope     = "data-class:orders"
+statement = "RPO 0: zero loss on any accepted order or executed trade."
+status    = "answered"
+
+# ---- Q4 Consistency contract ----
+
+[[answers.q4]]
+scope     = "data-class:orders"
+statement = "Strictly consistent and totally ordered: one order book, one sequence, no divergence."
+status    = "answered"
+
+# ---- Q5 Load ----
+
+[[answers.q5]]
+scope      = "data-class:orders"
+statement  = "6,000,000 orders per second at peak."
+shape      = "volume"
+read_model = "same"
+status     = "answered"
+
+[[answers.q5]]
+scope      = "path:market-data"
+statement  = "Fan-out of price updates to all connected participants; no published figure."
+shape      = "volume"
+read_model = "same"
+status     = "unknown"
+
+# ---- Q7 Release structure ----
+
+[[answers.q7]]
+scope     = "system"
+statement = "One engineering team releasing the exchange as a single unit."
+cadence   = "weekly"
+status    = "answered"
+
+# ---- Q8 Cost & capacity envelope ----
+
+[[answers.q8]]
+scope     = "system"
+statement = "A small operations team; commodity hardware preferred over specialist kit."
+status    = "answered"
+
+# ---- Q9 Multi-X ----
+
+[[answers.q9]]
+scope     = "system"
+statement = "One venue, one regulatory regime, one trading day."
+status    = "answered"
+
+# ---- Domain shape ----
+
+[[domain_shape]]
+operation   = "accept-order"
+inverse     = "cancel the resting order"
+decays      = false
+reshapeable = ["none"]
+
+[[domain_shape]]
+operation   = "match-trade"
+inverse     = "none: an executed trade is final and is corrected by a compensating trade"
+decays      = false
+reshapeable = ["sequence"]
+
+[[domain_shape]]
+operation   = "publish-market-data"
+inverse     = "none"
+decays      = true
+reshapeable = ["none"]

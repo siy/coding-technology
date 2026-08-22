@@ -1132,7 +1132,13 @@ This is a fair control (absence of treatment), unlike the Spring comparison this
 to publish. Grading is mechanical, which is the run's real strength: classifier output and a name census
 cannot be graded with a thumb on the scale.
 
-### Run 2 — Co-change validation — pre-registered
+### Run 2 — Co-change validation — RUN 2026-08-22, FAILED (design defective; claim untested)
+
+**Result: `COCHANGE-VALIDATION-RESULTS.md`.** N=3 of a required 5 (17 repos screened); two
+inconclusive, one resolved and confounded. P1 missed, P3 missed, P4 missed, P5 partial. An invalid
+`git --format` silently emptied the rename map on the first pass and produced a clean-looking artifact —
+caught by interrogating a too-tidy zero. **P1 is untested, not refuted**; four design defects are
+recorded for re-registration. Script preserved at `cochange-measure.py`.
 
 **Pre-registration committed before any data was touched:**
 `book-pfd-meta/COCHANGE-VALIDATION-PREDICTIONS.md`. Natural-experiment design over repositories with a

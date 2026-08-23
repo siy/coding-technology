@@ -127,7 +127,7 @@ before any methodology applies — and it is the clearest illustration of why P4
 
 ## What this changes
 
-`book/from-process-to-patterns.md:251` asserts deterministic structure. **The first measurement of that
+`book/introduction.md:54` asserts deterministic structure. **The first measurement of that
 claim does not support it.** Independent implementers given the methodology did not agree with each
 other more than independent implementers given none — and on naming they agreed considerably less.
 

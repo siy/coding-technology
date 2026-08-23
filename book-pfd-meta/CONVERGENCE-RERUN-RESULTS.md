@@ -112,7 +112,7 @@ well be negative.
 
 ## What this means for the books
 
-`book/from-process-to-patterns.md:251` asserts deterministic structure. **Two runs have now tested it,
+`book/introduction.md:54` asserts deterministic structure. **Two runs have now tested it,
 one blocked by an isolation defect and one clean, and the clean one falsifies it.** Independent
 implementers given JBCT agree with each other no more than implementers given nothing — and on
 vocabulary they agree considerably less.
@@ -140,3 +140,39 @@ result — **FALSIFIED** (treatment 77.66 vs control 77.71; naming reversed 21.1
 Run 1); secondary result — **distinctiveness supported with total separation on two axes, replicated**;
 caveats — one model, one domain, n=5 per arm, and the principal confound biased the failed prediction
 upward.*
+
+---
+
+## Citation correction — the falsified claim is in the Introduction
+
+Throughout this programme I cited `from-process-to-patterns.md:251` as the determinism claim. That line
+is a *secondary* mention ("Deterministic structure means an assistant generates the right shape").
+
+**The load-bearing claim is `book/introduction.md:54`, and Run 1b tested it almost verbatim:**
+
+> **Deterministic code generation** becomes possible when the mapping from requirements to code is
+> mechanical. Given a use case specification — inputs, outputs, validation rules, steps — there's
+> essentially one correct structure. **Different developers (or AI assistants) should produce nearly
+> identical implementations.**
+
+Run 1b gave five AI assistants a use case specification with inputs, outputs, validation rules and
+steps, and measured whether the implementations were nearly identical. **They were not — and they were
+no more alike than five implementations written with no methodology at all.**
+
+This matters for scope: the claim sits in the **Introduction**, where it functions as positioning, not
+in a deep chapter where it could be read as a qualified technical aside.
+
+## What was and was not measured
+
+**Falsified:** *inter-implementer* determinism — different implementers, one spec, converging structure.
+
+**Not tested:** whether an existing JBCT codebase has regular internal structure. No run measured that,
+and nothing here licenses a claim about `jbct-loan` or `ticketing`.
+
+**Supported, and the more precise statement of what the methodology does:** it determines the
+**vocabulary**, not the **proportions**. Every method in every treatment implementation landed in a
+named structural pattern (UNCLASSIFIED 0.0-1.7% against the control's 19.2-42.3%). *Which* pattern, and
+how much composition versus leaf, is not determined — SEQUENCER varied 5.0% to 20.5% across the arm.
+
+**"There's essentially one correct structure" is the part that failed. "Every part of the structure has
+a name" is the part that held.**

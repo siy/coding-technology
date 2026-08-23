@@ -10,7 +10,7 @@ ecosystem.
 
 ## The claim under test
 
-`book/from-process-to-patterns.md:251` asserts that the methodology produces **deterministic structure** —
+`book/introduction.md:54` asserts that the methodology produces **deterministic structure** —
 that the same design, implemented by different hands, yields the same shape. Nothing has ever measured
 it. It is also the claim the "AI-friendly" positioning rests on, which makes AI sessions the right
 population rather than a convenient substitute.

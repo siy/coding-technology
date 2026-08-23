@@ -1127,7 +1127,7 @@ claiming — falsifiability at ecosystem scale, not the absence of gaps.
 
 | # | Run | Claim under test | Instrument | Gate |
 |---|---|---|---|---|
-| 1 | Convergence | deterministic structure (`from-process-to-patterns.md:251`) | 10 isolated implementers | **RUN 1b 2026-08-23 — determinism FALSIFIED**; distinctiveness supported and replicated |
+| 1 | Convergence | deterministic structure (`introduction.md:54`) | 10 isolated implementers | **RUN 1b 2026-08-23 — determinism FALSIFIED**; distinctiveness supported and replicated |
 | 2 | Co-change validation | driver decomposition predicts independence | git history | v1 FAILED; **v2 registered, not run** |
 | 3 | External shape-census | "every corpus is the author's" | shape-census over public repos | **RUN 2026-08-23** — corpus objection weakened; MIXED unreachable |
 | 4 | Design-space probe | AS space completeness | `next_step` | **RUN 2026-08-22** — 2 missing inputs found |
@@ -1148,7 +1148,7 @@ consistent with the 4.5.0 naming census finding that vocabulary is domain terms 
 UNCLASSIFIED 0.0% against 17.9-38.5%. The methodology produces a structure unconstrained implementations
 never produce — Run 3's cross-codebase finding reproduced with everything else held fixed.
 
-**Consequence for the book:** `from-process-to-patterns.md:251` asserts deterministic structure, and the
+**Consequence for the book:** `introduction.md:54` asserts deterministic structure, and the
 first measurement of it does not support it. Distinctiveness is demonstrated; determinism is not. The
 stronger and more marketable claim is the one that failed, and the book should be brought into line with
 that before the claim is repeated.
@@ -1171,7 +1171,7 @@ control did not need, which biases P1 *upward*, and P1 still came out null.
 **Distinctiveness survives and is now replicated** across two controlled runs and four external
 codebases: SEQUENCER 5.0-20.5% against a flat 0.0%, UNCLASSIFIED 0.0-1.7% against 19.2-42.3%.
 
-**Book consequence — now the top item in this backlog.** `from-process-to-patterns.md:251` asserts
+**Book consequence — now the top item in this backlog.** `introduction.md:54` asserts
 deterministic structure. That is the claim that failed. Distinctiveness is what the evidence supports,
 and the two are not the same claim.
 

@@ -1127,7 +1127,7 @@ claiming — falsifiability at ecosystem scale, not the absence of gaps.
 
 | # | Run | Claim under test | Instrument | Gate |
 |---|---|---|---|---|
-| 1 | Convergence | deterministic structure (`from-process-to-patterns.md:251`) | 8 implementers, shape-census | **RUN 2026-08-23** — determinism NOT SUPPORTED; distinctiveness supported |
+| 1 | Convergence | deterministic structure (`from-process-to-patterns.md:251`) | 8 implementers, shape-census | **RUN 2026-08-23 — NOT EVALUABLE** (isolation failure); distinctiveness supported; **re-run needed** |
 | 2 | Co-change validation | driver decomposition predicts independence | git history | v1 FAILED; **v2 registered, not run** |
 | 3 | External shape-census | "every corpus is the author's" | shape-census over public repos | **RUN 2026-08-23** — corpus objection weakened; MIXED unreachable |
 | 4 | Design-space probe | AS space completeness | `next_step` | **RUN 2026-08-22** — 2 missing inputs found |
@@ -1138,7 +1138,7 @@ claiming — falsifiability at ecosystem scale, not the absence of gaps.
 implementers, one spec, four given JBCT and four given idiomatic-Java instructions of comparable weight;
 predictions and metric both locked in git before any implementation existed.
 
-**P5's falsification condition triggered and is published as the headline, as registered.** Treatment
+**CORRECTED: P1 is not evaluable.** Half the treatment arm (t3, t4) read the Pragmatica source and iterated against `jbct lint`, leaving a clean arm of n=2 — one pair, which is not an estimate. The design induced this: JBCT needs an external library whose signatures matter for compilation, idiomatic Java needs nothing outside the JDK, so only the treatment arm faced pressure to consult sources. A re-run needs filesystem isolation. Originally reported as P5 triggering; that overstated what the run can say. Treatment
 shape convergence 73.89 against control 69.22 — a margin of +4.66 that sits inside a pooled spread of
 14.0, and that **reverses to 68.27 against 69.22** once the one protocol-violating implementation is
 excluded. P2 reversed outright: treatment naming converged at 25.6% against the control's 40.4%,

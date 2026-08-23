@@ -1175,7 +1175,7 @@ that would detect it never fires. Filed for jbct-cli. See item 19.
 
 ### Run 3 — External shape-census
 
-Build `shape-census` (`../oss/tmp/jbct-cli-analysis-spec.md`, deliverable 1), run over public Java
+Build `shape-census` (`../oss/internal/jbct-cli-analysis-spec.md`, deliverable 1), run over public Java
 repositories. It does not measure JBCT; it establishes the **base rate**. The Spring control put 23 of
 365 logic mutants in orchestration, and external corpora say whether 6% is typical or an artifact of one
 author's control. Unblocks Runs 1 and 6 and retires the standing corpus objection without needing a
@@ -1254,7 +1254,7 @@ a **method reference** is extraction working correctly and must not count. That 
 book's *Allowed in Lambdas* rule, so the classifier reuses an existing definition rather than inventing
 one. The two must share the predicate, or they will drift apart again.
 
-**Bug report written: `../oss/tmp/jbct-cli-mixed-shape-bug.md`** — single-file reproduction, four
+**Bug report written: `../oss/internal/jbct-cli-mixed-shape-bug.md`** — single-file reproduction, four
 methods including an extraction control, expected-vs-actual table, and five acceptance criteria. Hand it
 to a session working in the pragmatica repo.
 

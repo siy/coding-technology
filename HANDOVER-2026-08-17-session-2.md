@@ -47,7 +47,7 @@ built by JBCT's author.
 
 The conflict is narrower than it reads. The "control built to lose" objection bites on *test-suite
 quality* comparisons — mutation scores — and a branch count is a property of the implementation,
-not of its tests. `../oss/tmp/mutation-findings.md:143` makes exactly that argument: *"A reader who
+not of its tests. `../oss/internal/mutation-findings.md:143` makes exactly that argument: *"A reader who
 rewrote the Spring version idiomatically would still find a 37-branch adjustment function, because
 that is the domain talking, not the framework."* The same file recommends *Basic Patterns* carry it.
 
@@ -96,7 +96,7 @@ The spine regex was checked directly and does extract `appendix-d-worksheet.md`.
 
 ## Part 2 — unstarted, and correctly so
 
-`../oss/tmp/jbct-cli-analysis-spec.md` is complete: the "almost everything already exists"
+`../oss/internal/jbct-cli-analysis-spec.md` is complete: the "almost everything already exists"
 inventory, the four deliverables in order (`shape-census`, Rule A, Rule C, obligation gap-list), a
 calibration set, and a scope caveat. It also records that Rule A and Rule C pull opposite ways — a
 `.recover(...)`-terminated method is still fallible upstream of the absorption — which is the
@@ -109,9 +109,9 @@ The plan forbids editing `~/IdeaProjects/pragmatica` from this repo's session. I
 **Ready to act on:**
 - **JBCT 4.7.0 and 4.8.0 are both untagged and unpublished.** Readers not emailed for 4.6.0, 4.7.0,
   or 4.8.0. Tagging and publishing both wait for an explicit command.
-- **Part 2** — hand `../oss/tmp/jbct-cli-analysis-spec.md` to a session working in the pragmatica
+- **Part 2** — hand `../oss/internal/jbct-cli-analysis-spec.md` to a session working in the pragmatica
   repo.
-- `../oss/tmp/jbct-loan-defect-report.md` §3 and §4 — two missing tests in `ProcessLoanApplication`.
+- `../oss/internal/jbct-loan-defect-report.md` §3 and §4 — two missing tests in `ProcessLoanApplication`.
 - **The convergence experiment** — one design, several implementers, compare mutation fingerprints.
   Still the highest-value unmeasured claim; `book/from-process-to-patterns.md:251` asserts
   deterministic structure and nothing measures it. `shape-census` (Part 2, item 1) is the

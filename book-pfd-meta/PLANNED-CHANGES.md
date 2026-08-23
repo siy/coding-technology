@@ -1127,12 +1127,12 @@ claiming — falsifiability at ecosystem scale, not the absence of gaps.
 
 | # | Run | Claim under test | Instrument | Gate |
 |---|---|---|---|---|
-| 1 | Convergence | deterministic structure (`from-process-to-patterns.md:251`) | shape-census + PIT | after Run 3 |
-| 2 | Co-change validation | driver decomposition predicts independence | git history | **ready** |
+| 1 | Convergence | deterministic structure (`from-process-to-patterns.md:251`) | shape-census + PIT | **UNBLOCKED** 2026-08-23 (Run 3 shipped); needs N independent implementers |
+| 2 | Co-change validation | driver decomposition predicts independence | git history | v1 FAILED; **v2 registered, not run** |
 | 3 | External shape-census | "every corpus is the author's" | shape-census over public repos | **RUN 2026-08-23** — corpus objection weakened; MIXED unreachable |
 | 4 | Design-space probe | AS space completeness | `next_step` | **RUN 2026-08-22** — 2 missing inputs found |
 | 5 | Crossings completeness | item 17.4's elicitation lever | manual, one system | **RUN 2026-08-22** — 62.5%, lever weakened |
-| 6 | Stranger's code | four-facts rule beyond the author | obligation checklist | after Run 3 |
+| 6 | Stranger's code | does composition detection generalize beyond Pragmatica | shape-census over vavr-style repos | **UNBLOCKED** 2026-08-23 |
 
 ### Run 1 — Convergence
 

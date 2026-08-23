@@ -1132,7 +1132,7 @@ claiming — falsifiability at ecosystem scale, not the absence of gaps.
 | 3 | External shape-census | "every corpus is the author's" | shape-census over public repos | **RUN 2026-08-23** — corpus objection weakened; MIXED unreachable |
 | 4 | Design-space probe | AS space completeness | `next_step` | **RUN 2026-08-22** — 2 missing inputs found |
 | 5 | Crossings completeness | item 17.4's elicitation lever | manual, one system | **RUN 2026-08-22** — 62.5%, lever weakened |
-| 6 | Stranger's code | does composition detection generalize beyond Pragmatica | shape-census over vavr-style repos | **UNBLOCKED** 2026-08-23 |
+| 6 | Composition-detection generality | does SEQUENCER measure structure or a library | shape-census over vavr code | **RUN 2026-08-23** — generalizes; Run 3 confound bounded |
 
 ### Run 1 — Convergence
 

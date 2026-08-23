@@ -163,6 +163,45 @@ the grammar-based naming census, the PIT mutation run, and the composition-oblig
 prediction in the bug report's closing note ("a non-zero result on the author's own code is a live
 possibility and would be the point of fixing this") holds.
 
+## Correction 3 — my attribution of the three MIXED methods was wrong (2026-08-23)
+
+Correction 2 above named the three MIXED methods as `ProcessRepayment.java:503`, `:550` and
+`LoanAmount.java:19`. **That was inferred from `jbct lint` output, not verified per file, and it was
+wrong.** Verified by measuring each file individually, the three were:
+
+| File | Why |
+|---|---|
+| `LoanAmount.java` | PAT-02 — Fork-Join nested in a Sequencer |
+| `ProcessRepayment.java` | a **NEST-01** site — an inner chain inside an adapter-leaf lambda |
+| `EvaluateCredit.java` | the same NEST-01 shape |
+
+The two ternaries at `:503` and `:550` were genuine **LAM-03** violations but were **not** counted as
+MIXED. `EvaluateCredit.java` was never on the list and was MIXED all along.
+
+**This also falsifies the clean rule stated below.** MIXED does *not* track PAT-02 and LAM-03 while
+ignoring NEST-01. It fires on **different-pattern mixing wherever it occurs**, which includes a subset
+of NEST-01 sites — the ones where the nested chain is a different pattern rather than more of the same.
+`jbct-realworld`'s six NEST-01 warnings produce zero MIXED because they are same-pattern nesting; two of
+`jbct-loan`'s do produce MIXED because they are not. Two data points had suggested a rule that a third
+disproved.
+
+**The lesson is the one this programme keeps relearning:** an attribution inferred from a neighbouring
+instrument is a hypothesis, not a measurement. Verifying it cost one per-file scan.
+
+## All five are now fixed and MIXED is zero
+
+`jbct-loan` reports **MIXED = 0** across both modules (884 methods), with **734 tests passing**. Five
+sites were changed — the three originally reported plus the two the correction uncovered:
+
+1. `LoanAmount.loanAmount` — Fork-Join extracted to `validateWithinLimits`
+2. `ProcessRepayment.verifyNotExceeding` — ternary replaced by `isLessThanOrEqualTo(...).filter(cause, Boolean::booleanValue)`
+3. `ProcessRepayment.determineRegularPaymentStatus` — ternary extracted to `statusForPaymentSize`
+4. `ProcessRepayment.loanAccountStep` — inner chain extracted to `toAccountOrNotFound`
+5. `EvaluateCredit.creditBureauStep` — inner chain extracted to `toReportOrMalformed`
+
+16 `JBCT-NEST-01` warnings remain in `jbct-slice`. All are same-pattern nesting, none is MIXED, and they
+are a single-level-of-abstraction matter rather than a pattern-mixing one.
+
 ## What the fix does and does not count
 
 MIXED tracks **different-pattern mixing**, not same-pattern nesting, and the corpus demonstrates the

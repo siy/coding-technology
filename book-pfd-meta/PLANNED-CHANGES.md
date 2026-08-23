@@ -1052,12 +1052,23 @@ existing engine's output. **Cheapest item in the intake, not "medium."**
 costing a config flag or one costing a migration. It needs reversibility pricing, which `brownfield.md`
 already supplies — additions reverse, splits do not at any practical cost.
 
-### 17.4 Use-case elicitation from context-map crossings — `proposed` `[PFD]`
+### 17.4 Use-case elicitation from context-map crossings — `proposed` `[PFD]` — MEASURED, weakened (Run 5)
 
 The proposed procedure is mostly circular: "enumerate externally observable outcomes" relocates the
 completeness problem from operations to outcomes, and its stated criterion is circular unless
 responsibilities are enumerable. (It also uses *responsibility* as a technical noun, which is banned
 vocabulary here; any adoption rewrites that.)
+
+**Run 5 measured it (2026-08-22, `CROSSINGS-COMPLETENESS-RESULTS.md`).** Against Mastodon, crossings
+enumerated from public protocol documentation reached **62.5%** of 734 mechanically enumerated
+operations. The residual is **71.6% administration** and only 6.7% scheduled maintenance — moderation
+and instance policy face a person, not a protocol, and crossings are blind to them by construction. And
+the crossing enumeration was **itself incomplete**: seven workers trace to FASP, a provider protocol
+with its own admin surface that the frozen list missed. The lever's failure mode is the failure mode it
+was supposed to cure.
+
+**Revised standing: a generator with a known blind spot, never a completeness criterion.** 62% from
+public documentation alone still beats a blank page as a *starting* set.
 
 **One clause is genuinely non-circular and worth keeping: *repeat from every context-map crossing*.**
 Crossings are finite and given by the input contract, and each implies at least one operation on each
@@ -1132,13 +1143,13 @@ This is a fair control (absence of treatment), unlike the Spring comparison this
 to publish. Grading is mechanical, which is the run's real strength: classifier output and a name census
 cannot be graded with a thumb on the scale.
 
-### Run 2 — Co-change validation — RUN 2026-08-22, FAILED (design defective; claim untested)
+### Run 2 — Co-change validation — v1 FAILED 2026-08-22; **re-registered as v2 2026-08-23**
 
 **Result: `COCHANGE-VALIDATION-RESULTS.md`.** N=3 of a required 5 (17 repos screened); two
 inconclusive, one resolved and confounded. P1 missed, P3 missed, P4 missed, P5 partial. An invalid
 `git --format` silently emptied the rename map on the first pass and produced a clean-looking artifact —
 caught by interrogating a too-tidy zero. **P1 is untested, not refuted**; four design defects are
-recorded for re-registration. Script preserved at `cochange-measure.py`.
+recorded for re-registration. Script preserved at `cochange-measure.py`. **v2 registration:** `COCHANGE-VALIDATION-PREDICTIONS-V2.md` — six defects repaired, directions registered instead of thresholds, rails named as the pilot and excluded from the test set. Not yet run.
 
 **Pre-registration committed before any data was touched:**
 `book-pfd-meta/COCHANGE-VALIDATION-PREDICTIONS.md`. Natural-experiment design over repositories with a

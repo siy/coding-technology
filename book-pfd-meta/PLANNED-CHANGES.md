@@ -1254,6 +1254,10 @@ a **method reference** is extraction working correctly and must not count. That 
 book's *Allowed in Lambdas* rule, so the classifier reuses an existing definition rather than inventing
 one. The two must share the predicate, or they will drift apart again.
 
+**Bug report written: `../oss/tmp/jbct-cli-mixed-shape-bug.md`** — single-file reproduction, four
+methods including an extraction control, expected-vs-actual table, and five acceptance criteria. Hand it
+to a session working in the pragmatica repo.
+
 **Deliberately out of scope: imperative code stays UNCLASSIFIED.** MIXED should mean *JBCT code mixing
 JBCT patterns*, which is an actionable defect. Imperative code is not mixing patterns, it is not written
 in the vocabulary — and had MIXED counted it, the external codebases in Run 3 would have swamped the

@@ -1129,7 +1129,7 @@ claiming — falsifiability at ecosystem scale, not the absence of gaps.
 |---|---|---|---|---|
 | 1 | Convergence | deterministic structure (`from-process-to-patterns.md:251`) | shape-census + PIT | after Run 3 |
 | 2 | Co-change validation | driver decomposition predicts independence | git history | **ready** |
-| 3 | External shape-census | "every corpus is the author's" | shape-census over public repos | build first |
+| 3 | External shape-census | "every corpus is the author's" | shape-census over public repos | **RUN 2026-08-23** — corpus objection weakened; MIXED unreachable |
 | 4 | Design-space probe | AS space completeness | `next_step` | **RUN 2026-08-22** — 2 missing inputs found |
 | 5 | Crossings completeness | item 17.4's elicitation lever | manual, one system | **RUN 2026-08-22** — 62.5%, lever weakened |
 | 6 | Stranger's code | four-facts rule beyond the author | obligation checklist | after Run 3 |
@@ -1157,6 +1157,21 @@ documented restructure; the endogeneity correction is the whole design rather th
 boundary co-change is discarded, cross-boundary co-change is the signal, and the new boundaries are the
 outcome. Excludes any repository the author has contributed to. Tests item 17.5's cadence refinement as
 P3/P4, with P4 deliberately predicting a null.
+
+**RUN 2026-08-23** (`SHAPE-CENSUS-EXTERNAL-RESULTS.md`). jbct-cli 1.0.0-rc3 shipped `shape-census`,
+unblocking this. **48,000 methods across four external business-Java codebases** (Fineract, Broadleaf,
+OpenMRS, Shopizer) against 1,460 JBCT methods. P2, P4 hit; P1 falsified but uninformative; P3 partial;
+P5 missed in the methodology's favour.
+
+**Result:** the distributions are distinguishable — SEQUENCER 8.6-20.4% (JBCT) against 0.00-0.17%
+(external), residual 5-18% against 23-44% — and the distinction **survives a same-domain control**
+(Fineract vs jbct-loan, both lending: distance 63.0, against 22.0 between the two JBCT systems in
+different domains). The standing "every corpus is the author's" objection is materially weakened.
+
+**Instrument defect found: `MIXED` is unreachable.** Neither maximal imperative pattern-mixing nor a
+monadic chain mixing Sequencer with Fork-Join produces it; they classify UNCLASSIFIED and SEQUENCER
+respectively. *Basic Patterns* rules that mixing patterns is the signal to split, and the census bucket
+that would detect it never fires. Filed for jbct-cli. See item 19.
 
 ### Run 3 — External shape-census
 
@@ -1202,6 +1217,25 @@ error handling; report whether it finds genuine gaps or misfires.
 **Sequencing:** Runs 2, 4 and 5 need no new code. Run 3 is the gate for half the programme. If only one
 runs, it is **Run 2** — it tests the claim the whole pipeline rests on, uses an instrument that already
 exists, and is the only run whose result would interest someone who does not care about this methodology.
+
+## 19. `shape-census` cannot detect mixed patterns (2026-08-23) `[jbct-cli]` — `measured`
+
+**Found by Run 3.** `MIXED` is zero across all seven codebases measured, including 48,000 methods of
+external Java. Two probes establish the bucket is unreachable rather than the code being clean:
+
+1. A maximal imperative method (nested branching, two loop forms, a switch, sequential statements, a
+   ternary) classifies **UNCLASSIFIED**.
+2. A monadic chain that genuinely mixes Sequencer and Fork-Join classifies **SEQUENCER**.
+
+Those are the two readings of "mixed patterns" and neither fires.
+
+**Why it matters beyond the tool.** *Basic Patterns*: *"each function implements exactly one pattern;
+mixing patterns is the signal to split."* That is a rule the census was the natural instrument for, and
+it currently cannot check it. It also means the JBCT baseline's `MIXED = 0` is not evidence the rule is
+being followed — it is the instrument's silence.
+
+**Fix belongs in jbct-cli** (`MethodShapeClassifier`), not in this repo. Either MIXED gains a reachable
+definition, or it is removed from the histogram so its zero stops reading as a finding.
 
 ## Release scope & versions
 

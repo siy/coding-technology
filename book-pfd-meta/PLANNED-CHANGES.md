@@ -1218,7 +1218,13 @@ error handling; report whether it finds genuine gaps or misfires.
 runs, it is **Run 2** — it tests the claim the whole pipeline rests on, uses an instrument that already
 exists, and is the only run whose result would interest someone who does not care about this methodology.
 
-## 19. `shape-census` cannot detect mixed patterns (2026-08-23) `[jbct-cli]` — `measured`
+## 19. `shape-census` cannot detect mixed patterns (2026-08-23) `[jbct-cli]` — **FIXED 2026-08-23; verified**
+
+**FIXED and verified 2026-08-23.** All five acceptance criteria pass. MIXED now fires on
+different-pattern mixing (PAT-02, LAM-03) and correctly *not* on same-pattern nesting (NEST-01) — which
+is stricter and more correct than the criterion I wrote. It immediately found **three violations in
+`jbct-loan`** (`ProcessRepayment.java:503` and `:550`, `LoanAmount.java:19`). Run 3's numbers were
+re-measured; conclusions unchanged. See `SHAPE-CENSUS-EXTERNAL-RESULTS.md`, correction section.
 
 **Found by Run 3.** `MIXED` is zero across all seven codebases measured, including 48,000 methods of
 external Java. Two probes establish the bucket is unreachable rather than the code being clean:

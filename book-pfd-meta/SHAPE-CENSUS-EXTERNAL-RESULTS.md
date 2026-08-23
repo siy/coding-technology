@@ -104,6 +104,14 @@ external teams could not express sequencing; it is that they do not express it a
 the tool can see**, which is a claim about visible structure and not about capability. Anyone citing
 this number owes that sentence alongside it.
 
+**Update 2026-08-23 — the confound is now bounded (Run 6).** `jbct shape-census` was run against
+`ddd-by-examples/library`, a vavr-composed Java codebase, and SEQUENCER fired at **1.35%** — roughly 8x
+the top of the external band and 6x below the bottom of the JBCT band. The detector recognises
+`Either`/`Try` chains it was never written for, so it is not detecting `org.pragmatica` imports. The
+remaining JBCT-versus-vavr gap is the difference between a methodology that *mandates* composition and a
+library that *permits* it. See `COMPOSITION-DETECTION-GENERALITY-RESULTS.md`; N=1, so the confound is
+bounded rather than eliminated.
+
 ## Standing
 
 **The corpus objection is materially weakened.** "Every corpus is the author's" has appeared in three

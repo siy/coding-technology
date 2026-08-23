@@ -1127,12 +1127,31 @@ claiming — falsifiability at ecosystem scale, not the absence of gaps.
 
 | # | Run | Claim under test | Instrument | Gate |
 |---|---|---|---|---|
-| 1 | Convergence | deterministic structure (`from-process-to-patterns.md:251`) | shape-census + PIT | **UNBLOCKED** 2026-08-23 (Run 3 shipped); needs N independent implementers |
+| 1 | Convergence | deterministic structure (`from-process-to-patterns.md:251`) | 8 implementers, shape-census | **RUN 2026-08-23** — determinism NOT SUPPORTED; distinctiveness supported |
 | 2 | Co-change validation | driver decomposition predicts independence | git history | v1 FAILED; **v2 registered, not run** |
 | 3 | External shape-census | "every corpus is the author's" | shape-census over public repos | **RUN 2026-08-23** — corpus objection weakened; MIXED unreachable |
 | 4 | Design-space probe | AS space completeness | `next_step` | **RUN 2026-08-22** — 2 missing inputs found |
 | 5 | Crossings completeness | item 17.4's elicitation lever | manual, one system | **RUN 2026-08-22** — 62.5%, lever weakened |
 | 6 | Composition-detection generality | does SEQUENCER measure structure or a library | shape-census over vavr code | **RUN 2026-08-23** — generalizes; Run 3 confound bounded |
+
+**RUN 2026-08-23 — `CONVERGENCE-RESULTS.md`. The primary claim failed.** Eight independent
+implementers, one spec, four given JBCT and four given idiomatic-Java instructions of comparable weight;
+predictions and metric both locked in git before any implementation existed.
+
+**P5's falsification condition triggered and is published as the headline, as registered.** Treatment
+shape convergence 73.89 against control 69.22 — a margin of +4.66 that sits inside a pooled spread of
+14.0, and that **reverses to 68.27 against 69.22** once the one protocol-violating implementation is
+excluded. P2 reversed outright: treatment naming converged at 25.6% against the control's 40.4%,
+consistent with the 4.5.0 naming census finding that vocabulary is domain terms no rule constrains.
+
+**What did hold, with total separation on 4-against-4:** SEQUENCER 15.6-21.2% against a flat 0.0%, and
+UNCLASSIFIED 0.0% against 17.9-38.5%. The methodology produces a structure unconstrained implementations
+never produce — Run 3's cross-codebase finding reproduced with everything else held fixed.
+
+**Consequence for the book:** `from-process-to-patterns.md:251` asserts deterministic structure, and the
+first measurement of it does not support it. Distinctiveness is demonstrated; determinism is not. The
+stronger and more marketable claim is the one that failed, and the book should be brought into line with
+that before the claim is repeated.
 
 ### Run 1 — Convergence
 

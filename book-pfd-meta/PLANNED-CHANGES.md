@@ -1234,8 +1234,36 @@ mixing patterns is the signal to split."* That is a rule the census was the natu
 it currently cannot check it. It also means the JBCT baseline's `MIXED = 0` is not evidence the rule is
 being followed — it is the instrument's silence.
 
-**Fix belongs in jbct-cli** (`MethodShapeClassifier`), not in this repo. Either MIXED gains a reachable
-definition, or it is removed from the histogram so its zero stops reading as a finding.
+**Re-diagnosed 2026-08-23: this is a wiring gap, not a detection gap.** `jbct lint` already detects
+every nested-pattern case the census misses, on the same CST, in the same binary:
+
+| Probe method | `jbct lint` | `jbct shape-census` |
+|---|---|---|
+| Fork-Join inside a `flatMap` chain | **JBCT-PAT-02** *"Fork-Join pattern nested inside Sequencer chain"* (+ NEST-01) | SEQUENCER |
+| Ternary (Condition) inside a lambda | **JBCT-LAM-03** *"Lambda contains ternary operator"* | SEQUENCER |
+| Stream (Iteration) inside a lambda | **JBCT-NEST-01** *"Nested monadic operations in lambda"* | SEQUENCER |
+
+**Two components of jbct-cli 1.0.0-rc3 return contradictory verdicts on the same method.** Lint says the
+patterns are mixed; the census says it is a clean Sequencer. That is the same class of defect this
+project caught in the `separated` rule, which was stated four incompatible ways across book, ledger and
+engine.
+
+**The fix:** `MethodShapeClassifier` returns `MIXED` when a chain link is an **inline lambda whose body
+carries a non-Leaf pattern** — the condition PAT-02, LAM-03 and NEST-01 already compute. A link that is
+a **method reference** is extraction working correctly and must not count. That line is already the
+book's *Allowed in Lambdas* rule, so the classifier reuses an existing definition rather than inventing
+one. The two must share the predicate, or they will drift apart again.
+
+**Deliberately out of scope: imperative code stays UNCLASSIFIED.** MIXED should mean *JBCT code mixing
+JBCT patterns*, which is an actionable defect. Imperative code is not mixing patterns, it is not written
+in the vocabulary — and had MIXED counted it, the external codebases in Run 3 would have swamped the
+bucket and it would measure "is this JBCT code" instead of "does this JBCT code violate the rule".
+
+**What the fix changes.** Run 3's external comparison is unaffected: external code has ~0% SEQUENCER, so
+there are almost no chains to mix. What changes is the **JBCT baseline** — `MIXED = 0` across 1,460 of
+the author's own methods becomes a real measurement instead of instrument silence, and the census gains
+a *rate* for a violation lint can currently only give *locations* for. Both prior instruments that were
+pointed at `jbct-loan` (the naming census, the mutation run) found real defects there.
 
 ## Release scope & versions
 

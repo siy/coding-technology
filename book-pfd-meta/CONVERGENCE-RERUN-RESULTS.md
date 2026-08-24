@@ -6,7 +6,21 @@ implementation existed or was measured.
 
 ---
 
-# Headline: the determinism claim is falsified.
+> **THIRD CORRECTION, 2026-08-23 — the headline below is unsafe.** The author dismantled the metric
+> after publication, correctly. `shape-census`'s `LEAF` bucket means *any method that does not compose*,
+> not the methodology's atomic **Leaf** — so it counts `message()`, `masked()`, `normalized()` and
+> failure factories. t1 wrote 14 named failure factories, t4 wrote 5 `message()` overrides, and that one
+> stylistic choice accounts for most of the "divergence". Worse: scoring the use-case file alone gives
+> the **control 100.00 convergence at sd 0.0**, because every control use-case file is 100%
+> UNCLASSIFIED — the control can score perfect agreement by being uniformly unclassifiable.
+>
+> **P1 measured error-construction style against a degenerate control. Determinism is neither supported
+> nor falsified; the instrument was wrong.** Inspection shows all five treatment implementations share
+> one skeleton (parse -> fork-join over three lookups -> guards -> persist -> best-effort confirm), but
+> that is inspection, not measurement. **Run 1c** will compare data dependency graphs instead. The
+> distinctiveness results below are *between-arm* and unaffected.
+
+# Headline: the determinism claim is falsified. [SUPERSEDED — see correction above]
 
 Run 1 could not test it; the treatment arm leaked and P1 was **not evaluable**. This run fixed the
 isolation defect, and the test ran cleanly.

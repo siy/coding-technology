@@ -1127,7 +1127,7 @@ claiming — falsifiability at ecosystem scale, not the absence of gaps.
 
 | # | Run | Claim under test | Instrument | Gate |
 |---|---|---|---|---|
-| 1 | Convergence | deterministic structure (`introduction.md:54`) | 10 isolated implementers | **RUN 1b 2026-08-23 — determinism FALSIFIED**; distinctiveness supported and replicated |
+| 1 | Convergence | deterministic structure (`introduction.md:54`) | 10 isolated implementers | **UNRESOLVED** — the metric measured error-construction style, not structure; **Run 1c: compare DDGs** over the 10 implementations already on disk. Distinctiveness supported and replicated. |
 | 2 | Co-change validation | driver decomposition predicts independence | git history | v1 FAILED; **v2 registered, not run** |
 | 3 | External shape-census | "every corpus is the author's" | shape-census over public repos | **RUN 2026-08-23** — corpus objection weakened; MIXED unreachable |
 | 4 | Design-space probe | AS space completeness | `next_step` | **RUN 2026-08-22** — 2 missing inputs found |

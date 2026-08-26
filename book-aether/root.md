@@ -16,7 +16,7 @@ title; structure and rationale live in `../book-aether-meta/BOOK-PLAN.md`.
 - [Part II — The Aether model](part2-aether-model.md) — your first slice, three environments, idempotency as the enabling rule.
 
 ## Part III — The playbook *(the heart)*
-- [Part III — The playbook](part3-playbook.md) — problem-driven idioms: A Data & messaging · B Reliability & consistency · C Performance & scale · D Architecture-in-the-large · E Operational rhythm.
+- [Part III — The playbook](part3-playbook.md) — problem-driven idioms in modules: A Persistence · B Messaging · C Other resources · D Reliability & consistency · E Performance & scale · F Architecture-in-the-large.
 
 ## Part IV — Testing & evolving
 - [Part IV — Testing & evolving](part4-testing.md) — plain-Java tests, Forge, k6, legacy → slice migration.
@@ -28,4 +28,5 @@ title; structure and rationale live in `../book-aether-meta/BOOK-PLAN.md`.
 - [Part VI — Thinking in Aether](part6-thinking.md) — deriving idioms, designing for failure, the finished app, techniques this book invented.
 
 ## Back matter
+- [Appendix A — API quick reference](appendix-a-api-reference.md) — the author-facing surface in one place, pinned to a named runtime commit.
 - [References](references.md) — works cited.

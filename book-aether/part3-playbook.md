@@ -599,24 +599,31 @@ public interface OrderLedger {
 public @interface OnOrderEvent {}
 ```
 
-<!-- BANNER:stream-declarative-consumer-488 status:rc3 remove-when:#488-wires-delivery -->
-> _Status as of rc3: the annotated form above is the design intent. Declaring it registers a
-> consumer group for `streams.order-events`, but the runtime does not yet drive delivery into the
-> method (pragmatica #488), so a deployed `@OnOrderEvent record` receives nothing today. Consume
-> with the explicit `StreamAccess` path below until the driver lands; the annotated method is the
-> shape that path folds into once it does._
-<!-- /BANNER:stream-declarative-consumer-488 -->
+The method shape is the same as a topic subscriber's, the message in and `Promise<Unit>` out, but
+the delivery contract is a stream's. Declaring the method registers a consumer group, named from
+the artifact and the method so every replica of the slice shares one, and the runtime elects
+exactly one node to drive each partition for that group: the partition's owner when it also runs
+the slice, otherwise a slice-bearing node that reads through the owner. Events arrive one at a
+time, in partition order. The consumer's position is a committed offset per group and partition,
+and it advances only after `record`'s `Promise` succeeds, so a restart or a reassignment resumes
+from the last committed position instead of skipping what it missed. All of this needs the slice
+running somewhere: a stream whose consuming slice is active on no live node delivers nothing and
+reports the unassigned partitions, loudly, until it returns.
 
-The method shape is the same as a topic subscriber's, the message in and `Promise<Unit>` out, and
-it is the shape the runtime will drive once #488 lands: events delivered in order, the consumer's
-position kept as a committed offset per consumer group, the offset advancing as each `record`
-succeeds, and a restart resuming from the last committed offset instead of skipping what it missed.
-The offset store behind that is real today; what is missing is only the loop that pushes events into
-the method.
+Failure is part of the same contract. A delivery the handler fails is retried with backoff, three
+attempts by default, and an event that exhausts them is recorded as a dead letter and skipped, the
+cursor advancing past it so one poison event cannot stall its partition forever. Pin down both
+halves of that. Delivery is at-least-once, and only that: a redelivery after a failure, a
+reassignment, or a resume from a checkpoint can hand the handler the same event twice, which is
+why the ledger's insert is keyed on the event id. And an event that fails every retry leaves the
+main path; the dead-letter record is where it goes, so a consumer that must lose nothing watches
+the dead-letter side rather than assuming the stream will redeliver forever.
 
-Until that loop lands you drive it yourself, with a `StreamAccess<OrderEvent>` parameter requested
-against the same `streams.order-events` section. `StreamAccess` reads and commits explicitly, and a
-consumer is a small read-process-commit loop over it:
+The annotated method is the passive form, and the runtime drives it. When you need the active
+form — scanning history, replaying from a chosen offset, batching reads under your own control —
+request a `StreamAccess<OrderEvent>` parameter against the same `streams.order-events` section.
+`StreamAccess` reads and commits explicitly, and a consumer is a small read-process-commit loop
+over it:
 
 ```java
 // events : StreamAccess<OrderEvent>, injected against streams.order-events
@@ -631,9 +638,9 @@ resumes rather than replays. `commit(group, partition, offset)` records progress
 per group and per partition and, on an owner with a writable data dir, survives a restart. Plain
 `fetch(fromOffset, max)` reads from any position when you want to scan or replay. Each consumer group
 keeps its own cursor, so a ledger and a read model read the whole stream independently, at their own
-pace. The read is per partition, so a single-partition stream, the choice the partition-ordering
-note below recommends for an ordered ledger, makes partition 0 the whole log; a multi-partition
-stream needs a loop per partition.
+pace. The read is per partition, so a single-partition stream, the shape the partition note below
+reserves for a log that must read as one total order, makes partition 0 the whole log; a
+multi-partition stream needs a loop per partition.
 
 Delivery is at-least-once: a batch read but not committed is read again after a failure, so the same
 event can arrive twice, and the handler must be idempotent in the sense of Part II. The ledger's
@@ -652,15 +659,24 @@ retention-value = "30d"   # tuning
 `partitions` is structural: ordering is guaranteed within a partition, and partitions are the
 unit of parallel consumption.
 
-Which partition a given event lands in is worth pinning down before you lean on order. Routing
-by key, the mechanism that would keep every event for one order in a single partition, is not
-yet wired in the runtime (pragmatica #507); today a publisher spreads its events round-robin
-across the partitions. Order still holds inside each partition, but with more than one partition
-you do not choose which partition an event takes, so a stream that must preserve the order of one
-order's events across the whole log needs a single partition. `partitions` defaults to four, so
-this is a choice to make on purpose: set `partitions = 1` when whole-stream per-key order
-matters, and treat several partitions as parallelism whose per-partition order is all you can
-rely on until key routing lands.
+Which partition a given event lands in is a declaration, made in the event type itself. Mark one
+component of the event record `@PartitionKey`:
+
+```java
+record OrderEvent(String eventId, @PartitionKey OrderId orderId, Kind kind, Instant at) { ... }
+```
+
+Every publish now routes by a stable hash of that component's string form, so all events carrying
+the same order id land in the same partition and read back in publish order — per-key order on a
+multi-partition stream, which is what the order-history read model needs. The hash is stable
+across nodes and restarts; one key per record, and a second `@PartitionKey` is a compile-time
+error. A record without one falls back to round-robin, which spreads load evenly but promises
+nothing about which partition an event takes: the right default for independent events where
+throughput is the only concern. Two edges to respect. The partition count is part of the
+contract, because changing it remaps keys to different partitions and existing events are not
+reshuffled, so pick the count as deliberately as you pick the key. And per-key order is order
+within a partition: a stream that must read as one total order across all keys still wants
+`partitions = 1`. `partitions` defaults to four.
 
 The retention keys tune how long the log is kept and how large an
 event may be. Treat those tuning keys as the part of streaming most likely to grow or change as
@@ -1085,17 +1101,17 @@ operation has to stay correct across several.
 
 # Module D — Reliability and consistency
 
-> _Status: intended design (INVENTED, prototype-gated). The idioms in this module are the
-> author-facing API of the durable single-writer entity, pinned against its design specification
-> and the runtime primitives it builds on. The per-key write fence is live on the KV path; the
-> persistent backing, the stream-path fence, the per-key serialization queue, and durable
-> per-entity timers are not yet wired, and the durable-entity resource is not yet on a deployed
-> node's classpath, so a slice cannot inject one in production today: an entity is neither highly
-> available nor restart-durable in a running deployment yet (pragmatica #352 wires the resource into
-> the node; #349 adds the persistent backing). The manual baseline that opens the module runs now on
-> plain JBCT. The durable facades that follow are designed and pinned, not yet built; read every
-> durable API here as the intended surface and verify it against the runtime before depending on it
-> in production._
+> _Status: split by layer. The durable entity at the module's core is shipped: the resource is on
+> a deployed node's classpath, a slice injects it like any other resource, and the write,
+> replication, forwarding, and read paths taught below are source-verified at the pinned runtime
+> head, with the crash gate run against a live cluster. Two bounds hold. Entity timers are
+> durably recorded but the driver that fires them is not yet wired into a deployed node
+> (pragmatica #351), so a scheduled timer never fires in production today; and the proven
+> durability envelope is the loss and replacement of an owner in a live cluster, with a
+> full-cluster cold restart riding the storage work still in flight (#349). The workflow and saga
+> facades later in the module remain intended design (INVENTED, prototype-gated): pinned against
+> the entity's verified primitives, with no runtime code behind them yet. The manual baseline
+> that opens the module runs now on plain JBCT._
 
 Placing an order is a single business operation built from several steps across several slices. It
 reserves inventory, charges payment, and arranges shipping: three slices, three external effects,
@@ -1230,11 +1246,12 @@ exactly one writer at a time. A keyed, durable object with a single fenced write
 entity, and it is the one primitive the rest of this module is built on.
 
 ```java
-public interface DurableEntity<K, S> {
+public interface DurableEntity<K, S, C extends Mutator<S>> {
     Promise<S>          create(K key, S initial);
     Promise<Option<S>>  get(K key);
-    Promise<S>          update(K key, Fn1<S, S> mutator);
-    Promise<TimerToken> scheduleTimer(K key, Duration delay, Fn1<S, S> onFire);
+    Promise<Option<S>>  get(K key, ReadConsistency consistency);
+    Promise<S>          update(K key, C mutator);
+    Promise<TimerToken> scheduleTimer(K key, Duration delay, C onFire);
     Promise<Unit>       cancelTimer(K key, TimerToken token);
     Promise<Unit>       delete(K key);
 
@@ -1242,55 +1259,100 @@ public interface DurableEntity<K, S> {
 }
 ```
 
-An entity is `(key, state, owner)`. The runtime hashes the key to a partition, and the partition has
-exactly one owner across the cluster. Every write goes through that owner as `update(key, mutator)`,
-where the mutator is a pure `S` to `S` function with no IO. The owner applies mutators for the same
-key one at a time, so same-key updates never race, while different keys run in parallel on different
-owners. The state itself is an ordinary immutable value, a record or a sealed interface.
+An entity is `(key, state, owner)`. The runtime hashes the key to a partition, and the partition
+has exactly one owner across the cluster. Every write goes through that owner as
+`update(key, mutator)`. The owner applies mutators for the same key one at a time, so same-key
+updates never race, while different keys run in parallel on different owners. The state itself is
+an ordinary immutable value, a record or a sealed interface.
+
+The third type parameter is the shape of those writes. A mutation is not a lambda. It is a value
+of your own command type `C`: a sealed interface extending `Mutator<S>`, whose variants are
+records, each implementing the single method `S apply(S state)`:
+
+```java
+public sealed interface OrderCommand extends Mutator<OrderState> {
+    record Cancel(String reason) implements OrderCommand {
+        @Override
+        public OrderState apply(OrderState state) { return state.withStatus(CANCELLED); }
+    }
+
+    record MarkPaid(ChargeId charge) implements OrderCommand {
+        @Override
+        public OrderState apply(OrderState state) { return state.paid(charge); }
+    }
+}
+```
+
+The reason is the knowledge-as-values discipline the whole book runs on, applied to state
+transitions. A lambda has no name: it cannot be serialized, so it cannot follow a write to the
+key's owner on another node, cannot be stored in the entity's log, and cannot be re-applied
+during recovery. A record can. Its name identifies the transition, its components are the
+arguments, and the slice's codec for it is generated because `C` is a type argument of the
+injected resource — the code is already on every node in the slice JAR, so only the data naming
+which transition to run has to travel. The sealed hierarchy is what holds the door shut: a
+lambda cannot implement a sealed interface, so a transition that could not survive a hop or a
+restart does not compile. Commands must stay pure, no IO and no reading anything beyond the
+state and their own components, because the owner may re-apply one during recovery, and only a
+pure transition lands the same way twice.
 
 The single writer is a guarantee, not a convention, because the write is fenced. Each owner holds an
 epoch, every write carries it, and a write tagged with a stale epoch is rejected by every replica
 identically. When ownership moves during a failover, the deposed owner's last in-flight write cannot
 commit, so two nodes that briefly both believe they own the key cannot both write. That fence is the
-correctness core, and on the KV path it is already live in the runtime.
+correctness core, and it is live at the entity log's own append gate: a write from a deposed owner
+is refused identically wherever it lands.
+
+Writes route themselves. A `create`, `update`, or `delete` arriving at a node that does not own
+the key is forwarded to the committed owner rather than refused, and the owner re-runs its
+admission under the fence, so forwarding weakens nothing. A failure crosses back typed: the
+caller pattern-matches `EntityAlreadyExists` or `EntityNotFound` the same way whether the write
+ran locally or three nodes away. Timer operations are the exception; they do not forward, and a
+non-owner answers them with `NotCurrentOwner`.
 
 Provisioning follows the same four moves as every resource in Part 0: a qualifier annotation, a
-config section, a manifest entry, an injected parameter.
+config section, a manifest entry, an injected parameter. Entities come in keyspaces, one per
+family of keys — `entities.orders`, `entities.payments` — so you declare one qualifier per
+keyspace, each naming its own section:
 
 ```java
-@ResourceQualifier(type = DurableEntity.class, config = "orders-entity")
+@ResourceQualifier(type = DurableEntity.class, config = "entities.orders")
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.PARAMETER)
-public @interface OrdersEntity {}
+public @interface OrderEntity {}
 ```
 
 ```toml
-[orders-entity]
-partitions         = 64    # each partition has one fenced owner
-replication-factor = 3     # replicas of the state, for availability
-terminal-ttl       = "7d"  # how long a finished entity is kept before collection
+[entities.orders]
+keyspace           = "orders"
+partition_count    = 8     # fence granularity: each partition has one fenced owner
+replication_factor = 3     # copies of each partition's log, including the owner
 ```
 
-> _Open decision (S2): the `terminal-ttl` defaults of 7d for entities, 30d for workflows, and 90d
-> for sagas are taught here as starting points an operator tunes, not as guarantees. Final
-> out-of-the-box values pending Sergiy._
+All three keys are required and validated when the slice loads, so a rejected value fails loading
+with a named cause rather than surfacing at first write. `replication_factor` is where durability
+is bought, and the write barrier is derived from it: at `3`, a write acknowledges only once the
+owner and at least one peer hold the record, which is what makes state survive the owner's death
+rather than merely its restart. At `1` the entity is still durable across a restart of its own
+node, but the disk it sits on is the only copy; that weaker guarantee is legal and has to be
+chosen on purpose.
 
 ```java
 @Route("/orders/{id}/cancel")
 public Promise<OrderState> cancel(
         String id,
-        @OrdersEntity DurableEntity<String, OrderState> orders) {
+        @OrderEntity DurableEntity<String, OrderState, OrderCommand> orders) {
 
-    return orders.update(id, state -> state.withStatus(CANCELLED));
+    return orders.update(id, new OrderCommand.Cancel("customer request"));
 }
 ```
 
-The entity stores current state, and only current state. There is no event log to replay on
-recovery; the owner reads the last committed state and continues from it. This is what lets the
-mutator be ordinary Java: nothing reruns, so nothing has to be deterministic. Replay-based durable
-execution engines such as Temporal re-execute a workflow's history to rebuild its state, and so
-constrain the workflow code to be deterministic. The durable entity keeps the state itself durable,
-and asks nothing of your code beyond purity of the single mutator.
+The entity durably stores state transitions, not your control flow. On recovery an owner or a
+replica rebuilds the state by re-applying committed commands from the entity's own log, from the
+last checkpoint forward — which is exactly why a command must be pure, and why it must be a
+value. The discipline stops at the command boundary. Replay-based durable execution engines such
+as Temporal re-execute the whole workflow function to rebuild its state, and so require all of
+that code to be deterministic; the durable entity confines replay to `apply`, and the slice code
+around it, IO and all, stays ordinary Java that never reruns.
 
 Operations fail in a typed channel, like every Aether resource:
 
@@ -1302,6 +1364,7 @@ public sealed interface EntityError extends Cause {
     record EntityNotFound(String key) implements EntityError {}
     record TimerNotFound(String key, DurableEntity.TimerToken token) implements EntityError {}
     record TimerNotSupported(String key) implements EntityError {}
+    record TimerFireFailed(String key, DurableEntity.TimerToken token, Cause cause) implements EntityError {}
     record StaleOwnerEpoch(String key, String presentedEpoch) implements EntityError {}
     record StorageFailed(String key, Cause cause) implements EntityError {}
     record NotCurrentOwner(String key, String committedOwner) implements EntityError {}
@@ -1318,22 +1381,43 @@ handover was in flight, the runtime retries against the new owner, and the autho
 > for operating on a finished entity or for collecting one that is not finished. Earlier drafts of
 > this listing carried `EntityTerminated` and `EntityNotTerminal`; neither is implemented, and
 > neither is shown above because a sealed interface's variants are exhaustive — a `switch` over
-> `EntityError` must match the ten above and nothing else._
+> `EntityError` must match the eleven above and nothing else._
+
+Reads carry their consistency in the call. Plain `get(key)` is a bounded-stale read: a node that
+holds the partition, owner or replica, answers from its local copy after folding its view forward
+to the log's committed head, and a node that holds nothing forwards the read to the committed
+owner. The answer can trail an in-flight write by a bounded window; it never invents state. When
+trailing is not acceptable — a check immediately before an irreversible action, a read that must
+see a write another node just acknowledged — ask for it: `get(key, ReadConsistency.LINEARIZABLE)`
+routes to the committed owner, orders a no-op consensus round, re-checks the owner's epoch after
+the round, and only then serves, so the read reflects every write acknowledged before it began.
+The price is a consensus round per read. Default to the bounded-stale form and escalate per call,
+so the code shows exactly which reads paid for certainty.
+
+Timers need one honest sentence more than the interface suggests. `scheduleTimer` and
+`cancelTimer` work against the entity's log — a pending timer is a durable record, scheduled at
+an absolute instant, surviving handover and restart like any other state — but the driver that
+fires due timers is not yet wired into a deployed node, so today a scheduled timer is remembered
+and never fires (pragmatica #351). Design with them where the design wants them; do not stake a
+production behavior on a fire until the driver lands.
 
 One observation pays off immediately. A fenced single writer per key is a lease. If a slice needs a
 distributed lock, a leader for some resource, or a guarantee that only one worker touches an account
 at a time, it models that resource as an entity and lets the fence be the lock. There is no separate
 locking primitive to learn, because single-writer-per-key already is one.
 
-A word on what durable means today, because the rest of the module leans on it. The fence and the
-replication an entity would rest on are designed against the runtime's primitives, and the fence
-mechanism is live on the KV path, but the durable-entity resource is not yet on a deployed node's
-classpath. A slice cannot inject one and run it in production today, so the high availability its
-replication would give is intended design, not a property you can lean on yet. The node wiring that
-would deliver it, and the persistent storage backing behind a full-cluster restart, are both still
-in flight. Until they land, an entity here is neither highly available nor restart-durable in a
-running deployment; read the two chapters that follow as the intended design, verified against the
-runtime's primitives but not yet a deployable feature.
+A word on what durable means in a running cluster, stated per property with the mechanism that
+earns it, because the rest of the module leans on it. A write acknowledges only after the
+entity's log holds it fsynced on the owner and, at `replication_factor` of two or more, on at
+least one peer — so an acknowledged write survives the owner's death, and the crash gate
+exercises exactly that: an owner killed mid-traffic, every acknowledged write still present with
+its exact value after the cluster heals. A log whose fsync fails stops accepting writes rather
+than acknowledging what the disk did not take: fail-stop, visible to the operator, instead of
+silent loss. Two bounds keep the claim honest. The proven envelope is the loss and replacement of
+an owner in a live cluster; a full-cluster cold restart rides the storage work still in flight
+(#349). And the timer half of the surface is recorded but inert, as the timers note above says.
+Read the two chapters that follow differently: they are facades not yet built, designed against
+the verified entity underneath them.
 
 ## When the process is a state machine
 
@@ -1583,15 +1667,19 @@ cover monitoring and operator recovery.
 > the rest of the durable-workflow surface, none of this is deployable yet; it is pinned design, not
 > shipped behavior._
 
-A closing note on what is real today, because this module asks for more trust than the ones before
-it. The manual saga that opened the module runs now: it is plain JBCT over resources you already
-have. Everything after it, the entity, the workflow, and the durable saga, is designed and pinned
-against the runtime's verified primitives but not yet built, and its durability is bounded by the
-storage work still in flight, and none of it is injectable into a deployed slice yet. In production
-today an entity is neither highly available nor restart-durable; both properties arrive with the
-node wiring and the persistent backing still to land. Read this module as the shape reliability takes in Aether, write the
-manual baseline when you need compensation now, and verify every durable idiom against the runtime
-before you stake an order on it.
+> _Open decision (S2, design-level): terminal-state retention — how long a finished entity,
+> workflow, or saga is kept before collection, with 7d/30d/90d as the taught starting points — is
+> part of the facade design, not a shipped configuration key; there is no `terminal-ttl` in the
+> entity's section today. Final out-of-the-box values pending Sergiy._
+
+A closing note on what is real today, because this module asks the reader to hold two registers
+at once. The manual saga runs now: plain JBCT over resources you already have. The entity is real
+too — injectable in a deployed slice, its writes fenced, replicated, and fsynced before they
+acknowledge, its reads served replica-aware, with its timers durably recorded but not yet fired
+(#351). The workflow and the saga above it are the module's intended design: pinned against those
+verified primitives, with no runtime code behind them yet. Write the manual baseline when you
+need compensation now, reach for the entity directly when you need durable per-key state now, and
+verify the workflow and saga surfaces against the runtime before you stake an order on them.
 
 Reliability keeps one operation correct across steps and crashes. The next module turns from
 correctness to speed: keeping the whole system responsive under load, with caching, batching, and

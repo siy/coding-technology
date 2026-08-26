@@ -39,27 +39,22 @@ differs only in the config sections resolved per environment. The deploy is a da
 a rewiring one — which is what makes "configuration change, not code change" hold at the cluster
 boundary, not just inside a slice.
 
-Two current realities of the deploy path are worth knowing before you hit them.
+Two operational edges of the deploy path are worth knowing before you hit them.
 
-<!-- BANNER:deploy-security-520 status:rc3 remove-when:#520-fixed -->
-> _Status as of rc3 (#520): `artifacts push` requires an OPERATOR or ADMIN identity. A cluster
-> bootstrapped with `security_mode = "NONE"` — the mode a quickstart reaches for — treats every
-> caller as an anonymous VIEWER and ignores API keys, so the push is rejected even with the admin
-> key the bootstrap mints. The path that works on a real cluster: bootstrap with the secure
-> `security_mode = "API_KEY"` default and pre-seed an operator key — an `AETHER_API_KEYS` entry
-> baked into the node's cloud-init, or an `[app-http.api-keys.<key>]` table under
-> `node_config.app-http` in the bootstrap config (the mechanism the bootstrap-config reference
-> documents). Then the push authenticates and the deploy proceeds._
-<!-- /BANNER:deploy-security-520 -->
+Security gates the push. `artifacts push` requires an OPERATOR or ADMIN identity on a secured
+cluster, and clusters are secured by default: an unset `security_mode` means `API_KEY`, and the
+bootstrap mints an admin key for exactly this, so the key CI presents is the one the bootstrap
+gave you. A cluster bootstrapped with `security_mode = "NONE"` accepts pushes unauthenticated,
+each one logged with a security warning, which makes NONE what it sounds like: a development and
+evaluation posture in which anyone who can reach the management port can load code into the
+cluster. Leave production on the default and hand CI the operator key.
 
-<!-- BANNER:deploy-teardown-521 status:rc3 remove-when:#521-fixed -->
-> _Status as of rc3 (#521): `aether cluster destroy --cluster=<name> --yes` can report a cleanup
-> failure and still exit 0 and remove the cluster's registry entry, leaving paid VMs running — a CI
-> check that reads only the exit code will believe the cluster is gone while it keeps billing.
-> Until this is fixed, verify a teardown in the provider console, and use
-> `tools/cloud-reaper.sh --cluster <name> --destroy` as the safety net that actually reaps stranded
-> resources._
-<!-- /BANNER:deploy-teardown-521 -->
+Teardown is honest about failure. `aether cluster destroy` removes the cluster's registry entry
+only after the cloud cleanup actually succeeds; a failed cleanup keeps the entry as your handle
+for the retry, prints the exact command to re-run, and exits with a distinct `CLEANUP_FAILED`
+code, so a CI gate reading the exit code cannot mistake stranded, still-billing VMs for a clean
+teardown. `tools/cloud-reaper.sh` is the independent sweep for orphaned cloud resources, and the
+CLI names it in the failure message; it is a second opinion, not a workaround.
 
 ## Scaling one slice, not the app
 

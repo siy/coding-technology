@@ -7,9 +7,13 @@ All notable changes to the PFD book, newest first. Format:
 `0.x` versions were preview editions; `1.0.0` marked the first edition released to
 readers, and `1.x` are its maintenance and expansion releases.
 
-## [2.7.0] - 2026-08-26
+## [2.7.0] - 2026-08-27
 
 ### Added
+- **Compensated sequence** (*Architecture Synthesis*, recovery-class selection; glossary) — the
+  composite named, and its identity with *saga* stated: a Sequencer whose steps each carry an
+  inverse, advanced by a ledger of what has committed so far. The two terms are declared
+  interchangeable. The reduction itself is unchanged — a saga is still not a primitive.
 - **The Data Question** — the scope boundary stated: the data the chapter models is the system's
   state; the form its persistence takes is outside the methodology's scope, and deliberately so.
 - **The Data Question** — configuration named as owned state: written by operations rather than by

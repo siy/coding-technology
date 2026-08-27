@@ -16,7 +16,7 @@ The methodology's vocabulary, defined once. These terms are the shared spine the
 
 ## B
 
-**BER (Backward Error Recovery).** The first member of the recovery triple: undo an invalidated step by an inverse action — release the held seat, void the authorization. The classic rollback or saga shape. Series long name: *compensate-by-inverse*. (The recovery triple.)
+**BER (Backward Error Recovery).** The first member of the recovery triple: undo an invalidated step by an inverse action — release the held seat, void the authorization. The classic rollback or saga shape; applied across autonomous steps it composes into a *compensated sequence*. Series long name: *compensate-by-inverse*. (The recovery triple.)
 
 **Boundary contract.** What a subsystem owns at its edge — what another subsystem must send to ask it for something, what it returns, which failures it exposes — composed from its internal types rather than invented anew (*composed-not-invented*). (Spiral 3.)
 
@@ -25,6 +25,8 @@ The methodology's vocabulary, defined once. These terms are the shared spine the
 **Change driver.** A reason code changes: a force that, when it moves, forces the code to move with it. A boundary is right when everything inside changes for the same reason and nothing outside changes for that reason. Distinct from a *trigger*, and itself not fixed — change drivers evolve as the business does. (Finding the change driver.)
 
 **Change-driver cohesion.** The grouping criterion: units cohere when a single change driver governs them, so one change would force all of them, and only them, to change together. Tested along two axes, *completeness* and *purity*, and made operational by *driver attribution*. (The telescope; Finding the change driver.)
+
+**Compensated sequence.** The book's name for the composite the industry calls a *saga*: a Sequencer whose steps each carry an inverse, advanced by a ledger of what has committed so far, so a failure part-way can walk that ledger backwards. The two terms are used interchangeably. Not a primitive — BER applied across autonomous steps that share no transactional substrate. (Recovery-class selection.)
 
 **Completeness.** One axis of the cohesion test: is every unit a driver governs inside the group, or are some scattered elsewhere so one change must chase them across modules — the smell of shotgun surgery? (The telescope.)
 

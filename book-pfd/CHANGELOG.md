@@ -7,6 +7,18 @@ All notable changes to the PFD book, newest first. Format:
 `0.x` versions were preview editions; `1.0.0` marked the first edition released to
 readers, and `1.x` are its maintenance and expansion releases.
 
+## [2.7.0] - 2026-08-26
+
+### Added
+- **The Data Question** — the scope boundary stated: the data the chapter models is the system's
+  state; the form its persistence takes is outside the methodology's scope, and deliberately so.
+- **The Data Question** — configuration named as owned state: written by operations rather than by
+  a business capability, read by anyone, on its own cadence, under its own authority. The model is
+  indifferent to the kind of state it holds.
+- **The Data Question** — the closing opens toward the derivation: grain, transaction boundaries,
+  identity, and enforcement follow from the closures, owners, and lifespans the chapter names;
+  that derivation is synthesis work, owned by *Architecture Synthesis*.
+
 ## [2.6.0] - 2026-08-21
 
 ### Added

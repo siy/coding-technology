@@ -66,6 +66,68 @@ bill. Three integration points, cheapest first:
 *required*.** That makes it a pruning force — the same shape as an explicit mandate strike, which
 `prune` already implements. The extension is to `prune`, not to the ledger's axes.
 
+### 5. Schema synthesis — the data module (2026-08-24) — `ruled` (rulings R7–R11)
+
+The persistence/schema derivation joins the AS successor as **one module, internally split
+logical/physical** (ANSI/SPARC three-schema lineage: conceptual vs internal). Ruled with the
+author 2026-08-24; the session record carries the full argument.
+
+- **Placement (R7).** One book — this one; genre decided it (PFD states what the design
+  determines, AS derives artifacts). The logical part (grain, transaction boundary,
+  state-representation lower bound, identity, enforcement obligations) consumes PFD outputs only
+  and works without the architecture derivation — most systems' vector is "single deployable" and
+  they still need a schema. The physical part (placement, state-representation strengthening,
+  materialization, lifecycle, enforcement mechanisms) consumes the architecture vector. State
+  representation is two-pass: logical lower bound (history readers, recovery choice), physical
+  strengthening (event-based composition). The physical part carries **store-form
+  considerations** (in-memory, KV/document, relational, event log) — the section where item 2
+  (recovery-time-to-state) resolves: the logical part's atomicity and durability obligations
+  filter eligible forms. One elicitation sheet (extends this book's), one engine (`next_step`
+  extends), one replication kit. Deferred to drafting: AS 2.0 vs 1.x; subtitle widening. The PFD
+  side gets a forward pointer only (`book-pfd-meta/PLANNED-CHANGES.md` item 20).
+- **Elicitation (R8).** Four questions, each with a necessity proof that no process output can
+  answer it: RPO; read latency and staleness per path (both dedupe against the existing sheet —
+  never ask twice); volume/cardinality growth per closure; off-process access registration —
+  readers *and writers*, fixed taxonomy (analytics, support, regulatory export, ML, ops
+  debugging). A fifth question (retention authority) was deleted before drafting:
+  `book-pfd/data-question.md:91-95` already places the authority in the change-driver register —
+  replaced by a register completeness check that bounces incomplete entries back to the design.
+  Principle for the chapter: *schema synthesis never elicits business facts; it may reject
+  incomplete design artifacts.* Tenant isolation joins item 1's isolation question; estate
+  constraints enter as prunes (item 3's shape). Residue protocol: the set is pre-registered,
+  unregistered questions needed during real derivations are logged misses, and the question count
+  is the module's headline metric (four against this book's nine).
+- **Axes (R9).** Eight, with a **published derivation order** — logical: transaction boundary (no
+  free choice: it *is* the invariant closure) → grain (never splits a closure; retention
+  divergence presses finer) → identity (minting operations) → state-rep lower bound → enforcement
+  obligations; physical: placement → state-rep strengthening → materialization → lifecycle →
+  enforcement mechanisms. **Enforcement locus is the eighth axis**: multi-writer invariants go to
+  the store (the only serialization point all writers share), single-writer invariants stay at
+  the parse boundary, mirrored as store checks only when an off-process writer is registered; FK
+  demotion across stores is the worked example. Axis-2's codomain is an **atomicity obligation**
+  (field set, operations, observer set) — never "a transaction"; placement earns the mechanism.
+  The module carries its own boundary statement: not normalized — index tuning, physical
+  parameters, vendor-within-class, ORM mapping, migration tooling.
+- **Evolution (R10).** In scope for v1, derivation only: design motion → migration class
+  (minting/accretion → additive; absorption → re-grain plus constraint; emancipation → extract,
+  expand–contract; severance-introduced → linkage-destruction retrofit) plus non-motion triggers
+  (new registered reader; answer change; a volume number crossing a registered flip point) →
+  which axes re-derive. The severance-retrofit asymmetry (crypto-shredding needs per-subject keys
+  from the first write) is the priced callout. Migration *mechanics* are below the line,
+  registered for the **Aether book**. Ships with the validation protocol registered and one
+  executed case — emancipation, which `data-question.md:73` already commits to in print.
+- **Validation (R11).** `SCHEMA-VALIDATION-PREDICTIONS.md` in this directory, committed **before
+  the first derivation**: corpus inventory (the Run 3 four plus `jbct-loan`); input firewall —
+  design inputs reconstructed from non-schema artifacts only, `READ_SCHEMA: no` disclosure per
+  deriver (Run 1b's isolation move); per-axis diff metric, never table-name matching;
+  framework-noise exclusions by category, named in advance; a noun-extraction baseline as the
+  designated collapse condition (if eight axes don't beat noun-per-entity, the method adds
+  nothing); the Fineract-vs-`jbct-loan` same-domain control; tiebreaker thresholds as registered
+  constants; one blind evolution case from a corpus release history; and the logical/physical
+  evidence asymmetry stated up front — this corpus validates the logical axes richly and the
+  physical poorly (four single-RDBMS monoliths), so physical axes validate against the
+  documented-systems corpus at AS-grade evidence.
+
 ## Carried from the book review
 
 ### 4. The design space is not proven complete — `open`

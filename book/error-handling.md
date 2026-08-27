@@ -87,7 +87,7 @@ private Result<User> validateAndCheckStatus(Email email, Password password) {
 
 private Result<User> checkAccountStatus(User user) {
     return user.isLocked()
-            ? new LoginError.AccountLocked(user.id()).result()
+            ? LoginError.AccountLocked.FACTORY.apply(user.id()).result()
             : Result.success(user);
 }
 ```
@@ -96,32 +96,90 @@ private Result<User> checkAccountStatus(User user) {
 
 ## Defining Typed Errors
 
-Every failure is a `Cause`. Define error types as sealed interfaces:
+Every failure is a `Cause`, and `Cause` has exactly one abstract member: `message()`. The construction idiom satisfies it structurally, so no error type ever hand-writes prose in a method body.
+
+A use case's failures form a sealed interface with two kinds of members. A **data-carrying failure** is a record: its components are the error's data, in declaration order, with a trailing `String message` component whose generated accessor *is* the `message()` implementation. Its `FACTORY`, built from a message template and the canonical constructor reference, is the construction path. **Fixed-text failures** share one enum in a prescribed shape - a single `message` field, a constructor, a field-returning accessor - with each failure declared as one constant carrying its text.
 
 ```java
 public sealed interface LoginError extends Cause {
-    record AccountLocked(UserId userId) implements LoginError {
-        @Override
-        public String message() {
-            return "Account is locked: " + userId;
-        }
+
+    record AccountLocked(UserId userId, String message) implements LoginError {
+        static final Fn1<AccountLocked, UserId> FACTORY =
+            Causes.forOneValue("Account is locked: %s", AccountLocked::new);
     }
 
-    enum InvalidCredentials implements LoginError {
-        INSTANCE;
+    enum General implements LoginError {
+        INVALID_CREDENTIALS("Invalid email or password");
+
+        private final String message;
+
+        General(String message) { this.message = message; }
 
         @Override
-        public String message() {
-            return "Invalid email or password";
-        }
+        public String message() { return message; }
     }
 }
 ```
 
-**Benefits:**
-- Exhaustive switch expressions
-- Compiler checks all cases handled
-- Clear documentation of failure modes
+Construction sites:
+
+```java
+LoginError.AccountLocked.FACTORY.apply(user.id()).result();   // data-carrying
+LoginError.General.INVALID_CREDENTIALS.result();              // fixed text
+```
+
+Three rules govern the shape:
+
+- **Every value the template formats is a component.** The factory's parameters are exactly the non-message components, so the data an error mentions stays typed - renderable at the boundary, countable in telemetry, never trapped in prose. The `message` component comes last, which is what lets the constructor reference serve as the factory argument. Zero data is a property, not an omission: `INVALID_CREDENTIALS` deliberately says nothing about which credential failed.
+- **One discriminable case per failure** - its own record type or its own enum constant. Qualified enum constant case labels (`case General.INVALID_CREDENTIALS ->`) discriminate constants in a switch over the sealed interface, and listing every constant preserves exhaustiveness: adding a constant breaks every switch, exactly as adding a record does.
+- **The `FACTORY` is the only constructor call site.** `new AccountLocked(id, "hand-typed prose")` compiles and silently decouples the stored message from the declared template; routed through the factory, template and data cannot disagree.
+
+---
+
+## Wrapped and Terminal Causes
+
+Two mixins nested in `Cause` remove the remaining overrides. A failure wrapping an underlying cause implements `Cause.Wrapped` with an `origin` component; the mixin derives `source()` from it. The component cannot be named `source` - the record accessor's return type would clash with `Cause.source()`, and `origin` is the name that avoids the trap. A failure no retry can change implements `Cause.Terminal`, which retry facilities consult to stop immediately.
+
+```java
+record PaymentFailed(Cause origin, String message) implements TransferError, Cause.Wrapped {
+    static final Fn1<PaymentFailed, Cause> FACTORY =
+        Causes.forOneValue("Payment step failed: %s", PaymentFailed::new);
+}
+
+// translation at a composition boundary:
+paymentStep.execute(order).mapError(PaymentFailed.FACTORY);
+```
+
+Composition sites accept the fully-typed factory directly. Where only some constants of an enum are terminal, a constant body overrides `isTerminal()` per constant.
+
+---
+
+## Rendering at the Boundary
+
+The `message` component is for logs and operators. User-facing text is produced at the boundary, by an exhaustive switch over the sealed interface, composed from the data components:
+
+```java
+String userText(LoginError error) {
+    return switch (error) {
+        case AccountLocked locked -> localized("login.locked", locked.userId());
+        case General.INVALID_CREDENTIALS -> localized("login.invalid");
+    };
+}
+```
+
+No default arm: the compiler proves the failure catalog covered, and a new failure breaks this switch instead of falling through silently. This is where the exhaustiveness the sealed hierarchy promises is collected. Redaction rides the same mechanism as messages: `String.format` renders value objects through their own `toString()`, so a value object that masks itself stays masked in every message with no per-error effort.
+
+---
+
+## When a Bare Cause Is Enough
+
+`Causes.cause("Age must be 0-150")` remains the sanctioned form where no caller can act on the distinction - value-object validation whose failures all land in the same composite. The line is behavioral: when a caller would branch on the failure, render it separately, or count it, it is worth a type. The single-argument template overloads (`Causes.forOneValue(String)` and friends) belong to this same ad-hoc tier; in domain code a parameterized failure is worth naming, because the template form bakes its data into prose and discards it.
+
+---
+
+## When Fixed Text Acquires Data
+
+A failure often starts as fixed text and later needs data. The migration is one motion - remove the constant, add the record - and the compiler walks through the rest: every switch that listed the constant stops being exhaustive, every constant assertion becomes a missing symbol, and each site is rewritten from `case General.SESSION_EXPIRED ->` to `case SessionExpired e ->`. No site can be missed. The constant's name becomes the record's name in type case, so history and search survive the move; and because user text is produced at the boundary, the migration changes no external contract.
 
 ---
 
@@ -177,10 +235,15 @@ Users see all errors at once, not fix-and-retry repeatedly.
 **Adapter code** catches external exceptions and maps to domain types:
 
 ```java
-// Adapter: map null → Option, exception → Cause
+// Adapter: map exception → wrapped Cause, null → Option
+record DatabaseFailure(Cause origin, String message) implements RepositoryError, Cause.Wrapped {
+    static final Fn1<DatabaseFailure, Cause> FACTORY =
+        Causes.forOneValue("Database failure: %s", DatabaseFailure::new);
+}
+
 public Promise<Option<User>> findById(UserId id) {
     return Promise.lift(
-        RepositoryError.DatabaseFailure::new,  // Exception → Cause
+        t -> DatabaseFailure.FACTORY.apply(Causes.fromThrowable(t)),
         () -> Option.option(jdbcTemplate.queryForObject(...))  // null → Option
     );
 }
@@ -198,7 +261,7 @@ Foreign code throws exceptions. **Adapters** catch and convert them:
 class JpaUserRepository implements UserRepository {
     public Promise<Option<User>> findByEmail(Email email) {
         return Promise.lift(
-            RepositoryError.DatabaseFailure::new,  // Convert exception → Cause
+            t -> DatabaseFailure.FACTORY.apply(Causes.fromThrowable(t)),
             () -> {
                 // JDBC/JPA code that might throw
                 return Option.option(result);
@@ -280,7 +343,17 @@ public static Result<Option<ReferralCode>> referralCode(String raw) {
 
 ## Testing Errors
 
+Assert on the failure's identity, never on `message()` text - a test matching message strings couples itself to prose and survives mutants that change which failure occurred. Fixed-text failures assert constant equality; data-carrying failures assert type and components.
+
 ```java
+// Test failure identity
+@Test
+void login_failsWithInvalidCredentials_forWrongPassword() {
+    loginUser("user@example.com", "wrong")
+        .onSuccess(Assertions::fail)
+        .onFailure(cause -> assertEquals(LoginError.General.INVALID_CREDENTIALS, cause));
+}
+
 // Test failure
 @Test
 void email_rejectsInvalidFormat() {
@@ -311,11 +384,13 @@ void execute_succeeds() {
 ## Key Takeaways
 
 1. **No business exceptions** - Errors are values, not thrown
-2. **Sealed interfaces** - Define exhaustive error types
-3. **Result.all()** - Accumulates all failures, not just first
-4. **Adapters convert** - Exceptions → Cause at boundaries
-5. **Never nest** - `Promise<Result<T>>` is forbidden
-6. **Test functionally** - Use `onSuccess`/`onFailure` assertions
+2. **Records with data, one enum for fixed text** - `message` is a trailing component, never a hand-written body
+3. **FACTORY constructs** - Template and data cannot disagree; direct `new` bypasses the guarantee
+4. **Result.all()** - Accumulates all failures, not just first
+5. **Adapters convert** - Exceptions → Cause at boundaries
+6. **Render at the boundary** - The exhaustive switch composes user text from components
+7. **Never nest** - `Promise<Result<T>>` is forbidden
+8. **Test identity, not prose** - Constant equality and components, never `message()` text
 
 ---
 

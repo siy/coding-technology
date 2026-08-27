@@ -11,15 +11,16 @@ public interface PaymentService {
     record ProcessResponse(String transactionId, PaymentStatus status) {}
 
     sealed interface PaymentError extends Cause {
-        record Declined(String reason) implements PaymentError {
-            public String message() { return "Payment declined: " + reason; }
+        record Declined(String reason, String message) implements PaymentError {
+            static final Fn1<Declined, String> FACTORY =
+                Causes.forOneValue("Payment declined: %s", Declined::new);
         }
         enum General implements PaymentError {
             GATEWAY_TIMEOUT("Payment gateway timeout"),
             INVALID_CARD("Invalid card number");
-            private final String msg;
-            General(String msg) { this.msg = msg; }
-            @Override public String message() { return msg; }
+            private final String message;
+            General(String message) { this.message = message; }
+            @Override public String message() { return message; }
         }
     }
 

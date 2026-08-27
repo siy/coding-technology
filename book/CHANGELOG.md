@@ -7,6 +7,63 @@ All notable changes to the JBCT book, newest first. Format:
 Earlier history (1.x–2.x) predates per-book changelogs and lives in the
 repository root `CHANGELOG.md`.
 
+## [4.9.0] - 2026-08-26
+
+### Added
+- **Introduction** — the normalization boundary: the explicit scope of the determinism claim.
+  Derived: package hierarchy, types, step contracts, return types, patterns, composition, failure
+  representation, sharing and placement, concurrency structure, testing obligations. Not
+  normalized: atomic-leaf algorithms, adapter internals, module promotion, test-input supply
+  vehicle, test-data representation. Variation below the line is style, above it a defect; a new
+  variation receives an explicit ruling recorded in the block.
+- **Four Return Types** — `Option<List<T>>` joins the forbidden nestings: a collection already
+  carries emptiness as a value, so the `Option` is a second absence channel. The rule line
+  generalizes — each concern appears at most once in a return type; emptiness is the collection's
+  own.
+- **Four Return Types** — the `Promise` boundary stated exactly: `Promise` marks an operation
+  that leaves the process. A long-running CPU-bound computation returns `Result`; scheduling is
+  the caller's decision, made visible at the composition site (`Promise.lift`).
+- **Appendix A** — a reference realization of the invariant obligation with a property library
+  (jqwik), non-normative.
+
+### Changed
+- **Error Handling & Composition** — *Defining Typed Errors* rewritten onto the construction idiom
+  landed in Pragmatica core: data-carrying failures are records with a trailing `message`
+  component and a declared `FACTORY` (message template plus the canonical constructor reference —
+  template and data cannot disagree, and the factory is the only construction path); fixed-text
+  failures are constants of one prescribed-shape `General` enum per hierarchy, discriminated in
+  switches by qualified constant labels. New sections: wrapped and terminal causes
+  (`Cause.Wrapped` with the `origin` component, `Cause.Terminal`), rendering at the boundary (the
+  exhaustive switch composes user text from data components; `message` is for logs and
+  operators), the bare-cause line (a failure is worth a type when a caller can act on it), and
+  the fixed-text-to-data migration (compiler-guided, boundary-invisible, name-continuous).
+  Worked examples across the book converted; tests assert failure identity, never `message()`
+  text.
+- **Appendix A** — Causes utilities updated for the same idiom: the typed factory overloads (the
+  `causeFactory` receives the values and the formatted message in constructor order, so the
+  record's constructor reference is the factory), the `Cause.Terminal`/`Cause.Wrapped` mixins,
+  `Locale.ROOT` formatting; the anonymous template factories marked as the ad-hoc tier.
+- **Project Structure** — "Module Organization (Optional)" rewritten as **Module Promotion**:
+  modules promote derived boundaries (telescope nodes, stratum roots) from lint-checked
+  convention to compiler enforcement; promotion is content-invariant; drivers are deployment
+  topology (forced), ownership divergence, independent publication, and dependency-direction
+  enforcement; the default is no modules. The "team > 5" heuristic replaced by ownership
+  divergence. Cut-level verdicts: subsystem natural, workflow rare, use case never. The layer cut
+  kept as the enforcement cut; the two cuts compose.
+- **Testing Philosophy** — the "3+ conditional branches or complex logic" guideline replaced: the
+  space-counting table assigns the business-leaf obligation. Enumerable space → exhaustive
+  vectors; unbounded computation → executable invariant plus boundary examples; pure projection →
+  covered by the parent's vectors. The invariant obligation is executable — the assertion is the
+  invariant, boundaries included, failures reproduce under a fixed or reported seed; the
+  input-supply vehicle is style.
+- **Testing Philosophy** — the test-data triad ("Which Approach to Use?") replaced by a declared
+  default: vectors; a factory method for one systematically varying field; a builder for optional
+  fields. The choice is style — the obligation never depends on it.
+- **Testing Practice** — the keep/delete criterion for unit tests during migration is now "does
+  the leaf carry its own space", replacing "complex logic, many branches".
+- **Troubleshooting FAQ** — "blocking code" sharpened to "blocking I/O" in the `Promise.lift`
+  checklist.
+
 ## [4.8.0] - 2026-08-20
 
 ### Added

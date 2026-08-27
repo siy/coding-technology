@@ -89,12 +89,10 @@ public sealed interface TransferError extends Cause {
         }
     }
 
-    record AuthorizationRequired(Money amount, Money threshold) implements TransferError {
-        @Override
-        public String message() {
-            return String.format("Transfer of %s requires authorization (threshold: %s)",
-                amount.value(), threshold.value());
-        }
+    record AuthorizationRequired(Money amount, Money threshold, String message) implements TransferError {
+        static final Fn2<AuthorizationRequired, Money, Money> FACTORY =
+            Causes.forTwoValues("Transfer of %s requires authorization (threshold: %s)",
+                                AuthorizationRequired::new);
     }
 }
 ```
@@ -457,7 +455,7 @@ class TransferFundsTest {
 
             TransferFunds.ExecuteTransfer failingThenSucceeding = transfer -> {
                 if (attempts.incrementAndGet() < 3) {
-                    return new TransientError().promise();
+                    return TransientError.TRANSIENT_ERROR.promise();
                 }
                 return Promise.success(new TransferResult(
                     new TransferId("tx-123"),
@@ -567,11 +565,15 @@ class TransferFundsTest {
         );
     }
 
-    static class TransientError implements Cause {
+    enum TransientError implements Cause {
+        TRANSIENT_ERROR("Transient error");
+
+        private final String message;
+
+        TransientError(String message) { this.message = message; }
+
         @Override
-        public String message() {
-            return "Transient error";
-        }
+        public String message() { return message; }
     }
 }
 ```

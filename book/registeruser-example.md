@@ -219,7 +219,7 @@ interface HashPassword {
     Result<HashedPassword> apply(Password password);
 
     static HashPassword hashPassword(BCryptPasswordEncoder encoder) {
-        return password -> Result.lift1(RegistrationError.PasswordHashingFailed::new,
+        return password -> Result.lift1(t -> RegistrationError.PasswordHashingFailed.FACTORY.apply(Causes.fromThrowable(t)),
                                         encoder::encode,
                                         password.value())
                                  .map(HashedPassword::new);
@@ -233,7 +233,7 @@ class JooqUserRepository implements SaveUser {
     private final DSLContext dsl;
 
     public Promise<User> apply(ValidUser user) {
-        return Promise.lift(RepositoryError.DatabaseFailure::cause,
+        return Promise.lift(t -> RepositoryError.DatabaseFailure.FACTORY.apply(Causes.fromThrowable(t)),
                             () -> saveUser(user));
     }
 
@@ -297,11 +297,9 @@ public sealed interface RegistrationError extends Cause {
         }
     }
 
-    record PasswordHashingFailed(Throwable cause) implements RegistrationError {
-        @Override
-        public String message() {
-            return "Password hashing failed: " + Causes.fromThrowable(cause);
-        }
+    record PasswordHashingFailed(Cause origin, String message) implements RegistrationError, Cause.Wrapped {
+        static final Fn1<PasswordHashingFailed, Cause> FACTORY =
+            Causes.forOneValue("Password hashing failed: %s", PasswordHashingFailed::new);
     }
 }
 ```

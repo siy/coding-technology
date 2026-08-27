@@ -76,7 +76,7 @@ Promise<User> promise = Promise.promise();  // Unresolved!
 .flatMap(data -> otherPromise)
 ```
 
-3. **Is Promise.lift wrapping blocking code?**
+3. **Is Promise.lift wrapping blocking I/O?**
 ```java
 // This runs async - make sure the thread pool isn't exhausted
 Promise.lift(() -> {

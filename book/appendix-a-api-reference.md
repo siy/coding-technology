@@ -304,19 +304,37 @@ Network.parseURI(String)         // -> Result<URI>
 ## Causes Utilities
 
 ```java
-Causes.cause(String message)                          // Simple cause
+Causes.cause(String message)                          // Simple cause (ad-hoc tier)
 Causes.cause(String message, Option<Cause> source)    // Cause with source
 Causes.fromThrowable(Throwable)                       // Convert exception
-Causes.forOneValue(String template)                   // Fn1<Cause, T> factory
+Causes.composite(Result<?>...)                        // Composite from results
+
+// Anonymous template factories (ad-hoc tier: tests, scripts)
+Causes.forOneValue(String template)                   // Fn1<Cause, T>
 Causes.forTwoValues(String template)                  // Fn2<Cause, T1, T2>
 Causes.forThreeValues(String template)                // Fn3<Cause, T1, T2, T3>
-Causes.composite(Result<?>...)                        // Composite from results
+
+// Typed factories (domain tier) - the causeFactory receives the values and the
+// formatted message in constructor order, so a record's canonical constructor
+// reference is the factory (message component last)
+Causes.forOneValue(String template, Fn2<C, T, String> causeFactory)             // Fn1<C, T>
+Causes.forTwoValues(String template, Fn3<C, T1, T2, String> causeFactory)       // Fn2<C, T1, T2>
+Causes.forThreeValues(String template, Fn4<C, T1, T2, T3, String> causeFactory) // Fn3<C, T1, T2, T3>
+// message-only variants taking Fn1<C, String> also exist; the data-carrying
+// forms above are the domain default
 ```
 
-**Template syntax** (uses String.format):
+**Cause mixins** (nested in `Cause`):
 ```java
-Causes.forOneValue("Invalid email: %s")           // CORRECT
-Causes.forTwoValues("Range error: %s to %s")      // CORRECT
+Cause.Terminal   // isTerminal() → true: no retry can change the outcome
+Cause.Wrapped    // declares Cause origin(); derives source() from it
+```
+
+**Template syntax** (uses String.format, Locale.ROOT):
+```java
+Causes.forOneValue("Invalid email: %s")                    // anonymous, ad-hoc tier
+Causes.forOneValue("Invalid email: %s", InvalidEmail::new) // typed:
+// record InvalidEmail(String raw, String message) implements EmailError
 ```
 
 ---
@@ -388,3 +406,24 @@ void validation_succeeds_forValidInput() {
                 });
 }
 ```
+
+## Property-Test Realization (Reference)
+
+The invariant obligation in *Testing Philosophy* is library-neutral: any input supply that executes the invariant and reproduces failures discharges it. This section shows one realization with jqwik, the maintained property-testing engine on the JUnit 5 platform. Non-normative.
+
+```java
+// test scope: net.jqwik:jqwik
+
+class EmailProperties {
+
+    @Property
+    void acceptedValuesAreStableUnderReparse(@ForAll String raw) {
+        Email.email(raw)
+             .onSuccess(first -> Email.email(first.value())
+                                      .onFailure(cause -> fail(cause.message()))
+                                      .onSuccess(second -> assertEquals(first, second)));
+    }
+}
+```
+
+The assertion is the invariant itself, applied to every generated input: whatever the parser accepts, reparsing the accepted value succeeds and yields an equal instance. Rejected inputs pass vacuously - the property quantifies over accepted values. On failure jqwik reports the seed, which satisfies the reproducibility clause; enumerated boundary examples stay in the ordinary example tests beside this property.

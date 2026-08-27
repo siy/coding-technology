@@ -113,7 +113,7 @@ The signature `Result<Email>` tells you: this might fail (invalid format), compl
 
 ## `Promise<T>` - Asynchronous, Can Fail
 
-Use this for any I/O operation, external service call, or computation that might block. `Promise<T>` is semantically equivalent to `Result<T>` but asynchronous - failures are carried in the Promise itself, not nested inside it.
+Use this for any operation that leaves the process: I/O, external service calls, inter-process communication. `Promise<T>` is semantically equivalent to `Result<T>` but asynchronous - failures are carried in the Promise itself, not nested inside it.
 
 ```java
 public interface AccountRepository {
@@ -152,7 +152,9 @@ promise.map(this::processUser)
 **Return `Promise<T>` when:**
 - Any I/O operation (database, HTTP, file system)
 - External service calls
-- Operations that might block or take time
+- Any other operation that leaves the process (messaging, inter-process calls)
+
+A long-running computation is not on this list. CPU-bound work returns `Result<T>` no matter how long it takes: `Promise` marks crossing the process boundary, and how an operation is scheduled is the caller's decision, made visible at the composition site (`Promise.lift`), never encoded in the leaf's type.
 
 ---
 
@@ -205,8 +207,9 @@ Each type represents one orthogonal concern:
 | `Result<Result<T>>` | Nested failures create unwrapping ceremony |
 | `Option<Option<T>>` | Nested optionality is meaningless |
 | `Promise<Option<Result<T>>>` | Triple nesting - architectural smell |
+| `Option<List<T>>` | A collection already carries emptiness as a value - a second absence channel says it twice |
 
-**Rule:** Each monadic concern (optionality, failure, asynchrony) appears at most once in a return type.
+**Rule:** Each concern (optionality, failure, asynchrony) appears at most once in a return type; emptiness is the collection's own concern, already carried as a value.
 
 ---
 

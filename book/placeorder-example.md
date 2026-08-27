@@ -216,6 +216,8 @@ public record Address(
 package com.example.shop.usecase.placeorder;
 
 import org.pragmatica.lang.Cause;
+import org.pragmatica.lang.Functions.Fn1;
+import org.pragmatica.lang.Functions.Fn3;
 import org.pragmatica.lang.utils.Causes;
 import com.example.shop.domain.shared.ProductId;
 import com.example.shop.domain.shared.Quantity;
@@ -244,28 +246,20 @@ public sealed interface OrderError extends Cause {
     }
 
     // Errors with data
-    record InsufficientInventory(List<ProductId> products) implements OrderError {
-        @Override
-        public String message() {
-            return "Insufficient inventory for products: " +
-                products.stream().map(ProductId::value).toList();
-        }
+    record InsufficientInventory(List<ProductId> products, String message) implements OrderError {
+        static final Fn1<InsufficientInventory, List<ProductId>> FACTORY =
+            Causes.forOneValue("Insufficient inventory for products: %s", InsufficientInventory::new);
     }
 
-    record InvalidQuantity(ProductId productId, Quantity requested, Quantity available)
+    record InvalidQuantity(ProductId productId, Quantity requested, Quantity available, String message)
         implements OrderError {
-        @Override
-        public String message() {
-            return String.format("Product %s: requested %d, available %d",
-                productId.value(), requested.value(), available.value());
-        }
+        static final Fn3<InvalidQuantity, ProductId, Quantity, Quantity> FACTORY =
+            Causes.forThreeValues("Product %s: requested %s, available %s", InvalidQuantity::new);
     }
 
-    record PaymentFailed(Throwable cause) implements OrderError {
-        @Override
-        public String message() {
-            return "Payment processing failed: " + Causes.fromThrowable(cause);
-        }
+    record PaymentFailed(Cause origin, String message) implements OrderError, Cause.Wrapped {
+        static final Fn1<PaymentFailed, Cause> FACTORY =
+            Causes.forOneValue("Payment processing failed: %s", PaymentFailed::new);
     }
 }
 ```
@@ -612,7 +606,7 @@ public class InventoryChecker implements CheckInventory {
         return inventoryClient.getAvailable(line.productId())
             .flatMap(available -> available.value() >= line.quantity().value()
                 ? Promise.success(line)
-                : OrderError.InvalidQuantity(
+                : OrderError.InvalidQuantity.FACTORY.apply(
                     line.productId(),
                     line.quantity(),
                     available
@@ -637,7 +631,7 @@ public class InventoryChecker implements CheckInventory {
             .map(c -> ((OrderError.InvalidQuantity) c).productId())
             .toList();
 
-        return new OrderError.InsufficientInventory(failedProducts).promise();
+        return OrderError.InsufficientInventory.FACTORY.apply(failedProducts).promise();
     }
 }
 ```
@@ -647,7 +641,9 @@ public class InventoryChecker implements CheckInventory {
 ```java
 package com.example.shop.adapter.payment;
 
+import org.pragmatica.lang.Cause;
 import org.pragmatica.lang.Promise;
+import org.pragmatica.lang.utils.Causes;
 import com.example.shop.usecase.placeorder.PlaceOrder.ProcessPayment;
 import com.example.shop.usecase.placeorder.ReservedInventory;
 import com.example.shop.usecase.placeorder.PaymentConfirmation;
@@ -667,25 +663,19 @@ public class PaymentProcessor implements ProcessPayment {
     @Override
     public Promise<PaymentConfirmation> apply(ReservedInventory reservation, Money total) {
         return Promise.lift(
-            OrderError.PaymentFailed::new,
+            this::mapPaymentError,
             () -> gateway.charge(total.value())
-        ).map(txId -> new PaymentConfirmation(txId, Instant.now()))
-         .mapError(this::mapPaymentError);
+        ).map(txId -> new PaymentConfirmation(txId, Instant.now()));
     }
 
-    private Cause mapPaymentError(Cause cause) {
-        return switch (cause) {
-            case OrderError.PaymentFailed pf -> {
-                if (pf.cause() instanceof TimeoutException) {
-                    yield OrderError.General.PAYMENT_TIMEOUT;
-                }
-                if (isDeclined(pf.cause())) {
-                    yield OrderError.General.PAYMENT_DECLINED;
-                }
-                yield cause;
-            }
-            default -> cause;
-        };
+    private Cause mapPaymentError(Throwable t) {
+        if (t instanceof TimeoutException) {
+            return OrderError.General.PAYMENT_TIMEOUT;
+        }
+        if (isDeclined(t)) {
+            return OrderError.General.PAYMENT_DECLINED;
+        }
+        return OrderError.PaymentFailed.FACTORY.apply(Causes.fromThrowable(t));
     }
 
     private boolean isDeclined(Throwable t) {
@@ -923,7 +913,7 @@ class InventoryCheckerTest {
         checker.apply(requestFor(PRODUCT, 2))
                .await()
                .onSuccess(Assertions::fail)
-               .onFailure(cause -> assertInstanceOf(OrderError.InventoryUnavailable.class, cause));
+               .onFailure(cause -> assertInstanceOf(OrderError.InsufficientInventory.class, cause));
     }
 }
 ```
@@ -1003,7 +993,7 @@ class PlaceOrderTest {
         @Test
         void execute_fails_whenInventoryInsufficient() {
             PlaceOrder.CheckInventory failingCheck = req ->
-                new OrderError.InsufficientInventory(List.of()).promise();
+                OrderError.InsufficientInventory.FACTORY.apply(List.of()).promise();
 
             var failingUseCase = PlaceOrder.placeOrder(
                 failingCheck, null, null, null, null, null, null

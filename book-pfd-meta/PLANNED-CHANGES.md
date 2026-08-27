@@ -1316,6 +1316,21 @@ the author's own methods becomes a real measurement instead of instrument silenc
 a *rate* for a violation lint can currently only give *locations* for. Both prior instruments that were
 pointed at `jbct-loan` (the naming census, the mutation run) found real defects there.
 
+## 20. The Data Question — schema-synthesis handoff (2026-08-24) — SHIPPED in PFD 2.7.0 `[PFD core]`
+
+Two small edits to *The Data Question*, ruled together with the schema-synthesis module
+(`book-arch-meta/PLANNED-CHANGES.md` item 5):
+
+- **Sharpen the scope claim.** Data is *system state*; the form of persistence is out of the
+  methodology's scope. The claim already exists at `data-question.md:156` ("Storage layout is a
+  separate decision... What the model constrains is who may write, not where the bytes sit") —
+  make it load-bearing and close the chapter with the forward pointer: the derivation (logical
+  schema as residue, then placement as architecture) lives in the AS successor's schema module.
+  Claim here, machinery there — the same relation the chapter already has with Architecture
+  Synthesis.
+- **One orphaned sentence gets its home:** config is owned state — the Data Question applies
+  as-is, with operations as the writer and its own change cadence. One sentence, not a section.
+
 ## Release scope & versions
 
 **Historical — this block planned the 1.3.0 round and is kept for the record.** Each book's version is

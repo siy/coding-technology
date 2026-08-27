@@ -96,7 +96,10 @@ def arm(impls, ids, label):
         print(f"  {name:16s}: {m*100:6.2f}%   (inextractable: {inext[name]}){flag}")
     kept = [v for k, v in scores.items() if k not in excluded and v is not None]
     overall = sum(kept) / len(kept) if kept else None
-    print(f"  {'OVERALL':16s}: {overall*100:6.2f}%   (from {len(kept)}/4 components)")
+    if overall is None:
+        print(f"  {'OVERALL':16s}:   VOID   (every component excluded under the void rule)")
+    else:
+        print(f"  {'OVERALL':16s}: {overall*100:6.2f}%   (from {len(kept)}/4 components)")
     return overall, scores, excluded
 
 

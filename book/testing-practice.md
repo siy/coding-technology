@@ -447,19 +447,18 @@ class UserLoginTest {
 
 As you add integration tests, notice which unit tests become redundant.
 
-**Question:** Is the unit test adding value beyond the integration test?
-- If **NO** -> Delete unit test
-- If **YES** (complex logic, many branches) -> Keep unit test
+**Question:** Does the leaf carry its own space?
+- If **NO** (a projection - its space is a subspace of the parent's vectors) -> Delete unit test
+- If **YES** (enumerable classes of its own, or an invariant over an unbounded domain) -> Keep unit test
 
 ### Step 3: Remove Redundant Unit Tests
 
 **Keep:**
-- Complex business leaf tests
+- Leaf tests that carry their own space - enumerable-class vectors and invariant tests, boundary rows included
 - Value object tests (always)
-- Edge case tests not covered by integration
 
 **Delete:**
-- Simple step tests (covered by integration)
+- Projection-leaf tests (the parent's vectors pin them)
 - Mock-heavy tests (testing mocking framework more than logic)
 - Tests that break on refactoring
 

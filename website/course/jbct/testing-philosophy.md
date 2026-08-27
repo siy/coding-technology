@@ -4,8 +4,8 @@ Integration-first testing: stub everything, then implement incrementally toward 
 ## learn
 - Why integration-first testing aligns with functional composition
 - The evolutionary process: stub -> implement incrementally -> production-ready
+- Counting the decision space: which leaves owe isolated tests, and what kind
 - Handling complex test inputs with builders and factories
-- When you still need unit tests
 
 ## note
 The pattern here (stub, then implement one step at a time) is what the worked examples later in the

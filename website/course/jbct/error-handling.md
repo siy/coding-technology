@@ -4,6 +4,8 @@ Errors as typed Cause values instead of exceptions, with exhaustive switches and
 ## learn
 - Why business logic never throws exceptions
 - Typed error hierarchies with Cause and sealed interfaces
+- The construction idiom: data components, a trailing message, and the FACTORY
+- Rendering user text at the boundary with an exhaustive switch
 - Error accumulation vs fail-fast semantics
 - Monadic composition rules
 

@@ -7,20 +7,22 @@ sealed interface OrderError extends Cause {
     enum General implements OrderError {
         DUPLICATE_ORDER("Order already exists"),
         INVENTORY_UNAVAILABLE("Requested items not available");
-        private final String msg;
-        General(String msg) { this.msg = msg; }
-        @Override public String message() { return msg; }
+        private final String message;
+        General(String message) { this.message = message; }
+        @Override public String message() { return message; }
     }
-    record CustomerNotFound(String customerId) implements OrderError {
-        public String message() { return "Customer not found: " + customerId; }
+    record CustomerNotFound(String customerId, String message) implements OrderError {
+        static final Fn1<CustomerNotFound, String> FACTORY =
+            Causes.forOneValue("Customer not found: %s", CustomerNotFound::new);
     }
-    record PaymentFailed(String reason, String transactionId) implements OrderError {
-        public String message() { return "Payment failed: " + reason; }
+    record PaymentFailed(String reason, String transactionId, String message) implements OrderError {
+        static final Fn2<PaymentFailed, String, String> FACTORY =
+            Causes.forTwoValues("Payment failed: %s (tx %s)", PaymentFailed::new);
     }
 }
 ```
 
-**Convention:** Enum for fixed-message errors, records for errors with context data.
+**Convention:** Enum for fixed-message errors, records for errors with context data. Records carry a trailing `String message` component and construct through their `FACTORY`.
 
 ## HTTP Status Mapping (routes.toml)
 

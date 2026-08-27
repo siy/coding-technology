@@ -4,6 +4,7 @@ Vertical slicing, the telescope rule for package growth, and where each type bel
 ## learn
 - Vertical slicing philosophy and package organization
 - The telescope rule: how the package tree grows with altitude
+- Module promotion: when a package boundary becomes a compile-time boundary
 - File structure: import ordering, member ordering, utility interfaces
 - Framework integration with Spring Boot and JOOQ
 

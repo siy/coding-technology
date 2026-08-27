@@ -121,9 +121,15 @@ Count the space instead, and let it choose the shape of the tests:
 cover four of them. The honest form of the test is the property the parser guarantees --
 that normalization is idempotent, that no accepted value fails the invariant -- which is
 what the tools called *property-based testing* libraries exist to check by generating
-inputs rather than listing them. This book does not teach them, and you do not need one to
-benefit: writing down the invariant, even as a comment above four examples, is what stops
-the four from being mistaken for coverage of the space.
+inputs rather than listing them. This book does not require one. The obligation for an
+unbounded space has three parts: the test's assertion *is* the invariant, applied to every
+supplied input rather than a hand-computed expected value per example; the input set
+includes the boundaries; and a failure reproduces, so generated inputs run under a fixed or
+reported seed. How the inputs are supplied -- a property library, a hand-rolled generator,
+an enumerated set beyond the boundaries -- is style. Writing the invariant down is still
+what stops four examples from being mistaken for coverage of the space; written as an
+assertion it also fails when violated, which a comment never does. [Appendix A](appendix-a-api-reference.md)
+shows the invariant realized with a property library.
 
 `Quantity` (1..100) is the *first* kind wearing the clothes of the third. It has 102
 interesting values including the boundaries, and boundary examples genuinely cover it.
@@ -131,21 +137,22 @@ interesting values including the boundaries, and boundary examples genuinely cov
 The worked case is `PriceCalculator` in [PlaceOrder](placeorder-example.md) -- eighteen
 nominal combinations, three of them structurally impossible, fifteen rows in a table.
 
-**2. Business Leaves: Unit Tests if Complex**
+**2. Business Leaves: The Same Table Chooses**
 
-Simple business leaves (single calculation, simple transformation) don't need isolated tests - they're covered by use case integration tests.
+The space-counting table above is not only for value objects; it assigns the testing obligation for every business leaf. Count the space the leaf decides over:
 
-Complex business leaves (rich algorithms, many branches) deserve unit tests:
+- **Enumerable from its types** (sealed interfaces, enums, booleans, `Option` presence) or a finite grid -- exhaustive vectors, one row per cell. A missing row is a visible hole.
+- **Computes over an unbounded domain** (numerics, strings, collections) -- state the invariant and add the boundary examples, per the obligation above.
+- **Neither branches nor computes** -- every output value is a verbatim copy or rearrangement of input fields and constants -- no isolated test. The parent composition's vectors pin it.
 
 ```java
 class PricingEngineTest {
     @Test void volumeDiscount_appliesAtThreshold() { /* ... */ }
     @Test void combinedDiscounts_stackCorrectly() { /* ... */ }
-    @Test void edgeCases_handleGracefully() { /* ... */ }
 }
 ```
 
-**Guideline:** If a leaf has 3+ conditional branches or complex logic, write unit tests.
+The obligation is derivable before the body exists: the space is determined by the step's input types and the decision it makes, both present in the design. Two implementers of one leaf derive the same tests. A branch count never decides anything here -- a branch-free interest formula still computes over an unbounded domain and still carries the invariant obligation.
 
 **3. Use Cases: Integration Tests (Test Vectors)**
 
@@ -446,11 +453,9 @@ public interface TestVectors {
 }
 ```
 
-### Which Approach to Use?
+### Which Form to Use
 
-- **Canonical Vectors:** Simple use cases, few fields, limited variations
-- **Factory Methods:** Medium complexity, systematic field variations
-- **Builders:** Complex objects, many optional fields, many combinations
+Any of the three discharges the obligation: which tests exist and what they assert never depends on how inputs are constructed, so the choice is style. The default in this book -- canonical vectors; a factory method when one field varies systematically; a builder when the input type has optional fields. The examples use vectors throughout, so variation in test-data form never carries meaning.
 
 ---
 

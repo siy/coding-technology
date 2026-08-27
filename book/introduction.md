@@ -1,6 +1,6 @@
 # Introduction - Code Unification
 
-**Based on:** JBCT v4.8.0 | **Pragmatica Core:** 1.0.0-rc1
+**Based on:** JBCT v4.9.0 | **Pragmatica Core:** 1.0.0-rc1
 
 ## About the Series
 
@@ -52,6 +52,8 @@ The benefits compound:
 **Hide the machinery, keep the meaning** is the property those last two add up to, and it deserves its own name. Technical noise is pushed to the edges *and* the business facts survive in the types: a return type states whether a step can fail, an `Option` parameter states that the domain allows absence, `Promise.all` states that steps are independent, a sealed error type states the complete failure catalog. The code executes and testifies at once — and because the testimony lives in types, the compiler keeps it true. The full inventory is a table in [From Process to Patterns](from-process-to-patterns.md), and it is why JBCT code stays legible to humans and AI assistants alike after its authors have moved on.
 
 **Deterministic code generation** becomes possible when the mapping from requirements to code is mechanical. Given a use case specification - inputs, outputs, validation rules, steps - there's essentially one correct structure. Different developers (or AI assistants) should produce nearly identical implementations.
+
+**The normalization boundary.** "Nearly identical" has a precise scope, and stating the scope is what makes the claim testable. JBCT derives the package hierarchy (the telescope rule), the Java types, the step contracts and return types, the pattern for each composition, the failure representation, the placement of shared code, the concurrency structure, and the testing obligations. JBCT does not normalize algorithms inside atomic leaves, framework-specific adapter internals, module promotion (content-invariant along derived boundaries — [Project Structure](project-structure.md) has the full treatment), the test-input supply vehicle, or test-data representation. Variation below this line is style; variation above it is a defect. A newly discovered variation receives an explicit ruling: closed by a rule, or placed below the line. The boundary comes from measurement rather than taste — inspecting independent implementations of one design found their skeletons identical, and what differed became the first rulings.
 
 > **A Broader Movement:** JBCT is not alone in pursuing compile-time guarantees and type-driven design. Similar philosophies appear in database design (7NF type-first approaches), distributed systems, and functional programming communities. The common thread: shift errors from runtime to compile-time, make invalid states unrepresentable, and reduce cognitive load through explicit contracts.
 

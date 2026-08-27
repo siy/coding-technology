@@ -4,7 +4,7 @@
 
 - Vertical slicing philosophy and package organization
 - The telescope rule: how the package tree grows as the design discovers altitudes
-- Module organization for larger systems
+- Module promotion: when a package boundary becomes a compile-time boundary
 - File structure guidelines: import ordering, member ordering, utility interfaces
 - Framework integration with Spring Boot and JOOQ
 - Where types go (placement rules)
@@ -186,9 +186,37 @@ Expanding a level moves files - imports change, git records the move, parallel b
 
 ---
 
-## Module Organization (Optional)
+## Module Promotion
 
-For larger systems, split into Gradle/Maven modules:
+The package tree already carries every boundary the design produced. Gradle/Maven modules add no structure of their own: a module boundary *promotes* an existing boundary from convention, checked by lint, to enforcement, checked by the compiler. Two facts make the promotion safe and the choice free.
+
+**Module boundaries coincide with derived boundaries.** A legal cut lies on a telescope node (use case, workflow, subsystem) or on a stratum root (`usecase/`, `domain/`, `adapter/`, `config`). A module boundary anywhere else is a structure the design never produced.
+
+**Promotion is content-invariant.** Same packages, same files, same imports - only build wiring changes. No line of Java can observe the choice, which is why it sits below the normalization boundary ([Introduction](introduction.md)). Every vertical cut is also well-formed by construction: the lowest-common-ancestor rule already placed shared code at ancestor nodes, so dependencies point up the tree and no cut can sever one.
+
+### When to Promote
+
+The default is no modules: package conventions plus lint enforce direction. Promote when a driver demands compile-time enforcement:
+
+- **Deployment topology (forced).** Multiple deployment units force cuts at the deployment boundaries. The architecture makes this decision, not the build.
+- **Ownership divergence (elective).** More than one team owning different subtrees on different change cadences. Headcount alone is not a driver - one team of eight still wants a single module.
+- **Independent publication (elective).** A library released on its own cycle is its own module.
+- **Dependency-direction enforcement (elective).** Compile-time proof that domain code cannot import adapters.
+
+### Which Level to Cut
+
+A module boundary taxes every change that crosses it: build configuration, API ceremony, version coordination. Promote boundaries where cross-boundary change is rare; keep packages where it is frequent.
+
+| Cut | Verdict |
+|-----|---------|
+| No modules | The default - one team, one deployable |
+| Subsystem per module | The natural promotion point: subsystems are the units of ownership and deployment, the slowest-moving boundaries |
+| Workflow per module | Only when one subsystem hosts several teams |
+| Use case per module | Never - use cases are the unit of change, and this puts the compile-time wall where churn is highest |
+
+### The Layer Cut
+
+The cuts above follow the business hierarchy. A second, orthogonal cut follows the strata, which exist as top-level packages and are therefore also legal promotions:
 
 ```
 :domain          # Pure Java - value objects
@@ -197,18 +225,7 @@ For larger systems, split into Gradle/Maven modules:
 :bootstrap       # Main class, configuration
 ```
 
-### When to Use Modules
-
-- Team size > 5 developers
-- Multiple deployment units from same codebase
-- Enforcing compile-time dependency boundaries
-- Independent library publication
-
-### When Single Module is Sufficient
-
-- Small to medium teams (< 5 developers)
-- Monolithic deployment
-- Package conventions provide sufficient structure
+Its drivers are the last two above: dependency-direction enforcement and independent publication of domain types. The two cuts compose - a system with both drivers ends with subsystem-by-stratum modules.
 
 ### Module Dependencies
 
@@ -221,6 +238,8 @@ adapters       -> application, domain
   |
 bootstrap      -> adapters, application, domain
 ```
+
+One sub-decision the vertical cut surfaces: adapters are organized by technical kind (`adapter.rest`, `adapter.persistence`), not by business subtree. A deployment-forced cut requires adapters to follow their subsystem - the adapter tree telescopes with it. An ownership-driven cut may keep one shared adapters module.
 
 ---
 

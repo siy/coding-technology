@@ -147,13 +147,14 @@ public sealed interface RegistrationError extends Cause {
         @Override public String message() { return message; }
     }
 
-    record PasswordHashingFailed(Throwable cause) implements RegistrationError {
-        @Override public String message() { return "Password hashing failed: " + Causes.fromThrowable(cause); }
+    record PasswordHashingFailed(Cause origin, String message) implements RegistrationError, Cause.Wrapped {
+        static final Fn1<PasswordHashingFailed, Cause> FACTORY =
+            Causes.forOneValue("Password hashing failed: %s", PasswordHashingFailed::new);
     }
 }
 ```
 
-Use constructor references in `lift`: `RepositoryError.DatabaseFailure::new`
+At `lift` boundaries, apply the factory to the converted throwable: `t -> RepositoryError.DatabaseFailure.FACTORY.apply(Causes.fromThrowable(t))`
 
 ### State-Machine State Types
 
@@ -305,8 +306,8 @@ r.ensureWith(T::field, op)                 // op result discarded; success gates
 ### Error Handling in Adapters
 
 ```java
-Promise.lift(Error::new, () -> ioOperation())          // Exception → Cause
-Result.lift1(Error::new, encoder::encode, value)       // Function with param
+Promise.lift(t -> Error.FACTORY.apply(Causes.fromThrowable(t)), () -> ioOperation())    // Exception → Cause
+Result.lift1(t -> Error.FACTORY.apply(Causes.fromThrowable(t)), encoder::encode, value) // Function with param
 promise.mapToUnit() / result.mapToUnit()               // T → Unit
 ```
 
@@ -353,7 +354,8 @@ static Price calculateDiscount(Price original, Percentage rate) { return origina
 
 // Adapter Leaf — I/O with lift
 public Promise<User> apply(UserId id) {
-    return Promise.lift(Error::new, () -> dsl.selectFrom(USERS).where(USERS.ID.eq(id.value())).fetchOptional())
+    return Promise.lift(t -> Error.FACTORY.apply(Causes.fromThrowable(t)),
+                        () -> dsl.selectFrom(USERS).where(USERS.ID.eq(id.value())).fetchOptional())
                   .flatMap(opt -> opt.map(this::toDomain).orElse(NOT_FOUND.promise()));
 }
 ```

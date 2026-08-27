@@ -136,34 +136,19 @@ Create appropriate Cause definitions for a user registration system:
 ```java
 public sealed interface RegistrationError extends Cause {
 
-    record EmailExists(String email) implements RegistrationError {
-        private static final Fn1<Cause, String> FACTORY =
-            Causes.forOneValue("Email already registered: %s");
-
-        @Override
-        public String message() {
-            return FACTORY.apply(email).message();
-        }
+    record EmailExists(String email, String message) implements RegistrationError {
+        static final Fn1<EmailExists, String> FACTORY =
+            Causes.forOneValue("Email already registered: %s", EmailExists::new);
     }
 
-    record WeakPassword(String weakness) implements RegistrationError {
-        private static final Fn1<Cause, String> FACTORY =
-            Causes.forOneValue("Password too weak: %s");
-
-        @Override
-        public String message() {
-            return FACTORY.apply(weakness).message();
-        }
+    record WeakPassword(String weakness, String message) implements RegistrationError {
+        static final Fn1<WeakPassword, String> FACTORY =
+            Causes.forOneValue("Password too weak: %s", WeakPassword::new);
     }
 
-    record InvalidUsername(String invalidChars) implements RegistrationError {
-        private static final Fn1<Cause, String> FACTORY =
-            Causes.forOneValue("Username contains invalid characters: %s");
-
-        @Override
-        public String message() {
-            return FACTORY.apply(invalidChars).message();
-        }
+    record InvalidUsername(String invalidChars, String message) implements RegistrationError {
+        static final Fn1<InvalidUsername, String> FACTORY =
+            Causes.forOneValue("Username contains invalid characters: %s", InvalidUsername::new);
     }
 }
 ```
@@ -476,7 +461,7 @@ return switch (user.tier()) {
 };
 
 // D
-return Promise.lift(DatabaseError::new,
+return Promise.lift(t -> DatabaseError.FACTORY.apply(Causes.fromThrowable(t)),
                    () -> jdbcTemplate.query(sql, mapper));
 ```
 
@@ -854,10 +839,10 @@ class TransferFundsTest {
 
     // Failure stubs
     private static final ValidateAccounts SOURCE_NOT_FOUND =
-        (from, to) -> TransferError.SOURCE_NOT_FOUND.promise();
+        (from, to) -> TransferError.General.SOURCE_NOT_FOUND.promise();
 
     private static final ValidateAccounts INSUFFICIENT_FUNDS =
-        (from, to) -> TransferError.INSUFFICIENT_FUNDS.promise();
+        (from, to) -> TransferError.General.INSUFFICIENT_FUNDS.promise();
 
     @Test
     void transfer_succeeds_forValidAccounts() {

@@ -1127,7 +1127,7 @@ claiming — falsifiability at ecosystem scale, not the absence of gaps.
 
 | # | Run | Claim under test | Instrument | Gate |
 |---|---|---|---|---|
-| 1 | Convergence | deterministic structure (`introduction.md:54`) | 10 isolated implementers | **UNRESOLVED** — the metric measured error-construction style, not structure; **Run 1c: compare DDGs** over the 10 implementations already on disk. Distinctiveness supported and replicated. |
+| 1 | Convergence | deterministic structure (`introduction.md:54`) | 10 isolated implementers | **RUN 1c 2026-08-27 — P1c-1 MISS, determinism falsified on the DDG instrument.** Both arms scored 100.00% within-arm; margin +0.00. Bounded by two disclosed limitations: the metric saturated (no headroom above the ceiling) and `SPEC.md`'s numbered step list hands the control arm its ordering. Licenses "not distinctive", not "JBCT lacks determinism". Cross-arm concurrency agreement **0.00%** — 5/5 treatment parallelize what 5/5 control serialize — so distinctiveness is supported again, now on a structural instrument. Successor run needed: unordered spec, real structural choice, finer metric. `RUN-1C-RESULTS.md`. |
 | 2 | Co-change validation | driver decomposition predicts independence | git history | v1 FAILED; **v2 registered, not run** |
 | 3 | External shape-census | "every corpus is the author's" | shape-census over public repos | **RUN 2026-08-23** — corpus objection weakened; MIXED unreachable |
 | 4 | Design-space probe | AS space completeness | `next_step` | **RUN 2026-08-22** — 2 missing inputs found |

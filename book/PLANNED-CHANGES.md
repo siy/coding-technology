@@ -112,6 +112,38 @@ carries the classification: `isTerminal()` is consulted by retry facilities, wit
 terminal — and let the class-token set disappear. Weigh against the example's pedagogy (an
 explicit policy object) before ruling.
 
+### 10. The determinism claim is not distinctive (2026-08-27, Run 1c) — `open`
+
+**Measured.** Run 1c compared data dependency graphs across the ten Run 1b implementations
+(`book-pfd-meta/RUN-1C-RESULTS.md`). Treatment and control both scored **100.00%** within-arm
+agreement on concurrency structure, guard placement, failure absorption and ordering. Margin
+**+0.00**, which triggers the pre-registered falsification condition.
+
+**What the finding actually is.** The claim at `introduction.md:54` reads: *"Given a use case
+specification — inputs, outputs, validation rules, steps — there's essentially one correct
+structure. Different developers (or AI assistants) should produce nearly identical
+implementations."* Run 1c does not show that false. Both arms produced nearly identical
+implementations, so the claim held in both. What it shows is that **the convergence is not
+attributable to JBCT** — five idiomatic-Java implementers converged just as completely, and the
+claim's own antecedent explains why: the specification supplied the steps.
+
+**The candidate defect is one of attribution, not truth.** A property that follows from having a
+specification is presented in a chapter arguing for a methodology, which invites the reader to
+credit the methodology for it. Two disclosed limitations bound this — the metric saturated at the
+ceiling, and `SPEC.md` enumerates its steps in execution order, handing the control arm its
+ordering — so the finding is real but not yet decisive.
+
+**What is genuinely distinctive, and is not currently claimed here.** Cross-arm agreement on
+concurrency structure was **0.00%**: five of five treatment implementations parallelized three
+independent lookups that five of five control implementations serialized. The methodology changed
+the *shape*, not the *agreement*. That is a stronger and more defensible claim than determinism, and
+the chapter does not make it.
+
+**Do not act on this yet.** A successor run is registered (unordered specification, real structural
+choice, finer-grained metric). Ruling on the book text before that run would be acting on a
+saturated measure. Recorded so the finding is not lost, and so the next release does not restate the
+attribution unexamined.
+
 ## Shipped
 
 - **4.9.0** (2026-08-26): items 1–8 — the `Option<List<T>>` forbidden row, the normalization

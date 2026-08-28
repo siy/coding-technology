@@ -2,6 +2,7 @@
 title: "Software's Second Free Lunch"
 description: "Development doesn't scale, and AI doesn't fix it. Borrow the trick that makes GPUs scale, uniform and independent parallel units, and it does."
 tags: [softwareengineering, architecture, softwaredesign, programming]
+canonical_url: https://pragmatica.dev/articles/softwares-second-free-lunch
 published: true
 ---
 
@@ -57,4 +58,4 @@ The second free lunch is not that development became free. It is that the workfo
 
 Sutter's bill said: parallelize your code. This one says: parallelize your development. It turns out to be the same recipe, uniform and independent pieces run in parallel, and it was always going to be, because the constraint was never really about silicon or about people. It was about coupling.
 
-The method, and the worked derivations behind it, are at pragmatica.dev.
+The method, and the worked derivations behind it, are at [pragmatica.dev](https://pragmatica.dev/).

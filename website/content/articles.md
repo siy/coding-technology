@@ -5,6 +5,11 @@ works it out at article length — the canonical copy lives here.
 
 ## The method
 
+**[Software's Second Free Lunch](/articles/softwares-second-free-lunch/)**
+Development does not scale by adding people, and AI does not fix it — it cuts the cost of a
+worker, not the coupling that caps how many can help. Borrow the trick that makes GPUs scale,
+uniform and independent pieces, and building parallelizes; the ceiling moves from Brooks to Amdahl.
+
 **[Engineering Is the Checkable Fraction of Your Practice](/articles/engineering-is-the-checkable-fraction/)**
 Type inference has refused to guess for fifty years and build systems learned the habit;
 decomposition methods never did. Three clauses, the five things they forbid, and a definition of

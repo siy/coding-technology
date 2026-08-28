@@ -622,6 +622,12 @@ const LANDING_PAGES = [
     fallbackTitle: 'The Underlying Process of Request Processing',
     crumb: crumbSub('/articles/', 'Articles', 'The Underlying Process'), nav: '',
     related: [{ href: '/articles/', label: 'All articles', note: 'back to the list' }]
+  },
+  {
+    src: 'articles/softwares-second-free-lunch.md', out: 'articles/softwares-second-free-lunch/index.html',
+    fallbackTitle: "Software's Second Free Lunch",
+    crumb: crumbSub('/articles/', 'Articles', 'The Second Free Lunch'), nav: '',
+    related: [{ href: '/articles/', label: 'All articles', note: 'back to the list' }]
   }
 ];
 

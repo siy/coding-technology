@@ -1007,6 +1007,9 @@ function verifyLinks() {
       if (!href || href.startsWith('http://') || href.startsWith('https://') ||
           href.startsWith('mailto:') || href.startsWith('data:') || href.startsWith('//')) continue;
 
+      // /p/* is the Pirsch proxy, served at the Cloudflare edge — never present in dist.
+      if (href.startsWith('/p/')) continue;
+
       const [rawPath, hash] = href.split('#');
       const pathPart = rawPath.split('?')[0];
 

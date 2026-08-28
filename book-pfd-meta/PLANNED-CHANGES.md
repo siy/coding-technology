@@ -604,7 +604,7 @@ context. Additive — nothing shipped becomes wrong.
 the change-driver material) or adjacent to Brownfield. Decision at prose time. Keep additive to
 `foundations.md`/`brownfield.md`, not a restatement (that material is already dense — duplication risk).
 
-### Part C — the Brooks / parallelism article (pointer only)
+### Part C — the Brooks / parallelism article (pointer only — AMENDED 2026-08-28, see below)
 
 Standalone article in `articles/` (drafted this session), sequel to the shipped reflection piece. Thesis:
 use-case decomposition does not contradict Brooks' Law — it satisfies the one condition Brooks named for
@@ -613,6 +613,45 @@ driver attribution + stable interfaces; the ceiling is Amdahl, not Brooks; deter
 change the *kind* of the communication cost. Book impact: at most a one-line forward pointer from
 `foundations.md:220` ("a thousand independent descents") to the article. Series has zero Brooks/Amdahl
 mentions (confirmed), so no contradiction risk.
+
+**Amendment (user ruling, 2026-08-28): "pointer only" is revised to "assembly section + pointer."**
+The article is published: <https://dev.to/siy/softwares-second-free-lunch-10fk> (live since
+2026-07-22, edited 2026-08-21; final title *Software's Second Free Lunch*,
+`articles/softwares-second-free-lunch.md`). Grounds for revision: the original ruling scoped the
+article before the step-level discovery was absorbed — the book fully grounds the quasi-linear
+*mechanism* (Foundations) but never cashes out its *payoff* (the parallel workforce), so the
+book's own headline claim floats without this section; and the step-grain half (typed steps
+independently buildable) has never been in the book in any form.
+
+**New scope — a short section (1–2 pages) in `closing.md`,** near the bet / locality-vs-parsimony
+material. Skeleton: development scales when the work is uniform and independent (the GPU pair) →
+PFD supplies *independence*, and made finding the cut quasi-linear → a corresponding coding
+technology supplies *uniformity* and pushes the grain below the use case to typed steps →
+honest bounds → pointer to the article for the full Brooks/Amdahl argument.
+
+**Why the coding-technology link is load-bearing, not decorative (the extension's point):** PFD
+alone buys half the scaling claim. Without a uniformity-supplying implementation discipline,
+workers are not fungible and the parallelism payoff only half-holds. This (a) shows the approach
+scales beyond the design stage, and (b) upgrades the PFD↔JBCT relationship from "one instance"
+to "the required second half."
+
+**Constraints prose time inherits:**
+1. Language-neutral phrasing per `introduction.md`'s stance ("the methodology is the *why*; JBCT
+   is one *how*"): write "a corresponding coding technology — JBCT is the worked instance," never
+   "JBCT supplies it." The closing must not marry the book to Java.
+2. Consistency-lens honesty: steps are independently *buildable*, not independently *runnable*;
+   the per-cut tax (intermediate types) means an optimal grain, not infinite parallelism; the
+   development ceiling is Amdahl (the serial derivation). Do NOT stretch "quasi-linear" from the
+   design claim to the development claim.
+3. Assembly, not restatement: the section references the shipped quasi-linear material; no
+   re-derivation (Part A's "no fourth restatement" discipline still binds).
+4. Runtime scaling and Aether stay out — runtime is the AS chapter's territory; the section is
+   two-level (design + construction). The three-level ecosystem line waits for the Aether book.
+5. Pointer target: the dev.to copy carries no canonical and the article is not yet on the site
+   (`/articles/`) — whether the book points at dev.to or a site edition is decided when the
+   article's site/canonical question is settled; do not block the section on it.
+
+The original `foundations.md:220` one-line forward pointer stays as ruled.
 
 ### Salvage from the "rediscovery" thread (one line, not a thread)
 

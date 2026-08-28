@@ -87,3 +87,14 @@ See [configuration.md](configuration.md) for the config source merge order
 (SLICE > NODE > GLOBAL/resources.toml). Same rule applies to any other
 `@ResourceQualifier(config = "...")` lookups — pub-sub topics, database
 names, HTTP clients, rate limits.
+
+## Durability bounds
+
+Streams are in-memory (off-heap ring buffer), not durable storage. Replay is
+bounded twice: by the retention window, and by the eviction policy under memory
+pressure — `DROP_OLDEST` evicts the oldest entries even if a slow consumer has
+not read them yet, while `REJECT_WHEN_FULL` refuses new writes instead. Consumer
+cursors are persisted, so a reconnecting consumer resumes position, but the
+entries behind that position may already be gone. Data that must survive the
+window or a node loss belongs in durable storage, with the stream as transport.
+Source: pragmatica feature-catalog row 146.

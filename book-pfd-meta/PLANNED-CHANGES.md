@@ -615,6 +615,9 @@ change the *kind* of the communication cost. Book impact: at most a one-line for
 mentions (confirmed), so no contradiction risk.
 
 **Amendment (user ruling, 2026-08-28): "pointer only" is revised to "assembly section + pointer."**
+**SHIPPED in PFD 3.0.0 (2026-08-28):** *The second payoff: construction that scales* (Closing, between
+the bet and the predictions), the Foundations forward pointer, and the Amdahl/Brooks/article reference
+entries — all five constraints below honored; the pointer targets the site edition.
 The article is published: <https://dev.to/siy/softwares-second-free-lunch-10fk> (live since
 2026-07-22, edited 2026-08-21; final title *Software's Second Free Lunch*,
 `articles/softwares-second-free-lunch.md`). Grounds for revision: the original ruling scoped the

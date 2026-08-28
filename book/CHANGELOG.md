@@ -7,6 +7,25 @@ All notable changes to the JBCT book, newest first. Format:
 Earlier history (1.x–2.x) predates per-book changelogs and lives in the
 repository root `CHANGELOG.md`.
 
+## [5.0.0] - 2026-08-28
+
+The fifth edition. Published editions jump from 4.8.0 directly to 5.0.0: the 4.9.0
+entry below was committed but never published, and this edition carries all of it.
+Major per the versioning scheme: 4.9.0 replaced content readers relied on (*Defining
+Typed Errors* rewritten onto the record-plus-`FACTORY` idiom; Module Promotion
+replacing *Module Organization (Optional)*), and 5.0.0 adds the construction-scaling
+claim to the book's position, paired with *Process-First Design* 3.0.0 carrying the
+other half.
+
+### Added
+- **Introduction** — construction that scales, stated as its own claim in *The JBCT Approach*:
+  development parallelism distinguished from runtime parallelism (build-time concurrency follows
+  from typed step contracts, run-time concurrency from data dependencies); uniformity as what
+  makes builders interchangeable and ramp-up fall toward zero; the design-phase half (the
+  change-driver cut) attributed to the companion *Process-First Design*; pointer to
+  *Software's Second Free Lunch*. The claim stands on contracts and uniformity alone — it does
+  not depend on the determinism claim.
+
 ## [4.9.0] - 2026-08-26
 
 ### Added

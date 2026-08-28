@@ -1,6 +1,6 @@
 # Introduction - Code Unification
 
-**Based on:** JBCT v4.9.0 | **Pragmatica Core:** 1.0.0-rc1
+**Based on:** JBCT v5.0.0 | **Pragmatica Core:** 1.0.0-rc1
 
 ## About the Series
 
@@ -54,6 +54,8 @@ The benefits compound:
 **Deterministic code generation** becomes possible when the mapping from requirements to code is mechanical. Given a use case specification - inputs, outputs, validation rules, steps - there's essentially one correct structure. Different developers (or AI assistants) should produce nearly identical implementations.
 
 **The normalization boundary.** "Nearly identical" has a precise scope, and stating the scope is what makes the claim testable. JBCT derives the package hierarchy (the telescope rule), the Java types, the step contracts and return types, the pattern for each composition, the failure representation, the placement of shared code, the concurrency structure, and the testing obligations. JBCT does not normalize algorithms inside atomic leaves, framework-specific adapter internals, module promotion (content-invariant along derived boundaries — [Project Structure](project-structure.md) has the full treatment), the test-input supply vehicle, or test-data representation. Variation below this line is style; variation above it is a defect. A newly discovered variation receives an explicit ruling: closed by a rule, or placed below the line. The boundary comes from measurement rather than taste — inspecting independent implementations of one design found their skeletons identical, and what differed became the first rulings.
+
+**Construction that scales** is what these properties buy at team size. It is a different claim from runtime parallelism: whether steps *run* in parallel follows from their data dependencies, while whether they can be *built* in parallel follows from their contracts — and JBCT steps share only their typed input and output, so the pieces of even a strictly sequential chain can be built concurrently by builders who coordinate on nothing beyond the types. Uniformity supplies the rest: when every unit is shaped from the same six patterns and four return types, any builder, human or AI agent, picks up any unit already knowing its shape, so ramp-up cost falls toward zero and workers stay interchangeable across the codebase. The other half of the pair — cutting the system into units that change for different reasons, so builders rarely meet at all — is design-phase work, developed in the companion *Process-First Design*. The author's *Software's Second Free Lunch* carries the full argument.
 
 > **A Broader Movement:** JBCT is not alone in pursuing compile-time guarantees and type-driven design. Similar philosophies appear in database design (7NF type-first approaches), distributed systems, and functional programming communities. The common thread: shift errors from runtime to compile-time, make invalid states unrepresentable, and reduce cognitive load through explicit contracts.
 

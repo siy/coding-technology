@@ -37,6 +37,8 @@ A backlog has very few real read points. Nobody reads the whole plan at breakfas
 
 That single observation splits the maintenance problem into two cheap halves. At write time, when knowledge is created, you record what it touches, in one line, while it is fresh. At read time, at one of those few real moments, you verify only the beliefs you are about to act on. Everything else waits, and that is fine.
 
+Call the discipline Read-Point Planning, RPP for short: the plan is guaranteed true where it is read, and only there. The rest of this article is what that costs in practice, which is very little.
+
 ## The mechanics, small enough to try today
 
 None of this needs tooling. It needs two habits and one shell command.
@@ -75,6 +77,6 @@ You can start with one project and zero new tools.
 4. The next time you make a scope-changing decision, write one line naming the tickets it touches, at the moment you make it.
 5. When something is flagged as stale, verify before you act. The detector earns trust slowly and loses it in one false alarm.
 
-That is the entire discipline: two sentences at write time, one command at read time. Expect what we found, that a quarter of your notes are expired, that a few tickets are already done, and that at least one real blocker is hiding behind a belief nobody has checked since spring.
+That is all Read-Point Planning asks: two sentences at write time, one command at read time. Expect what we found, that a quarter of your notes are expired, that a few tickets are already done, and that at least one real blocker is hiding behind a belief nobody has checked since spring.
 
 Your plan was never going to stay true by itself. It is a cache. Caches are wonderful, as long as somebody invalidates them.

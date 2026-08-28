@@ -628,6 +628,12 @@ const LANDING_PAGES = [
     fallbackTitle: "Software's Second Free Lunch",
     crumb: crumbSub('/articles/', 'Articles', 'The Second Free Lunch'), nav: '',
     related: [{ href: '/articles/', label: 'All articles', note: 'back to the list' }]
+  },
+  {
+    src: 'articles/your-backlog-is-a-cache-of-beliefs.md', out: 'articles/your-backlog-is-a-cache-of-beliefs/index.html',
+    fallbackTitle: 'Your Backlog Is a Cache of Beliefs',
+    crumb: crumbSub('/articles/', 'Articles', 'Cache of Beliefs'), nav: '',
+    related: [{ href: '/articles/', label: 'All articles', note: 'back to the list' }]
   }
 ];
 

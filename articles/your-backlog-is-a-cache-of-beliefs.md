@@ -2,7 +2,8 @@
 title: "Your Backlog Is a Cache of Beliefs"
 description: "Plans do not fail by tangling, they fail by rotting. Treat the backlog as a cache of beliefs about a moving codebase, and staleness stops being a feeling and becomes something you can compute."
 tags: [softwareengineering, projectmanagement, agile, programming]
-published: false
+canonical_url: https://pragmatica.dev/articles/your-backlog-is-a-cache-of-beliefs
+published: true
 ---
 
 # Your Backlog Is a Cache of Beliefs

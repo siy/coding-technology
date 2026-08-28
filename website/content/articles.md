@@ -10,6 +10,11 @@ Development does not scale by adding people, and AI does not fix it — it cuts 
 worker, not the coupling that caps how many can help. Borrow the trick that makes GPUs scale,
 uniform and independent pieces, and building parallelizes; the ceiling moves from Brooks to Amdahl.
 
+**[Your Backlog Is a Cache of Beliefs](/articles/your-backlog-is-a-cache-of-beliefs/)**
+Plans do not fail by tangling, they fail by rotting. Read-Point Planning: mark invalidations
+when knowledge is created, verify beliefs only where the plan is read, stamp what you verified —
+and staleness becomes a query over git history instead of an opinion.
+
 **[Engineering Is the Checkable Fraction of Your Practice](/articles/engineering-is-the-checkable-fraction/)**
 Type inference has refused to guess for fifty years and build systems learned the habit;
 decomposition methods never did. Three clauses, the five things they forbid, and a definition of

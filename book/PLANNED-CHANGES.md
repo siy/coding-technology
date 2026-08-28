@@ -146,6 +146,13 @@ attribution unexamined.
 
 ## Shipped
 
+- **5.0.0** (2026-08-28): item 11 — *Construction that scales* paragraph in the Introduction's
+  *The JBCT Approach*, after the normalization boundary. Development parallelism stated as its
+  own claim, distinct from runtime parallelism; grounded in typed step contracts and uniformity,
+  deliberately NOT in the determinism claim (item 10's gate is untouched); the change-driver cut
+  attributed to the companion *Process-First Design* (two-way structural link — PFD 3.0.0's
+  closing section names JBCT as the uniformity instance); pointer to *Software's Second Free
+  Lunch*. No "quasi-linear" in JBCT prose — that bound belongs to PFD's design-scaling claim.
 - **4.9.0** (2026-08-26): items 1–8 — the `Option<List<T>>` forbidden row, the normalization
   boundary (Run 1c now unblocked), module promotion, the Promise process-boundary wording,
   space-counted leaf obligations, the executable invariant with the jqwik appendix realization,

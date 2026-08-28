@@ -7,6 +7,29 @@ All notable changes to the PFD book, newest first. Format:
 `0.x` versions were preview editions; `1.0.0` marked the first edition released to
 readers, and `1.x` are its maintenance and expansion releases.
 
+## [3.0.0] - 2026-08-28
+
+The third edition. Published editions jump from 2.5.0 directly to 3.0.0: the 2.6.0
+and 2.7.0 entries below were committed but never published, and this edition carries
+both. Major per the versioning scheme: the 2.4.2 correction replaced a prescription
+readers relied on (locking → the guarded field), 2.6.0 added a module (*The Data
+Question*), and 3.0.0 adds the construction-scaling claim to the book's position,
+paired with *Java Backend Coding Technology* 5.0.0 carrying the other half.
+
+### Added
+- **The second payoff: construction that scales** (*Closing*, between the bet and the
+  predictions) — the development-scaling assembly: Brooks' law read as a coupling cost that
+  adding AI does not touch; the two properties that make work parallelize (uniform,
+  independent); independence from the change-driver cut, with the quasi-linear discovery
+  referenced rather than re-derived; uniformity and the below-use-case grain from a
+  corresponding coding technology, *Java Backend Coding Technology* named as the worked
+  instance; the buildable-versus-runnable distinction, the optimal grain, and Amdahl as the
+  governing ceiling once Brooks' condition is met.
+- **Foundations** — the "thousand independent descents" paragraph points forward to the
+  Closing section and to the article that develops the argument.
+- **References** — Amdahl (1967), Brooks (*The Mythical Man-Month*), and the author's
+  *Software's Second Free Lunch*.
+
 ## [2.7.0] - 2026-08-27
 
 ### Added

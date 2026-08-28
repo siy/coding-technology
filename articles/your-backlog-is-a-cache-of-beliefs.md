@@ -1,12 +1,12 @@
 ---
-title: "Your Backlog Is a Cache of Beliefs"
+title: "Read-Point Planning: Your Backlog Is a Cache of Beliefs"
 description: "Plans do not fail by tangling, they fail by rotting. Treat the backlog as a cache of beliefs about a moving codebase, and staleness stops being a feeling and becomes something you can compute."
 tags: [softwareengineering, projectmanagement, agile, programming]
 canonical_url: https://pragmatica.dev/articles/your-backlog-is-a-cache-of-beliefs
 published: true
 ---
 
-# Your Backlog Is a Cache of Beliefs
+# Read-Point Planning: Your Backlog Is a Cache of Beliefs
 
 Cache invalidation is famously one of the two hard things in computer science. The joke survives because the pain is real: keep a copy of something, and the moment the original changes, your copy starts lying to you. It lies silently, with a straight face, and it lies hardest to the people who trust it most.
 

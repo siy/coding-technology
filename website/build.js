@@ -631,8 +631,8 @@ const LANDING_PAGES = [
   },
   {
     src: 'articles/your-backlog-is-a-cache-of-beliefs.md', out: 'articles/your-backlog-is-a-cache-of-beliefs/index.html',
-    fallbackTitle: 'Your Backlog Is a Cache of Beliefs',
-    crumb: crumbSub('/articles/', 'Articles', 'Cache of Beliefs'), nav: '',
+    fallbackTitle: 'Read-Point Planning: Your Backlog Is a Cache of Beliefs',
+    crumb: crumbSub('/articles/', 'Articles', 'Read-Point Planning'), nav: '',
     related: [{ href: '/articles/', label: 'All articles', note: 'back to the list' }]
   }
 ];

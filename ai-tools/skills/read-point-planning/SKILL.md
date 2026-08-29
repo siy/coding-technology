@@ -43,6 +43,11 @@ failure the source cannot explain. Do not try to encode build provenance in the 
 just know that the stamp's guarantee stops at source, and say so where the distinction
 could bite.
 
+**A stamp covers one item's claim and does not transfer to its neighbours.** Two items
+sharing a subsystem do not share a verification, however similar they look and however
+recently the other one was checked. Confidence inherited from a neighbour's stamp is the
+quietest way a stamped backlog goes wrong, because every stamp in sight is real.
+
 ## The four read points
 
 Verification happens here and nowhere else. Between them the plan is knowingly stale, and
@@ -101,10 +106,18 @@ or an executing agent verifies at the read point before anything is closed or re
 the smoke detector to wake you, not to put out the fire.
 
 **Watch for the instrument shape that reports success while structurally unable to see
-failure.** An edit-reset freshness field is the canonical example: it looks like evidence and
-measures activity. So is a verification run against stale build artifacts, and a document
-written alongside a change that describes the delta rather than the system. Before believing a
-check, ask what would make it fail and confirm it can.
+failure.** Four shapes, all observed:
+
+- **A field that looks like evidence and measures activity** — the edit-reset freshness field.
+- **A verification run against stale build artifacts** — source-identical, behaviour-different.
+- **A document written alongside a change that describes the delta rather than the system.**
+- **An instrument validated for one question, then cited for its neighbour** — the validation
+  is real, the claim attached to it is not, and the gap is invisible because everything that
+  was checked did pass. *Validation licenses the specific claim the probe exercised, never the
+  question next to it; before citing a validated instrument, ask whether the validation run
+  demonstrated that capability or merely that the instrument runs.*
+
+Before believing any check, ask what would make it fail and confirm that it can.
 
 ## Propagation: one hop, marks only
 

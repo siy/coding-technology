@@ -32,7 +32,16 @@ an inactivity timer, which is the failure mode of every stale bot and the thing 
 to replace.
 
 A SHA is repo-scoped. When an item's premise spans repositories, carry a map of repo to
-SHA, or fall back to a timestamp, which is portable at the cost of precision.
+SHA, or fall back to a timestamp, which is portable at the cost of precision. Carry both
+where you can: the timestamp is what lets a later reader notice that a verification
+predates something the SHA cannot express.
+
+**A stamp asserts "verified against source at this SHA", never "verified against a build
+of it."** Two verifications at the same SHA can legitimately disagree if one ran against
+stale build artifacts — a class present at HEAD and absent from a cached jar produces a
+failure the source cannot explain. Do not try to encode build provenance in the stamp;
+just know that the stamp's guarantee stops at source, and say so where the distinction
+could bite.
 
 ## The four read points
 
@@ -90,6 +99,12 @@ Whoever creates knowledge writes the mark, at the moment it is cheapest.
 wrong — in the pilot it was, on day one, and a second independent check falsified it. A human
 or an executing agent verifies at the read point before anything is closed or rewired. Trust
 the smoke detector to wake you, not to put out the fire.
+
+**Watch for the instrument shape that reports success while structurally unable to see
+failure.** An edit-reset freshness field is the canonical example: it looks like evidence and
+measures activity. So is a verification run against stale build artifacts, and a document
+written alongside a change that describes the delta rather than the system. Before believing a
+check, ask what would make it fail and confirm it can.
 
 ## Propagation: one hop, marks only
 

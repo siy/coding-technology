@@ -168,8 +168,20 @@ is a **release-boundary event**: re-verify every item, stamp every `verified_at`
 the decay rate you observe.
 
 Sweep discipline: two layers, because the instrument errs. One pass proposes staleness, a
-second, independent pass re-verifies before anything closes. Report the decay rate as a
-number; it is the only way to know whether the practice is working.
+second, independent pass re-verifies before anything closes. The second pass must **re-derive**
+rather than confirm — a closer that never disagrees is an instrument that cannot fail.
+
+**Prove the layers work; do not reason that they do.** Seed the sweep with one item whose
+premise is known to be dead, tell neither layer which it is, and give it to the second pass
+carrying a proposed verdict of "still real" — otherwise the first pass may catch it and the
+re-derivation you actually depend on is never exercised. If the seed comes back challenged, the
+sweep's numbers are credible. If it comes back confirmed, the sweep is blind and its
+disagreement rate means nothing at any value: report it as unvalidated. Make the seed typical
+rather than obvious, since an easy seed licenses nothing about subtle rot, and exclude it from
+the reported counts.
+
+Report the decay rate as a number; it is the only way to know whether the practice is working,
+and the only way the next sweep has something to compare against.
 
 ## What RPP is not
 

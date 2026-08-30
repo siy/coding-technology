@@ -40,13 +40,29 @@ That single observation splits the maintenance problem into two cheap halves. At
 
 Call the discipline Read-Point Planning, RPP for short: the plan is guaranteed true where it is read, and only there. The rest of this article is what that costs in practice, which is very little.
 
+## Why git, specifically
+
+The check has to answer one question: has anything happened to the code this note is about, since the last time somebody looked? Answering that properly needs a complete record of what changed, when, and where. Building such a record would be a project in itself, and if this practice required one, nobody would adopt it.
+
+You do not have to build it. You are already running it. Underneath the branching and merging, that is what git is: an append-only log of every change anyone has made, each entry stamped with the moment it happened, the person who made it, and the exact list of files it touched. It has been recording the whole time, whether or not anyone ever read it back. The practice here is not a new system. It is a question put to a log you already keep.
+
+The commit ID you write on a ticket is a bookmark in that log, meaning "I read up to here." The command is the question:
+
+```
+git log --oneline abc1234..HEAD -- path/to/the/subsystem
+```
+
+Read it out loud: *list everything that happened to this corner of the code between my bookmark and now.* Nothing listed means nothing happened there, which means the note is exactly as true as it was the day it was written. And the `-- path/` at the end is what keeps it cheap. You are not asking what happened to the whole project, which is thousands of changes nobody will read. You are asking what happened to the one corner this ticket stands on, which is usually nothing at all.
+
+The same log holds the other half too. When decisions get recorded as commits, one query tells you what the world did and another tells you what your team decided, from the same tool, with no database and nothing to install.
+
 ## The mechanics, small enough to try today
 
 None of this needs tooling. It needs two habits and one shell command.
 
 **Habit one: two questions at filing.** Every new ticket answers two one-line questions. What existing knowledge does this invalidate? What does this genuinely depend on? Ten seconds, written by the person who just created the knowledge, at the only moment the answer is cheap. A new ticket is not just new work, it is new information, and new information is precisely the thing that expires old notes. If nobody prices that at filing time, someone pays retail for it later, during an incident.
 
-**Habit two: date your verifications.** When you check that a ticket's premise still holds, write down the commit you checked it against: "still true at abc1234." That one stamp turns staleness from a feeling into arithmetic, because now the question "can I trust this note?" has a computable answer:
+**Habit two: date your verifications.** When you check that a ticket's premise still holds, write down the commit you checked it against: "still true at abc1234." That is the bookmark from the section above, and it turns staleness from a feeling into arithmetic, because now the question "can I trust this note?" has a computable answer:
 
 ```
 git log --oneline abc1234..HEAD -- path/to/the/subsystem

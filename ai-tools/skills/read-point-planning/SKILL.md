@@ -180,6 +180,18 @@ disagreement rate means nothing at any value: report it as unvalidated. Make the
 rather than obvious, since an easy seed licenses nothing about subtle rot, and exclude it from
 the reported counts.
 
+**The seed must not be discoverable except by re-deriving it.** If any artifact the runners can
+read identifies it — a prior sweep report, a recorded list of known-fixed items, the data handed
+over for the baseline — the blind is not blind, and the failure is invisible: the seed is
+caught, the sweep declares itself validated, and the layer you meant to test never ran. Keep the
+seed's identity in a record the runners do not hold. Note the residual honestly: the practice of
+seeding is itself documented, so what the probe measures is sensitivity *under awareness*, an
+upper bound rather than an estimate.
+
+**Vary the seed's difficulty across sweeps, never within one, and record the level.** One seed
+is a smoke test; one seed per sweep at a deliberately chosen difficulty accumulates a
+sensitivity curve over successive sweeps at no extra cost per run.
+
 Report the decay rate as a number; it is the only way to know whether the practice is working,
 and the only way the next sweep has something to compare against.
 

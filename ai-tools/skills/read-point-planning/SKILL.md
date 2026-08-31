@@ -86,6 +86,36 @@ wrong.
 Then write back: stamp `verified_at` with current HEAD, and if the check produced a
 decision, record it (below). Verification is itself knowledge creation.
 
+## Choosing an instrument when you have to ask the system
+
+The two queries tell you whether to look, not what is true. When the code has moved and you
+must actually determine whether a premise survived, you pick an instrument — and instruments
+are not equal in what they can observe.
+
+**Prefer the ones where the system describes its own state.** A registry listing what is
+actually registered. A status endpoint reporting what actually applied. A history table
+recording what actually ran. A journal of requests actually received. A checksum of what
+actually shipped. These are the system testifying about itself, and they can say something
+you did not expect.
+
+**Distrust the ones that infer state from side effects.** A grep for an expected log line
+cannot distinguish "no error occurred" from "that code never ran". A test count measures the
+suite, not the product. A health endpoint reports liveness, not correctness. A harness you
+wrote yourself tests your model of the system, which is the thing in question. Each of these
+reports success identically whether the system works or was never reached.
+
+**The diagnostic question is one line:** does this instrument report the system's state, or my
+expectation of it?
+
+**The strongest move available is to run the thing from empty and read what it says about
+itself.** A clean start forces the system to describe its actual configuration rather than
+inherit assumptions from a warm one, which is how a defect that strands every component, or a
+migration that could never apply to a fresh install, becomes visible at all. Field evidence:
+in one evening a suite of 12,676 tests stayed green while four such defects were found this
+way, and five separate instruments — log greps, test counts, health endpoints, and two
+bespoke harnesses — reported success throughout while structurally unable to observe the
+failures.
+
 ## At write time: record, do not act
 
 Whoever creates knowledge writes the mark, at the moment it is cheapest.

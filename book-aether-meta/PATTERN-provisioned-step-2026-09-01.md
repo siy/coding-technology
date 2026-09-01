@@ -128,6 +128,15 @@ space — a deployment names one assembled configuration, and the untested-combi
 disappears rather than being managed. `enable-premium` in the current docs is the motivating
 example, already in Aether's own material.
 
+**A second payoff, discovered while checking the first: the pattern is more honest than the
+mechanism it replaces.** Resource-injected config never refreshes (§7), and that is true of
+`ConfigurationSection` today. But a thing called *a config section* sounds like a live view of
+configuration, so its semantics are invisible and a reader can reasonably expect updates to
+arrive. A step *assembled at provisioning* obviously reflects one moment in time — the name
+carries the semantics. The pattern does not change the refresh behaviour at all; it stops the
+behaviour from being surprising, which for a property nobody had written down anywhere is worth
+more than it sounds.
+
 ## 6. Rules that came out of the discussion
 
 - **The step's type bounds what configuration can do.** Because the unit is a step, its
@@ -150,10 +159,22 @@ example, already in Aether's own material.
 
 Both are cheap now and expensive after someone ships against them.
 
-- **Deployment scope must be explicit.** Until dynamic reconfiguration exists, an operator
-  changing config through the Management API does *not* re-assemble a Provisioned Step. This
-  has to be stated precisely because `configuration.md` advertises live updates through
-  consensus a few paragraphs away.
+- **Config is read once, at provision time — and this is now a verified guarantee, not a
+  caveat.** Established by the CTO 2026-09-01: `SpiResourceProvider` mutates `promiseCache` at
+  exactly two points, `:119` `computeIfAbsent` on first provision and `:153` `remove` inside
+  `releaseAll` when the last consumer releases. **No invalidation path on config change exists,
+  and there is no hook from the config layer into the resource provider at all.** Corroborated
+  from the other direction by **#381** — `ConfigNotificationManager.notifyChange` has no caller,
+  so runtime config-change push is dead code.
+  The sentence for the book: ***a config value delivered through a provisioned resource is read
+  once, at provision time, and does not refresh on a consensus config update; a restart or slice
+  reload is what applies it.***
+  **The scope is wider than this pattern.** It holds for `ConfigurationSection` today, not only
+  for user-defined types since `8d36f0c1c`. So `aether-overview.md:386` — *"no restart required
+  for changes"* — is imprecise for resource-injected config generally.
+  **Two tickets, not interchangeable:** #381 owns the missing mechanism, #496 owns the claim.
+  Fixing #381 makes the overview bullet true; until then it is a headline capability that one of
+  its two delivery paths does not provide. Do not cite #496 as tracking the dead-code fix.
 - **Lifecycle exists, so "none today" would be false.** This corrects the original draft, which
   recommended stating that there is none. Verified in code: `SpiResourceProvider.releaseAll`
   (`:141-172`) is refcounted — it drops the slice from the consumer set and, when the last
@@ -237,11 +258,9 @@ two is now available and is in §10.1.
   1040.
 - **(2)** `aether/docs/aether-overview.md:386` — *"**Dynamic Configuration via KV-Store** —
   expose runtime configuration in consensus, no restart required for changes."* Unqualified, in
-  an overview. For a Provisioned Step a restart is exactly what a config change requires until
-  dynamic reconfiguration exists, so this is not merely a proximity risk but a claim that the
-  new capability makes wrong.
-  **One question I have not verified and which decides how bad (2) already is:** resource
-  promises are cached by `SpiResourceProvider`, so it is unclear whether config delivered
-  *through the resource mechanism* — `ConfigurationSection` today, Provisioned Steps now —
-  is refreshed on a config change at all. If cached promises are not invalidated, the overview
-  bullet is already imprecise for resource-injected config and not only for this pattern.
+  an overview. **Resolved 2026-09-01: this is ACTIVE, not latent, and broader than first
+  scoped.** `SpiResourceProvider` has no cache-invalidation path on config change (`:119`
+  provision, `:153` release, nothing else), and #381 records that
+  `ConfigNotificationManager.notifyChange` has no caller. So resource-injected config never
+  refreshes — `ConfigurationSection` included, today. I scoped this finding to the new pattern;
+  it is not scoped to the new pattern.

@@ -5,6 +5,13 @@ CTO review at leisure — no rush, nothing blocked on it.** The CTO coordinates 
 writing, so this is written to be reviewable without the conversation behind it. Who makes the
 book changes is undecided and is the CTO's call._
 
+> **Revised 2026-09-01 after CTO review, which was grounded in the code and corrected two
+> claims.** The capability is one day old, not longstanding (§2, item 4); the internal-precedent
+> argument is narrower than first written and is now stated in its narrow form (§4); lifecycle
+> **exists**, so the "none today" recommendation was wrong and is replaced by the actual
+> per-operation semantics (§7); and the mechanism's real constraints are recorded in a new §2.1.
+> §10 is redirected to an existing ticket rather than filed.
+
 ---
 
 ## 1. The idea
@@ -33,6 +40,32 @@ Four questions were put to the owner; these are the answers.
    the runtime lacks; when dynamic reconfiguration lands, it lands for everything at once.
 4. **Mechanism: deliberately identical.** Implemented by a few small changes to resource
    provisioning that allow user-defined resource types. There is otherwise no difference.
+   **But this became true only today.** Until `8d36f0c1c` (#773, closed 2026-09-01, verified
+   across 143 modules) user-defined resource factories were unreachable: the SPI registry was
+   node-boot-only while the class lived in the slice loader, so a slice declaring a qualifier
+   for its own type compiled, deployed, and then failed at load with `ResourceFactoryNotFound`.
+   **Any example of this pattern written before that commit would have failed at deployment.**
+   The book must date the capability rather than imply it was always available.
+
+## 2.1 What the mechanism actually provides (CTO, verified in code 2026-09-01)
+
+- **Config arrives parsed, not whole.** `ResourceFactory<T, C>` declares `configType()` and
+  receives `provision(C config)`; the section is bound to a typed object before the factory
+  runs. **Examples must show a config record, not a section handle.**
+  `provision(C, ProvisioningContext)` is an optional override; generated factories emit the
+  no-context form for a plain dependency.
+- **The user type `T` is unconstrained** — no interface, no constructor shape. The *factory*
+  carries the entire contract. This is the strongest single fact for the pattern: the step can
+  be whatever type its author wants, so the pattern imposes nothing on domain code.
+- **Selection by config is already in the mechanism.** `priority()` and `supports(C)` let
+  several factories offer the same type, with config deciding which one provisions. That is
+  exactly "the behaviour that varies, chosen per deployment" — the mechanism is already doing
+  the pattern's work, and the book should name that rather than describe selection as something
+  the author arranges.
+- **Registration** is `META-INF/services/org.pragmatica.aether.resource.ResourceFactory` inside
+  the slice jar, preserved by `PackageSlicesMojo`. Since #773 the overlay scans with the slice's
+  own loader and keeps only factories that loader defined, keyed by `Class`, so a slice's step
+  cannot collide with a platform factory or acquire a node-loader twin.
 
 ## 3. Naming
 
@@ -61,13 +94,16 @@ applies directly, since configuration is by definition a different change driver
 logic: different reason to change, different cadence, different authority. **The Aether book
 should cite PFD here rather than re-derive the principle.**
 
-**From Aether itself, which is the better argument.** `MethodInterceptor.class` is already a
-resource type carrying user-supplied *behaviour*, not infrastructure, and it already has its own
-playbook section ("Cross-cutting behavior: interceptors"). So the resource mechanism already
-provisions behaviour in one place. **Provisioned Step generalizes a move Aether already makes**
-rather than introducing behaviour-as-resource as a new idea. That is internal precedent, not
-analogy, and it is the same shape as the saga ruling: name the composition that is already
-there instead of introducing a primitive.
+**From Aether itself — and this is narrower than it first looks, so state the narrow form.**
+`MethodInterceptor.class` is a resource type carrying user-supplied *behaviour* rather than
+infrastructure, and it already has its own playbook section ("Cross-cutting behavior:
+interceptors"). But it is a **platform** type provisioned by a **platform** factory registered
+at node boot — precisely the path user-defined types could not use until `8d36f0c1c`. So the
+honest claim is not "Aether already does this and we are merely naming it" but **"Aether
+already does this for platform types, and as of `8d36f0c1c` can do it for user types too."**
+The saga-ruling shape survives — this generalizes an existing move rather than introducing a
+primitive — but the narrow statement costs nothing and cannot be knocked down, where the broad
+one can be, by anyone who knows where the platform factories register.
 
 **The teaching contrast writes itself, and both halves already exist.** `ConfigurationSection`
 hands the slice a section to interpret; a Provisioned Step hands it an assembled step. Same
@@ -118,12 +154,18 @@ Both are cheap now and expensive after someone ships against them.
   changing config through the Management API does *not* re-assemble a Provisioned Step. This
   has to be stated precisely because `configuration.md` advertises live updates through
   consensus a few paragraphs away.
-- **Lifecycle must be stated, not omitted.** The owner's instinct is right that keeping
-  lifecycle out of the *name* preserves design freedom. But not naming and not documenting are
-  different moves: the machinery is shared, so whatever release path resources take, these take.
-  **"None today" preserves more freedom than silence** — it is honest now, and adding lifecycle
-  later is purely additive, whereas silence lets readers form expectations in both directions
-  and guarantees half of them are wrong when the decision lands. One sentence, not a section.
+- **Lifecycle exists, so "none today" would be false.** This corrects the original draft, which
+  recommended stating that there is none. Verified in code: `SpiResourceProvider.releaseAll`
+  (`:141-172`) is refcounted — it drops the slice from the consumer set and, when the last
+  consumer goes, removes the cached promise and calls `factory.close(resource)`. The
+  `ResourceFactory.close` default closes the resource if it is `AutoCloseable`. The guarantee
+  to state, per operation: **close is called only when the last consuming slice releases it**,
+  never per-slice; **only if the type is `AutoCloseable`**, unless the factory overrides
+  `close`; and **a close failure is absorbed** — caught, logged at WARNING through JDK platform
+  logging, the resource leaves the cache regardless, and the release promise still succeeds,
+  because one resource's failure must not block every other release.
+  That last clause is itself an instance of §10: a reader who infers "close is called" will
+  also infer "close failures surface." They do not, and the section has to say so.
 
 ## 8. Proposed placement
 
@@ -137,24 +179,33 @@ Both are cheap now and expensive after someone ships against them.
   search. The reference row should carry the words *Provisioned Step* explicitly, or the book
   will name something with no footprint in the code.
 
-## 9. Open questions for the CTO
+## 9. Questions for the CTO — two answered, one open
 
-1. **Does the shared provisioning path call anything on a user-defined type at release?** This
-   decides §7's lifecycle sentence: if it does, the behaviour exists today and silence hides it;
-   if it does not, "none today" is accurate and costs nothing.
-2. **Anything in the few small changes that constrains what a user-defined type may be?**
-   Constructor shape, interface requirement, whether the config section is passed whole or
-   parsed. The book's examples have to match what the runtime actually accepts.
-3. **Placement and authorship.** Part 3 is a guess from the section list; the CTO knows the
-   book's plan. And who writes it is undecided — the Editor↔aether-main arrangement governs, not
+1. ~~Does the shared provisioning path call anything on a user-defined type at release?~~
+   **Answered 2026-09-01: yes.** Lifecycle exists; the per-operation semantics are in §7 and the
+   release path is `SpiResourceProvider.releaseAll` → `factory.close(resource)`.
+2. ~~What do the changes constrain about a user-defined type?~~ **Answered 2026-09-01:** config
+   arrives parsed via `configType()`/`provision(C)`, the type itself is unconstrained and the
+   factory carries the contract, and `priority()`/`supports(C)` already do config-driven
+   selection. Full detail in §2.1.
+3. **Still open: placement and authorship.** Part 3 is a guess from the section list; the CTO
+   knows the book's plan. Authorship is governed by the Editor↔aether-main arrangement, not by
    this note.
 
-## 10. One observation about the doc set, separate from the pattern
+## 10. The adjacency hazard — do not file, it is already owned
 
 Three times in one day a reader would have inherited a guarantee from an adjacent section rather
 than from a statement: pub-sub delivery reliability (found and fixed, D18), live config updates
-applying to a deployment-scoped step (§7 above), and resource lifecycle applying to a Provisioned
-Step (§7 again). Nothing in any of those cases was stated falsely — the docs describe mechanisms
-in adjacent sections, and adjacency reads as inheritance. That looks systemic rather than
-incidental, and might be worth a pass of its own: for each capability section, state what it does
-*not* guarantee, especially where the neighbouring section guarantees exactly that.
+appearing to apply to a deployment-scoped step (§7), and resource lifecycle appearing to apply to
+a Provisioned Step (§7 again) — to which the CTO's review adds a fourth, since close failures are
+absorbed while a reader who learns close is called will assume they surface. Nothing in any case
+was stated falsely; the docs describe mechanisms in adjacent sections, and adjacency reads as
+inheritance.
+
+**This belongs on #496, not on a new ticket** (CTO, 2026-09-01): *"GA claims-vs-reality audit:
+guarantee-language sweep of all public docs (consistency-lens method)"*, currently one of 27 GA
+blockers that two independent sweep layers agreed on, with zero hits for a claims register and 53
+one-bit labels still standing. The contribution is a method addition to that ticket rather than a
+separate thread: **for each capability section, state what it does NOT guarantee, especially
+where the neighbouring section guarantees exactly that.** The four instances above are the
+evidence for it.

@@ -188,17 +188,35 @@ Both are cheap now and expensive after someone ships against them.
   That last clause is itself an instance of §10: a reader who infers "close is called" will
   also infer "close failures surface." They do not, and the section has to say so.
 
-## 8. Proposed placement
+## 8. Placement — RULED (owner, 2026-09-01)
 
-- **Capability → the resources reference** (`ai-tools/skills/aether-coder/resources/custom-qualifiers.md`
-  and its book equivalent): `type` may name a user-defined type. A row and a short section.
-- **Pattern → Part 3, the playbook**, as a peer to "Cross-cutting behavior: interceptors", which
-  is its own precedent. Part 3's sections are named for problems, so the heading should name the
-  problem (something in the register of "Configuring what varies"), not the mechanism.
-- **The term needs a home on the code side.** There is no new construct — the pattern is a
-  discipline about what goes in `type` — so a developer reading source has no identifier to
-  search. The reference row should carry the words *Provisioned Step* explicitly, or the book
-  will name something with no footprint in the code.
+> *"It should be described along with configuration provisioning as a form of the application
+> configuration."*
+
+**The Provisioned Step does not stand alone.** It goes wherever configuration provisioning is
+described, framed as a form of application configuration. This supersedes the Part 3 guess below,
+and it is a stronger frame than either this note or the CTO proposed, for three reasons worth
+recording:
+
+- **The teaching contrast becomes structural instead of scattered.** `ConfigurationSection` and
+  the Provisioned Step stop being two patterns compared across sections and become **two assembly
+  levels of one mechanism** — one hands the slice a section to interpret, the other hands it an
+  assembled step — which the reader meets together rather than by cross-reference.
+- **It absorbs the refresh finding cleanly.** Neither refreshes (§7). Under this framing that is
+  one property of one mechanism, stated once where both live, instead of a caveat repeated in two
+  places and drifting between them.
+- **§5's nominative payoff becomes a distinction *within* the section** — the name carrying the
+  semantics is what separates the two levels — rather than an argument for having a separate one.
+
+Superseded proposal, kept for the record: a standalone Part 3 section as a peer to
+"Cross-cutting behavior: interceptors". That was an inference from the section list.
+
+**Still open: authorship**, governed by the Editor↔aether-main arrangement, and whether the
+Aether prose pause still holds.
+
+**The term still needs a home on the code side.** There is no new construct — the pattern is a
+discipline about what goes in `type` — so a developer reading source has no identifier to search.
+The resources reference should carry the words *Provisioned Step* explicitly.
 
 ## 9. Questions for the CTO — two answered, one open
 

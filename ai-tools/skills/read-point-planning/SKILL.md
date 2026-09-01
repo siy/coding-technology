@@ -258,6 +258,32 @@ Three scoping rules:
 - **An unstamped guarantee is not trusted**, exactly as an unstamped item is not — never
   silently assumed fresh.
 
+**The test is one line:** *what would have to happen for this claim to become false without
+anyone noticing?* If the answer is "nothing, it was never checked," the claim is already in the
+failure state rather than at risk of entering one.
+
+**The family runs in two directions, and from outside they are indistinguishable.** A claim that
+was true and stopped being so, and a claim that was never verified at all. The second is the more
+dangerous, because nothing about it will ever change to trigger a re-read — there is no motion to
+detect, and a stamp-based check looking for staleness will find none.
+
+**Observed instances, all the same object — a claim whose verification and whose statement have
+come apart:**
+
+- a mutation probe reporting a matching checksum for a restore that never happened, after which
+  every run measured mutated code and reported green;
+- a code comment asserting the opposite of its own file months after the gap it describes was
+  closed, with a ticket's gating depending on it;
+- work items citing files and symbols absent at HEAD — 9 of 265 in one sweep, and **mechanically
+  detectable in seconds** by diffing cited source names against `git ls-files`;
+- a commit cited as doing work it did not do, caught only because someone re-ran the sweep it
+  was credited with;
+- a relayed claim about who holds a role, improved from unattributed to attributed but never to
+  verified, because a relay cannot get there.
+
+The third is worth copying: where claims cite identifiers, existence-checking them against the
+repository is close to free and finds the decayed ones without reading anything.
+
 ## What RPP is not
 
 Not a planning system, and not a replacement for a tracker. The tracker owns content; RPP

@@ -225,6 +225,39 @@ sensitivity curve over successive sweeps at no extra cost per run.
 Report the decay rate as a number; it is the only way to know whether the practice is working,
 and the only way the next sweep has something to compare against.
 
+## Applying this to claims, not only to plans
+
+A stated guarantee is a belief about code exactly as a plan item is. "Delivery is at-most-once"
+rots when the code moves, the same way "the retry path drops errors" rots, and it rots silently
+because a document has no way to notice. The mechanism transfers — with one structural
+difference that changes the economics.
+
+**Documentation has no pickup.** Three of the four read points assume a reader who can verify:
+an agent taking an item, a ruling being made, a gate being acknowledged. A document's readers
+are users who cannot verify and who arrive continuously, so "someone read it" is a read with no
+verification capability attached and does not count. **Of the four read points, documentation
+has exactly one usable one: the release stamp.**
+
+That is the design consequence rather than a defect. Claims cannot rely on lazy
+verification-at-use, so they must be swept on a schedule, and the release boundary is that
+schedule — the same release-boundary event a plan sweep already is. **One pass, both
+artifacts.**
+
+Everything else transfers unchanged: `verified_at` with the no-touch-on-ordinary-edit rule,
+`subsystems` making the range query cheap, and all four hazard shapes — including the one that
+produces most doc defects, a section reporting a guarantee while structurally unable to observe
+whether the code still provides it.
+
+Three scoping rules:
+
+- **The unit is the claim, not the section.** One section carries several claims and they rot at
+  different rates, so they carry different stamps.
+- **Each claim is recorded with its boundary.** What a claim does *not* guarantee is exactly
+  what a reader cannot obtain by failing to find a statement, so the two belong in one record
+  rather than in one section and one silence.
+- **An unstamped guarantee is not trusted**, exactly as an unstamped item is not — never
+  silently assumed fresh.
+
 ## What RPP is not
 
 Not a planning system, and not a replacement for a tracker. The tracker owns content; RPP

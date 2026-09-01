@@ -194,18 +194,54 @@ Both are cheap now and expensive after someone ships against them.
 
 ## 10. The adjacency hazard — do not file, it is already owned
 
-Three times in one day a reader would have inherited a guarantee from an adjacent section rather
-than from a statement: pub-sub delivery reliability (found and fixed, D18), live config updates
-appearing to apply to a deployment-scoped step (§7), and resource lifecycle appearing to apply to
-a Provisioned Step (§7 again) — to which the CTO's review adds a fourth, since close failures are
-absorbed while a reader who learns close is called will assume they surface. Nothing in any case
-was stated falsely; the docs describe mechanisms in adjacent sections, and adjacency reads as
-inheritance.
+Four cases in one day where a reader takes a guarantee from the docs' *shape* rather than from
+any statement. **They are not all the same direction, and the correction matters** (CTO,
+2026-09-01):
+
+- **(1) pub-sub delivery** read as reliable because the section never stated at-most-once —
+  adjacency read as inheritance. Found and fixed as D18.
+- **(2) live config updates** appearing to apply to a deployment-scoped step, because the
+  overview promises consensus-propagated config with "no restart required for changes" —
+  inheritance again.
+- **(3) resource lifecycle**, which is the **mirror image and the sharpest of the four**:
+  lifecycle *does* apply to a user-defined provisioned type, and this note's first draft was
+  about to deny it. Here the docs' silence produced a **false negative** — silence read as
+  absence of behaviour, not adjacency read as inheritance.
+- **(4) close failures**, absorbed at WARNING while a reader who learns close is called will
+  assume they surface.
+
+**(3) is why the proposal has to cut both ways.** A section that never mentions lifecycle is as
+misleading as one whose neighbour implies it, so "state what you do not guarantee" is only half
+the rule; the other half is "state what you *do*, where silence would read as nothing happening."
+
+**And two of the four were writer-side, not reader-side** (CTO's observation, from this
+material): the lifecycle error was mine, and the pub-sub omission was whoever wrote that
+section. The defect reproduces in the people *extending* the docs, not only in those consuming
+them — which means a claims register would be load-bearing for authorship, not merely for
+readers.
 
 **This belongs on #496, not on a new ticket** (CTO, 2026-09-01): *"GA claims-vs-reality audit:
-guarantee-language sweep of all public docs (consistency-lens method)"*, currently one of 27 GA
-blockers that two independent sweep layers agreed on, with zero hits for a claims register and 53
-one-bit labels still standing. The contribution is a method addition to that ticket rather than a
-separate thread: **for each capability section, state what it does NOT guarantee, especially
-where the neighbouring section guarantees exactly that.** The four instances above are the
-evidence for it.
+guarantee-language sweep of all public docs (consistency-lens method)"*, one of 27 GA blockers
+that two independent sweep layers agreed on, with zero hits for a claims register and 53 one-bit
+labels still standing. Posted there as comment 5496041708, with the four instances split by
+provenance: (3) and (4) verified against `SpiResourceProvider:141-172` and
+`ResourceFactory.close`, (1) and (2) recorded as reported-not-re-verified. Evidence for those
+two is now available and is in §10.1.
+
+### 10.1 Citations for instances (1) and (2)
+
+- **(1)** Pre-fix `aether/docs/slice-developers/resource-reference.md:1038-1041` (parent of
+  `395fe33c5`): the pub-sub section runs "Multiple slices can subscribe…", "Subscriptions are
+  automatically removed when the slice deactivates", then a horizontal rule. No delivery
+  statement of any kind. `395fe33c5` inserts the at-most-once paragraph at what becomes line
+  1040.
+- **(2)** `aether/docs/aether-overview.md:386` — *"**Dynamic Configuration via KV-Store** —
+  expose runtime configuration in consensus, no restart required for changes."* Unqualified, in
+  an overview. For a Provisioned Step a restart is exactly what a config change requires until
+  dynamic reconfiguration exists, so this is not merely a proximity risk but a claim that the
+  new capability makes wrong.
+  **One question I have not verified and which decides how bad (2) already is:** resource
+  promises are cached by `SpiResourceProvider`, so it is unclear whether config delivered
+  *through the resource mechanism* — `ConfigurationSection` today, Provisioned Steps now —
+  is refreshed on a config change at all. If cached promises are not invalidated, the overview
+  bullet is already imprecise for resource-injected config and not only for this pattern.

@@ -255,6 +255,14 @@ Three scoping rules:
 - **Each claim is recorded with its boundary.** What a claim does *not* guarantee is exactly
   what a reader cannot obtain by failing to find a statement, so the two belong in one record
   rather than in one section and one silence.
+
+**What this buys is not freshness, it is co-location.** One claim stated in four places is four
+re-verifications nobody will schedule, and three of them are found by accident or never. Observed:
+a single false claim about configuration reaching a running slice stood simultaneously in a public
+overview, a book chapter, and two reference documents, none of them wrong when written, and the
+book copy surfaced only because somebody happened to be writing the adjacent section. That is
+luck, not process. A register does not make claims fresher; it makes correcting one a single edit
+instead of a search.
 - **An unstamped guarantee is not trusted**, exactly as an unstamped item is not — never
   silently assumed fresh.
 
@@ -276,6 +284,12 @@ fixing something a check depends on, ask what the check was using it for, and la
 replacement in the same change.** This is the seeded probe's logic inverted: a sweep plants a
 known-bad case deliberately because an instrument that cannot fail is not evidence, and here the
 known-bad case arrived by accident and is about to be taken away by someone doing good work.
+
+The first two failures are about knowledge going stale; this one is about incentives, which is
+why it needs its own name. The person who removes the defect is doing unambiguously good work
+and has no reason to look, nobody chose the arrangement so nobody owns maintaining it, and the
+failure arrives disguised as an improvement. **That is worse than rot, because rot has no
+advocate.**
 
 **Observed instances, all the same object — a claim whose verification and whose statement have
 come apart:**

@@ -38,3 +38,7 @@ password = "${secrets:db/password}"
 ## Dynamic Config Updates
 
 Operators change config at runtime via Management API (`/api/config`). Changes propagate through consensus KV-Store. No slice code changes needed.
+
+**What that does not do: refresh a running slice.** A resource is built from the values current when it was provisioned, and nothing rebuilds it when the stored configuration changes. `SpiResourceProvider` mutates its promise cache only on first provision and on last release; there is no invalidation path on config change, and `ConfigNotificationManager.notifyChange` has no callers (#381). So a slice sees new configuration when it is next reloaded, and not before.
+
+This applies to every resource, `ConfigurationSection` included — config reaches slices only through provisioned resources, so "propagated to the cluster" and "in effect in a slice" are different states.

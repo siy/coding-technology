@@ -240,11 +240,101 @@ This split is what makes "configuration change, not code change" concrete. The a
 settings ship with the app; the environment's facts live on the node; moving from staging
 to production changes node config and touches nothing else. Operators can also change
 configuration on a running cluster through the management API, and the update propagates
-through the cluster's consensus store, so slices pick it up without a redeploy.
+through the cluster's consensus store. What that changes is the stored configuration, not
+a running slice: every resource a slice holds was built from the values current when it
+was provisioned, and nothing rebuilds it when those values change. A slice sees new
+configuration when it is next reloaded, and not before.
 
 Through all of this, the slice reads nothing. It declares a qualifier, the runtime reads
 the merged configuration, builds the resource, and hands it over. Configuration is the
 runtime's input, never the slice's concern.
+
+## Configuring behavior: the provisioned step
+
+That last claim holds while configuration is values. It stops holding the moment a setting
+decides *what* the application does rather than what it does it with.
+
+The orders spine has both kinds. A pool size, a payment timeout, a maximum order amount are
+values, and the code that uses them does not change shape when they change. A setting like
+`express-shipping = true` is different in kind. Something has to read it and choose, and the
+choosing lands inside a method that would otherwise be a straight sequence of steps:
+
+```java
+if (config.expressShipping()) {
+    return expressQuote(order);
+}
+return standardQuote(order);
+```
+
+That is a small ugliness with a long tail. One of those branches is unexercised on any given
+deployment, and flags multiply: three of them make eight combinations, of which a team tests
+two and ships all eight. Configuration has also become the slice's concern, which is the one
+thing the previous section said it never is.
+
+Part 0 drew the line this sits on: a plain interface as a factory parameter is assembling,
+the same parameter carrying a resource qualifier is provisioning. A qualifier does not have
+to name a runtime type. It can name yours.
+
+```java
+@ResourceQualifier(type = ShippingQuote.class, config = "shipping")
+@Retention(RUNTIME) @Target(PARAMETER)
+public @interface Shipping {}
+```
+
+`ShippingQuote` is an ordinary interface of your own, shaped to what the use case needs and
+nothing else. The slice declares it as a parameter and calls it. There is no flag in that
+code and no branch, because which implementation arrives was decided before the slice ran.
+A parameter of your own type, carrying a qualifier, is a **provisioned step**: assembled
+like your own code, provisioned like a resource.
+
+What decides it is a factory you write, registered in the slice's jar under
+`META-INF/services` and found by the runtime:
+
+```java
+public class ExpressQuoteFactory implements ResourceFactory<ShippingQuote, ShippingConfig> {
+    public Class<ShippingConfig> configType() { return ShippingConfig.class; }
+
+    public boolean supports(ShippingConfig config) { return config.express(); }
+
+    public Promise<ShippingQuote> provision(ShippingConfig config) {
+        return ExpressQuote.build(config.carrier(), config.cutoff());
+    }
+}
+```
+
+Three things there are the pattern doing its work. The configuration arrives **parsed**:
+`configType()` names a record, the runtime binds the `[shipping]` section to it before the
+factory runs, and a malformed section fails there rather than inside a request. **`supports`
+is where the choosing went**: several factories may offer `ShippingQuote`, the runtime asks
+each whether it handles this configuration, and `priority()` breaks a tie, so the `if` that
+was in the slice is now a question asked once at provisioning. And **`provision` returns a
+`Promise`, which means assembly can fail**. Configuration goes in and a working step comes
+out, so configuration that cannot produce one fails the deployment: a missing carrier code
+becomes a deployment that does not start, while somebody is watching, instead of a failure
+on an order at three in the morning.
+
+A `ConfigurationSection` parameter and a provisioned step are two levels of one mechanism.
+The first hands the slice a section to interpret; the second hands it something already
+built. Same qualifier, same provisioning, same merge order. The only difference is how far
+the runtime carries the work before the slice takes over, and the names say which is which:
+a section sounds like something you read, a step sounds like something that runs.
+
+That difference matters because of a property both levels share, and which the previous
+section stated: neither refreshes. A resource is built once, from the configuration current
+at that moment. For a section this is easy to forget, because a thing called configuration
+sounds live. For a provisioned step the name carries the truth, since it was assembled once
+and it is what it was assembled into.
+
+The line to hold is about which settings earn this. If a setting selects which of several
+behaviors runs, provision the behavior; if it parameterizes one behavior that runs
+regardless, pass the value. `max-order-amount` stays a number, because one check always runs
+and the setting is its threshold. `express-shipping` becomes a step, because it picks between
+two ways of quoting. Applied to every scalar this would be absurd; applied to the settings
+that fork the code, it removes the fork.
+
+The type is what keeps it safe. Because the unit is a step and the use case names its type,
+configuration can change how the step works and never what it is, so the compiler bounds
+what any setting you add is able to reach.
 
 ## Request routing
 

@@ -3,11 +3,14 @@
 `verified_at: v1.0.0-rc3` → resolved commit `c67664bd9a104581a54172cf824d7766a5713bcf`, tagged
 2026-09-02 21:41:37+02:00. **Methodology note:** a companion tag,
 `v1.0.0-rc3-checkpoint-pre-curation`, holds a pre-squash history for the same tree — release
-curation rewrote ~512 commits into 8. `git merge-base --is-ancestor` against a pre-curation SHA
-can therefore report "not an ancestor" for code that is genuinely present; verify by path + blob
-content (`git show <sha>:<path>` diffed against the tag), not by commit-graph ancestry, across the
-curation boundary. One capability below (the provisioned-step mechanism) was checked this way and
-confirmed byte-identical at a moved path.
+curation collapsed 743 commits since rc2 into 11 subsystem commits + 20 replayed `know:` commits +
+1 docs commit (32 total), tree-hash-verified against the checkpoint independently of the agent
+that built it (`oss/internal/handover-2026-09-02-cto-session7.md:26-32`, §1a; corrects an earlier,
+unverified "~512 into 8" estimate from my own ad hoc commit count). `git merge-base --is-ancestor`
+against a pre-curation SHA can therefore report "not an ancestor" for code that is genuinely
+present; verify by path + blob content (`git show <sha>:<path>` diffed against the tag), not by
+commit-graph ancestry, across the curation boundary. One capability below (the provisioned-step
+mechanism) was checked this way and confirmed byte-identical at a moved path.
 
 ## 1. `‹AUDIT›` markers
 

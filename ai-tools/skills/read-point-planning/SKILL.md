@@ -267,6 +267,16 @@ was true and stopped being so, and a claim that was never verified at all. The s
 dangerous, because nothing about it will ever change to trigger a re-read — there is no motion to
 detect, and a stamp-based check looking for staleness will find none.
 
+**There is a third direction, and it punishes repair.** Sometimes a check's ability to fail
+depends on a defect continuing to exist. A dead-code gate demonstrates that it can detect
+anything by pointing at one method known to have no callers; wire that method up, and the gate
+still passes while quietly losing its demonstration. The claim being relied on is "this check
+works", it was verified once, and the next repair removes the condition that verified it. **Before
+fixing something a check depends on, ask what the check was using it for, and land the
+replacement in the same change.** This is the seeded probe's logic inverted: a sweep plants a
+known-bad case deliberately because an instrument that cannot fail is not evidence, and here the
+known-bad case arrived by accident and is about to be taken away by someone doing good work.
+
 **Observed instances, all the same object — a claim whose verification and whose statement have
 come apart:**
 

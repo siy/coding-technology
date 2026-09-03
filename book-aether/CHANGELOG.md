@@ -67,6 +67,28 @@ will mark the first edition released to readers.
   `StreamAccess`'s internal error/metadata types — all confirmed present at both the old and new
   pin, so their omission predates this delta rather than being caused by it). The timer sentence
   above is the only casualty this six-day range produced.
+- **`BOOK-PLAN.md` §6 disagreed with itself about the spine app** (*planning
+  doc, owner Q1*). The prose said the spine was "a fresh app built
+  incrementally... start from an empty Aether project," but `examples/ecommerce`
+  already exists at the rc3 tag and was already cited elsewhere in the plan as
+  "the real reference artifact." Owner decision (2026-09-03): narrate directly
+  on `examples/ecommerce`, promoted from answer-key to primary source; no
+  from-scratch build. While updating, corrected a second, independent staleness
+  the gap inventory had introduced: it counted three slices
+  (`inventory`/`payment`/`fulfillment`); the tree at `v1.0.0-rc3`
+  (`c67664bd9a104581a54172cf824d7766a5713bcf`) has five —
+  `inventory`/`pricing`/`payment`/`fulfillment`/`place-order` — plus a `shared`
+  module, verified by `git ls-tree` and the parent `pom.xml`'s `<modules>` list.
+  `place-order/src/main/java/.../PlaceOrder.java:52-54`'s own doc comment states
+  the durable-saga gap the flagship INVENTED chapter needs ("Does NOT
+  demonstrate: durable saga state... a production saga needs a persisted log to
+  drive the release on restart"), so the gap→curriculum map's saga row is now
+  sourced against the shipped example rather than only the loan-app audit.
+  Three other map rows (real resources, HTTP routing, schema migration) were
+  written assuming the from-scratch spine would start without them;
+  `examples/ecommerce` already has all three (real `@Sql` `resources.toml` per
+  service, wired `routes.toml`, Flyway-style `schema/V001__create_tables.sql`),
+  so those rows now say "teach by reading, not building."
 
 ## [0.1.0] - 2026-06-20
 

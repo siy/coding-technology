@@ -48,6 +48,17 @@ will mark the first edition released to readers.
   operator surface yet (no DLQ inspection/redrive route, no lag/stall alarm, no per-topic
   retention override) — a dead-lettered event is durable data readable only via a direct stream
   read on `.dlq` today.
+- **Management-API surfaces absent from Part V, plus consensus load metrics (`#674`)** (*Part V,
+  "Reading what the cluster reports"*) — six operator routes named in the gap inventory but never
+  taught: `GET/POST /api/ab-tests` (+ `/metrics`, `/create`, `/conclude`), `POST
+  /api/cluster/migrate` (+ `/migrate/plan` dry run), `GET /api/dht/replication-map`, `GET`/`POST`/
+  `DELETE /api/logging/levels`, `POST /api/alerts/inject`, `POST /api/controller/evaluate`. All
+  six confirmed live at the rc3 pin against `ManagementRoute.java:86-90,128-129,362,377,380-382,395`;
+  the controller-evaluate response and CLI description ("Force controller evaluation") confirmed
+  against `AetherCli.java:2606-2618` and `ControllerRoutes.java:105`. Also added: coordination load
+  now reaches `GET /api/v1/metrics/comprehensive`'s `consensus` block and matching `consensus_*`
+  Prometheus gauges, landed 2026-08-28 per `pragmatica/CHANGELOG.md:208-234` (three previously-empty
+  vote recorders wired, the comprehensive DTO carrying the block, Prometheus exposing it).
 
 ### Fixed
 - **Config inheritance overstated live updates** (*Part I*). The text said an operator's

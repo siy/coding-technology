@@ -500,13 +500,17 @@ The topic itself is one configuration section:
 
 ```toml
 [messaging.order-events]
-topicName = "order-events"
+topic_name = "order-events"
 ```
 
-`topicName` is the only field. A bare name like `order-events` is scoped to the application at
-deploy; a fully qualified `namespace:topic:version` is taken as written. In the manifest the
-publisher and subscriber appear as data the runtime reads before loading a class, the publisher
-as a `publish.topic` entry and the subscriber among the reactive bindings:
+`topic_name` is the only field this ephemeral declaration needs, the default tier, so the
+zero-config path stays cheap. A bare name like `order-events` is scoped to the application at
+deploy; a fully qualified `namespace:topic:version` is taken as written. The same section can
+instead declare the topic durable, trading the zero-config default for a stronger guarantee; that
+variant is its own subsection later in this module, once streams have introduced the substrate it
+is built on. In the manifest the publisher and subscriber appear as data the runtime reads before
+loading a class, the publisher as a `publish.topic` entry and the subscriber among the reactive
+bindings:
 
 ```
 publish.topic.0.config=messaging.order-events
@@ -522,14 +526,16 @@ persist the message, and it does not retry a subscriber that is down. Because th
 waits on those subscribers, a caller that chains work onto it, as `orderService` does above with
 `events.publish(placed).map(() -> placed)`, pays the subscribers' latency in its own response time,
 so keep subscriber work short or move the slow part to a stream. That the publisher waits on present
-subscribers is today's behavior, not a fixed contract; a durable pub-sub variant on the roadmap
-would decouple the two. Delivery is at-most-once: a subscriber that is absent misses the event, and
-there is no log
+subscribers, and that a missing one is simply missed, is a property of the ephemeral tier, the
+default, not a fixed contract of pub-sub itself; declaring the same topic durable decouples the
+two, covered once streams are in hand. Delivery here is at-most-once: a subscriber that is absent
+misses the event, and there is no log
 to catch up from. One consequence is friendly: publishing to a topic with no subscribers is a
 success, so a quiet system does not fail `placeOrder` for lack of listeners. The other is the
-constraint that decides when to use it. Pub-sub fits when missing a message is acceptable, a
-dashboard that refreshes a moment later, a cache that warms on the next read. When a message must
-not be lost, the tool is a stream, and that is the next chapter.
+constraint that decides when to use it. Ephemeral pub-sub fits when missing a message is
+acceptable, a dashboard that refreshes a moment later, a cache that warms on the next read. When a
+message must not be lost, reach for a stream, covered next, or declare the topic itself durable,
+covered right after it once the mechanism a durable topic is built on has been introduced.
 
 ## Events that must not be lost
 
@@ -725,18 +731,104 @@ case, a stream configured for durability survives an owner loss with its reads i
 its own redundancy afterward, with the wider failure envelope still being validated, so verify
 against the current runtime before you rely on behavior past that single-failure path.
 
-### Pub-sub or stream?
+### The durable pub-sub tier
 
-Both deliver a message from one slice to others through the same two mechanisms, and they trade
-on a single axis: what happens to a message no one is ready for.
+Pub-sub and streams are not the only two points on this axis. The same topic can be declared
+durable, keeping the pub-sub shape, publish a value, receive a value, no offsets for the slice to
+manage, while buying most of a stream's delivery guarantee. The one-argument subscriber method
+from the previous section is unaffected; declaring a topic durable does not require touching the
+Java at all. Only the configuration section grows:
 
-- Reach for **pub-sub** when the message is a live signal and missing one is acceptable:
-  refreshing a dashboard, warming or invalidating a cache, an in-app nudge, fanning out to
-  whoever happens to be listening. It is the loosest coupling and the cheapest, at-most-once,
-  with no bookkeeping.
-- Reach for a **stream** when every message counts and order or catch-up matters: audit ledgers,
-  event-sourced read models, anything a restarted or late consumer must reprocess. It is durable,
-  ordered, and at-least-once, at the cost of managing offsets and writing idempotent handlers.
+```toml
+[messaging.order-events]
+topic_name = "order-events"
+durability = "durable"        # "ephemeral" (default) | "durable"
+partitions = 1                 # durable only; default 1
+replicas = 2                   # durable only; default 2
+min_sync_replicas = 2          # durable only; default = replicas
+retention = "7d"               # durable only; default 7d
+```
+
+`durability` is the switch. The four knobs below it exist only for a durable declaration; declare
+them on an ephemeral topic and the build rejects the section rather than silently ignoring the
+keys, the same config-honesty stance a stream's own knobs take. A durable topic is backed
+internally by a replicated stream plus its own dead-letter stream, both provisioned the moment
+the topic is provisioned, not lazily on first publish, and a publish resolves once the write
+reaches the replication floor below, not merely once it lands on the owner.
+
+The `replicas >= 2` and `min_sync_replicas == replicas` pairing above is not an arbitrary
+default, it is exactly the stream configuration the previous section proved survives an owner
+kill with every prior event intact. Declare anything outside it, `replicas = 1`, say, or
+`min_sync_replicas` short of `replicas`, and the build rejects the declaration at parse rather
+than silently accepting a weaker guarantee than the one advertised.
+
+What the tier buys, and no more:
+
+- **Delivery to a subscriber group.** Ephemeral is at-most-once: a single invoke to a
+  round-robin instance, dropped on RPC failure, crash, or absence, never retried, never
+  persisted. Durable is **at-least-once per group**: a group cursor plus bounded redelivery,
+  five attempts with exponential backoff, then the group-attributed dead-letter queue.
+- **Subscriber failure.** Ephemeral failure is invisible to the runtime, logged, no redelivery.
+  Durable retries and then lands the event in `topic:<address>.dlq` as a group-attributed
+  envelope carrying the original message id, source position, failing group, attempt count, and
+  last cause. The source cursor does not advance past an event whose DLQ append has not itself
+  succeeded, so a stalled dead-letter sink stalls the partition visibly instead of silently
+  dropping the event.
+- **Duplicate exposure.** None for ephemeral, zero or one delivery. Durable can redeliver up to
+  the cursor-checkpoint window on crash or restart, at most 1000 acknowledged events or 500ms
+  per partition, whichever comes first; both figures are fixed constants today, not per-topic
+  configuration.
+- **Consumer-group identity.** Version-stable (`groupId:artifactId#method`), so a blue-green
+  deploy window collapses to one dispatch loop per group and partition instead of doubling
+  delivery across the two versions in flight.
+
+A durable subscriber may opt into a second parameter, `Promise<Unit> handler(T event,
+MessageContext context)`. `context.messageId()` is the field worth keying on, a publisher-minted
+id stable across a retry and across a dead-letter hop; `context.partition()` and
+`context.offset()` describe only where this particular delivery landed and change on redelivery,
+so using either to de-duplicate reintroduces the duplicates the id exists to catch. The build
+rejects the two-argument shape on a topic that is not durable, there being no envelope to build a
+context from.
+
+None of this is exactly-once anywhere in the mechanism. The strongest claim the runtime makes is
+at-least-once with de-duplication left to the handler, the same discipline Module D asks of any
+at-least-once path.
+
+**What is still open.** The guarantee above is verified single-node: publish and dispatch proven
+end to end on one node, and subscriber registration is crash-durable regardless of tier, a
+Rabia-replicated write, so the topology survives a restart even though an ephemeral topic's
+in-flight messages do not. The multi-node composed path, a publish landing on one node and
+dispatch owned by another, including a failover between them, is **design intent, unverified
+pending forge e2e**. There is also no operator surface yet for the durable tier: no DLQ
+inspection or redrive route, no lag or stall alarm, no per-topic retention override on the
+dead-letter stream. A dead-lettered event is real, durable data today, readable only by reading
+the `.dlq` stream directly, awaiting the management surface that turns redriving it into a
+command instead of a stream read.
+
+A related but distinct surface: `@Notify` for email or HTTP is at-least-once with retries and may
+duplicate, but it is not pub-sub and carries no DLQ; the guarantees above do not extend to it.
+
+### Pub-sub, durable pub-sub, or stream?
+
+All three deliver a message from one slice to others, and the same two resource types cover them,
+`Publisher`/`Subscriber` for both pub-sub tiers, `StreamPublisher`/`StreamSubscriber`/
+`StreamAccess` for streams. What varies is what happens to a message no one is ready for, and how
+much bookkeeping buying a stronger answer costs.
+
+- Reach for **ephemeral pub-sub** when the message is a live signal and missing one is
+  acceptable: refreshing a dashboard, warming or invalidating a cache, an in-app nudge, fanning
+  out to whoever happens to be listening. It is the loosest coupling and the cheapest,
+  at-most-once, with no bookkeeping and no configuration beyond a topic name.
+- Reach for a **durable topic** when the shape you want is still pub-sub, publish a value,
+  receive a value, no offsets to manage by hand, but a subscriber that is temporarily down must
+  still get the event once it returns. It costs a handful of configuration keys and buys
+  at-least-once per group with a dead-letter queue for what a handler cannot process, at the
+  price documented above: bounded duplicate exposure, and a multi-node failover path still
+  unverified.
+- Reach for a **stream** when every message counts, order matters, or a late or replayed
+  consumer must reprocess history it missed entirely: audit ledgers, event-sourced read models.
+  It is durable, ordered, and at-least-once, at the cost of managing offsets, or letting the
+  declarative consumer do it, and writing idempotent handlers.
 
 The stream has a deeper use, foreshadowed by Module A's dual-write. When `placeOrder` must both
 commit the order and record an event reliably, the event written to a durable stream is the safe
@@ -744,9 +836,10 @@ record, and the rest of the system is built by reading that stream. Making that 
 reliable when neither the commit nor the emit may be lost is the dual-write problem, and Module D
 solves it with an idempotency key rather than a separate outbox to operate. The
 model to carry forward is unchanged from Part I: a parameter to send, an annotated method to
-receive, and the runtime reading the manifest to wire both. Messaging added two resource types
-and reused the model intact. The next module collects the smaller resources a slice reaches for,
-HTTP, notifications, scheduled work, and the interceptors that wrap them.
+receive, and the runtime reading the manifest to wire both. Messaging added two resource types —
+a durable declaration on the first is configuration, not a third — and reused the model intact.
+The next module collects the smaller resources a slice reaches for, HTTP, notifications,
+scheduled work, and the interceptors that wrap them.
 
 # Module C — Other resources
 

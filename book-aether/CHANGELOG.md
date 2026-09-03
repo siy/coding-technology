@@ -23,6 +23,31 @@ will mark the first edition released to readers.
   application configuration rather than a standalone pattern. The capability itself dates
   from `8d36f0c1c` (pragmatica #773); before it, a slice declaring a qualifier for its own
   type failed at load with `ResourceFactoryNotFound`.
+- **The durable pub-sub tier** (*Part III, Module B, after "What durable depends on"*) — the
+  same `Publisher`/`Subscriber` shape, declared `durability = "durable"` on the topic's config
+  section, backed internally by a replicated stream plus its own dead-letter stream. Delivery is
+  at-least-once per consumer group (a group cursor, five bounded retries, then a
+  group-attributed DLQ at `topic:<address>.dlq`; the source cursor does not advance past a
+  failed DLQ append); duplicate exposure is bounded to the cursor-checkpoint window (≤1000 acks
+  or 500ms per partition); consumer-group identity is version-stable across a blue-green window.
+  The `replicas >= 2` / `min_sync_replicas == replicas` constraint enforced at parse is the same
+  configuration the stream-durability section proves survives an owner kill, not an arbitrary
+  default (`TopicConfigError.outsideProvenDurableConfig`, durable-pubsub-spec §3, v1 until #411).
+  A durable subscriber may opt into a second parameter, `MessageContext context`
+  (`aether/slice-api/.../topic/MessageContext.java`), whose `messageId` is the stable
+  deduplication key — `partition`/`offset` describe only a delivery's position and change on
+  redelivery; the JBCT processor rejects the two-argument shape on a non-durable topic at build
+  time (`jbct/slice-processor/.../MessageContextRule.java:1-60`). No exactly-once claim anywhere
+  in the mechanism. Sourced against `TopicConfig.java`, `TopicConfigTest.java`
+  (`tomlBinding_bindsLegacyDeclaration_asEphemeral` confirms the real field is `topic_name`,
+  snake_case), `DurableTopicSpec.java`, `TopicConfigError.java`, `MessageContext.java`,
+  `ContextualEvent.java`, `guarantees.md` (line 26, row 22a/23, lines 177-193), and
+  `pragmatica/CHANGELOG.md:113-135` ("#386 durable-topic dispatch WIRED") as the primary
+  citation. The multi-node composed path (publish node ≠ dispatch node, failover) is stated
+  exactly as that CHANGELOG entry states it: "design intent — unverified pending forge e2e"; no
+  operator surface yet (no DLQ inspection/redrive route, no lag/stall alarm, no per-topic
+  retention override) — a dead-lettered event is durable data readable only via a direct stream
+  read on `.dlq` today.
 
 ### Fixed
 - **Config inheritance overstated live updates** (*Part I*). The text said an operator's
@@ -89,6 +114,18 @@ will mark the first edition released to readers.
   `examples/ecommerce` already has all three (real `@Sql` `resources.toml` per
   service, wired `routes.toml`, Flyway-style `schema/V001__create_tables.sql`),
   so those rows now say "teach by reading, not building."
+- **Ephemeral pub-sub example used a field that does not exist** (*Part III, Module B*) —
+  `topicName = "order-events"` is not a real key; the bound field, confirmed by
+  `TopicConfigTest.java`'s `tomlBinding_bindsLegacyDeclaration_asEphemeral` test body, is
+  `topic_name` (snake_case). Pragmatica's own `resource-reference` docs carried the same class
+  of bug, fixed under the same ticket (`pragmatica/CHANGELOG.md:113-135`) — not an idiosyncratic
+  mistake in this book alone.
+- **"Pub-sub or stream?" stated the ephemeral tier's at-most-once bound as pub-sub's fixed
+  contract** rather than as the default tier's property, and omitted the durable tier entirely.
+  Now a three-way comparison (ephemeral / durable / stream) with the durable tier's tradeoffs
+  stated alongside the other two. Appendix A's "Pub-sub" section made the same unqualified claim
+  ("Delivery is at-most-once...") and now names the `durability` key, the `MessageContext`
+  second-parameter shape, and points to Module B for the full guarantee.
 
 ## [0.1.0] - 2026-06-20
 

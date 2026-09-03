@@ -140,9 +140,15 @@ public interface Publisher<T> {
 
 Publishing is a parameter (qualifier over `Publisher.class`, section `messaging.<topic>`).
 Receiving is a method: declare a method-level qualifier over `Subscriber.class` with the same
-section, on a method taking exactly the message type and returning `Promise<Unit>`. Delivery is
-at-most-once to the subscribers present at publish time; the returned `Promise` completes when
-every present subscriber's `Promise` settles.
+section, on a method taking exactly the message type and returning `Promise<Unit>`. The section's
+`durability` key selects the tier: `"ephemeral"` (default) delivers at-most-once to the
+subscribers present at publish time, with the returned `Promise` completing when every present
+subscriber's `Promise` settles; `"durable"` backs the topic with a replicated stream and delivers
+at-least-once per consumer group with a group-attributed dead-letter queue, at the cost of
+`partitions`, `replicas`, `min_sync_replicas`, and `retention` keys. A durable subscriber may add
+a second parameter, `MessageContext context`, carrying a publisher-minted `messageId` stable
+across retries and dead-letter hops. Module B covers the full guarantee, including what remains
+unverified for the multi-node path.
 
 ## Streams
 

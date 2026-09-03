@@ -1,7 +1,7 @@
 # Appendix A — API quick reference
 
 The author-facing surface this book teaches, in one place. Every signature below was read from
-Pragmatica source at `release-1.0.0-rc3` head `e123caafb` (2026-08-26); the shapes are stable,
+Pragmatica source at `release-1.0.0-rc3` head `c67664bd9a1` (2026-09-02); the shapes are stable,
 but this is the fastest-moving appendix in the book, so verify against the source of your
 runtime version before you lean on a detail. The core types — `Result`, `Option`, `Promise`,
 their combinators, and the JBCT patterns built on them — are the JBCT book's territory and its

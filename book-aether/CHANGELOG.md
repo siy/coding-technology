@@ -53,6 +53,20 @@ will mark the first edition released to readers.
   last tracked-issue check confirming #349 still open and still bounding the claim
   (`book-aether-meta/VERIFICATION-rc3-e123caafb-delta.md:21`). Re-verification is an rc4
   verification-stream task, not a book task.
+- **Appendix A's pin was six days stale** (`e123caafb`, 2026-08-26, against roughly a dozen
+  substantive tickets landed since). Re-pinned to the resolved `v1.0.0-rc3` tag commit
+  `c67664bd9a104581a54172cf824d7766a5713bcf` (2026-09-02 21:41:37+02:00,
+  `appendix-a-api-reference.md:4`), then re-diffed the appendix's four other source-backed
+  blocks against the new pin: `Cause` (`core/src/main/java/org/pragmatica/lang/Cause.java`),
+  `ResourceQualifier` (`aether/slice-api/.../annotation/ResourceQualifier.java`) plus its five
+  built-in qualifiers (`@Sql`/`@PgSql`/`@Http`/`@Notify`/`@Jooq`, one file each, unchanged),
+  `HttpClient` (`aether/resource/api/.../http/HttpClient.java`), and `StreamAccess`
+  (`aether/slice-api/.../StreamAccess.java`). All four match the taught shapes exactly; the
+  appendix's own scope as a quick-reference summary, not an exhaustive listing, already accounts
+  for what it omits (header-carrying `HttpClient` overloads, `HttpClient.config()`,
+  `StreamAccess`'s internal error/metadata types — all confirmed present at both the old and new
+  pin, so their omission predates this delta rather than being caused by it). The timer sentence
+  above is the only casualty this six-day range produced.
 
 ## [0.1.0] - 2026-06-20
 

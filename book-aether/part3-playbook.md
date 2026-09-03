@@ -1199,9 +1199,12 @@ operation has to stay correct across several.
 > replication, forwarding, and read paths taught below are source-verified at the pinned runtime
 > head, with the crash gate run against a live cluster. Entity timers are durably recorded and
 > fire on a deployed node as of 2026-08-27 (#351); the interval is a documented 1-second constant,
-> not a config knob. One bound remains: the proven durability envelope is the loss and
-> replacement of an owner in a live cluster, and a full-cluster cold restart, which rides the
-> storage work still in flight (#349), has not been re-verified since 2026-08-26. The workflow and saga
+> not a config knob. The proven durability envelope covers both the loss and replacement of an
+> owner in a live cluster and a full cluster restart that keeps the node data directories (#349,
+> re-verified at rc3): the per-partition WAL and the entity's own log are fsynced and replayed at
+> boot. Two things fall outside that envelope: the DHT key-value store, which is in-memory only
+> and does not survive a restart, and an ungraceful power loss of every node or a partition
+> reassigned to a different owner afterward, both still untested. The workflow and saga
 > facades later in the module remain intended design (INVENTED, prototype-gated): pinned against
 > the entity's verified primitives, with no runtime code behind them yet. The manual baseline
 > that opens the module runs now on plain JBCT._
@@ -1506,10 +1509,14 @@ least one peer — so an acknowledged write survives the owner's death, and the 
 exercises exactly that: an owner killed mid-traffic, every acknowledged write still present with
 its exact value after the cluster heals. A log whose fsync fails stops accepting writes rather
 than acknowledging what the disk did not take: fail-stop, visible to the operator, instead of
-silent loss. One bound keeps the claim honest. The proven envelope is the loss and replacement of
-an owner in a live cluster; a full-cluster cold restart, riding the storage work still in flight
-(#349), has not been re-verified since 2026-08-26. The timer half of the surface is recorded and
-firing, as the timers note above says.
+silent loss. The proven envelope, stated with the same rigor as the write above, now covers a
+full cluster restart too: the write survives its owner being replaced and a full cluster restart
+that keeps the node data directories, because the same fsync-before-ack discipline applies to the
+per-partition WAL — replayed in full at boot — and the entity's own log restores its snapshot the
+same way (#349, re-verified at rc3). Two things sit outside that envelope: the DHT key-value
+store, which is in-memory only and loses its contents on any restart, and an ungraceful power
+loss of every node or a partition reassigned to a different owner afterward, both still untested.
+The timer half of the surface is recorded and firing, as the timers note above says.
 Read the two chapters that follow differently: they are facades not yet built, designed against
 the verified entity underneath them.
 

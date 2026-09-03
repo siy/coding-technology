@@ -212,7 +212,8 @@ Declare one qualifier per keyspace over `DurableEntity.class`, section `entities
 The section requires all of `keyspace` (non-blank, no `/`), `partition_count` (≥ 1), and
 `replication_factor` (≥ 1); the write barrier is derived as `min(2, replication_factor)`.
 Failures are the sealed `EntityError` — eleven variants, listed in Module D. Timers are durably
-recorded but not yet fired on a deployed node (#351) at this pin.
+recorded and fire on a deployed node as of 2026-08-27 (#351); the check interval is a documented
+1-second constant, not a config knob.
 
 ## Scheduled work
 

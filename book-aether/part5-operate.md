@@ -172,6 +172,22 @@ you're talking to, no restart required. `POST /api/alerts/inject` and `POST
 on its own: injecting a synthetic alert to test a response path, or forcing a controller
 evaluation cycle instead of waiting for its next tick.
 
+One entry in that surface checks a correctness invariant rather than offering a lever: `GET
+/api/storage/retention` (`aether storage retention` from the CLI) walks every stream partition on
+the node it's asked and reports, per partition, the WAL's live counters, the sealed-segment bound,
+the entity checkpoint floor, and a joint verdict across the three. The invariant is narrower than
+it sounds: an entity partition with a committed checkpoint must have some local source — WAL,
+in-memory ring, or sealed segment — starting at or before that checkpoint plus one. That is the
+necessary half of recoverability, not the sufficient half; a clean verdict means no source starts
+too late, not that every record in between is actually present. The three sources are read one
+after another rather than as one atomic snapshot, which is the genuine reason the periodic watch
+requires two consecutive bad reads, not one, before it pages a `CRITICAL` `retention-invariant`
+alert (`#634` items 3+4, `RetentionRoutes.java`) — and that periodic half runs only while a
+dashboard client is connected, so an unwatched cluster gets the invariant checked when you call the
+endpoint yourself, not as a standing background guarantee. The same response carries
+`wal.failStopped`: a WAL that has stopped accepting writes after a failed fsync shows up here
+before it shows up as a missing event.
+
 ## The majority rule, as a design force
 
 The last question is how much failure the cluster absorbs, and — the senior form of the question —

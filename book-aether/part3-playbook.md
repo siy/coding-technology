@@ -713,9 +713,23 @@ recovers its log, but not safe against losing the node's disk and not safe again
 Lose that node and its single copy goes with it: a consumer reads empty until the node returns. For a
 stream whose whole point is that no event is lost, one disk is not enough.
 
+One failure sits earlier than any of this: the node's WAL directory itself. A node that finds it
+cannot write there refuses to start, rather than come up and stream non-durably behind a single
+warning buried in the log — the same fail-stop-at-boot idiom the cluster-name and TLS checks use
+(`#634` item 2, `AetherNode.java:875-987`, `verifyWalBootable`/`decideWalAvailability`, wired
+through `Main`'s boot sequence). A deployment that genuinely wants best-effort streaming over no
+streaming at all opts in explicitly with `-Daether.allowNonDurableStreams=true` (or
+`AETHER_ALLOW_NON_DURABLE_STREAMS=true`); a node constructed directly rather than through `Main` —
+Forge, a test, an embedded runtime — bypasses this check and keeps the old warn-and-degrade
+behavior, since it is not the deployment the guard protects.
+
 Durability across the loss of a node is what `min-sync-replicas` buys. Set it to `2` or more and
-every write waits for at least one copy beyond the owner, so a caught-up replica always exists. Then
-losing the owner is survivable for reads: after the owner is killed, a reader still gets the complete
+every write waits for at least one copy beyond the owner, so a caught-up replica always exists —
+and that copy is fsynced on the replica before its ack counts, the same bar the owner clears, so a
+power loss on owner and replica together inside an unsynced window cannot silently erase a write
+the caller was told reached the configured replication factor (`#634` item 1,
+`ReplicationReceiveHandler.java:92-93,255-257`). Then losing the owner is survivable for reads:
+after the owner is killed, a reader still gets the complete
 prior history and the ordered tail, nothing dropped and nothing reordered. That is proven end to
 end, an owner killed mid-stream and every earlier event still served in offset order alongside the
 events that follow.

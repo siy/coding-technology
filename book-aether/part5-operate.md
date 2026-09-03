@@ -148,13 +148,29 @@ per-method latency percentiles — p50, p95, p99 — and a slow-invocation list,
 (with `/api/metrics/prometheus` for scraping), `/api/invocations/metrics`, and
 `/api/invocations/metrics/slow`. Per-method observability depth is tunable at runtime for a single
 `(slice, method)` pair through `/api/observability/config` and `/api/observability/depth`, so you
-turn detail up on the one method you are chasing and leave the rest cheap.
+turn detail up on the one method you are chasing and leave the rest cheap. Coordination load
+itself reaches the same wire: `GET /api/v1/metrics/comprehensive` carries a `consensus` block of
+live vote-round and fast-path totals, mirrored as `consensus_*` Prometheus gauges on the same
+scrape endpoint (#674), so the majority rule the next section names is not a black box from the
+outside either.
 
 Why the automatic correlation is the load-bearing piece: because the id is bound by the framework
 and propagated through the `Promise` context and the invocation fabric, a request stays traceable
 across every slice and node it touched with no application code carrying it. The observability is
 the runtime's, so it is uniform across your services instead of as good as each team remembered to
 make it.
+
+The management API is the wider operator surface too, beyond tracing and metrics. `GET/POST
+/api/ab-tests` (plus `/ab-tests/metrics`, `/ab-tests/create`, `/ab-tests/conclude`) drive a
+progressive rollout as an experiment with its own metrics rather than a bare canary percentage.
+`POST /api/cluster/migrate`, with a `/cluster/migrate/plan` dry run, relocates slice instances
+between nodes on request. `GET /api/dht/replication-map` reads the current partition-to-node
+assignment underneath entities and streams, the thing scaling and failover actually move. `GET`,
+`POST`, and `DELETE` on `/api/logging/levels` read, set, or reset a logger's level on the node
+you're talking to, no restart required. `POST /api/alerts/inject` and `POST
+/api/controller/evaluate` are the operator's own hooks into the same machinery the cluster runs
+on its own: injecting a synthetic alert to test a response path, or forcing a controller
+evaluation cycle instead of waiting for its next tick.
 
 ## The majority rule, as a design force
 

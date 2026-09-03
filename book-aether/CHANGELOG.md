@@ -37,8 +37,9 @@ will mark the first edition released to readers.
   (`aether/slice-api/.../topic/MessageContext.java`), whose `messageId` is the stable
   deduplication key — `partition`/`offset` describe only a delivery's position and change on
   redelivery; the JBCT processor rejects the two-argument shape on a non-durable topic at build
-  time (`jbct/slice-processor/.../MessageContextRule.java:1-60`). No exactly-once claim anywhere
-  in the mechanism. Sourced against `TopicConfig.java`, `TopicConfigTest.java`
+  time (`jbct/slice-processor/.../MessageContextRule.java:1-60`). A redelivered message carries
+  the same `messageId` as the original; the handler dedupes on it, not the runtime. Sourced
+  against `TopicConfig.java`, `TopicConfigTest.java`
   (`tomlBinding_bindsLegacyDeclaration_asEphemeral` confirms the real field is `topic_name`,
   snake_case), `DurableTopicSpec.java`, `TopicConfigError.java`, `MessageContext.java`,
   `ContextualEvent.java`, `guarantees.md` (line 26, row 22a/23, lines 177-193), and

@@ -804,9 +804,9 @@ so using either to de-duplicate reintroduces the duplicates the id exists to cat
 rejects the two-argument shape on a topic that is not durable, there being no envelope to build a
 context from.
 
-None of this is exactly-once anywhere in the mechanism. The strongest claim the runtime makes is
-at-least-once with de-duplication left to the handler, the same discipline Module D asks of any
-at-least-once path.
+A redelivered message carries the same `messageId` as the original; the handler is what dedupes
+on it, not the runtime. The strongest claim the runtime makes is at-least-once with
+de-duplication left to the handler, the same discipline Module D asks of any at-least-once path.
 
 **What is still open.** The guarantee above is verified single-node: publish and dispatch proven
 end to end on one node, and subscriber registration is crash-durable regardless of tier, a

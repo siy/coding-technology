@@ -1104,11 +1104,11 @@ operation has to stay correct across several.
 > _Status: split by layer. The durable entity at the module's core is shipped: the resource is on
 > a deployed node's classpath, a slice injects it like any other resource, and the write,
 > replication, forwarding, and read paths taught below are source-verified at the pinned runtime
-> head, with the crash gate run against a live cluster. Two bounds hold. Entity timers are
-> durably recorded but the driver that fires them is not yet wired into a deployed node
-> (pragmatica #351), so a scheduled timer never fires in production today; and the proven
-> durability envelope is the loss and replacement of an owner in a live cluster, with a
-> full-cluster cold restart riding the storage work still in flight (#349). The workflow and saga
+> head, with the crash gate run against a live cluster. Entity timers are durably recorded and
+> fire on a deployed node as of 2026-08-27 (#351); the interval is a documented 1-second constant,
+> not a config knob. One bound remains: the proven durability envelope is the loss and
+> replacement of an owner in a live cluster, and a full-cluster cold restart, which rides the
+> storage work still in flight (#349), has not been re-verified since 2026-08-26. The workflow and saga
 > facades later in the module remain intended design (INVENTED, prototype-gated): pinned against
 > the entity's verified primitives, with no runtime code behind them yet. The manual baseline
 > that opens the module runs now on plain JBCT._
@@ -1394,12 +1394,12 @@ the round, and only then serves, so the read reflects every write acknowledged b
 The price is a consensus round per read. Default to the bounded-stale form and escalate per call,
 so the code shows exactly which reads paid for certainty.
 
-Timers need one honest sentence more than the interface suggests. `scheduleTimer` and
+Timers need one honest sentence about their bound, not their existence. `scheduleTimer` and
 `cancelTimer` work against the entity's log — a pending timer is a durable record, scheduled at
-an absolute instant, surviving handover and restart like any other state — but the driver that
-fires due timers is not yet wired into a deployed node, so today a scheduled timer is remembered
-and never fires (pragmatica #351). Design with them where the design wants them; do not stake a
-production behavior on a fire until the driver lands.
+an absolute instant, surviving handover and restart like any other state — and the driver that
+fires due timers is wired into a deployed node as of 2026-08-27 (pragmatica #351): a scheduled
+timer fires there, at or after its instant, never before. The check runs on a documented
+1-second constant, not a config knob, so do not design around a finer grain than that.
 
 One observation pays off immediately. A fenced single writer per key is a lease. If a slice needs a
 distributed lock, a leader for some resource, or a guarantee that only one worker touches an account
@@ -1413,9 +1413,10 @@ least one peer — so an acknowledged write survives the owner's death, and the 
 exercises exactly that: an owner killed mid-traffic, every acknowledged write still present with
 its exact value after the cluster heals. A log whose fsync fails stops accepting writes rather
 than acknowledging what the disk did not take: fail-stop, visible to the operator, instead of
-silent loss. Two bounds keep the claim honest. The proven envelope is the loss and replacement of
-an owner in a live cluster; a full-cluster cold restart rides the storage work still in flight
-(#349). And the timer half of the surface is recorded but inert, as the timers note above says.
+silent loss. One bound keeps the claim honest. The proven envelope is the loss and replacement of
+an owner in a live cluster; a full-cluster cold restart, riding the storage work still in flight
+(#349), has not been re-verified since 2026-08-26. The timer half of the surface is recorded and
+firing, as the timers note above says.
 Read the two chapters that follow differently: they are facades not yet built, designed against
 the verified entity underneath them.
 
@@ -1675,8 +1676,8 @@ cover monitoring and operator recovery.
 A closing note on what is real today, because this module asks the reader to hold two registers
 at once. The manual saga runs now: plain JBCT over resources you already have. The entity is real
 too — injectable in a deployed slice, its writes fenced, replicated, and fsynced before they
-acknowledge, its reads served replica-aware, with its timers durably recorded but not yet fired
-(#351). The workflow and the saga above it are the module's intended design: pinned against those
+acknowledge, its reads served replica-aware, with its timers durably recorded and firing on
+schedule (#351). The workflow and the saga above it are the module's intended design: pinned against those
 verified primitives, with no runtime code behind them yet. Write the manual baseline when you
 need compensation now, reach for the entity directly when you need durable per-key state now, and
 verify the workflow and saga surfaces against the runtime before you stake an order on them.

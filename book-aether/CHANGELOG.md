@@ -59,6 +59,48 @@ will mark the first edition released to readers.
   now reaches `GET /api/v1/metrics/comprehensive`'s `consensus` block and matching `consensus_*`
   Prometheus gauges, landed 2026-08-28 per `pragmatica/CHANGELOG.md:208-234` (three previously-empty
   vote recorders wired, the comprehensive DTO carrying the block, Prometheus exposing it).
+- **Four of the seven WAL/AHSE operational-seam corners (`#634`)** — CTO ruling 2026-09-03: do
+  `#634` now, hold Module F (a full module from a blank scaffold, gated on rulings still moving —
+  #321 SemVer, #793 stable component-facing surface, filed the same day — and already sized by the
+  gap inventory's own §5 as a dedicated pass). Items 5 (deferred, double-gated on #349's DD-8-1 and
+  a pending BSL→Apache re-licensing question, owner ruling "both gates stand") and 6 (product-doc
+  housekeeping) are not book-relevant and are out of scope here. All four items below verified
+  directly against `v1.0.0-rc3` source, not taken on the ticket's or the product CHANGELOG's word.
+  - *Item 1, replica fsync-before-ack* (*Part III Module B, "What durable depends on"*,
+    `part3-playbook.md:727-731`) — a min-sync replica's copy is now fsynced before its ack counts,
+    the same bar the owner clears, closing the window where a power loss on owner and replica
+    together could have silently erased a write the caller was told reached the configured
+    replication factor (`ReplicationReceiveHandler.java:92-93,255-257`).
+  - *Item 2, boot refusal on an unwritable WAL dir* (*same section*, `part3-playbook.md:716-724`) —
+    a node that cannot write its WAL directory now refuses to start, the same `verify* ->
+    abortBoot` idiom as the cluster-name and TLS gates, instead of silently degrading to
+    non-durable streaming behind one WARN; opt out explicitly with
+    `-Daether.allowNonDurableStreams=true` / `AETHER_ALLOW_NON_DURABLE_STREAMS=true`
+    (`AetherNode.java:875-987`, `verifyWalBootable`/`decideWalAvailability`; `Main.java:234-238`;
+    `WalAvailabilityGateTest.java`). A node constructed directly — Forge, a test, an embedded
+    runtime — bypasses the check and keeps the old warn-and-degrade behavior.
+  - *Items 3+4, the tri-floor retention operator surface* (*Part V, "Reading what the cluster
+    reports"*, `part5-operate.md:175-189`) — `GET /api/storage/retention`
+    (`ManagementRoute.java:153`) and `aether storage retention` (`StorageCommand.java:15`,
+    `StorageRetentionCommand.java`) report, per partition, whether the WAL, sealed-segment index,
+    and entity checkpoint agree that no local source starts later than checkpoint+1 — necessary,
+    not sufficient, for recoverability, because the three sources are read non-atomically. A
+    periodic watch debounces two consecutive bad reads before paging a `CRITICAL`
+    `retention-invariant` alert, and that periodic half runs only while a dashboard client is
+    connected, stated in the book as not a standing background guarantee
+    (`RetentionRoutes.java:1-90`). The response also carries `wal.failStopped`.
+  - *Item 7, WAL fsync-failure injection + crash-mid-compaction* (*Part IV, "Forge: a cluster on
+    your laptop"*, `part4-testing.md:98-111`) — the WAL used to retry a failed fsync, which risked
+    reporting durability over a hole the OS had silently dropped; it now fail-stops, refusing every
+    later append and truncate with a typed `WalError.FailStopped` until the node restarts, surfaced
+    as `wal.failStopped` (`PartitionWalTest.java:308-473`, `FsyncFailure`, 7 tests). A second suite
+    constructs the exact on-disk state a SIGKILL would leave at each point of a compaction's
+    temp-and-rename dance and proves recovery from every one of those states
+    (`PartitionWalTest.java:478-559`, `CrashMidCompaction`, 4 tests); rename now uses `ATOMIC_MOVE`
+    (`PartitionWal.java:401`). Framed in the book as the unit-level technique that closes the
+    compaction half of the torn-write gap Forge's single-JVM chaos controls cannot reach on their
+    own — not as a substitute for a real crash-kill, which the same section already says waits for
+    separate machines.
 
 ### Fixed
 - **Config inheritance overstated live updates** (*Part I*). The text said an operator's

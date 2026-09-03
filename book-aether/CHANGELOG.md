@@ -89,6 +89,26 @@ will mark the first edition released to readers.
   last tracked-issue check confirming #349 still open and still bounding the claim
   (`book-aether-meta/VERIFICATION-rc3-e123caafb-delta.md:21`). Re-verification is an rc4
   verification-stream task, not a book task.
+- **Superseded by evidence, same day: `#349` is now re-verified, read-only, at the rc3 tag**
+  (`part3-playbook.md:1202-1204` and `:1512-1516` — shifted from the two sites above by the
+  durable-pub-sub and management-API insertions). The previous bullet's "has not been
+  re-verified since 2026-08-26" framing no longer holds. Independently confirmed against
+  `v1.0.0-rc3` source — not taken on the strength of the relayed ticket trace alone — that
+  stream data and entity state survive a full-cluster restart on one condition: every node
+  returns with its own data directory. The per-partition WAL is fsync-gated before ack and
+  replayed at boot (`StreamPartitionManager.java:1179-1184` fsync gate, `:2719` replay);
+  segments layer memory over `LocalDiskTier` under a per-node `streamDataDir`
+  (`StorageFactory.java:128-138`); metadata is snapshotted and restored at boot
+  (`StorageFactory.java:171-173`). Three Heavy-tagged, in-JVM `EmberCluster` tests exercise
+  exactly this — stop every node, keep the data dirs, restart, read back:
+  `DurableEntityTimerDurabilityTest.java:234`, `StreamCrashDurabilityTest.java:157`,
+  `MultiPartitionCrashDurabilityTest.java:149`. What does not survive: the DHT key-value store
+  (`MemoryStorageEngine`, `AetherNode.java:461`, in-memory only); fenced entity state no longer
+  lives there, it moved to the entity log (`AetherNode.java:6050-6055`). Untested: an
+  ungraceful power loss of every node, and a partition reassigned to a different owner after
+  restart. `#349` stays open for the DHT KV gap and a container-level (not in-JVM) restart
+  test. Published wording: "survives its owner being replaced and a full cluster restart that
+  keeps the node data directories."
 - **Appendix A's pin was six days stale** (`e123caafb`, 2026-08-26, against roughly a dozen
   substantive tickets landed since). Re-pinned to the resolved `v1.0.0-rc3` tag commit
   `c67664bd9a104581a54172cf824d7766a5713bcf` (2026-09-02 21:41:37+02:00,

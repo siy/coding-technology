@@ -51,6 +51,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Zone verb vocabulary** (`skills/jbct/SKILL.md`) — the skill pointed at the book for the full tables and carried a divergent verb list of its own; the tables are now generated from `book/basic-patterns.md`.
 
 ### Fixed
+- **`BOOK-VERSIONING.md` says what a defect correction costs** — MAJOR's "content readers relied on being
+  removed or replaced" could be read to cover any corrected prescription, which is how the 2026-09-05 review
+  corrections were first misclassified as two paired majors. The clause now states that correcting a defect is
+  a PATCH even when the defect was a prescription, and cites *PFD*'s own precedent: the locking → guarded-field
+  correction replaced a prescription readers had followed and shipped as 2.4.2. Owner ruling, 2026-09-05.
+
 - **The site's evidence claim now matches the book's own grading** (`website/templates/front-door.html`,
   `website/content/architecture-synthesis.md`) — both said four architectures were "derived blind", while
   *Architecture Synthesis* grades those same four runs itself: one executed by operators quarantined from the

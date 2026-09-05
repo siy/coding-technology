@@ -112,7 +112,7 @@ The methodology's vocabulary, defined once. These terms are the shared spine the
 
 **Sequencer.** The pattern for steps in order, each feeding the next, short-circuiting on the first failure. (The patterns.)
 
-**Shared primitive.** What actually couples two processes — an id, a state enum, the value type of a field they both touch — each of which is a word the business actually says. Two processes writing different fields of one row are not coupled by co-location. (Where data comes from.)
+**Shared primitive.** What actually couples two processes — an id, a state enum, the value type of a field they both touch — each of which is a word the business actually says. Two processes writing different fields of one row are not coupled *in the design* by co-location. They may still contend in the store, since row-level locking and whole-row versioning are properties of the storage engine rather than of the ownership split; keeping them independent at runtime is a storage-layout obligation, not a consequence of the split. (Where data comes from.)
 
 **The patterns.** The sufficient set of composition primitives, the same six at every altitude: Leaf, Sequencer, Fork-Join, Condition, Iteration, Aspects. (Foundations.)
 

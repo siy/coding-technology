@@ -1,6 +1,6 @@
 ---
 tags: [java, architecture, softwaredesign, communication]
-canonical_url: https://pragmatica.dev/patterns-as-business-vocabulary
+canonical_url: https://pragmatica.dev/articles/patterns-as-business-vocabulary
 description: How structural patterns create a shared language between developers and domain experts
 published: true
 ---

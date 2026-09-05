@@ -56,6 +56,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   corrections were first misclassified as two paired majors. The clause now states that correcting a defect is
   a PATCH even when the defect was a prescription, and cites *PFD*'s own precedent: the locking → guarded-field
   correction replaced a prescription readers had followed and shipped as 2.4.2. Owner ruling, 2026-09-05.
+- **A published article claimed an upgrade capability the runtime does not provide, and named commands that no
+  longer exist** (`articles/aether-let-java-be-java.md`, `articles/jbct-aether-series/00-aether-let-java-be-java.md`)
+  — *Pragmatica Aether: Let Java Be Java*, live on the site and dev.to since 2026-02-13, printed four
+  `aether update` commands and promised "instant rollback with one command" with traffic that "immediately shifts
+  back". The commands were real when the article was published; pragmatica's changelog records `aether update`
+  being replaced by `aether deploy --canary` and then removed, and the command appears nowhere in `aether/docs`,
+  so only the article carried it. The passage now uses the `aether deploy` forms, replaces the instant-rollback
+  sentences with the mechanism the Aether maintainer verified at source (per-node weighted selection over the
+  endpoints each node currently knows, not atomic across the cluster and not instantaneous), states as unverified
+  whether traffic then divides in the requested proportion, and cites pragmatica#291 for the rolling-update API
+  not existing server-side. A dated note records what changed underneath the section, because nothing was wrong
+  when written. Verifiers: the Aether maintainer for the mechanism and the ticket; this session for the changelog
+  removal notice, the `DeployCommand` surface, and the docs being clean. The dev.to copy (3254469) is corrected by
+  `PUT`; the Medium copy exists and can only be edited by hand.
 
 - **The site's evidence claim now matches the book's own grading** (`website/templates/front-door.html`,
   `website/content/architecture-synthesis.md`) — both said four architectures were "derived blind", while

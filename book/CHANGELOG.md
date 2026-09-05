@@ -7,6 +7,29 @@ All notable changes to the JBCT book, newest first. Format:
 Earlier history (1.x–2.x) predates per-book changelogs and lives in the
 repository root `CHANGELOG.md`.
 
+## [Unreleased]
+
+### Fixed
+- **Coverage prescriptions removed** (*Testing Philosophy*, *Testing in Practice*). The philosophy chapter
+  stated that "100% coverage" is the wrong target and, twenty-two lines earlier, headed its first testing
+  layer "Value Objects: Unit Tests (100% coverage)"; the practice chapter still prescribed 100% for value
+  objects and complex leaves and 90%+ for use cases, in its section headings, its two rationale paragraphs
+  and its key takeaways. Both chapters now name the obligation instead of a percentage: the decision space
+  for value objects, the deciding branches for complex leaves, and the four composition obligations for use
+  cases, which the practice chapter already carried in its own table. Reported by an external review of the
+  site, 2026-09-05; both chapters render as course lessons, so the contradiction was live on pragmatica.dev.
+- **"Exactly one of four types" restated as four semantic shapes** (*The Four Return Types*). The chapter
+  opened with "exactly one of four types. Not 'usually' or 'preferably'—exactly one, always" and later
+  permitted `Result<Option<T>>` and `Promise<Option<T>>` and gave `void` a defined role at the edges. The
+  opening now names the four shapes, the single permitted composition where fallibility and optionality are
+  independent, and `void` as distinct from `Result<Unit>`. Same review.
+- **The five criteria no longer claim measurement** (*Introduction*). The section called them "objective"
+  and "measurable", said "we prove it", and summed per-criterion marks to a total of +6. No scale,
+  procedure, calibration or unit was ever defined, so the arithmetic was ordinal notation presented as
+  measurement. The criteria are now named dimensions with stated directions, the marks are stated as
+  ordinal, the total is gone, and a comparison that is close on every dimension is allowed to say so. The
+  per-pattern marks elsewhere in the book are unchanged and are governed by this definition. Same review.
+
 ## [5.0.0] - 2026-08-28
 
 The fifth edition. Published editions jump from 4.8.0 directly to 5.0.0: the 4.9.0

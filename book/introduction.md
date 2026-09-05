@@ -63,7 +63,7 @@ The benefits compound:
 
 ## The Five Evaluation Criteria
 
-Before diving into patterns, understand how we evaluate every decision in JBCT. Traditional "best practices" rely on subjective "readability" - but what does that mean? JBCT uses five objective criteria:
+Before diving into patterns, understand how we evaluate every decision in JBCT. Traditional "best practices" rely on subjective "readability" - but what does that mean? JBCT uses five named criteria:
 
 1. **Mental Overhead** - "Don't forget to..." and "Keep in mind..." items you must track. Lower is better.
 
@@ -75,7 +75,7 @@ Before diving into patterns, understand how we evaluate every decision in JBCT. 
 
 5. **Complexity** - Number of elements, connections, and hidden coupling. Fewer moving parts are better.
 
-These aren't preferences - they're measurable. When we say "don't use business exceptions," we prove it:
+These are not preferences. They are not measurements either, and the difference matters: each criterion is a named dimension with a stated direction, and the marks below are ordinal notation for *better on this dimension*, not quantities. They share no unit, so they are not summed. What the rubric buys is that a disagreement has to name a dimension and a direction instead of resting on taste, and that a comparison which is close on every dimension is allowed to say so. When we say "don't use business exceptions," this is the comparison:
 - **Mental Overhead**: Checked exceptions pollute signatures; unchecked are invisible (+2 for Result)
 - **Reliability**: Exceptions bypass type checker; Result makes failures explicit (+1 for Result)
 - **Complexity**: Exception hierarchies create coupling (+1 for Result)
@@ -110,10 +110,9 @@ These aren't preferences - they're measurable. When we say "don't use business e
    - Explicit: Control flow is visible
    - **Score: +1 for explicit**
 
-**Verdict: Use explicit transaction management (Aspect pattern)**
-- Total: +6 points for explicit
+**Verdict: Use explicit transaction management (Aspect pattern)** — better on four dimensions, neutral on the fifth, and worse on none. A verdict is that shape or it is not a verdict: where the dimensions genuinely disagree, the rubric reports the disagreement rather than resolving it by arithmetic.
 
-This is how every decision in JBCT is made—not based on opinion, but on measurable impact across five dimensions.
+This is how every decision in JBCT is argued—not from opinion, but by naming which dimensions move and in which direction.
 
 ---
 

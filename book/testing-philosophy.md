@@ -82,7 +82,7 @@ Your use case is a composition of steps. Test the composition. Stub only at adap
 
 ### The Three Testing Layers
 
-**1. Value Objects: Unit Tests (100% coverage)**
+**1. Value Objects: Unit Tests Over the Decision Space**
 
 Value objects are pure, isolated, and enforce invariants. Test them comprehensively:
 

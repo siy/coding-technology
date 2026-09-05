@@ -51,6 +51,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Zone verb vocabulary** (`skills/jbct/SKILL.md`) — the skill pointed at the book for the full tables and carried a divergent verb list of its own; the tables are now generated from `book/basic-patterns.md`.
 
 ### Fixed
+- **The site's evidence claim now matches the book's own grading** (`website/templates/front-door.html`,
+  `website/content/architecture-synthesis.md`) — both said four architectures were "derived blind", while
+  *Architecture Synthesis* grades those same four runs itself: one executed by operators quarantined from the
+  outcome, two registered in advance by an operator who was not, and one drawn from memory of the same public
+  sources it would be graded against. The book was more careful than the pages selling it. Both now state the
+  protocol and the unequal insulation. Reported by an external review of the site, 2026-09-05.
+- **`/method/` stopped saying the free courses are planned** (`website/content/method.md`) — both course
+  editions have been live and linked from the front door for weeks; the hub page still told readers to buy the
+  book "until each one is built". It now links them. Same review; also recorded in the roadmap-conference
+  inventory of 2026-09-04.
+
 - **Article corrections: dead draft canonicals and an unearned availability claim** (`articles/*.md`, `articles/fail-safe-legacy.md`, `articles/jbct-aether-series/04-monolith-deploys.md`) — eight unpublished drafts (`errors-as-values`, `four-return-types`, `parse-dont-validate`, `result-option-pattern`, `value-objects-cookbook`, `legacy-adoption-strategy`, `single-level-of-abstraction`, `patterns-as-business-vocabulary`) carried `canonical_url: https://pragmatica.dev/<slug>`, a root path that returns 404; repointed to `/articles/<slug>` so a future cross-post cannot canonicalise to a dead page (the page itself still has to exist first, per the pipeline order). *Fail-Safe Your Legacy Java in One Sprint* (live on the site and dev.to since 2026-01-27) stated that Aether "provides exactly this guarantee" and that "the same request, processed by any available node, produc[es] the same result"; rewritten to name the mechanism and its bound — a cluster of at least three nodes advancing shared state by majority consensus, requests routed to live nodes, capacity lost below half, progress on shared state stopped at half or more, and "same answer from any node" holding only for reads that go through the consensus path — in both the site source and the series copy, and pushed to the dev.to copy by `PUT`. The dev.to copy of *Software's Second Free Lunch* (article 4206323) declared its canonical as `.../softwares-second-free-lunch)` with a trailing parenthesis; corrected by `PUT`. Found during the 2026-09-04 roadmap-conference inventory.
 
 - **The book contradicted itself on test naming** — `book/basic-patterns.md` still taught the retired three-segment `methodName_outcome_condition` while `systematic-application.md` and `chapter-summaries.md` taught the 4.3.1 `method_[scenario_]expectation`. The 4.3.1 change had missed this section, which is where the skill's copy of the old rule came from.

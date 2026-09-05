@@ -134,9 +134,9 @@ usecase/
 
 ## What to Test Where
 
-### Coverage Criteria by Component Type
+### Test Obligations by Component Type
 
-**1. Value Objects: 100% Coverage (Unit Tests)**
+**1. Value Objects: The Decision Space (Unit Tests)**
 
 ```java
 class EmailTest {
@@ -148,9 +148,13 @@ class EmailTest {
 }
 ```
 
-**Why 100%?** Value objects are pure, isolated, easy to test. No excuse for gaps.
+**Why here?** Value objects are pure and isolated, so the only question is the space the factory
+decides over. Enumerable spaces get examples, finite grids get a table, unbounded spaces get the
+invariant stated as the assertion -- the rule from [Testing Philosophy](testing-philosophy.md).
+The five tests above are the enumerable case; a line-coverage number would report the same figure
+for two of them.
 
-**2. Business Leaves: 100% if Complex, Skip if Trivial (Unit Tests)**
+**2. Business Leaves: Test if Complex, Skip if Trivial (Unit Tests)**
 
 **Complex leaf (write unit tests):**
 ```java
@@ -206,7 +210,7 @@ dependency -- and once it is a parameter like any other step, both branches are 
 at the composition and the guideline's original answer turns out to be right after all.
 The test you could not write is how you found the hidden dependency.
 
-**3. Use Cases: 90%+ Coverage (Integration Test Vectors)**
+**3. Use Cases: The Four Obligations (Integration Test Vectors)**
 
 ```java
 class RegisterUserTest {
@@ -226,7 +230,8 @@ class RegisterUserTest {
 }
 ```
 
-**Why 90%+?** Use cases are the behavior. Incomplete coverage = incomplete understanding.
+**Why here?** Use cases are the behavior, and the obligations below are what a use case owes --
+not a percentage of its lines.
 
 **What the number should be made of.** A percentage says how much was executed, not whether the
 right things were established. Walk the composition chain and check off four items, which is the
@@ -582,9 +587,9 @@ void forkJoin_completesAllBranches() {
 ## Key Takeaways
 
 1. **Organize by scenario** - Nested classes, parameterized tests
-2. **Value objects: 100%** - Unit tests, always
-3. **Complex leaves: 100%** - Unit tests if 3+ branches
-4. **Use cases: 90%+** - Integration tests with stubbed adapters
+2. **Value objects: the decision space** - Unit tests, shaped by the space the factory decides over
+3. **Complex leaves: every branch that decides** - Unit tests if 3+ branches
+4. **Use cases: the four obligations** - Success, validation, one per outward step, one per absorbed failure
 5. **Adapters: Contract tests** - Success + error modes only
 6. **Migrate incrementally** - Add integration first, then remove redundant unit tests
 

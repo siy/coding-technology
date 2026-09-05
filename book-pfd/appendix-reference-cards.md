@@ -68,7 +68,7 @@ Asynchrony **emerges from leaves** — any operation touching I/O is a `Promise`
 
 **The cohesion test, both directions at once:** does this one change force ***all*** of these, and ***only*** these, to change? (Completeness · Purity.)
 
-**Driver attribution** — attribute each use case to its driver once, then the use cases sharing a driver fall out as the groups. Turns a quadratic similarity search into a **quasi-linear partition**.
+**Driver attribution** — attribute each use case to its driver once, then the use cases sharing a driver fall out as the groups. Once the drivers are attributed — which is elicitation, and human — keeping the decomposition cohesive is a **quasi-linear partition**.
 
 **The register** — a plain table, use case against driver. Triple duty: the grouping itself; the completeness-and-purity checklist; and what version-control history can confirm. A use case in two columns is a sighting, not an error — an adapter or a boundary.
 

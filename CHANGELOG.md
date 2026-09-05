@@ -56,7 +56,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   *Architecture Synthesis* grades those same four runs itself: one executed by operators quarantined from the
   outcome, two registered in advance by an operator who was not, and one drawn from memory of the same public
   sources it would be graded against. The book was more careful than the pages selling it. Both now state the
-  protocol and the unequal insulation. Reported by an external review of the site, 2026-09-05.
+  protocol and the unequal insulation. Reported by a review of the site handed to this session, 2026-09-05.
 - **`/method/` stopped saying the free courses are planned** (`website/content/method.md`) — both course
   editions have been live and linked from the front door for weeks; the hub page still told readers to buy the
   book "until each one is built". It now links them. Same review; also recorded in the roadmap-conference

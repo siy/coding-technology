@@ -1,6 +1,6 @@
 ---
 tags: [java, ddd, designpatterns, cleancode]
-canonical_url: https://pragmatica.dev/value-objects-cookbook
+canonical_url: https://pragmatica.dev/articles/value-objects-cookbook
 description: Practical patterns for building value objects with validation, normalization, and cross-field rules
 published: true
 ---

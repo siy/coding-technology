@@ -1,6 +1,6 @@
 ---
 tags: [java, functionalprogramming, types, validation]
-canonical_url: https://pragmatica.dev/result-option-pattern
+canonical_url: https://pragmatica.dev/articles/result-option-pattern
 description: Understanding when to use T, Option, Result, and Result<Option> for precise domain modeling
 published: true
 ---

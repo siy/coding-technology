@@ -28,6 +28,16 @@ For a book, SemVer reads as:
 - **MINOR** — substantial additive change: a new chapter, section, or concept.
 - **PATCH** — corrections: typos, clarifications, fixes that add no new concept.
 
+**Correcting a defect is a PATCH, even when the defect was a prescription.** MAJOR's "content
+readers relied on" means content the book still stands behind and chose to replace, which is why
+that line is scoped to a new edition. Removing a claim the book had already contradicted
+elsewhere, or that was never true, changes no teaching and introduces no concept. The precedent is
+in *PFD*'s own history: the locking → guarded-field correction replaced a prescription readers had
+followed and shipped as **2.4.2**. It was cited later among the changes that made 3.0.0 an edition,
+but on its own it was a patch, and the edition's majorness came from the accumulation and the new
+module. (Owner ruling, 2026-09-05, after a session read that citation backwards and classified a
+set of pure corrections as majors.)
+
 ## Release status is the major version
 
 - `0.x` — pre-GA: draft / preview, not yet released to readers as a finished

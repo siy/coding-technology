@@ -1,6 +1,6 @@
 ---
 tags: [java, legacy, migration, architecture]
-canonical_url: https://pragmatica.dev/legacy-adoption-strategy
+canonical_url: https://pragmatica.dev/articles/legacy-adoption-strategy
 description: A practical guide to adopting modern patterns in existing codebases without costly rewrites
 published: true
 ---

@@ -1,6 +1,6 @@
 ---
 tags: [java, cleancode, refactoring, functionalprogramming]
-canonical_url: https://pragmatica.dev/single-level-of-abstraction
+canonical_url: https://pragmatica.dev/articles/single-level-of-abstraction
 description: Why complex logic should never live in lambdas, and how naming everything improves code clarity
 published: true
 ---

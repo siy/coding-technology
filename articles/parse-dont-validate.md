@@ -1,6 +1,6 @@
 ---
 tags: [java, validation, designpatterns, cleancode]
-canonical_url: https://pragmatica.dev/parse-dont-validate
+canonical_url: https://pragmatica.dev/articles/parse-dont-validate
 description: Making invalid states unrepresentable through validation at construction time
 published: true
 ---

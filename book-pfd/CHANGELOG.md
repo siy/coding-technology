@@ -18,7 +18,7 @@ readers, and `1.x` are its maintenance and expansion releases.
   conflict rule, and a halt on contradiction. The section now records that both objections were right about
   those two instruments and wrong about the conclusion, states that the book is authoritative where the two
   differ, and keeps the three profiles and the named considerations as the preview and intuition they are.
-  Reported by an external review of the site, 2026-09-05.
+  Reported by a review of the site handed to this session, 2026-09-05.
 - **Semantic independence distinguished from physical contention** (*Glossary*, *The Data Question*). The
   shared-primitive entry said two processes writing different fields of one row "are not coupled by
   co-location", and the conflict table answered write-write on different fields with "no conflict to

@@ -91,11 +91,13 @@ What Phase 5 is *for* is worth stating plainly, because it answers the oldest ob
 
 ---
 
-## Selecting the vector: thought process, not flowchart
+## Selecting the vector: what this preview shows, and where the procedure lives
 
-**How a team gets from nine answers to six axis values is the heart of the method, and it is deliberately not a procedure that hands back an answer.** A decision tree per axis was considered and rejected: it reads like a recipe and it misses the interactions between axes, which is where the real judgment lives. A compatibility matrix of every axis against every other was considered and rejected too: it explodes combinatorially, it goes brittle the moment an axis gains a value, and its false precision invites the reader to trust a lookup where they should be thinking.
+**How a team gets from nine answers to six axis values is the heart of the method, and this module shows that step as a thought process rather than executing it.** That is a statement about this preview, and it used to be a stronger one. Earlier editions argued that the step could not be handed back as a procedure at all: a decision tree per axis reads like a recipe and misses the interactions between axes, and a compatibility matrix of every axis against every other explodes combinatorially, goes brittle the moment an axis gains a value, and invites trust in a lookup where the reader should be thinking.
 
-What replaces them is a small set of considerations per axis, each anchored in a Phase-4 input, phrased as *consider this as well* rather than *pick from this menu*, demonstrated by working real profiles end to end. **The stance, stated once: show the thought process, give the reader a tool for building their own thought process, and let them make their own decision.** The walkthrough below is where the considerations are shown in motion. Only afterward are they named and collected, because a heuristic read before it has been seen at work is a rule, and rules are what this method is trying not to ship.
+Both objections were right about those two instruments. Neither was right about the conclusion. *Architecture Synthesis: The Next Correct Step* derived the step mechanically without either one: it starts from the cheapest vector on every axis, presses each stated demand against a ledger of capabilities and their always-on costs, moves only under citation, resolves conflicts by a stated rule, and halts on a contradiction instead of inventing an answer. Interactions between axes are carried by the pressure pass rather than by a matrix, and the brittleness is answered by a ledger that grows by rows instead of by cells. **Where this module and that book differ, the book is authoritative, and this is the place they differ.**
+
+What follows is still worth the reading. The considerations named below are the intuitions that procedure later formalized, and watching them operate on three real profiles is how a reader learns to check a derivation's output rather than merely obey it. The full procedure, with its conflict rule, its halts and its verification arithmetic, is one book away.
 
 ---
 
@@ -147,13 +149,13 @@ The vector, written out: *services for the read path plus a unified runtime for 
 
 Walked in sequence, the three profiles say four things the methodology has been claiming all along, now visible at once. They demonstrate that **Phase-4 inputs drive Phase-5 vectors: same domain, three sets of answers, three architectures that share almost nothing.** **They show that hybrid is normal at any real scale: only the small profile resolved uniformly on every axis, and the moment several teams, several regions, or several data shapes appear, the axes start pulling in different directions and the correct vector is the one that lets them.** They show **the telescope reaching architecture**: the enterprise profile gave each subsystem its own vector, which is the same recognition the spiral has been making at every transition, applied one more time. And they show **anti-patterns surfacing as contrast**, not as a separate chapter: each profile named what it avoided and why, and the methodology never had to prohibit anything in advance because the walkthrough is what makes the incoherent vectors visible.
 
-What the walkthrough did not do, and what the next section does, is name the considerations that were operating per axis. Reading them after the walkthrough rather than before is the methodology's own discipline applied to itself: name comes third, after the situation and the derivation. A heuristic read before it has been seen at work reads as a rule, and rules are what the method is trying not to ship.
+What the walkthrough did not do, and what the next section does, is name the considerations that were operating per axis. Reading them after the walkthrough rather than before is the methodology's own discipline applied to itself: name comes third, after the situation and the derivation.
 
 ---
 
 ## The heuristics, named
 
-The three profiles were not consulting a lookup table. They were running the same short set of considerations on each axis, and letting the Phase-4 answers decide. Named after the fact, the considerations are these. Read them as *also worth weighing*, never as a flowchart that returns a value, and notice that each one points back at a numbered Phase-4 input.
+The three profiles were not consulting a lookup table. They were running the same short set of considerations on each axis, and letting the Phase-4 answers decide. Named after the fact, the considerations are these. Read them as *also worth weighing*, notice that each one points back at a numbered Phase-4 input, and read the companion book for the ledger and the pressure rule that make the same considerations mechanical.
 
 **Deployment topology** — *primary inputs: load (#5), multi-X (#9), release structure (#7), cost envelope (#8).*
 

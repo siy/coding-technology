@@ -1,0 +1,86 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 560" width="900" height="560" font-family="ui-sans-serif, system-ui, -apple-system, Helvetica, Arial, sans-serif">
+<defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#374151"/></marker></defs>
+<rect width="900" height="560" fill="#ffffff"/>
+<text x="200" y="40" text-anchor="middle" font-size="13" font-weight="600" fill="#374151">use case · Sequencer</text>
+<text x="392.5" y="40" text-anchor="middle" font-size="13" font-weight="600" fill="#374151">orchestration</text>
+<text x="655.0" y="40" text-anchor="middle" font-size="13" font-weight="600" fill="#374151">leaves</text>
+<line x1="560" y1="52" x2="560" y2="520" stroke="#d1d5db" stroke-width="1" stroke-dasharray="4 4"/>
+<text x="552" y="535" text-anchor="end" font-size="11" font-style="italic" fill="#6b7280">routing only</text>
+<text x="568" y="535" font-size="11" font-style="italic" fill="#6b7280">all the work</text>
+<path d="M350 164 C465.0 164, 465.0 122, 580 122" fill="none" stroke="#6b7280" stroke-width="1.5"/>
+<path d="M350 164 C465.0 164, 465.0 164, 580 164" fill="none" stroke="#6b7280" stroke-width="1.5"/>
+<path d="M350 164 C465.0 164, 465.0 206, 580 206" fill="none" stroke="#6b7280" stroke-width="1.5"/>
+<path d="M475 269 C527.5 269, 527.5 248, 580 248" fill="none" stroke="#6b7280" stroke-width="1.5"/>
+<path d="M475 269 C527.5 269, 527.5 290, 580 290" fill="none" stroke="#6b7280" stroke-width="1.5"/>
+<path d="M350 300 C402.5 300, 402.5 269, 455 269" fill="none" stroke="#6b7280" stroke-width="1.5"/>
+<path d="M350 300 C465.0 300, 465.0 332, 580 332" fill="none" stroke="#6b7280" stroke-width="1.5"/>
+<path d="M475 395 C527.5 395, 527.5 374, 580 374" fill="none" stroke="#6b7280" stroke-width="1.5"/>
+<path d="M475 395 C527.5 395, 527.5 416, 580 416" fill="none" stroke="#6b7280" stroke-width="1.5"/>
+<path d="M350 395 C402.5 395, 402.5 395, 455 395" fill="none" stroke="#6b7280" stroke-width="1.5"/>
+<path d="M206 80 C393.0 80, 393.0 80, 580 80" fill="none" stroke="#6b7280" stroke-width="1.5"/>
+<path d="M206 164 C258.0 164, 258.0 164, 310 164" fill="none" stroke="#6b7280" stroke-width="1.5"/>
+<path d="M206 300 C258.0 300, 258.0 300, 310 300" fill="none" stroke="#6b7280" stroke-width="1.5"/>
+<path d="M206 395 C258.0 395, 258.0 395, 310 395" fill="none" stroke="#6b7280" stroke-width="1.5"/>
+<path d="M206 458 C393.0 458, 393.0 458, 580 458" fill="none" stroke="#6b7280" stroke-width="1.5"/>
+<path d="M206 500 C393.0 500, 393.0 500, 580 500" fill="none" stroke="#6b7280" stroke-width="1.5"/>
+<line x1="200" y1="80" x2="200" y2="500" stroke="#374151" stroke-width="2"/>
+<circle cx="200" cy="80" r="5" fill="#fff" stroke="#374151" stroke-width="2"/>
+<text x="212" y="96" font-size="12" fill="#374151">validate</text>
+<circle cx="200" cy="164" r="5" fill="#fff" stroke="#374151" stroke-width="2"/>
+<text x="212" y="180" font-size="12" fill="#374151">check availability</text>
+<circle cx="200" cy="300" r="5" fill="#fff" stroke="#374151" stroke-width="2"/>
+<text x="212" y="316" font-size="12" fill="#374151">price</text>
+<circle cx="200" cy="395" r="5" fill="#fff" stroke="#374151" stroke-width="2"/>
+<text x="212" y="411" font-size="12" fill="#374151">reserve stock</text>
+<circle cx="200" cy="458" r="5" fill="#fff" stroke="#374151" stroke-width="2"/>
+<text x="212" y="474" font-size="12" fill="#374151">save order</text>
+<circle cx="200" cy="500" r="5" fill="#fff" stroke="#374151" stroke-width="2"/>
+<text x="212" y="516" font-size="12" fill="#374151">publish</text>
+<line x1="112" y1="80" x2="193" y2="80" stroke="#374151" stroke-width="2" marker-end="url(#ar)"/>
+<text x="188" y="68" text-anchor="end" font-size="12" font-family="ui-monospace, Menlo, monospace" fill="#374151">PlaceOrderRequest</text>
+<line x1="193" y1="500" x2="112" y2="500" stroke="#374151" stroke-width="2" marker-end="url(#ar)"/>
+<text x="188" y="488" text-anchor="end" font-size="12" font-family="ui-monospace, Menlo, monospace" fill="#374151">Promise&lt;OrderPlaced&gt;</text>
+<rect x="310" y="154" width="40" height="20" rx="5" fill="#fff" stroke="#374151" stroke-width="1.5"/>
+<text x="330" y="168" text-anchor="middle" font-size="10.5" font-weight="600" fill="#374151">all</text>
+<rect x="435" y="259" width="40" height="20" rx="5" fill="#fff" stroke="#374151" stroke-width="1.5"/>
+<text x="455" y="273" text-anchor="middle" font-size="10.5" font-weight="600" fill="#374151">seq</text>
+<polygon points="330,286 350,300 330,314 310,300" fill="#fff" stroke="#374151" stroke-width="1.5"/>
+<text x="330" y="304" text-anchor="middle" font-size="10.5" font-weight="600" fill="#374151">if</text>
+<rect x="435" y="385" width="40" height="20" rx="5" fill="#fff" stroke="#374151" stroke-width="1.5"/>
+<text x="455" y="399" text-anchor="middle" font-size="10.5" font-weight="600" fill="#374151">seq</text>
+<rect x="310" y="385" width="40" height="20" rx="5" fill="#fff" stroke="#374151" stroke-width="1.5"/>
+<text x="330" y="399" text-anchor="middle" font-size="10.5" font-weight="600" fill="#374151">each</text>
+<rect x="580" y="66.0" width="150" height="28" rx="4" fill="#dcfce7" stroke="#16a34a" stroke-width="1.5"/>
+<text x="655.0" y="84" text-anchor="middle" font-size="12" fill="#111827">parse &amp; validate</text>
+<text x="742" y="84" font-size="11" fill="#16a34a">pure computation</text>
+<rect x="580" y="108.0" width="150" height="28" rx="4" fill="#dbeafe" stroke="#2563eb" stroke-width="1.5"/>
+<text x="655.0" y="126" text-anchor="middle" font-size="12" fill="#111827">load catalog</text>
+<text x="742" y="126" font-size="11" fill="#2563eb">database</text>
+<rect x="580" y="150.0" width="150" height="28" rx="4" fill="#ffedd5" stroke="#ea580c" stroke-width="1.5"/>
+<text x="655.0" y="168" text-anchor="middle" font-size="12" fill="#111827">load stock levels</text>
+<text x="742" y="168" font-size="11" fill="#ea580c">HTTP service</text>
+<rect x="580" y="192.0" width="150" height="28" rx="4" fill="#dcfce7" stroke="#16a34a" stroke-width="1.5"/>
+<text x="655.0" y="210" text-anchor="middle" font-size="12" fill="#111827">compute availability</text>
+<text x="742" y="210" font-size="11" fill="#16a34a">pure computation</text>
+<rect x="580" y="234.0" width="150" height="28" rx="4" fill="#ffedd5" stroke="#ea580c" stroke-width="1.5"/>
+<text x="655.0" y="252" text-anchor="middle" font-size="12" fill="#111827">fetch promo</text>
+<text x="742" y="252" font-size="11" fill="#ea580c">HTTP service</text>
+<rect x="580" y="276.0" width="150" height="28" rx="4" fill="#dcfce7" stroke="#16a34a" stroke-width="1.5"/>
+<text x="655.0" y="294" text-anchor="middle" font-size="12" fill="#111827">apply promo</text>
+<text x="742" y="294" font-size="11" fill="#16a34a">pure computation</text>
+<rect x="580" y="318.0" width="150" height="28" rx="4" fill="#dcfce7" stroke="#16a34a" stroke-width="1.5"/>
+<text x="655.0" y="336" text-anchor="middle" font-size="12" fill="#111827">standard pricing</text>
+<text x="742" y="336" font-size="11" fill="#16a34a">pure computation</text>
+<rect x="580" y="360.0" width="150" height="28" rx="4" fill="#ffedd5" stroke="#ea580c" stroke-width="1.5"/>
+<text x="655.0" y="378" text-anchor="middle" font-size="12" fill="#111827">reserve line item</text>
+<text x="742" y="378" font-size="11" fill="#ea580c">HTTP service</text>
+<rect x="580" y="402.0" width="150" height="28" rx="4" fill="#dbeafe" stroke="#2563eb" stroke-width="1.5"/>
+<text x="655.0" y="420" text-anchor="middle" font-size="12" fill="#111827">record reservation</text>
+<text x="742" y="420" font-size="11" fill="#2563eb">database</text>
+<rect x="580" y="444.0" width="150" height="28" rx="4" fill="#dbeafe" stroke="#2563eb" stroke-width="1.5"/>
+<text x="655.0" y="462" text-anchor="middle" font-size="12" fill="#111827">insert order</text>
+<text x="742" y="462" font-size="11" fill="#2563eb">database</text>
+<rect x="580" y="486.0" width="150" height="28" rx="4" fill="#ede9fe" stroke="#7c3aed" stroke-width="1.5"/>
+<text x="655.0" y="504" text-anchor="middle" font-size="12" fill="#111827">publish OrderPlaced</text>
+<text x="742" y="504" font-size="11" fill="#7c3aed">message bus</text>
+</svg>

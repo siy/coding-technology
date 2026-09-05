@@ -1,0 +1,89 @@
+# The regeneration test — results
+
+Registered in `REGENERATION-PREDICTIONS.md` at `d07f42d`, **before any builder was launched**. Arm A's
+structure was extracted and written down **before arm B reported**. Scored 2026-09-05.
+
+# Headline: P1, P2, P3 hit. P4 is not falsified, and the structure the model change produced regenerates from the current specification alone.
+
+## Isolation held
+
+Arm B's builder disclosed its sources unprompted: the eleven spec files, the JBCT skill, and Pragmatica
+Core's `lang` package. It ran `jbct lint` against Core's own `vo` package as an instrument check. It read
+nothing under `ticketing` and ran no search across `~/IdeaProjects`. Run 1's failure mode did not recur.
+
+Arm B's artifact is real, not a sketch: 16 files, 973 lines, compiling under `javac -Xlint:all` against
+`core-1.0.0-rc4.jar` with no warnings, a 26-check behavioural harness passing, and `jbct lint` reporting
+0 errors and 24 warnings. Its author mutation-probed its own harness twice — writing the booking row first
+turns the ordering check red, and dropping compensation turns five checks red — so the harness can fail.
+
+## Scoring
+
+| Prediction | Arm A (evolved) | Arm B (fresh) | Verdict |
+|---|---|---|---|
+| **P1** three gate checks concurrent | `Promise.all(readSaleStatus, countActiveBookings, readSeatSellability)` | `Promise.all(gateSale, gateSeat, gateCustomer)` | **HIT** |
+| **P2** step count within ±1 | 5 stage records | 4 stage records | **HIT** |
+| **P3** write order preserved | insertTicket → insertPayment → insertBooking | saveTicket → savePayment → saveBooking | **HIT** |
+| **P4** nothing traces only to history | — | — | **NOT FALSIFIED** (below) |
+
+Neither arm was told to parallelise validation, and both did: `Result.all` over the four field parses,
+independently, in addition to the gate.
+
+## P4 in detail — the prediction the run existed for
+
+The model change under test is `5b685a4`, *"seat is the reservation identity, unblocking resale and
+hold-to-purchase"*. Before it, the reservation was not keyed by seat. The candidate residue surfaces were
+named in advance: `ReservedBuy.claimId`, the `confirmReservation` keying, and the `claimSeat` guarded claim.
+
+**Arm B produced all three, from the current specification, with no access to that history.** It declares
+`ClaimId` as a value type, wins it in `ClaimSeat`, carries it in a `Claimed` stage record, and keys
+`ConfirmClaim` and `ReleaseClaim` by it. That is arm A's post-change shape, regenerated.
+
+So the structure the model change produced is a function of the requirements as they now stand, not a
+trace of the change that introduced it. On this instance, **debt did not accumulate as a stock: the
+evolved code is what a fresh build produces.**
+
+## The three divergences, reported because they are the interesting part
+
+**1. Error grouping — and arm A's own comment names arm B's answer.** Both arms produced *the same ten
+failure values*, including two records with identical names and identical two-field shapes
+(`InvalidRequest`, `UnacceptableValue`). Arm A splits the eight fixed-message causes into four enums by
+HTTP status; arm B puts all eight into one enum named **`General`**. Arm A's javadoc explains why it does
+not: *"which is why the group is named for that routing rule rather than `General`"* — route error-mapping
+targets a whole status class by the enum's simple name, via `routes.toml`.
+
+Arm B **had the status mapping** (`08-failure-catalog.md` carries a Status column; `07-http-api.md` lists
+400, 402, 409, 422, 503 for this endpoint) and still did not group by it. What arm B did not have is the
+*mechanism that makes the grouping pay* — `routes.toml` pattern-matching on an enum's simple name is an
+Aether deployment artifact, absent from the process specification. The divergence is a response to a
+constraint outside the input, not residue from arm A's path. Arm A reached this form in `7122341`, a
+refactor **after** the model change.
+
+**2. Dependency granularity.** Arm B declared fourteen single-method step interfaces. Arm A uses one
+shared `BookingStore` port of seven methods plus cross-slice use case calls. Arm A is one use case among
+several sharing that store; arm B built one use case alone and had nothing to share with. Again an input
+difference, not a path difference.
+
+**3. Placement — a genuine miss, and arm B's.** Arm A places the use case at
+`...booking.purchase.buyticket`: subsystem, **workflow**, use case, as the telescope rule requires. Arm B
+placed it at `...booking.usecase.buyticket`, dropping the workflow level and inserting a literal `usecase`
+segment. The specification describes the workflow; arm B did not derive the level from it. This is the one
+place where the two structures differ and neither an outside constraint nor the history explains it.
+
+## What this licenses, and what it does not
+
+**Licensed.** On this use case, a fresh build from the current process specification reproduces the
+evolved code's concurrency structure, its write ordering, its stage decomposition within one record, its
+complete failure catalogue, and — the point of the run — the structure introduced by a domain-model change,
+without access to that change. Path-independence is **supported on this instance**.
+
+**Not licensed.** n = 1 use case and n = 1 builder; this can falsify, it cannot estimate a rate.
+Requirements did not change *between* the arms, so the run asks whether maintenance leaves residue, not
+whether a re-derivation after changed requirements converges. The specification numbers its steps in
+execution order, which was disclosed in advance and matters less here than in Run 1c because both arms read
+the same numbering. And the two structures were compared by one reader — me — who wrote arm A's description
+before seeing arm B's, but who is not blind to the thesis.
+
+**The honest caveat the run itself produced:** two of the three divergences trace to inputs arm A had and
+arm B did not. "The input is the PFD process" is the design's assumption, and arm A was in fact also shaped
+by a routing configuration and by sibling use cases. A stronger successor gives both arms the whole input,
+or states the boundary of "the process" more narrowly than a repository does.

@@ -10,8 +10,8 @@ what the build stamps on the PDF (single source of truth).
   a faithful design-time preview" while this book supersedes its answer sheet; the module also taught that
   the selection step could not be a procedure, which this book's derivation falsifies. The note now says the
   module previews the inputs, the axes and the considerations and points here for the procedure that
-  consumes them. Reported by an external review of the site, 2026-09-05; the PFD module was corrected in the
-  same pass.
+  consumes them. Reported by a review of the site handed to this session, 2026-09-05; the PFD module was corrected
+  in the same pass.
 
 ## [1.1.2] — 2026-08-03
 

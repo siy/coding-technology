@@ -1,6 +1,6 @@
 ---
 tags: [java, functionalprogramming, api, cleancode]
-canonical_url: https://pragmatica.dev/four-return-types
+canonical_url: https://pragmatica.dev/articles/four-return-types
 description: A systematic approach to function signatures that makes code self-documenting
 published: true
 ---

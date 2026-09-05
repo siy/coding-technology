@@ -16,8 +16,8 @@ repository root `CHANGELOG.md`.
   objects and complex leaves and 90%+ for use cases, in its section headings, its two rationale paragraphs
   and its key takeaways. Both chapters now name the obligation instead of a percentage: the decision space
   for value objects, the deciding branches for complex leaves, and the four composition obligations for use
-  cases, which the practice chapter already carried in its own table. Reported by an external review of the
-  site, 2026-09-05; both chapters render as course lessons, so the contradiction was live on pragmatica.dev.
+  cases, which the practice chapter already carried in its own table. Reported by a review of the site handed to
+  this session, 2026-09-05; both chapters render as course lessons, so the contradiction was live on pragmatica.dev.
 - **"Exactly one of four types" restated as four semantic shapes** (*The Four Return Types*). The chapter
   opened with "exactly one of four types. Not 'usually' or 'preferably'—exactly one, always" and later
   permitted `Result<Option<T>>` and `Promise<Option<T>>` and gave `void` a defined role at the edges. The

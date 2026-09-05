@@ -134,7 +134,7 @@ Four cases, and the tactics answer three:
 
 | Conflict | The answer |
 |---|---|
-| Write-write, on different fields | single-writer ownership — no conflict to resolve |
+| Write-write, on different fields | single-writer ownership — no *semantic* conflict to resolve; physical contention remains a storage-layout question |
 | Write-write, on the workflow's state | the guarded transition |
 | Read-write, on a fact with a unique key | a declarative constraint |
 | **Read-write, on a predicate over a set** | **design-out, but by materializing the predicate — see below** |

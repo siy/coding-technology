@@ -11,7 +11,7 @@
 
 ## Overview
 
-Every function in JBCT returns exactly one of four types. Not "usually" or "preferably"—exactly one, always. This isn't an arbitrary restriction; it's intentional compression of complexity into type signatures.
+Every function in JBCT returns one of four semantic shapes: `T`, `Option<T>`, `Result<T>`, or `Promise<T>`. Not "usually" or "preferably"—one of the four, always. Two qualifications keep the rule exact rather than merely emphatic. The shapes compose in one permitted way, `Result<Option<T>>` and its asynchronous form `Promise<Option<T>>`, where fallibility and optionality are genuinely independent concerns; every deeper nesting is a smell this chapter names later. And `void` remains available at the edges as a deliberate signal that failure is irrelevant to the caller, distinct from `Result<Unit>`, where it is not. This isn't an arbitrary restriction; it's intentional compression of complexity into type signatures.
 
 **Why by criteria:**
 - **Mental Overhead**: Hidden error channels (exceptions), hidden optionality (null), hidden asynchrony (blocking I/O) force remembering behavior not in signatures. Explicit types eliminate this (+3).

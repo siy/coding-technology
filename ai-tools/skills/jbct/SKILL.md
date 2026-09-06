@@ -89,11 +89,39 @@ jbct add-persistence           # Add PostgreSQL persistence support
 ## Core Philosophy
 
 JBCT reduces the space of valid choices to one good way to do most things through:
-- **Four Return Kinds**: Every function returns exactly one of `T`, `Option<T>`, `Result<T>`, `Promise<T>`
+- **Four Return Kinds**: Every function returns one of four semantic shapes: `T`, `Option<T>`, `Result<T>`, `Promise<T>`
 - **Parse, Don't Validate**: Make invalid states unrepresentable
 - **No Business Exceptions**: Business failures are typed `Cause` values
 - **Thread Safety by Design**: Immutability at boundaries, thread confinement for sequential logic
 - **Six Structural Patterns**: All code fits one pattern (Leaf, Sequencer, Fork-Join, Condition, Iteration, Aspects)
+
+<!-- book:jbct-approach -->
+**Java Backend Coding Technology (JBCT)** proposes a different approach: **reduce the space of valid choices until there's essentially one good way to do most things**. Not through rigid frameworks or heavy ceremony, but through a small set of rules that make structure predictable, refactoring mechanical, and business logic clearly separated from technical concerns.
+
+The benefits compound:
+
+**Unified structure** means humans can read AI-generated code without guessing about hidden assumptions, and AI can read human code without inferring structure from context. A use case looks the same whether you wrote it, your colleague wrote it, or an AI assistant generated it. The structure carries the intent.
+
+**Minimal technical debt** emerges naturally because refactoring rules are built into the methodology. When a function grows beyond one clear operation, the rules tell you exactly how to split it. When a component gets reused, there's one obvious place to move it. Debt doesn't accumulate because prevention is cheaper than cleanup.
+
+**Close business modeling** happens when you're not fighting technical noise. Value objects enforce domain invariants at construction time. Use cases read like business processes because each step does one thing. Errors are domain concepts, not stack traces. Product owners can read the code structure and recognize their requirements.
+
+**Requirement discovery** becomes systematic. When you structure code as validation → steps → composition, gaps become obvious. Missing validation rules surface when you define value objects. Unclear business logic reveals itself when you can't name a step clearly. Edge cases emerge when you model errors as explicit types.
+
+**Common language** emerges when patterns become vocabulary. The six patterns (Leaf, Sequencer, Fork-Join, Condition, Iteration, Aspects) describe both code structure and business processes. When business says "First we verify, then we process, then we notify"—that's a Sequencer. When they say "We need profile, preferences, and history"—that's a Fork-Join. The translation is mechanical, and requirements discussions become technical design sessions.
+
+**Business logic as a readable language** happens when patterns become vocabulary. The four return types, parse-don't-validate, and the fixed pattern catalog form a consistent way to express domain concepts in code. Anyone who understands the domain can pick up a new codebase virtually instantly.
+
+**Hide the machinery, keep the meaning** is the property those last two add up to, and it deserves its own name. Technical noise is pushed to the edges *and* the business facts survive in the types: a return type states whether a step can fail, an `Option` parameter states that the domain allows absence, `Promise.all` states that steps are independent, a sealed error type states the complete failure catalog. The code executes and testifies at once — and because the testimony lives in types, the compiler keeps it true. The full inventory is a table in [From Process to Patterns](https://pragmatica.dev/java/jbct/course/from-process-to-patterns/), and it is why JBCT code stays legible to humans and AI assistants alike after its authors have moved on.
+
+**Deterministic code generation** becomes possible when the mapping from requirements to code is mechanical. Given a use case specification - inputs, outputs, validation rules, steps - there's essentially one correct structure. Different developers (or AI assistants) should produce nearly identical implementations.
+
+**The normalization boundary.** "Nearly identical" has a precise scope, and stating the scope is what makes the claim testable. JBCT derives the package hierarchy (the telescope rule), the Java types, the step contracts and return types, the pattern for each composition, the failure representation, the placement of shared code, the concurrency structure, and the testing obligations. JBCT does not normalize algorithms inside atomic leaves, framework-specific adapter internals, module promotion (content-invariant along derived boundaries — [Project Structure](https://pragmatica.dev/java/jbct/course/project-structure/) has the full treatment), the test-input supply vehicle, or test-data representation. Variation below this line is style; variation above it is a defect. A newly discovered variation receives an explicit ruling: closed by a rule, or placed below the line. The boundary comes from measurement rather than taste — inspecting independent implementations of one design found their skeletons identical, and what differed became the first rulings.
+
+**Construction that scales** is what these properties buy at team size. It is a different claim from runtime parallelism: whether steps *run* in parallel follows from their data dependencies, while whether they can be *built* in parallel follows from their contracts — and JBCT steps share only their typed input and output, so the pieces of even a strictly sequential chain can be built concurrently by builders who coordinate on nothing beyond the types. Uniformity supplies the rest: when every unit is shaped from the same six patterns and four return types, any builder, human or AI agent, picks up any unit already knowing its shape, so ramp-up cost falls toward zero and workers stay interchangeable across the codebase. The other half of the pair — cutting the system into units that change for different reasons, so builders rarely meet at all — is design-phase work, developed in the companion *Process-First Design*. The author's *Software's Second Free Lunch* carries the full argument.
+
+> **A Broader Movement:** JBCT is not alone in pursuing compile-time guarantees and type-driven design. Similar philosophies appear in database design (7NF type-first approaches), distributed systems, and functional programming communities. The common thread: shift errors from runtime to compile-time, make invalid states unrepresentable, and reduce cognitive load through explicit contracts.
+<!-- /book:jbct-approach -->
 
 ## FORBIDDEN PATTERNS (Zero Tolerance)
 
@@ -163,6 +191,15 @@ return USER_NOT_FOUND.result();
 
 ### The Four Return Kinds
 
+<!-- book:four-return-shapes -->
+Every function in JBCT returns one of four semantic shapes: `T`, `Option<T>`, `Result<T>`, or `Promise<T>`. Not "usually" or "preferably"—one of the four, always. Two qualifications keep the rule exact rather than merely emphatic. The shapes compose in one permitted way, `Result<Option<T>>` and its asynchronous form `Promise<Option<T>>`, where fallibility and optionality are genuinely independent concerns; every deeper nesting is a smell this chapter names later. And `void` remains available at the edges as a deliberate signal that failure is irrelevant to the caller, distinct from `Result<Unit>`, where it is not. This isn't an arbitrary restriction; it's intentional compression of complexity into type signatures.
+
+**Why by criteria:**
+- **Mental Overhead**: Hidden error channels (exceptions), hidden optionality (null), hidden asynchrony (blocking I/O) force remembering behavior not in signatures. Explicit types eliminate this (+3).
+- **Reliability**: Compiler verifies error handling, null safety, and async boundaries when encoded in types (+3).
+- **Complexity**: Four types cover all scenarios - no guessing about combinations (+2).
+<!-- /book:four-return-shapes -->
+
 ```java
 // T - Pure computation, cannot fail, always present
 public String initials() { return ...; }
@@ -177,8 +214,40 @@ public static Result<Email> email(String raw) { return ...; }
 public Promise<User> loadUser(UserId id) { return ...; }
 ```
 
+<!-- book:return-type-matrix -->
+### Allowed Return Types
+
+| Type | Use Case |
+|------|----------|
+| `T` | Synchronous, cannot fail, always present |
+| `Option<T>` | Synchronous, cannot fail, might be absent |
+| `Result<T>` | Synchronous, can fail |
+| `Promise<T>` | Asynchronous, can fail |
+| `Result<Option<T>>` | Optional value that can fail validation |
+| `Promise<Option<T>>` | Async lookup that might not find anything |
+
+### Discouraged
+
+| Type | Why Discouraged |
+|------|-----------------|
+| `Optional<T>` | Use `Option<T>` for consistency |
+| `CompletableFuture<T>` | Use `Promise<T>` for consistent error handling |
+| Framework-specific types (`Mono<T>`, `ResponseEntity<T>`) | Keep business logic framework-agnostic |
+
+### Forbidden (Double-Monad Nesting)
+
+| Type | Why Forbidden |
+|------|---------------|
+| `Promise<Result<T>>` | `Promise` already carries failures - double error channel |
+| `Result<Result<T>>` | Nested failures create unwrapping ceremony |
+| `Option<Option<T>>` | Nested optionality is meaningless |
+| `Promise<Option<Result<T>>>` | Triple nesting - architectural smell |
+| `Option<List<T>>` | A collection already carries emptiness as a value - a second absence channel says it twice |
+
+**Rule:** Each concern (optionality, failure, asynchrony) appears at most once in a return type; emptiness is the collection's own concern, already carried as a value.
+<!-- /book:return-type-matrix -->
+
 **Critical Rules:**
-- ❌ Never `Promise<Result<T>>` - Promise already handles failures
 - ❌ Never `Void` type parameter - always use `Unit` (`Result<Unit>`, `Promise<Unit>`). `void` return is OK for fire-and-forget
 - ✅ Use `Result.unitResult()` for successful `Result<Unit>`
 
@@ -749,28 +818,71 @@ com.example.app/
 - Steps (interfaces) → always inside use case
 - Errors → sealed interface inside use case
 
-**Error Structure (General enum pattern):**
+### Typed Errors
+
+<!-- book:typed-errors -->
+Every failure is a `Cause`, and `Cause` has exactly one abstract member: `message()`. The construction idiom satisfies it structurally, so no error type ever hand-writes prose in a method body.
+
+A use case's failures form a sealed interface with two kinds of members. A **data-carrying failure** is a record: its components are the error's data, in declaration order, with a trailing `String message` component whose generated accessor *is* the `message()` implementation. Its `FACTORY`, built from a message template and the canonical constructor reference, is the construction path. **Fixed-text failures** share one enum in a prescribed shape - a single `message` field, a constructor, a field-returning accessor - with each failure declared as one constant carrying its text.
+
 ```java
-public sealed interface RegistrationError extends Cause {
-    // Group fixed-message errors into single enum
-    enum General implements RegistrationError {
-        EMAIL_ALREADY_REGISTERED("Email already registered"),
-        WEAK_PASSWORD_FOR_PREMIUM("Premium codes require 10+ char passwords");
+public sealed interface LoginError extends Cause {
+
+    record AccountLocked(UserId userId, String message) implements LoginError {
+        static final Fn1<AccountLocked, UserId> FACTORY =
+            Causes.forOneValue("Account is locked: %s", AccountLocked::new);
+    }
+
+    enum General implements LoginError {
+        INVALID_CREDENTIALS("Invalid email or password");
 
         private final String message;
-        General(String message) { this.message = message; }
-        @Override public String message() { return message; }
-    }
 
-    // Records for errors with data (e.g., Throwable)
-    record PasswordHashingFailed(Throwable cause) implements RegistrationError {
-        @Override public String message() { return "Password hashing failed"; }
+        General(String message) { this.message = message; }
+
+        @Override
+        public String message() { return message; }
     }
 }
-
-// Usage
-RegistrationError.General.EMAIL_ALREADY_REGISTERED.promise()
 ```
+
+Construction sites:
+
+```java
+LoginError.AccountLocked.FACTORY.apply(user.id()).result();   // data-carrying
+LoginError.General.INVALID_CREDENTIALS.result();              // fixed text
+```
+
+Three rules govern the shape:
+
+- **Every value the template formats is a component.** The factory's parameters are exactly the non-message components, so the data an error mentions stays typed - renderable at the boundary, countable in telemetry, never trapped in prose. The `message` component comes last, which is what lets the constructor reference serve as the factory argument. Zero data is a property, not an omission: `INVALID_CREDENTIALS` deliberately says nothing about which credential failed.
+- **One discriminable case per failure** - its own record type or its own enum constant. Qualified enum constant case labels (`case General.INVALID_CREDENTIALS ->`) discriminate constants in a switch over the sealed interface, and listing every constant preserves exhaustiveness: adding a constant breaks every switch, exactly as adding a record does.
+- **The `FACTORY` is the only constructor call site.** `new AccountLocked(id, "hand-typed prose")` compiles and silently decouples the stored message from the declared template; routed through the factory, template and data cannot disagree.
+<!-- /book:typed-errors -->
+
+### Wrapped and Terminal Causes
+
+<!-- book:wrapped-terminal-causes -->
+Two mixins nested in `Cause` remove the remaining overrides. A failure wrapping an underlying cause implements `Cause.Wrapped` with an `origin` component; the mixin derives `source()` from it. The component cannot be named `source` - the record accessor's return type would clash with `Cause.source()`, and `origin` is the name that avoids the trap. A failure no retry can change implements `Cause.Terminal`, which retry facilities consult to stop immediately.
+
+```java
+record PaymentFailed(Cause origin, String message) implements TransferError, Cause.Wrapped {
+    static final Fn1<PaymentFailed, Cause> FACTORY =
+        Causes.forOneValue("Payment step failed: %s", PaymentFailed::new);
+}
+
+// translation at a composition boundary:
+paymentStep.execute(order).mapError(PaymentFailed.FACTORY);
+```
+
+Composition sites accept the fully-typed factory directly. Where only some constants of an enum are terminal, a constant body overrides `isTerminal()` per constant.
+<!-- /book:wrapped-terminal-causes -->
+
+### When a Bare Cause Is Enough
+
+<!-- book:bare-cause -->
+`Causes.cause("Age must be 0-150")` remains the sanctioned form where no caller can act on the distinction - value-object validation whose failures all land in the same composite. The line is behavioral: when a caller would branch on the failure, render it separately, or count it, it is worth a type. The single-argument template overloads (`Causes.forOneValue(String)` and friends) belong to this same ad-hoc tier; in domain code a parameterized failure is worth naming, because the template form bakes its data into prose and discards it.
+<!-- /book:bare-cause -->
 
 ## Testing Patterns
 

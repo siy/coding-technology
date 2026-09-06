@@ -68,7 +68,27 @@ difference, not a path difference.
 placed it at `...booking.usecase.buyticket`, dropping the workflow level and inserting a literal `usecase`
 segment.
 
-**CORRECTED 2026-09-06, on the owner's challenge.** This file first called that "a genuine miss ... neither
+**CORRECTED TWICE, 2026-09-06. The second correction reverses the first, and both reversals are recorded
+because the sequence is the finding.**
+
+**Correction 2 (final): arm B applied the rule correctly, and its placement is what the book prescribes for
+what it was asked to build.** The telescope rule in `book/project-structure.md` is explicit that structure
+*appears* with growth: *"A new app is flat. Every use case is a package directly under `usecase`"*, and its
+worked example shows `searchevents/  # still flat - in no workflow yet`. A workflow package appears only
+*"when several use cases cohere under one change driver"*. **Arm B built exactly one use case.** With no
+siblings, no workflow has appeared, so the use case belongs flat under `usecase` — which is precisely
+`...booking.usecase.buyticket`. Arm B kept the subsystem because the specification names three authoritative
+subsystems, and omitted the workflow because on its input there is none to name.
+
+Arm A carries `purchase` because arm A has the siblings — acquire hold, cancel ticket, sweep holds — that
+cohere into it. **So the placement difference is derived from the scope difference, exactly as the method
+says structure should be.** It is not indeterminacy and it is not an error. It is the rule working.
+
+**Consequence for the run: after this correction there is no divergence attributable to the method, and none
+attributable to a mistake.** All three trace to inputs arm B did not have — the routing mechanism, the
+sibling use cases, and the scope. The run's structural agreement is therefore stronger than first scored.
+
+**Correction 1 (superseded, kept for the record).** This file first called that "a genuine miss ... neither
 an outside constraint nor the history explains it", and framed it as the boundary of the determinism claim.
 That framing was wrong, and the correction matters more than the original reading.
 
@@ -80,8 +100,21 @@ and still producing the wrong path has *misapplied a determinate rule*. That is 
 the method permits a choice. A determinate method can be misapplied; the two are different claims and this
 file conflated them.
 
-**What the divergence does evidence is a gap in the enforcer, and it is worth more than the original
-reading.** No lint rule checks telescope placement. The ARCH family covers dependency direction
+**What survives from correction 1 — and the owner sharpened it further.** No lint rule checks telescope
+placement, and **it cannot**: the package path is the only record in the codebase of which use cases cohere
+under which change driver. A checker compares two things, and here there is only one. Placement encodes
+business context for which the code holds no second source of truth, so this is not a gap the toolchain can
+close — it is outside the checkable fraction by construction. The only place both sides exist is authoring
+time, where the specification and the code are in hand together, which makes it a skill obligation rather
+than a gate rule.
+
+Recorded as a real gap regardless: the JBCT skill does **not** carry the telescope rule at all — zero hits
+for it across `ai-tools/skills/jbct/`, and `sync-book-blocks.py` syncs import ordering and member ordering
+from `book/project-structure.md` while leaving *The Telescope Rule* unsynced. Arm B reached the right
+placement without ever being given the rule. Note for decision 5's fidelity check: counting gate rejects
+would not have detected this, because the gate cannot see placement.
+
+For the record, the ARCH family in full: no rule in any of the 77 knows what package a use case belongs in. The ARCH family covers dependency direction
 (`JBCT-ARCH-01`), the lift zone (`-02`), use-case coupling (`-03`) and slice internals (`-04`); no rule in
 any of the 77 knows what package a use case belongs in. So the one structural error in the run is precisely
 the class `jbct check` cannot see — which is why it survived into an artifact that passes the gate with 0

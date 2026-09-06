@@ -21,8 +21,10 @@ import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 
-# id -> where the canonical text lives, and which tooling file mirrors it.
-# Destinations must contain matching <!-- book:<id> --> / <!-- /book:<id> --> markers.
+# id -> where the canonical text lives, and which tooling file(s) mirror it.
+# `dest` is one path or a list; every destination must contain matching
+# <!-- book:<id> --> / <!-- /book:<id> --> markers. A block that both the skill and an
+# agent carry is listed once with both destinations, so the two cannot disagree.
 BLOCKS = [
     {
         'id': 'telescope-rule',
@@ -65,6 +67,62 @@ BLOCKS = [
         'source': '../book/basic-patterns.md',
         'heading': '### Test Naming',
         'dest': 'skills/jbct/testing/patterns.md',
+    },
+    # Added 2026-09-06 after the typed-error section of the skill was found carrying the
+    # pre-4.9.0 idiom (hand-written message(), Throwable component) while the book and the
+    # agent carried the record-plus-FACTORY idiom: the skill and the agent disagreed with
+    # each other, and no check could see it.
+    {
+        'id': 'four-return-shapes',
+        'source': '../book/four-return-types.md',
+        'heading': '## Overview',
+        'dest': ['skills/jbct/SKILL.md',
+                 'skills/jbct/fundamentals/four-return-kinds.md',
+                 'agents/jbct-coder.md'],
+    },
+    {
+        'id': 'return-type-matrix',
+        'source': '../book/four-return-types.md',
+        'heading': '## Return Type Matrix',
+        'dest': ['skills/jbct/SKILL.md',
+                 'skills/jbct/fundamentals/four-return-kinds.md',
+                 'agents/jbct-coder.md'],
+    },
+    {
+        'id': 'promise-boundary',
+        'source': '../book/four-return-types.md',
+        'heading': '## `Promise<T>` - Asynchronous, Can Fail',
+        'dest': 'skills/jbct/fundamentals/four-return-kinds.md',
+    },
+    {
+        'id': 'jbct-approach',
+        'source': '../book/introduction.md',
+        'heading': '## The JBCT Approach',
+        'dest': 'skills/jbct/SKILL.md',
+    },
+    {
+        'id': 'typed-errors',
+        'source': '../book/error-handling.md',
+        'heading': '## Defining Typed Errors',
+        'dest': ['skills/jbct/SKILL.md', 'agents/jbct-coder.md'],
+    },
+    {
+        'id': 'wrapped-terminal-causes',
+        'source': '../book/error-handling.md',
+        'heading': '## Wrapped and Terminal Causes',
+        'dest': ['skills/jbct/SKILL.md', 'agents/jbct-coder.md'],
+    },
+    {
+        'id': 'bare-cause',
+        'source': '../book/error-handling.md',
+        'heading': '## When a Bare Cause Is Enough',
+        'dest': ['skills/jbct/SKILL.md', 'agents/jbct-coder.md'],
+    },
+    {
+        'id': 'module-promotion',
+        'source': '../book/project-structure.md',
+        'heading': '## Module Promotion',
+        'dest': 'skills/jbct/project-structure/organization.md',
     },
 ]
 
@@ -154,18 +212,23 @@ def main():
     stale, errors = [], []
     for block in BLOCKS:
         source = os.path.join(HERE, block['source'])
-        dest = os.path.join(HERE, block['dest'])
+        dests = block['dest'] if isinstance(block['dest'], list) else [block['dest']]
         try:
             body = extract(source, block['heading'])
             if not body.strip():
                 raise LookupError('section %r in %s is empty'
                                   % (block['heading'], block['source']))
-            current = apply_block(dest, block['id'], body, args.write)
         except (LookupError, OSError) as exc:
             errors.append('%s: %s' % (block['id'], exc))
             continue
-        if not current:
-            stale.append('%s -> %s' % (block['id'], block['dest']))
+        for rel in dests:
+            try:
+                current = apply_block(os.path.join(HERE, rel), block['id'], body, args.write)
+            except (LookupError, OSError) as exc:
+                errors.append('%s: %s' % (block['id'], exc))
+                continue
+            if not current:
+                stale.append('%s -> %s' % (block['id'], rel))
 
     for err in errors:
         print('ERROR: %s' % err)

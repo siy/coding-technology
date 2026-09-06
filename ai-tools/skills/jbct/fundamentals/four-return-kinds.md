@@ -1,6 +1,13 @@
 # Four Return Kinds
 
-Every function in JBCT returns exactly one of four kinds. This constraint eliminates ambiguity and makes function behavior predictable from the signature alone.
+<!-- book:four-return-shapes -->
+Every function in JBCT returns one of four semantic shapes: `T`, `Option<T>`, `Result<T>`, or `Promise<T>`. Not "usually" or "preferably"—one of the four, always. Two qualifications keep the rule exact rather than merely emphatic. The shapes compose in one permitted way, `Result<Option<T>>` and its asynchronous form `Promise<Option<T>>`, where fallibility and optionality are genuinely independent concerns; every deeper nesting is a smell this chapter names later. And `void` remains available at the edges as a deliberate signal that failure is irrelevant to the caller, distinct from `Result<Unit>`, where it is not. This isn't an arbitrary restriction; it's intentional compression of complexity into type signatures.
+
+**Why by criteria:**
+- **Mental Overhead**: Hidden error channels (exceptions), hidden optionality (null), hidden asynchrony (blocking I/O) force remembering behavior not in signatures. Explicit types eliminate this (+3).
+- **Reliability**: Compiler verifies error handling, null safety, and async boundaries when encoded in types (+3).
+- **Complexity**: Four types cover all scenarios - no guessing about combinations (+2).
+<!-- /book:four-return-shapes -->
 
 ## The Four Kinds
 
@@ -91,43 +98,85 @@ result.async()
 
 ### 4. `Promise<T>` - Asynchronous
 
-**When to use**: Asynchronous operation (I/O, network, database) that can fail.
+<!-- book:promise-boundary -->
+Use this for any operation that leaves the process: I/O, external service calls, inter-process communication. `Promise<T>` is semantically equivalent to `Result<T>` but asynchronous - failures are carried in the Promise itself, not nested inside it.
 
 ```java
-public Promise<User> loadUser(UserId id) {
-    return Promise.lift(
-        DatabaseError::cause,
-        () -> jdbcTemplate.queryForObject(
-            "SELECT * FROM users WHERE id = ?",
-            new Object[]{id.value()},
-            this::mapUser
-        )
-    );
-}
-
-public Promise<Response> execute(Request request) {
-    return ValidRequest.validRequest(request)
-        .async()
-        .flatMap(checkEmail::apply)
-        .flatMap(saveUser::apply)
-        .map(this::toResponse);
+public interface AccountRepository {
+    Promise<Account> findById(AccountId id);  // async lookup, can fail
 }
 ```
 
-**Characteristics**:
-- Asynchronous execution
-- Can fail (wraps failures in `Cause`)
-- Use for I/O operations, external services, database calls
-- Composes with `flatMap` for sequential async operations
+The signature `Promise<Account>` tells you: this completes later (async), might fail (network, database), failure is carried in the Promise.
 
-**Converting Promise**:
+> **Promise as Async Result**
+>
+> Think of `Promise<T>` as the asynchronous counterpart to `Result<T>`. Both represent operations that can succeed or fail with typed errors. The only difference is timing: `Result<T>` completes immediately, `Promise<T>` completes later. The same `map`/`flatMap` patterns work identically; converting is trivial (`result.async()` lifts to Promise, `promise.await()` blocks to Result). When you understand `Result<T>`, you understand `Promise<T>`.
+
+**Promise Resolution and Thread Safety:**
+
+Promise resolution is **thread-safe** and happens **exactly once**:
+
+- Multiple threads can attempt resolution - only the first succeeds
+- Resolution serves as synchronization point
+- Transformations execute after resolution
+- Side effects execute independently
+
 ```java
-// Promise → Result (blocks current thread)
-promise.await()
-promise.await(timeout)
+var promise = Promise.<User>promise();
+
+// Multiple threads racing to resolve - only first wins
+executor.submit(() -> promise.succeed(user1));  // First to resolve
+executor.submit(() -> promise.succeed(user2));  // Ignored
+
+// All transformations see the same result (user1)
+promise.map(this::processUser)
+       .flatMap(this::saveToDatabase)
+       .onSuccess(this::logSuccess);
 ```
+
+**Return `Promise<T>` when:**
+- Any I/O operation (database, HTTP, file system)
+- External service calls
+- Any other operation that leaves the process (messaging, inter-process calls)
+
+A long-running computation is not on this list. CPU-bound work returns `Result<T>` no matter how long it takes: `Promise` marks crossing the process boundary, and how an operation is scheduled is the caller's decision, made visible at the composition site (`Promise.lift`), never encoded in the leaf's type.
+<!-- /book:promise-boundary -->
 
 ## Critical Rules
+
+<!-- book:return-type-matrix -->
+### Allowed Return Types
+
+| Type | Use Case |
+|------|----------|
+| `T` | Synchronous, cannot fail, always present |
+| `Option<T>` | Synchronous, cannot fail, might be absent |
+| `Result<T>` | Synchronous, can fail |
+| `Promise<T>` | Asynchronous, can fail |
+| `Result<Option<T>>` | Optional value that can fail validation |
+| `Promise<Option<T>>` | Async lookup that might not find anything |
+
+### Discouraged
+
+| Type | Why Discouraged |
+|------|-----------------|
+| `Optional<T>` | Use `Option<T>` for consistency |
+| `CompletableFuture<T>` | Use `Promise<T>` for consistent error handling |
+| Framework-specific types (`Mono<T>`, `ResponseEntity<T>`) | Keep business logic framework-agnostic |
+
+### Forbidden (Double-Monad Nesting)
+
+| Type | Why Forbidden |
+|------|---------------|
+| `Promise<Result<T>>` | `Promise` already carries failures - double error channel |
+| `Result<Result<T>>` | Nested failures create unwrapping ceremony |
+| `Option<Option<T>>` | Nested optionality is meaningless |
+| `Promise<Option<Result<T>>>` | Triple nesting - architectural smell |
+| `Option<List<T>>` | A collection already carries emptiness as a value - a second absence channel says it twice |
+
+**Rule:** Each concern (optionality, failure, asynchrony) appears at most once in a return type; emptiness is the collection's own concern, already carried as a value.
+<!-- /book:return-type-matrix -->
 
 ### ❌ Never `Promise<Result<T>>`
 

@@ -25,6 +25,12 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 # Destinations must contain matching <!-- book:<id> --> / <!-- /book:<id> --> markers.
 BLOCKS = [
     {
+        'id': 'telescope-rule',
+        'source': '../book/project-structure.md',
+        'heading': '## The Telescope Rule: How Structure Grows',
+        'dest': 'skills/jbct/project-structure/organization.md',
+    },
+    {
         'id': 'import-ordering',
         'source': '../book/project-structure.md',
         'heading': '### Import Ordering',
@@ -63,6 +69,27 @@ BLOCKS = [
 ]
 
 
+# A skill is installed to ~/.claude/skills/<name>/, where no relative path reaches the
+# book. Book-relative chapter links inside a synced block must therefore become web URLs;
+# check-drift.sh enforces the same rule on hand-written skill text.
+WEB_FOR_BOOK = {
+    'book': 'https://pragmatica.dev/java/jbct/course/',
+    'book-pfd': 'https://pragmatica.dev/method/pfd/course/',
+    'book-arch': 'https://pragmatica.dev/method/architecture-synthesis/course/',
+}
+
+
+def rewrite_book_links(body, source_path):
+    """Turn `](chapter.md)` / `](chapter.md#anchor)` into the chapter's published URL."""
+    book_dir = os.path.basename(os.path.dirname(os.path.normpath(source_path)))
+    base = WEB_FOR_BOOK.get(book_dir)
+    if base is None:
+        return body
+    return re.sub(r'\]\(([A-Za-z0-9._-]+)\.md(#[^)]*)?\)',
+                  lambda m: ']({}{}/{})'.format(base, m.group(1), m.group(2) or ''),
+                  body)
+
+
 def extract(source_path, heading):
     """Return the body of `heading` — everything up to the next heading of the same
     or higher level, minus trailing rules and blank lines."""
@@ -91,7 +118,7 @@ def extract(source_path, heading):
         body.pop()
     while body and not body[0].strip():
         body.pop(0)
-    return '\n'.join(body)
+    return rewrite_book_links('\n'.join(body), source_path)
 
 
 def apply_block(dest_path, block_id, body, write):

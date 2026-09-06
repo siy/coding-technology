@@ -63,11 +63,29 @@ shared `BookingStore` port of seven methods plus cross-slice use case calls. Arm
 several sharing that store; arm B built one use case alone and had nothing to share with. Again an input
 difference, not a path difference.
 
-**3. Placement — a genuine miss, and arm B's.** Arm A places the use case at
+**3. Placement — a misclassification by arm B, not an indeterminacy.** Arm A places the use case at
 `...booking.purchase.buyticket`: subsystem, **workflow**, use case, as the telescope rule requires. Arm B
 placed it at `...booking.usecase.buyticket`, dropping the workflow level and inserting a literal `usecase`
-segment. The specification describes the workflow; arm B did not derive the level from it. This is the one
-place where the two structures differ and neither an outside constraint nor the history explains it.
+segment.
+
+**CORRECTED 2026-09-06, on the owner's challenge.** This file first called that "a genuine miss ... neither
+an outside constraint nor the history explains it", and framed it as the boundary of the determinism claim.
+That framing was wrong, and the correction matters more than the original reading.
+
+Both inputs the derivation needs were present. **The workflow is named in the specification**: the README's
+index says `02-processes-booking.md` contains "Holds, **purchase**, cancellation, hold expiry", and B3 *Buy
+ticket* is the purchase process — `purchase` is exactly the segment arm A used. **The rule was also
+present**: the telescope is JBCT's, and arm B had the skill. An applier holding both the fact and the rule
+and still producing the wrong path has *misapplied a determinate rule*. That is an error, not evidence that
+the method permits a choice. A determinate method can be misapplied; the two are different claims and this
+file conflated them.
+
+**What the divergence does evidence is a gap in the enforcer, and it is worth more than the original
+reading.** No lint rule checks telescope placement. The ARCH family covers dependency direction
+(`JBCT-ARCH-01`), the lift zone (`-02`), use-case coupling (`-03`) and slice internals (`-04`); no rule in
+any of the 77 knows what package a use case belongs in. So the one structural error in the run is precisely
+the class `jbct check` cannot see — which is why it survived into an artifact that passes the gate with 0
+errors. The telescope is prescribed in the book and unenforced in the toolchain.
 
 ## What this licenses, and what it does not
 
@@ -77,6 +95,8 @@ complete failure catalogue, and — the point of the run — the structure intro
 without access to that change. Path-independence is **supported on this instance**.
 
 **Not licensed.** n = 1 use case and n = 1 builder; this can falsify, it cannot estimate a rate.
+Note that after the placement correction above, **the run contains no divergence attributable to the method
+itself**: two trace to inputs arm B lacked, and the third to an applier error the gate does not catch.
 Requirements did not change *between* the arms, so the run asks whether maintenance leaves residue, not
 whether a re-derivation after changed requirements converges. The specification numbers its steps in
 execution order, which was disclosed in advance and matters less here than in Run 1c because both arms read

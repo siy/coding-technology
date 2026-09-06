@@ -51,6 +51,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Zone verb vocabulary** (`skills/jbct/SKILL.md`) — the skill pointed at the book for the full tables and carried a divergent verb list of its own; the tables are now generated from `book/basic-patterns.md`.
 
 ### Fixed
+- **The telescope rule reaches the skill, and the sync learned to rewrite book links** (`ai-tools/sync-book-blocks.py`,
+  `ai-tools/skills/jbct/project-structure/organization.md`) — the JBCT skill carried **no statement of the telescope
+  rule at all**, while `sync-book-blocks.py` pulled import ordering and member ordering from the same book chapter and
+  left *The Telescope Rule: How Structure Grows* unsynced. Found by the regeneration run, where an isolated builder
+  produced a correct flat placement without ever being given the rule. The block is now book-owned and synced (83
+  lines). Around it, the skill states when the rule fires: **placement present in the input makes the package path
+  derived, not chosen** — applied in the build phase before the first file, verified in the verification phase as an
+  explicit step that names which level came from which fact. Recorded there too is why this is a skill obligation and
+  not a lint rule: the package path is the only record in the codebase of which use cases cohere under which change
+  driver, so a checker has one side of the comparison and not two, and no rule among the 77 attempts it.
+  The sync now rewrites book-relative chapter links to their published URLs, since a skill installed under
+  `~/.claude/skills/` can reach no relative path into the book — the first synced block containing such a link
+  exposed the gap, and `check-drift.sh` already enforced the same rule on hand-written skill text.
+
 - **`BOOK-VERSIONING.md` says what a defect correction costs** — MAJOR's "content readers relied on being
   removed or replaced" could be read to cover any corrected prescription, which is how the 2026-09-05 review
   corrections were first misclassified as two paired majors. The clause now states that correcting a defect is

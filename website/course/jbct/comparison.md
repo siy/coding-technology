@@ -1,18 +1,18 @@
 ## blurb
-Where JBCT fits against layered, hexagonal, and clean architecture, and what it borrows or rejects.
+Where JBCT sits among the functional options on the JVM: railway-oriented error handling, Vavr, and Arrow-kt.
 
 ## learn
-- JBCT works within any architecture: layered, hexagonal, clean
 - Railway-oriented programming for error handling
 - Simpler than full FP libraries (Vavr, Arrow-kt)
 - Structural patterns other approaches lack
+- When a general-purpose functional library earns its place, and when it does not
 
 ## note
-Reading/analysis lesson, no code. Useful if you need to justify JBCT to a team already committed to a
-specific architecture.
+Reading/analysis lesson, no code. Useful when choosing between Pragmatica Core and a general-purpose
+functional library.
 
 ## exercise
-### Locate JBCT in Your Architecture | ~15 min
-Identify your team's current architecture (layered, hexagonal, clean, or none in particular). Write
-down where each JBCT pattern (Leaf, Condition, Sequencer, Fork-Join) would slot into your existing
-layers without requiring a rewrite.
+### Count Your Failure Channels | ~15 min
+Take one method in your codebase that orchestrates several steps. Count the distinct ways it signals
+failure: return codes, exceptions, nulls, logged-and-swallowed. Write down how many there are, then
+how many a caller would have to know about to use the method safely.

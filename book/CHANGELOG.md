@@ -9,6 +9,21 @@ repository root `CHANGELOG.md`.
 
 ## [Unreleased]
 
+### Removed
+- **The co-existence framing with other architectures** (*Comparison with Other Approaches*,
+  *Chapter Summaries*, *Appendix C*). The chapter carried three sections positioning JBCT relative to
+  Layered, Hexagonal and Clean Architecture, each ending in a verdict that JBCT sits inside them:
+  "refines layered architecture rather than replacing it", "Use Hexagonal for high-level architecture,
+  JBCT for implementation patterns within that architecture", and "JBCT can be implemented within Clean
+  Architecture". That framing contradicts the current *Project Structure* and *Process-First Design*
+  material, in which the telescope rule, lowest-common-ancestor sharing and change-driver decomposition
+  determine the primary decomposition rather than living inside someone else's. The three sections, the
+  architectural-style tier of the "Where JBCT Fits" diagram, the "works within any architectural style"
+  claim, the first exercise, two rows of the closing attribution table, and the Clean Architecture,
+  Hexagonal Architecture and Port glossary entries are removed. **No comparison replaces them**; the
+  chapter now covers railway-oriented programming and the functional libraries only. Chapter length
+  470 to 219 lines.
+
 ### Fixed
 - **Glossary: the Leaf Pattern entry described only adapter leaves** (*Appendix C*). It read "atomic
   operations with no dependencies. Typically adapters wrapping external I/O", which omits the business

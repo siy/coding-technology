@@ -325,6 +325,11 @@ at that moment. For a section this is easy to forget, because a thing called con
 sounds live. For a provisioned step the name carries the truth, since it was assembled once
 and it is what it was assembled into.
 
+That is the form to learn first, and build-once belongs to the form rather than to the
+runtime: the mechanism will gain a form that does refresh. Saying so now costs nothing,
+because what makes a provisioned step safe was never that it holds still. It is the type,
+and the type does not care how often the step behind it is rebuilt.
+
 The line to hold is about which settings earn this. If a setting selects which of several
 behaviors runs, provision the behavior; if it parameterizes one behavior that runs
 regardless, pass the value. `max-order-amount` stays a number, because one check always runs

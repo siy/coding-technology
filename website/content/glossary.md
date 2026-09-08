@@ -85,10 +85,6 @@ A reason code changes — a force that, moving, forces the code to move with it.
 The grouping criterion: units cohere when one change driver governs all of them, tested on two axes — [completeness](#completeness) and [purity](#purity).
 *Defined in: PFD*
 
-**Clean Architecture** {#clean-architecture}
-Uncle Bob's concentric-layers style with the dependency rule. JBCT can be implemented inside it; the two are compatible, not identical.
-*Defined in: JBCT*
-
 **Completeness** {#completeness}
 One axis of the cohesion test: does a grouping contain everything a driver governs, or is some of it scattered elsewhere, forcing one change to chase pieces across modules (shotgun surgery)?
 *Defined in: PFD*
@@ -247,10 +243,6 @@ An early return on invalid input. JBCT replaces this with [parse, don't validate
 The execution path when every operation succeeds. In JBCT it's the default read of the code; failures are the explicit branch, not the other way around.
 *Defined in: JBCT*
 
-**Hexagonal Architecture** {#hexagonal-architecture}
-Ports-and-adapters: domain at the center, adapters at the edges. JBCT's step interfaces play a role similar to ports.
-*Defined in: JBCT*
-
 **Hide the Machinery, Keep the Meaning** {#hide-the-machinery-keep-the-meaning}
 JBCT's twin property, and the undersold half of "code reads like the process": technical detail is hidden in adapters and [Aspects](#aspects), while the business facts survive in types and combinators — [the shapes](#the-shapes) state fallibility and absence, `Option` parameters state domain optionality, `flatMap` states dependency, `all()` states independence, sealed [`Cause`](#cause) hierarchies state the failure catalog, [`*State`](#state-machine) sums state the lifecycle. The code reads twice: once by the compiler as Java, once by the reader as the business process — [semantic potential](#semantic-potential), spent and kept.
 *Defined in: JBCT*
@@ -360,10 +352,6 @@ One of the [six axes](#six-axes): single shared store, distributed shared, shard
 **Phase 4 / Phase 5 / Phase 6** {#phase-4-5-6}
 AS's three phases of architecture work, cutting across [altitude](#altitude) rather than naming one: **Phase 4** elicits what the system must satisfy (the [nine questions](#nine-questions)); **Phase 5** selects the axis vector that satisfies it; **Phase 6** picks the concrete technology. See the [crosswalk](#crosswalk) for the unrelated JBCT term sharing the word "Phase."
 *Defined in: AS*
-
-**Port** {#port}
-In Hexagonal Architecture, an interface defining how the domain talks to the outside world — similar in role to JBCT's step interfaces.
-*Defined in: JBCT*
 
 **Pragmatica Core** {#pragmatica-core}
 The minimal Java library providing Option, Result, Promise, and Cause — the foundation JBCT's patterns are built on.

@@ -37,9 +37,6 @@ A typed error value in Pragmatica Core. Represents why an operation failed. Defi
 **Chain**
 A sequence of monadic operations connected by `flatMap()`. Each step receives the previous step's success value. Failures short-circuit the chain.
 
-**Clean Architecture**
-Uncle Bob's architectural style with concentric layers and the dependency rule. JBCT can be implemented within Clean Architecture.
-
 **CompositeCause**
 A Cause containing multiple sub-causes. Created by `Result.all()` when multiple validations fail. Allows collecting all errors instead of stopping at first.
 
@@ -102,9 +99,6 @@ Early return on invalid input. In JBCT, replaced by parse-don't-validate: valida
 **Happy Path**
 The execution path when all operations succeed. In JBCT, the happy path is the default - failures are handled explicitly.
 
-**Hexagonal Architecture**
-Ports and Adapters architecture. Domain at center, adapters at edges. JBCT's step interfaces are similar to ports.
-
 **Hide the Machinery, Keep the Meaning**
 JBCT's twin property: technical detail is pushed to adapters and Aspects (the machinery hidden), while business facts are preserved in types and combinators (the meaning kept) — return types state fallibility and absence, `Option` parameters state domain optionality, `flatMap` states dependency, `all()` states independence, sealed `Cause` hierarchies state the failure catalog, `*State` sums state the lifecycle. The code reads twice: as Java by the compiler, as the business process by the reader. The inventory table is in From Process to Patterns.
 
@@ -130,7 +124,7 @@ Java Backend Coding Technology. A methodology for writing maintainable backend J
 ## L
 
 **Leaf Pattern**
-A structural pattern for atomic operations with no dependencies. Typically adapters wrapping external I/O with `Promise.lift()`.
+A structural pattern for the smallest unit of processing: an operation none of the other patterns can split further. Either a business leaf (pure computation) or an adapter leaf (I/O or side effects, typically wrapping external calls with `Promise.lift()`).
 
 **Lift**
 Converting a value or operation to a monadic context. `Result.lift()` wraps throwing code in Result. `result.async()` lifts Result to Promise.
@@ -158,9 +152,6 @@ A type representing a value that may be absent. Use when absence is normal, not 
 
 **Parse, Don't Validate**
 A principle: instead of validating data and proceeding with raw types, parse data into validated types that make invalid states unrepresentable.
-
-**Port**
-In Hexagonal Architecture, an interface defining how the domain interacts with the outside world. Similar to JBCT's step interfaces.
 
 **Pragmatica Core**
 A minimal Java library providing Option, Result, Promise, and Cause types. The foundation for JBCT patterns.
@@ -268,7 +259,7 @@ A function that adds behavior around another function. Used in the Aspects patte
 | Cause | Typed error value |
 | flatMap | Chain dependent operations |
 | Fork-Join | Parallel independent operations |
-| Leaf | Atomic adapter operation |
+| Leaf | Atomic operation: pure computation or adapter |
 | map | Transform success value |
 | Option | Value that may be absent |
 | Parse, Don't Validate | Create validated types, not checked raw data |

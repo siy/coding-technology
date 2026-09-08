@@ -242,8 +242,8 @@ to production changes node config and touches nothing else. Operators can also c
 configuration on a running cluster through the management API, and the update propagates
 through the cluster's consensus store. What that changes is the stored configuration, not
 a running slice: every resource a slice holds was built from the values current when it
-was provisioned, and nothing rebuilds it when those values change. A slice sees new
-configuration when it is next reloaded, and not before.
+was provisioned, and in the form described here nothing rebuilds it when those values
+change. A slice sees new configuration when it is next reloaded, and not before.
 
 Through all of this, the slice reads nothing. It declares a qualifier, the runtime reads
 the merged configuration, builds the resource, and hands it over. Configuration is the

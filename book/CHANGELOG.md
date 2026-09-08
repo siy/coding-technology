@@ -10,6 +10,10 @@ repository root `CHANGELOG.md`.
 ## [Unreleased]
 
 ### Fixed
+- **Glossary: the Leaf Pattern entry described only adapter leaves** (*Appendix C*). It read "atomic
+  operations with no dependencies. Typically adapters wrapping external I/O", which omits the business
+  leaf entirely and defines the pattern by what it wraps rather than by what makes it a leaf. It now
+  names the deciding property, an operation no other pattern can split further, and both kinds.
 - **Coverage prescriptions removed** (*Testing Philosophy*, *Testing in Practice*). The philosophy chapter
   stated that "100% coverage" is the wrong target and, twenty-two lines earlier, headed its first testing
   layer "Value Objects: Unit Tests (100% coverage)"; the practice chapter still prescribed 100% for value

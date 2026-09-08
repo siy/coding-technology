@@ -295,7 +295,6 @@ feature/
 ### Comparison with Other Approaches
 
 **Key Takeaways:**
-- JBCT works within any architecture (Layered, Hexagonal, Clean)
 - Railway-oriented programming for error handling
 - Simpler than full FP libraries (vavr, Arrow-kt)
 - Adds structural patterns other approaches lack

@@ -130,7 +130,7 @@ Java Backend Coding Technology. A methodology for writing maintainable backend J
 ## L
 
 **Leaf Pattern**
-A structural pattern for atomic operations with no dependencies. Typically adapters wrapping external I/O with `Promise.lift()`.
+A structural pattern for the smallest unit of processing: an operation none of the other patterns can split further. Either a business leaf (pure computation) or an adapter leaf (I/O or side effects, typically wrapping external calls with `Promise.lift()`).
 
 **Lift**
 Converting a value or operation to a monadic context. `Result.lift()` wraps throwing code in Result. `result.async()` lifts Result to Promise.

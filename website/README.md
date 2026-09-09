@@ -137,7 +137,6 @@ See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed setup instructions.
 - **Node.js** - Build script runtime
 - **markdown-it** - Markdown to HTML conversion
 - **markdown-it-anchor** - Automatic heading anchors
-- **front-matter** - Optional YAML front matter support
 - **Netlify** - Static site hosting
 - **GitHub Actions** - CI/CD pipeline
 - **Cloudflare** - DNS and CDN

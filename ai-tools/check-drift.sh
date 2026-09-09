@@ -9,9 +9,11 @@ set -u
 cd "$(dirname "$0")" || exit 2
 FAIL=0
 
-# Canonical Pragmatica Core version. Bump HERE when the library releases; the checker
-# then names every file still carrying the old pin.
-PRAGMATICA_VERSION='1.0.0-rc1'
+# Pragmatica Core version: derived, not declared here. ai-tools/pragmatica-version.json is
+# the single source (issue #60) and pragmatica-pins.py compares every surface in the
+# repository against it AND the declaration against Maven Central. The hard-coded constant
+# this replaces was compared against nothing external, over three paths, with a pattern
+# that matched only `-rcN` — it could not fail in any of the directions that mattered.
 
 # Book version is derived, not declared: BOOK-VERSIONING.md makes each book's
 # CHANGELOG.md the single source of truth.
@@ -88,13 +90,11 @@ if escaping:
 sys.exit(1 if (denied or dead or escaping) else 0)
 EOF
 
-# --- 4. Pragmatica Core pin agrees with the declared canonical ---
-stale_pin=$(grep -rn -E '1\.0\.0-rc[0-9]+' skills agents ../book/*.md 2>/dev/null \
-            | grep -v -F "$PRAGMATICA_VERSION")
-if [ -n "$stale_pin" ]; then
-  fail "Pragmatica Core pin disagrees with declared $PRAGMATICA_VERSION:"
-  printf '%s\n' "$stale_pin"
-fi
+# --- 4. Pragmatica Core pins agree with the derived declaration ---
+# pragmatica-pins.py carries the mechanism, the space it searches, the four blindnesses of
+# the grep it replaces, and what a green result does NOT mean. It prints its own counts;
+# never add -q, and read the occurrence and exception counts rather than the exit status.
+python3 pragmatica-pins.py --check || FAIL=1
 
 # --- 5. Book version headers agree with the book's own CHANGELOG ---
 stale_hdr=$(grep -rn -E '\*\*Based on:\*\* JBCT v[0-9.]+' ../book/*.md 2>/dev/null \

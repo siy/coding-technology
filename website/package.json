@@ -11,8 +11,7 @@
   },
   "dependencies": {
     "markdown-it": "^14.0.0",
-    "markdown-it-anchor": "^9.0.1",
-    "front-matter": "^4.0.2"
+    "markdown-it-anchor": "^9.0.1"
   },
   "devDependencies": {},
   "engines": {

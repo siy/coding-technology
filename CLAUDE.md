@@ -52,7 +52,7 @@ build-and-deploy job, so it is coupled to the deploy path rather than sitting wi
 others. `deploy.yml` publishes the site to Netlify on merge to `main`; `dist/` is
 gitignored and built at deploy time.
 
-**A PR based on anything but `main` gets ZERO CI.** Both workflows filter
+**A PR based on anything but `main` gets ZERO CI.** Both PR workflows filter
 `pull_request: branches: [main]`, which matches the *base*, so a stacked PR runs no checks at
 all and shows an empty check list rather than a failure — indistinguishable from CI simply not
 having started yet. Measured 2026-09-09: PR #73 based on a feature branch had 0 check-runs while

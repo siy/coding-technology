@@ -134,9 +134,11 @@ See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed setup instructions.
 
 ## Technologies
 
-- **Node.js** - Build script runtime
-- **markdown-it** - Markdown to HTML conversion
-- **markdown-it-anchor** - Automatic heading anchors
+- **Node.js** - Build script runtime (no npm packages; `dependencies` is empty)
+- **pandoc** - Markdown to HTML conversion, driven by `lib/render.js` and the
+  `lib/site.lua` filter that reproduces the retired markdown-it markup exactly
+  (heading anchors, fenced code, `<hr>`, `<s>`). Already required by the book
+  build scripts. CI must install a pinned version.
 - **Netlify** - Static site hosting
 - **GitHub Actions** - CI/CD pipeline
 - **Cloudflare** - DNS and CDN

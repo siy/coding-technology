@@ -1,3 +1,7 @@
+---
+reviewed-at: 51913609e0e42f6490c6376c1a830cc6f60d56d1
+---
+
 ## blurb
 Why JBCT exists, the problems it fixes, and how the rest of the course is organized.
 

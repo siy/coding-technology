@@ -1,3 +1,7 @@
+---
+reviewed-at: 28fb12dd4e45040f1994013c0deb98d1dcd6c6fd
+---
+
 ## blurb
 Workflows emerge when use cases multiply and start sharing a change driver - compensation, saga, and time-as-decay follow from that emergence.
 

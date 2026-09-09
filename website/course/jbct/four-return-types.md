@@ -1,3 +1,7 @@
+---
+reviewed-at: 2e6b747cec6004151044862a921f1395ead5db8b
+---
+
 ## blurb
 The four return types - T, Option, Result, Promise - and the decision rule for choosing between them.
 

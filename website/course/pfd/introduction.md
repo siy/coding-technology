@@ -1,3 +1,7 @@
+---
+reviewed-at: 754d5709852dd8666a68fdddaf57d808eb603e62
+---
+
 ## blurb
 Why process, not entity, is the right unit of design, and how the book sets out to demonstrate that rather than argue it.
 

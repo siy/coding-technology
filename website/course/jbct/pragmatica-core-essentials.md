@@ -1,3 +1,7 @@
+---
+reviewed-at: 38b95c8b66f3dfd25124b0c4f3caa9529ff3f289
+---
+
 ## blurb
 Installing Pragmatica Core and its shared vocabulary: map, flatMap, filter, and recover across all four types.
 

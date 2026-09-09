@@ -1,0 +1,290 @@
+{
+  "_": "The one derived version declaration for issue #60. ai-tools/pragmatica-pins.py carries the mechanism and, more importantly, what a green result does NOT mean; read that first. `pinned` is the Pragmatica Core version every surface in this repository must quote. It is UNCHANGED from the constant it replaces (check-drift.sh:14, 1.0.0-rc1) — moving it is an editorial claim about what the books assert, and it belongs to the owner.",
+  "pinned": "1.0.0-rc1",
+  "pinned_since": "unchanged from ai-tools/check-drift.sh:14, moved here 2026-09-09",
+  "governed_artifacts": [
+    "core"
+  ],
+  "_governed_artifacts": "Artifacts in the group that this pin speaks for. org.pragmatica-lite:jbct-maven-plugin is at 0.4.6 and releases on its own line, so comparing it against core's pin would demand a wrong edit forever; it carries not-core inventory entries instead.",
+  "upstream": {
+    "maven_metadata": "https://repo1.maven.org/maven2/org/pragmatica-lite/core/maven-metadata.xml",
+    "_": "The external fact the old constant was never compared against. <release> is what Maven Central last published. Read 2026-09-09: 1.0.0-rc3, lastUpdated 20260902212949. The highest tag at github.com/pragmaticalabs/pragmatica is v1.0.0-rc3, so the two independent external sources agree; pragmatica HEAD sits on branch release-1.0.0-rc4 with no rc4 tag published.",
+    "known_behind": {
+      "upstream": "1.0.0-rc3",
+      "since": "2026-09-09",
+      "why": "Central published rc3 on 2026-09-02 and this repository still declares rc1. Which value the books should assert is the owner's ruling, not this PR's: bumping the pin re-asserts every dependency snippet and both chapter headers against a library nobody has re-read them against. Delete this key when the pin moves — with it gone the check fails until declaration and Central agree."
+    }
+  },
+  "known_versions": {
+    "_": "Every version org.pragmatica-lite:core has published, read from maven_metadata on 2026-09-09 (38 entries). It bounds the safety net: an UNATTRIBUTED literal is only worth a human's classification when Pragmatica has really shipped that version. Without it the check demands entries for all 111 book versions, POM model versions and URL fragments in the tree, and an inventory that size gets routed around rather than maintained. Refresh it in the same PR that moves the pin — note that plain 1.0.0 is NOT yet a published version, so a GA release must add it here.",
+    "read_at": "2026-09-09",
+    "versions": [
+      "0.8.0",
+      "0.8.1",
+      "0.8.2",
+      "0.8.3",
+      "0.8.4",
+      "0.8.5",
+      "0.8.6",
+      "0.9.0",
+      "0.9.1",
+      "0.9.2",
+      "0.9.3",
+      "0.9.4",
+      "0.9.5",
+      "0.9.6",
+      "0.9.7",
+      "0.9.8",
+      "0.9.9",
+      "0.9.10",
+      "0.9.11",
+      "0.10.0",
+      "0.11.0",
+      "0.11.1",
+      "0.11.2",
+      "0.15.0",
+      "0.15.1",
+      "0.16.0",
+      "0.17.0",
+      "0.19.0",
+      "0.19.1",
+      "0.19.2",
+      "0.20.0",
+      "0.21.0",
+      "0.23.1",
+      "0.24.0",
+      "0.25.0",
+      "1.0.0-rc1",
+      "1.0.0-rc2",
+      "1.0.0-rc3"
+    ]
+  },
+  "space": {
+    "_": "Subtracted from `git ls-files`. Every glob here is a dated record whose job is to name old versions. Anything else removed from the search must be argued for in writing, because a narrowed space was defect (b) of the check this replaces.",
+    "_self_exclude": "EXACT paths, matched by string equality and never as globs, printed by name on the space line. These two files quote version literals in prose ABOUT pins, which the scan reads back as pins — the instrument seeing itself. Never widen this to `ai-tools/` or any directory: ai-tools/skills/ and ai-tools/agents/ carry real pins and are precisely what defect (b) was about, and a broadened exclusion would still exit 0, so nothing would report the loss.",
+    "self_exclude": [
+      "ai-tools/pragmatica-pins.py",
+      "ai-tools/pragmatica-version.json"
+    ],
+    "exclude_globs": [
+      "CHANGELOG.md",
+      "*/CHANGELOG.md",
+      "HANDOVER-*.md",
+      "*/HANDOVER-*.md",
+      "*-meta/*",
+      "*-meta/*/*"
+    ]
+  },
+  "render_exceptions": [
+    {
+      "path": "website/content/aether.md",
+      "version": "1.0.0-rc3",
+      "count": 2,
+      "since": "2026-09-09",
+      "why": "The two coordinate forms on line 5 (org.pragmatica-lite:core and org.pragmatica-lite.aether:*). Paired with the mechanical-deferred inventory entry for the same file: the site agrees with Maven Central and the declaration does not, and the owner rules which moves. The page is NOT converted to {{PRAGMATICA_VERSION}} in this PR, because substituting it today would render rc1 and make the site LESS correct than it is now — the conversion is one edit, gated on the ruling."
+    }
+  ],
+  "_render_exceptions": "Read by website/build.js only, which guards the site's own voice (website/content/*.md) by coordinate form. The repository-wide check is ai-tools/pragmatica-pins.py; these two lists are separate because they answer different questions and the build must not depend on python3.",
+  "inventory": [
+    {
+      "path": "website/content/aether.md",
+      "match": "The current candidate is",
+      "version": "1.0.0-rc3",
+      "count": 4,
+      "class": "mechanical-deferred",
+      "deferred_at_pin": "1.0.0-rc1",
+      "since": "2026-09-09",
+      "why": "The site states rc3 while this repository declares rc1; the site is the surface that agrees with Maven Central. Four occurrences on one line: the prose version, the core coordinate, the aether wildcard coordinate, and the GitHub release tag. Deferred, not edited, because the owner rules which value is canonical. SEPARATELY UNRESOLVED and NOT settled by this entry: whether `org.pragmatica-lite.aether:*` is a true wildcard. Two attempts to check it used unsound instruments (probing module names absent at the tag; an artifactId extraction disagreeing with git ls-tree). Deriving that line mechanically would freeze an unverified claim, so build.js substitutes the VERSION only."
+    },
+    {
+      "path": "examples/pom.xml",
+      "match": "<pragmatica.version>0.9.0</pragmatica.version>",
+      "version": "0.9.0",
+      "count": 1,
+      "class": "mechanical-deferred",
+      "deferred_at_pin": "1.0.0-rc1",
+      "since": "2026-09-09",
+      "why": "A live core pin, six releases behind: it feeds <version>${pragmatica.version}</version> for org.pragmatica-lite:core at examples/pom.xml:29, and examples/README.md:12,20 in the same directory claims 1.0.0-rc1. The examples build and its own README disagree. Outside the old check's three-path space and spelled `pragmatica.version` rather than `pragmatica-lite.version`, so nothing could see it. Class i, but it needs the owner's value like every other pin."
+    },
+    {
+      "path": "book-aether/appendix-a-api-reference.md",
+      "match": "Pragmatica source at `release-1.0.0-rc3` head `e123caafb`",
+      "version": "1.0.0-rc3",
+      "count": 1,
+      "class": "editorial",
+      "since": "2026-09-09",
+      "why": "Not a pin: a verified_at provenance stamp asserting the appendix's signatures were READ from source at a named tag and a named head SHA on a named date. Moving the version without re-reading the source at the new tag fabricates a verification nobody performed, and the tag, the SHA and the date have to move together or not at all. Needs a re-read, not a sed."
+    },
+    {
+      "path": "BOOK-VERSIONING.md",
+      "match": "The `1.0.0-rc1` in the text",
+      "version": "1.0.0-rc1",
+      "count": 1,
+      "class": "editorial",
+      "since": "2026-09-09",
+      "why": "Explanatory prose telling readers that the rc suffix they see in book text belongs to the library and not to any book. It quotes the literal as an example. Whether the example should track the pin or be generalised to `1.0.0-rcN` is an editorial call, and either answer is defensible."
+    },
+    {
+      "path": "book/knowledge-gathering-pipelines.md",
+      "match": "Pragmatica Core 1.0.0-rc1)",
+      "version": "1.0.0-rc1",
+      "count": 1,
+      "class": "historical",
+      "since": "2026-09-09",
+      "why": "Named by issue #60's own boundary. States the release the mapWith family ARRIVED in. Must not move: at rc3 the sentence would claim the combinators appeared in a release that merely contains them."
+    },
+    {
+      "path": "book/knowledge-gathering-pipelines.md",
+      "match": "Pragmatica Core 1.0.0-rc1 (`mapWith`",
+      "version": "1.0.0-rc1",
+      "count": 1,
+      "class": "historical",
+      "since": "2026-09-09",
+      "why": "Named by issue #60's own boundary. 'the context-preserving combinators added in Pragmatica Core 1.0.0-rc1' — the release they were added in. Must not move."
+    },
+    {
+      "path": "book/knowledge-gathering-pipelines.md",
+      "match": "Before 1.0.0-rc1,",
+      "version": "1.0.0-rc1",
+      "count": 1,
+      "class": "historical",
+      "since": "2026-09-09",
+      "why": "Named by issue #60's own boundary. 'Before 1.0.0-rc1, that shape forced a nested lambda' — a statement about the past. Must not move. It is also the only one of the three that no attribution rule reaches (no anchor within two lines), so it arrives through the known_versions net."
+    },
+    {
+      "path": "website/course/jbct/knowledge-gathering-pipelines.md",
+      "match": "(Pragmatica Core 1.0.0-rc1)",
+      "version": "1.0.0-rc1",
+      "count": 1,
+      "class": "historical",
+      "since": "2026-09-09",
+      "why": "NOT named by issue #60. The course blurb shadowing book/knowledge-gathering-pipelines.md:6 and carrying the same when-it-appeared claim. The issue lists three historical lines and there are more; a bump PR working from the issue alone would have edited this one."
+    },
+    {
+      "path": "ai-tools/skills/jbct/patterns/knowledge-gathering.md",
+      "match": "pragmatica core 1.0.0-rc1+",
+      "version": "1.0.0-rc1",
+      "count": 1,
+      "class": "historical",
+      "since": "2026-09-09",
+      "why": "NOT named by issue #60. '**Availability**: pragmatica core 1.0.0-rc1+' — the trailing + makes it a floor, the release the feature became available in, true for every later release. Moving it would narrow a true statement."
+    },
+    {
+      "path": "ai-tools/agents/jbct-coder.md",
+      "match": "1.0.0-rc1+) makes each stage",
+      "version": "1.0.0-rc1",
+      "count": 1,
+      "class": "historical",
+      "since": "2026-09-09",
+      "why": "NOT named by issue #60. An availability floor ('the mapWith family (core 1.0.0-rc1+)') split across lines 304-305, which is why the prose window is two lines rather than one."
+    },
+    {
+      "path": "ai-tools/agents/jbct-coder.md",
+      "match": "(core 1.0.0-rc1+, on Result/Option/Promise)",
+      "version": "1.0.0-rc1",
+      "count": 1,
+      "class": "historical",
+      "since": "2026-09-09",
+      "why": "NOT named by issue #60. A section heading stating the release the context-preserving combinators became available in. Floor, not pin."
+    },
+    {
+      "path": "book/error-handling.md",
+      "match": "(Pragmatica Core 0.9.0+)",
+      "version": "0.9.0",
+      "count": 1,
+      "class": "historical",
+      "since": "2026-09-09",
+      "why": "NOT named by issue #60. 'Verify.ensureOption() (Pragmatica Core 0.9.0+)' — an availability floor six minor releases before the pin. It reads as a badly stale pin and is not one; this is the exact shape that makes a naive widened check demand wrong edits."
+    },
+    {
+      "path": "book/four-return-types.md",
+      "match": "(Pragmatica Core 0.9.0+)",
+      "version": "0.9.0",
+      "count": 1,
+      "class": "historical",
+      "since": "2026-09-09",
+      "why": "NOT named by issue #60. Availability floor for Verify.ensureOption(), same sentence as book/error-handling.md:330."
+    },
+    {
+      "path": "book/parse-dont-validate.md",
+      "match": "(Pragmatica Core 0.9.0+)",
+      "version": "0.9.0",
+      "count": 1,
+      "class": "historical",
+      "since": "2026-09-09",
+      "why": "NOT named by issue #60. Availability floor for Verify.ensureOption()."
+    },
+    {
+      "path": "book/registeruser-example.md",
+      "match": "(Pragmatica Core 0.9.0+)",
+      "version": "0.9.0",
+      "count": 1,
+      "class": "historical",
+      "since": "2026-09-09",
+      "why": "NOT named by issue #60. Availability floor for Verify.ensureOption()."
+    },
+    {
+      "path": "MANAGEMENT_PERSPECTIVE.md",
+      "match": "Performance as of v0.15.1",
+      "version": "0.15.1",
+      "count": 1,
+      "class": "historical",
+      "since": "2026-09-09",
+      "why": "NOT named by issue #60, and the most dangerous entry here to move mechanically: it binds a MEASUREMENT (6.5K requests/second at sub-millisecond latency) to the release it was measured on. Advancing the version re-attributes a benchmark to a release nobody benchmarked. A new number needs a new run, not a new literal."
+    },
+    {
+      "path": "proposals/private-record-constructors.md",
+      "match": "<version>0.8.5</version>",
+      "version": "0.8.5",
+      "count": 1,
+      "class": "historical",
+      "since": "2026-09-09",
+      "why": "NOT named by issue #60. Inside a blockquoted note in a JEP-style proposal that says the Pragmatica types 'are not part of this proposal - they serve only to illustrate'. Editing a document as submitted is rewriting the record."
+    },
+    {
+      "path": "proposals/private-record-constructors.md",
+      "match": "implementation 'org.pragmatica-lite:core:0.8.5'",
+      "version": "0.8.5",
+      "count": 1,
+      "class": "historical",
+      "since": "2026-09-09",
+      "why": "NOT named by issue #60. The Gradle half of the same blockquoted proposal snippet."
+    },
+    {
+      "path": "sources/articles/asynchronous-processing-in-java-with-promises.md",
+      "match": "<version>0.7.6</version>",
+      "version": "0.7.6",
+      "count": 1,
+      "class": "historical",
+      "since": "2026-09-09",
+      "why": "NOT named by issue #60, and it declares its own class: line 424 reads 'most recent version at the time of writing'. An archived article source, published elsewhere; 0.7.6 predates every version Maven Central still lists."
+    },
+    {
+      "path": "MAVEN-PLUGIN.md",
+      "match": "<version>0.4.6</version>",
+      "version": "0.4.6",
+      "count": 3,
+      "class": "not-core",
+      "since": "2026-09-09",
+      "why": "org.pragmatica-lite:jbct-maven-plugin, not core. Same group, independent release line, so it must never be compared against core's pin. Its own staleness is a real question and this check does not answer it — there is no declaration for the plugin, and adding one is out of scope for #60."
+    },
+    {
+      "path": "README.md",
+      "match": "<version>0.4.6</version>",
+      "version": "0.4.6",
+      "count": 1,
+      "class": "not-core",
+      "since": "2026-09-09",
+      "why": "org.pragmatica-lite:jbct-maven-plugin again, in the README's build-integration snippet."
+    },
+    {
+      "path": "BOOK-VERSIONING.md",
+      "match": "`jbct-v3.2.0`, `pfd-v0.9.0`",
+      "version": "0.9.0",
+      "count": 1,
+      "class": "not-pragmatica",
+      "since": "2026-09-09",
+      "why": "A BOOK tag example (pfd-v0.9.0) whose digits collide with a real Pragmatica release, so the known_versions net picks it up. Nothing to do with the library; recorded so the net stays quiet without being narrowed."
+    }
+  ]
+}

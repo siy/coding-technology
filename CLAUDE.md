@@ -45,7 +45,11 @@ node --test website/next-step/*.test.js   # the next_step derivation engine
 python3 ai-tools/sync-book-blocks.py --check   # book-owned blocks still in sync
 ```
 
-The first three plus the block check run in CI (`.github/workflows/checks.yml`).
+All four run in CI on push and pull request to `main`, but not from one workflow: the
+drift, block and next-step checks are in `.github/workflows/checks.yml`, while
+`npm run build` — the only link/orphan check — runs inside `deploy.yml`'s
+build-and-deploy job, so it is coupled to the deploy path rather than sitting with the
+others.
 `deploy.yml` publishes the site to Netlify on merge to `main`; `dist/` is gitignored and
 built at deploy time.
 

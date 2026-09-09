@@ -1,3 +1,7 @@
+---
+reviewed-at: a61adf062bc1df5f521b2a0d1c653afe816cc150
+---
+
 ## blurb
 The Condition pattern in a real workflow: routing an article's approval path by author tier.
 

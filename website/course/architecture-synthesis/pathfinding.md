@@ -1,3 +1,7 @@
+---
+reviewed-at: 44e91088181620788889eeec9f539d1bc0a9fb88
+---
+
 ## blurb
 Migration as pathfinding: deltas that don't commute, intermediate states with physics of their own, and six qualitative indicators that weigh a route.
 

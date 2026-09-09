@@ -1,3 +1,7 @@
+---
+reviewed-at: e1cf9b7e6ed643138b4a3411de0209eca1d58c25
+---
+
 ## blurb
 The three basic patterns - Leaf, Condition, Iteration - and mechanical rules for extracting functions.
 

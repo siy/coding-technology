@@ -1,3 +1,7 @@
+---
+reviewed-at: 0fbf2771e9c8305ffbf0d6f8943f87bd152f2f73
+---
+
 ## blurb
 Subsystems emerge from workflows that change together, and business cross-cutting - the audit ledger, the compliance check - becomes a design decision instead of runtime plumbing.
 

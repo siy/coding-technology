@@ -1,3 +1,7 @@
+---
+reviewed-at: 1c05fc91785c591026454e04c8d63e4244a07da7
+---
+
 ## blurb
 Errors as typed Cause values instead of exceptions, with exhaustive switches and clean composition.
 

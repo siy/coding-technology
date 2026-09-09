@@ -1,3 +1,7 @@
+---
+reviewed-at: 410ea690b723c22f2ced08bfc644eb9da5aa2900
+---
+
 ## blurb
 Where JBCT sits among the functional options on the JVM: railway-oriented error handling, Vavr, and Arrow-kt.
 

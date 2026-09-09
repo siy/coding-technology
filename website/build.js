@@ -35,6 +35,58 @@ const BOOK_DIR = path.join(ROOT_DIR, 'book');
 const COURSE_DIR = path.join(__dirname, 'course', 'jbct');
 const SITE_URL = 'https://pragmatica.dev';
 
+// ---------- The one derived Pragmatica version declaration (issue #60) ----------
+// ai-tools/pragmatica-version.json is the single source. The site gets the version from
+// it via {{PRAGMATICA_VERSION}} rather than hand-stating it, and refuses to render a
+// landing page that hand-writes a DIFFERENT one.
+//
+// SCOPE, deliberately narrow, and the reason matters. This guards the site's own voice —
+// website/content/*.md — by the COORDINATE form alone (`org.pragmatica-lite…:artifact:x`),
+// which is unambiguous and needs no window logic. It does NOT re-implement the repository
+// -wide attribution in ai-tools/pragmatica-pins.py, for two reasons: a second copy of a
+// parser drifts from the first, and the natural place to run it here — the emitted HTML —
+// is syntax-highlighted markup where `org.pragmatica-lite` can be split across spans, so
+// a scan of it would be a parser written against a format nobody validated it on. The
+// books and every other surface are checked by pragmatica-pins.py, which CI runs through
+// ai-tools/check-drift.sh. Substitution is a WEBSITE mechanism and stays out of the book
+// sources, which also build to PDF through a toolchain that would not expand the token.
+const PIN_DECL = JSON.parse(
+  fs.readFileSync(path.join(ROOT_DIR, 'ai-tools', 'pragmatica-version.json'), 'utf-8'));
+const PINNED_VERSION = PIN_DECL.pinned;
+const PIN_TOKEN = /\{\{PRAGMATICA_VERSION\}\}/g;
+const PIN_COORD = /org\.pragmatica-lite(?:\.[A-Za-z0-9_-]+)*:[A-Za-z0-9_*.-]+:(\d+\.\d+\.\d+(?:-[A-Za-z0-9]+(?:\.[A-Za-z0-9]+)*)?)/g;
+
+function renderExceptionsFor(src) {
+  return (PIN_DECL.render_exceptions || []).filter(e => e.path === src);
+}
+
+// Refuse to render a version the declaration does not sanction. An exception must name
+// the file, the version and how many occurrences it covers, so a line that gains or loses
+// one fails instead of passing quietly.
+function verifySourcePins(src, raw) {
+  const found = [...raw.matchAll(PIN_COORD)].map(m => m[1]);
+  const off = found.filter(v => v !== PINNED_VERSION);
+  if (!off.length) return;
+  const allowed = renderExceptionsFor(src);
+  for (const version of new Set(off)) {
+    const seen = off.filter(v => v === version).length;
+    const entry = allowed.find(e => e.version === version);
+    if (!entry) {
+      throw new Error(
+        `${src} states Pragmatica ${version} but the declaration pins ${PINNED_VERSION}. ` +
+        `Use {{PRAGMATICA_VERSION}}, or add a dated render_exceptions entry to ` +
+        `ai-tools/pragmatica-version.json saying why this page differs.`);
+    }
+    if (entry.count !== seen) {
+      throw new Error(
+        `${src} render exception for ${version} claims ${entry.count} occurrence(s) but ` +
+        `${seen} are present — re-count it in ai-tools/pragmatica-version.json.`);
+    }
+    console.log(`  NOTE: ${src} renders Pragmatica ${version}, not the declared ` +
+                `${PINNED_VERSION} — excepted ${entry.since}: ${entry.why}`);
+  }
+}
+
 const STYLE_HASH = crypto.createHash('md5')
                          .update(fs.readFileSync(path.join(STYLES_DIR, 'style.css')))
                          .digest('hex')
@@ -386,6 +438,8 @@ function buildLandingPage(cfg) {
     console.warn(`WARN: ${cfg.src} not found — rendering placeholder for /${cfg.out}`);
     raw = `# ${cfg.fallbackTitle}\n\n<div class="placeholder-note">Content pending.</div>\n`;
   }
+  verifySourcePins(cfg.src, raw);
+  raw = raw.replace(PIN_TOKEN, PINNED_VERSION);
   const { body } = stripFrontMatter(raw);
   const title = getTitle(body) || cfg.fallbackTitle;
   const description = cfg.description || extractFirstParagraph(body);
@@ -1082,6 +1136,24 @@ function verifyLinks() {
   }
 }
 
+// An unsubstituted {{PRAGMATICA_VERSION}} in the output is the substitution mechanism
+// failing silently: the page renders, and it shows a template token to the reader instead
+// of a version. Cheap to check, and it fails LOUD rather than shipping the literal.
+function verifyNoLeakedPinToken() {
+  const files = walk(DIST_DIR).filter(f => f.endsWith('.html'));
+  const leaked = files.filter(f => PIN_TOKEN.test(fs.readFileSync(f, 'utf-8')));
+  PIN_TOKEN.lastIndex = 0;
+  if (leaked.length) {
+    leaked.forEach(f => console.error(
+      `  UNSUBSTITUTED: ${path.relative(DIST_DIR, f)} still contains {{PRAGMATICA_VERSION}}`));
+    console.error(`\n✗ ${leaked.length} page(s) leaked the version token.`);
+    process.exitCode = 1;
+    return;
+  }
+  console.log(`✓ Pragmatica version ${PINNED_VERSION} from ai-tools/pragmatica-version.json ` +
+              `(${files.length} pages checked, no leaked tokens).`);
+}
+
 // ---------- Main build ----------
 
 function build() {
@@ -1115,6 +1187,7 @@ function build() {
   generateSitemap();
 
   verifyLinks();
+  verifyNoLeakedPinToken();
 
   console.log('\n✓ Build complete!');
   console.log(`Output directory: ${DIST_DIR}`);

@@ -1,3 +1,7 @@
+---
+reviewed-at: 8427ae20c1b994184693a77007220d61bf6564b4
+---
+
 ## blurb
 The exit gate: the consistency lens and five rules of budget arithmetic that catch a wrong vector before anything is built.
 

@@ -1,3 +1,7 @@
+---
+reviewed-at: 1a9ad3ab54a0fa906c4dbc90eafae5ff15a0c1b5
+---
+
 ## blurb
 Integration-first testing: stub everything, then implement incrementally toward production-ready.
 

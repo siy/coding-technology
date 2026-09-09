@@ -1,3 +1,7 @@
+---
+reviewed-at: 5c1519ff43d91be18ad32b3c9dc16c4cd403d748
+---
+
 ## blurb
 How a business process becomes a data dependency graph, and why pattern choice follows from it.
 

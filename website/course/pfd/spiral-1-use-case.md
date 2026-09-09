@@ -1,3 +1,7 @@
+---
+reviewed-at: d7691999e635096c63444395fe7ad1844c6fe693
+---
+
 ## blurb
 One use case, buying a ticket, walked end to end - its types, its patterns, its recovery, and the questions it deliberately leaves open.
 

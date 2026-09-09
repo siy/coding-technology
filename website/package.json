@@ -9,10 +9,7 @@
     "prebuild": "npm run clean",
     "test": "node --test next-step/*.test.js"
   },
-  "dependencies": {
-    "markdown-it": "^14.0.0",
-    "markdown-it-anchor": "^9.0.1"
-  },
+  "dependencies": {},
   "devDependencies": {},
   "engines": {
     "node": ">=18.0.0"

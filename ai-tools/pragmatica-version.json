@@ -61,6 +61,11 @@
   },
   "space": {
     "_": "Subtracted from `git ls-files`. Every glob here is a dated record whose job is to name old versions. Anything else removed from the search must be argued for in writing, because a narrowed space was defect (b) of the check this replaces.",
+    "_self_exclude": "EXACT paths, matched by string equality and never as globs, printed by name on the space line. These two files quote version literals in prose ABOUT pins, which the scan reads back as pins — the instrument seeing itself. Never widen this to `ai-tools/` or any directory: ai-tools/skills/ and ai-tools/agents/ carry real pins and are precisely what defect (b) was about, and a broadened exclusion would still exit 0, so nothing would report the loss.",
+    "self_exclude": [
+      "ai-tools/pragmatica-pins.py",
+      "ai-tools/pragmatica-version.json"
+    ],
     "exclude_globs": [
       "CHANGELOG.md",
       "*/CHANGELOG.md",

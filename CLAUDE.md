@@ -59,6 +59,12 @@ having started yet. Measured 2026-09-09: PR #73 based on a feature branch had 0 
 `deploy.yml` publishes the site to Netlify on merge to `main`; `dist/` is gitignored and
 built at deploy time.
 
+A third workflow runs on a schedule rather than on a PR: `.github/workflows/upstream-pin.yml`
+compares the declared Pragmatica pin against Maven Central daily. It is deliberately outside
+PR CI — it is the one check that needs the network, and an unreachable Central inside a
+blocking check could only print `axis NOT checked` and pass. On the schedule it fails instead,
+because a scheduled job blocks no merge.
+
 Books build to PDF/EPUB via `book/build-pdf.sh`, `book/build-epub.sh`, and
 `<book>-meta/build-pdf.sh` for the others. **PDF and EPUB outputs are never committed** —
 they are gitignored build artifacts.

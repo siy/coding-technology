@@ -110,14 +110,34 @@ difference between an inventory and a list of suppressions.
 WHAT A GREEN RESULT DOES NOT MEAN. Not that the repository is current with Pragmatica:
 only that every surface agrees with the declared pin and every disagreement is excepted in
 writing. The exception count prints on the summary line for exactly that reason. Nor does
-it mean the upstream probe ran — when Maven Central is unreachable the
-declaration-versus-upstream axis is NOT checked, and the run says so in those words rather
-than passing quietly.
+it mean anything at all about upstream, which --check no longer looks at.
 
-  --check      classify the whole space; exit 1 on findings (default)
+WHY THE UPSTREAM AXIS LEFT --check, AND WHERE IT WENT. Every other axis here is hermetic: it
+asks whether this repository's own surfaces agree with this repository's own declaration,
+and it is decidable from the checkout. The declaration-versus-upstream axis is the one that
+reaches the network, and a network axis inside a BLOCKING pull-request check has only two
+available behaviours when Central is unreachable, both bad. Failing turns an outage at
+repo1.maven.org into a merge block on work that has nothing to do with pins. Not failing —
+what this printed before — is a gate reporting SUCCESS while examining NOTHING, and it said
+so in the words "axis NOT checked" on a line inside an otherwise-green run, which is exactly
+where such a line goes unread.
+
+So the axis MOVED; it did not disappear. It runs under --upstream from
+.github/workflows/upstream-pin.yml on a daily schedule, and THERE an unreachable or
+malformed probe FAILS the job rather than skipping: a scheduled job blocks no pull request,
+so strictness costs a notification instead of a merge, and that asymmetry is the whole
+argument for the move.
+
+The pointer is VERIFIED, NOT ASSERTED. --check reads that workflow file on every run and
+FAILS if it has gone missing or has stopped invoking --upstream, because a comment naming
+where an axis went is precisely the kind of claim that rots green while the axis it names
+has been deleted.
+
+  --check      classify the whole space; exit 1 on findings (default). Hermetic: no network
   --list       print every occurrence with its bucket, out-of-scope ones included
   --pinned     print the declared version and exit, for shell and build consumption
-  --offline    skip the upstream probe and say that it was skipped
+  --upstream   ONLY the declaration-vs-upstream axis, strict: unreachable or malformed is a
+               FAILURE here, never a skip. This is what the scheduled workflow runs
 """
 
 import argparse
@@ -167,6 +187,11 @@ ARTIFACT_TAG_RE = re.compile(r'<artifactId>([^<]+)</artifactId>')
 SAMPLE_RE = re.compile(r'org\.example:')
 
 CLASSES = ('mechanical-deferred', 'editorial', 'historical', 'not-core', 'not-pragmatica')
+
+# Where the upstream axis went, and the flag it must still be invoked with. Read on every
+# --check run rather than trusted; see the docstring.
+UPSTREAM_WORKFLOW = os.path.join('.github', 'workflows', 'upstream-pin.yml')
+UPSTREAM_FLAG = '--upstream'
 
 
 def load_declaration():
@@ -268,12 +293,12 @@ def apply_inventory(occurrences, inventory):
     return hits
 
 
-def probe_upstream(decl, offline):
+def probe_upstream(decl):
     """The external fact defect (a) needs. An unreachable probe is an instrument failure,
     not a finding: it returns None and says so, because a run that could not check the
-    axis must not read like a run that checked it."""
-    if offline:
-        return None, 'SKIPPED (--offline): declaration-vs-upstream axis NOT checked'
+    axis must not read like a run that checked it. What that costs is the CALLER's ruling,
+    and there is now exactly one caller — upstream_axis(), running on a schedule where
+    nothing is blocked, so it costs the job."""
     import urllib.request
     url = decl['upstream']['maven_metadata']
     try:
@@ -287,12 +312,72 @@ def probe_upstream(decl, offline):
     return m.group(1), 'read <release> from %s' % url
 
 
+def upstream_axis(decl):
+    """The declaration-vs-upstream axis, lifted out of --check unchanged in what it
+    COMPARES and changed in exactly one thing: an instrument failure now fails the run.
+
+    That inversion is the entire point of the move. The same strictness inside a PR check
+    would block merges on somebody else's outage, so the axis was reduced to printing
+    'NOT checked' and passing. Here it blocks nothing, so it can afford to be honest, and
+    silence about upstream costs a red scheduled run instead of hiding inside a green PR.
+    Note what did NOT change: a known_behind exception still passes, because it is anchored
+    to one exact upstream value and stops matching the day Central moves."""
+    pinned = decl['pinned']
+    print('pragmatica pin check — upstream axis ONLY (hermetic axes run in check-drift.sh)')
+    print('  declared: %s for %s'
+          % (pinned, '/'.join(sorted(decl['governed_artifacts']))))
+    upstream, note = probe_upstream(decl)
+    if upstream is None:
+        print('FAIL: %s' % note)
+        print('  this job blocks no pull request, so an unreachable or malformed Central '
+              'is a FAILURE here rather than a skip — that is why the axis was moved')
+        print('upstream axis: FAILURE ABOVE')
+        return 1
+    if upstream == pinned:
+        print('  upstream: %s — agrees with the declared pin (%s)' % (upstream, note))
+        print('upstream axis: all green')
+        return 0
+    allowed = decl.get('upstream', {}).get('known_behind')
+    if allowed and allowed.get('upstream') == upstream:
+        print('  upstream: %s — DISAGREES with declared %s; excepted %s: %s'
+              % (upstream, pinned, allowed['since'], allowed['why']))
+        print('upstream axis: all green (disagreement excepted, not absent)')
+        return 0
+    print('FAIL: upstream Maven Central publishes %s, this repository declares %s'
+          % (upstream, pinned))
+    print('  issue #60 item 6 is one PR moving the pin and every quoted block '
+          'together; clear upstream.known_behind when it lands')
+    print('upstream axis: FAILURE ABOVE')
+    return 1
+
+
+def upstream_pointer():
+    """(fail, line) for --check. Says out loud that this run did not look upstream, and
+    where the axis that does lives — then proves that claim against the file, so the axis
+    cannot be deleted while a line here goes on saying it runs somewhere."""
+    full = os.path.join(ROOT, UPSTREAM_WORKFLOW)
+    try:
+        with open(full, encoding='utf-8') as fh:
+            body = fh.read()
+    except OSError as exc:                                     # noqa: BLE001
+        return 1, ('FAIL: this run does not check upstream and %s, which is supposed to, '
+                   'cannot be read (%s) — the axis has no home' % (UPSTREAM_WORKFLOW, exc))
+    if UPSTREAM_FLAG not in body:
+        return 1, ('FAIL: this run does not check upstream and %s no longer invokes %s — '
+                   'the axis has been silently disarmed'
+                   % (UPSTREAM_WORKFLOW, UPSTREAM_FLAG))
+    return 0, ('  upstream: NOT part of this run, by construction — the '
+               'declaration-vs-upstream axis runs %s from %s on a schedule, where an '
+               'unreachable Central FAILS (verified: that file exists and invokes %s)'
+               % (UPSTREAM_FLAG, UPSTREAM_WORKFLOW, UPSTREAM_FLAG))
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--check', action='store_true')
     ap.add_argument('--list', action='store_true')
     ap.add_argument('--pinned', action='store_true')
-    ap.add_argument('--offline', action='store_true')
+    ap.add_argument('--upstream', action='store_true')
     args = ap.parse_args()
 
     decl = load_declaration()
@@ -300,6 +385,8 @@ def main():
     if args.pinned:
         print(pinned)
         return 0
+    if args.upstream:
+        return upstream_axis(decl)
 
     inventory = decl['inventory']
     governed = set(decl['governed_artifacts'])
@@ -335,22 +422,9 @@ def main():
           % (len(occurrences), len(agrees), len(excepted), len(findings),
              len(needs_class), len(out_of_scope)))
 
-    upstream, note = probe_upstream(decl, args.offline)
-    if upstream is None:
-        print('  upstream: %s' % note)
-    elif upstream == pinned:
-        print('  upstream: %s — agrees with the declared pin (%s)' % (upstream, note))
-    else:
-        allowed = decl.get('upstream', {}).get('known_behind')
-        if allowed and allowed.get('upstream') == upstream:
-            print('  upstream: %s — DISAGREES with declared %s; excepted %s: %s'
-                  % (upstream, pinned, allowed['since'], allowed['why']))
-        else:
-            print('FAIL: upstream Maven Central publishes %s, this repository declares %s'
-                  % (upstream, pinned))
-            print('  issue #60 item 6 is one PR moving the pin and every quoted block '
-                  'together; clear upstream.known_behind when it lands')
-            fail = 1
+    pointer_fail, pointer_line = upstream_pointer()
+    print(pointer_line)
+    fail = fail or pointer_fail
 
     if findings:
         print('FAIL: version pin disagrees with the declared %s (%d):'

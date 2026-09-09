@@ -21,10 +21,24 @@ check that has never been shown to fail in a given direction is not evidence abo
 direction.
 
 THE SPACE. Every file `git ls-files` reports, minus EXCLUDE_GLOBS (dated records whose job
-is to name old versions: changelogs, handovers, `*-meta/` working notes), minus symlinks
-(three point back into ai-tools/ and would double-count), minus anything that does not
-decode as UTF-8. All four counts print on every run, so the space is checkable by a reader
-rather than asserted here.
+is to name old versions: changelogs, handovers, `*-meta/` working notes), minus the two
+self-exclusions below, minus symlinks (three point back into ai-tools/ and would
+double-count), minus anything that does not decode as UTF-8. All five counts print on
+every run, so the space is checkable by a reader rather than asserted here.
+
+SELF-EXCLUSION, AND WHY IT IS TWO EXACT PATHS AND NEVER A DIRECTORY. This script and
+pragmatica-version.json quote version literals in prose ABOUT pins — "Central published
+rc3", "the plugin is at 0.4.6", the four blindnesses above — and the scan reads them back
+as pins. The instrument sees itself. Both files are therefore matched by STRING EQUALITY,
+never a glob, and their names print on the space line. Excluding `ai-tools/` would be the
+easy fix and the wrong one: `ai-tools/skills/` and `ai-tools/agents/` carry real pins and
+are exactly what defect (b) was about, and a broadened exclusion would still exit 0, so
+nothing would report the loss.
+
+This bug shipped once. The check was verified green while both files were still
+UNTRACKED, so `git ls-files` could not see them; committing them enlarged the space and
+turned the same tree red. A check whose space is defined by tracked files must be re-run
+AFTER the commit that adds it.
 
 ATTRIBUTION. A version literal is a Pragmatica pin only when something on the page says
 so. Three rules, deliberately different in strength:
@@ -161,14 +175,25 @@ def load_declaration():
 
 
 def tracked_files(decl):
-    """The space: tracked, non-symlink, not excluded, UTF-8 decodable. Returns the files
-    plus the three skip counts, so a run prints what it did not look at."""
+    """The space: tracked, non-self, non-symlink, not excluded, UTF-8 decodable. Returns
+    the files plus the four skip counts, so a run prints what it did not look at."""
     out = subprocess.run(['git', '-C', ROOT, 'ls-files', '-z'],
                          capture_output=True, check=True).stdout
     names = [n for n in out.decode('utf-8').split('\0') if n]
     globs = decl['space']['exclude_globs']
-    kept, skipped_glob, skipped_link, skipped_binary = [], 0, 0, 0
+    # Exact paths, never globs, and never a directory. This file and its inventory quote
+    # version literals in prose ABOUT pins — "Central published rc3", "the plugin is at
+    # 0.4.6" — which the scan otherwise reads back as pins, and the instrument sees
+    # itself. Excluding `ai-tools/` instead would silence skills/ and agents/, which
+    # carry REAL pins and are exactly what defect (b) was about; that would still exit 0,
+    # so nothing would report the loss. Membership is string equality for that reason,
+    # and the names are printed on the space line so over-exclusion is visible.
+    selves = set(decl['space']['self_exclude'])
+    kept, skipped_glob, skipped_self, skipped_link, skipped_binary = [], 0, 0, 0, 0
     for name in names:
+        if name in selves:
+            skipped_self += 1
+            continue
         if any(fnmatch.fnmatch(name, g) for g in globs):
             skipped_glob += 1
             continue
@@ -181,7 +206,7 @@ def tracked_files(decl):
                 kept.append((name, fh.read().splitlines()))
         except (UnicodeDecodeError, IsADirectoryError, FileNotFoundError):
             skipped_binary += 1
-    return kept, len(names), skipped_glob, skipped_link, skipped_binary
+    return kept, len(names), skipped_glob, skipped_self, skipped_link, skipped_binary
 
 
 def attribute(lines, idx, match):
@@ -212,7 +237,7 @@ def attribute(lines, idx, match):
 
 
 def scan(decl):
-    files, total, sk_glob, sk_link, sk_bin = tracked_files(decl)
+    files, total, sk_glob, sk_self, sk_link, sk_bin = tracked_files(decl)
     occurrences = []
     for name, lines in files:
         for idx, line in enumerate(lines):
@@ -223,8 +248,8 @@ def scan(decl):
                     'text': line.strip(), 'rule': rule, 'artifact': artifact,
                 })
     return occurrences, {'files_tracked': total, 'files_scanned': len(files),
-                         'skipped_excluded': sk_glob, 'skipped_symlink': sk_link,
-                         'skipped_undecodable': sk_bin}
+                         'skipped_excluded': sk_glob, 'skipped_self': sk_self,
+                         'skipped_symlink': sk_link, 'skipped_undecodable': sk_bin}
 
 
 def apply_inventory(occurrences, inventory):
@@ -300,10 +325,11 @@ def main():
     fail = 0
     print('pragmatica pin check: declared %s for %s'
           % (pinned, '/'.join(sorted(governed))))
-    print('  space: %d tracked, %d scanned, %d excluded by glob, %d symlink, '
-          '%d undecodable' % (space['files_tracked'], space['files_scanned'],
-                              space['skipped_excluded'], space['skipped_symlink'],
-                              space['skipped_undecodable']))
+    print('  space: %d tracked, %d scanned, %d excluded by glob, %d self-excluded (%s), '
+          '%d symlink, %d undecodable'
+          % (space['files_tracked'], space['files_scanned'], space['skipped_excluded'],
+             space['skipped_self'], ', '.join(sorted(decl['space']['self_exclude'])),
+             space['skipped_symlink'], space['skipped_undecodable']))
     print('  occurrences: %d total — %d agree, %d excepted, %d findings, '
           '%d need classification, %d out of scope'
           % (len(occurrences), len(agrees), len(excepted), len(findings),

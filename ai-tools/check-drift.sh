@@ -148,7 +148,16 @@ if [ -d ../book-arch ]; then
   fi
 fi
 
-# --- 7. Installed copy matches this repo (local only; absent in CI) ---
+# --- 7. Course lesson blurbs still assert against their book chapters ---
+# Each website/course/<course>/<slug>.md shadows <book>/<slug>.md and nothing related the
+# two, so #70 took book/comparison.md from 470 lines to 218 while its blurb went on
+# describing three deleted sections and every check here stayed green. A blurb is prose:
+# it cannot be generated from its chapter or compared to it by meaning. What is checkable
+# is whether anyone has looked since the chapter last moved. blurb-stamps.py carries the
+# mechanism and, more importantly, what a green result does NOT claim.
+python3 blurb-stamps.py --check || FAIL=1
+
+# --- 8. Installed copy matches this repo (local only; absent in CI) ---
 INSTALLED="${CLAUDE_HOME:-$HOME/.claude}"
 if [ -d "$INSTALLED/skills" ]; then
   for src in skills/*/; do

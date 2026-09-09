@@ -1,3 +1,7 @@
+---
+reviewed-at: 55a824d7b7b23ddd160ae7e0c7b0660b555ed29a
+---
+
 ## blurb
 Vertical slicing, the telescope rule for package growth, and where each type belongs.
 

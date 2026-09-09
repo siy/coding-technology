@@ -1,3 +1,7 @@
+---
+reviewed-at: 235d02e24b872d4720aad0f30e89266f2050a849
+---
+
 ## blurb
 Three reasonable answers on one trading platform empty an entire axis — the derivation halts, mechanically, and hands back a priced menu instead of an architecture.
 

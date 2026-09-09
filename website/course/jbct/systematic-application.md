@@ -1,3 +1,7 @@
+---
+reviewed-at: 84e611521fbd932006b9176ea1ac0595a49e913d
+---
+
 ## blurb
 Eight checkpoints for applying JBCT consistently, in new code and in review.
 

@@ -1,3 +1,7 @@
+---
+reviewed-at: 5a27d07ef18b30e2c188bba54725f662732ced1a
+---
+
 ## blurb
 Where every decision the spiral deferred comes due at once - nine elicitation questions, a six-axis architecture vector, and the judgment that turns answers into a choice.
 

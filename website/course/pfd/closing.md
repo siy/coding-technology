@@ -1,3 +1,7 @@
+---
+reviewed-at: e63e73988d292a59845cba28bc1f317436cdf828
+---
+
 ## blurb
 The book's falsifiable bet, its honest scope, and the reflexive question of what happens when you run it against your own last project.
 

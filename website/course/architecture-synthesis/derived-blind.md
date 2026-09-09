@@ -1,3 +1,7 @@
+---
+reviewed-at: b2ac0be03054bdc15d3a3a6ee08d6bc77099124d
+---
+
 ## blurb
 Four real systems — Stack Overflow, Shopify, Discord, a UK government registrar — derived blind from public commitments, with predictions registered before the outcomes were checked.
 

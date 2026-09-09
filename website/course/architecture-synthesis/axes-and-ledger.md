@@ -1,3 +1,7 @@
+---
+reviewed-at: a5bf8b8127c6bc74505832585207a4997f179040
+---
+
 ## blurb
 Six axes, each value priced as provides / mechanism / always-on cost — the middle space between demands and named architecture styles.
 

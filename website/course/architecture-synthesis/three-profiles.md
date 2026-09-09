@@ -1,3 +1,7 @@
+---
+reviewed-at: b6b2aa43603cfa0bb1ff7b3952912a58dfdaecd6
+---
+
 ## blurb
 One domain, three answer sheets, three forced vectors — ticketing re-derived at venue, regional, and enterprise scale with every step citing its rule.
 

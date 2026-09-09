@@ -1,3 +1,7 @@
+---
+reviewed-at: ed5d4a9cf3388a0c5c761a9390ac2e0a1002ec23
+---
+
 ## blurb
 Five decisions every use case forces on its designer, before a line of code exists.
 

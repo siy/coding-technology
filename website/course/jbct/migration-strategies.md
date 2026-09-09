@@ -1,3 +1,7 @@
+---
+reviewed-at: 84ecba61bc3f48013a3fa7da544d1216f6cf1e88
+---
+
 ## blurb
 A phased playbook for adopting JBCT in an existing codebase without a big-bang rewrite.
 

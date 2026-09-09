@@ -49,15 +49,20 @@ All four run in CI on push and pull request to `main`, but not from one workflow
 drift, block and next-step checks are in `.github/workflows/checks.yml`, while
 `npm run build` — the only link/orphan check — runs inside `deploy.yml`'s
 build-and-deploy job, so it is coupled to the deploy path rather than sitting with the
-others.
+others. `deploy.yml` publishes the site to Netlify on merge to `main`; `dist/` is
+gitignored and built at deploy time.
 
-**A PR based on anything but `main` gets ZERO CI.** Both workflows filter
+**A PR based on anything but `main` gets ZERO CI.** Both PR workflows filter
 `pull_request: branches: [main]`, which matches the *base*, so a stacked PR runs no checks at
 all and shows an empty check list rather than a failure — indistinguishable from CI simply not
 having started yet. Measured 2026-09-09: PR #73 based on a feature branch had 0 check-runs while
 #72 based on `main` had 6. Retarget to `main` before reading anything into a stacked PR's checks.
-`deploy.yml` publishes the site to Netlify on merge to `main`; `dist/` is gitignored and
-built at deploy time.
+
+A third workflow runs on a schedule rather than on a PR: `.github/workflows/upstream-pin.yml`
+compares the declared Pragmatica pin against Maven Central daily. It is deliberately outside
+PR CI — it is the one check that needs the network, and an unreachable Central inside a
+blocking check could only print `axis NOT checked` and pass. On the schedule it fails instead,
+because a scheduled job blocks no merge.
 
 Books build to PDF/EPUB via `book/build-pdf.sh`, `book/build-epub.sh`, and
 `<book>-meta/build-pdf.sh` for the others. **PDF and EPUB outputs are never committed** —

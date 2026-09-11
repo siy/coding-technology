@@ -1,6 +1,31 @@
 #!/usr/bin/env python3
-"""pragmatica-pins.py — one derived declaration of the pinned Pragmatica version, and a
-check that every surface in this repository agrees with it (issue #60).
+"""pragmatica-pins.py — the derived declaration of this repository's Pragmatica versions,
+and a check that every surface agrees with it (issue #60).
+
+TWO FIELDS, NOT ONE, by the owner's ruling of 2026-09-11. The single `pinned` value this
+replaces was answering two questions at once, which is why it could never move:
+
+  depends_on        the version a reader's build should use. A dependency coordinate and
+                    nothing more. It tracks Maven Central mechanically — a coordinate is
+                    right when it resolves and names what Central last published — so no
+                    human judgement is needed to advance it.
+  verified_against  the version at which a human actually re-read the API surfaces a
+                    document describes. It moves only when a person does that work.
+
+Bumping the old single field re-asserted every verification nobody had performed; holding
+it still left every dependency snippet stale. Split apart, each axis moves on its own
+evidence: Central for the first, a person for the second.
+
+verified_against IS NOT ONE VALUE, and that was determined from the repository rather than
+assumed. Two coexist today — book/introduction.md:3 says 1.0.0-rc1 while
+book-aether/appendix-a-api-reference.md:4 says 1.0.0-rc3 — and they are not a
+disagreement: the Aether appendix's own text disclaims covering Pragmatica Core at all
+('the core types … are the JBCT book's territory'), so the two stamps speak about
+DIFFERENT API surfaces read at different times. Per-book undercounts as well, because the
+installed skill and agents carry their own 'with Pragmatica Core <version>' claims beside
+their own last-modified dates and are not books. So the field is PER SCOPE, where a scope
+is a documentation surface someone re-reads as a unit; the scopes, their evidence and the
+one judgement call among them are recorded in pragmatica-version.json.
 
 WHAT THE CHECK IT REPLACES COULD NOT DO. check-drift.sh compared a hard-coded constant
 against `grep -rn -E '1\\.0\\.0-rc[0-9]+' skills agents ../book/*.md | grep -v -F "$V"`.
@@ -57,17 +82,49 @@ group used by the articles and the Aether book and are never attributed.
 
 ARTIFACTS DO NOT SHARE A VERSION, which the issue does not consider and the widened space
 found: `org.pragmatica-lite:jbct-maven-plugin` is at 0.4.6 in MAVEN-PLUGIN.md and
-README.md while core is at 1.0.0-rc1. Attribution therefore carries the artifact id, and
-only `governed_artifacts` from the declaration are compared against the pin. Anything else
-in the group needs its own inventory entry, so a second pin cannot hide inside the first
-one's check.
+README.md while core is at 1.0.0-rc3. Attribution therefore carries the artifact id, and
+only `depends_on.artifacts` from the declaration are compared against depends_on. Anything
+else in the group needs its own inventory entry, so a second pin cannot hide inside the
+first one's check.
+
+FIELD ASSIGNMENT — WHICH OF THE TWO FIELDS AN OCCURRENCE ANSWERS TO. Attribution says a
+literal IS a Pragmatica version; assignment says which question it answers. Two mechanical
+rules cover the unambiguous forms:
+
+  coordinate   a <version> reached by the block rule, a literal that is the version
+               segment of a full `org.pragmatica-lite:<artifact>:<version>`, or the value
+               of a `<pragmatica*.version>` property  ->  depends_on
+  provenance   a literal written as `release-<version>`, or one on a `**Based on:**`
+               header line                             ->  verified_against
+
+Everything else is DECLARED in `field_assignment`, for the same reason the inventory's
+classes are declared: nothing in the text distinguishes "the build uses rc1" from
+"somebody read rc1". An attributed, non-excepted occurrence that neither rule nor
+declaration reaches FAILS as UNASSIGNED. It is never defaulted either way, and the
+asymmetry is why — defaulting a coordinate into verified_against leaves a stale snippet,
+while defaulting a verification stamp into depends_on gets it sed'd forward at the next
+bump and FABRICATES A VERIFICATION NOBODY PERFORMED. A silent default in the second
+direction is the exact failure this split exists to prevent, so there is no default.
+
+Assignment is PER OCCURRENCE, never per file, and ai-tools/agents/jbct-reviewer.md is why:
+line 11 states what the agent was written against (verified_against) and line 185 states
+the dependency to declare (depends_on). One file, both fields, two different values the
+moment the coordinate moves.
+
+A verified_against occurrence is then resolved to exactly one scope by the scopes' path
+globs. Zero scopes or more than one is a FAILURE, not a default: a document asserting a
+verification that no declared scope owns is a claim with nobody behind it.
 
 ACCOUNTING. Every occurrence ends in exactly one bucket and every bucket is counted, so
 "all accounted for" is computed here rather than asserted:
 
-  agrees      attributed to a governed artifact and equal to the pin, or an org.example
-              sample coordinate;
-  finding     attributed, not equal to the pin, not excepted — FAILS;
+  agrees      assigned to a field and equal to that field's value — depends_on for a
+              coordinate, the owning scope's version for a verification — or an
+              org.example sample coordinate;
+  finding     assigned and NOT equal, or assigned to depends_on under an ungoverned
+              artifact, or a verification no scope owns — FAILS;
+  unassigned  attributed, not excepted, and reached by no assignment rule or declaration —
+              FAILS, because there is no safe default. See FIELD ASSIGNMENT above.
   needs-class an UNATTRIBUTED literal that is nonetheless a version Pragmatica has really
               published (`known_versions`) — FAILS. This is the net under the attribution
               rules, and it earned its place immediately: it caught
@@ -80,37 +137,44 @@ ACCOUNTING. Every occurrence ends in exactly one bucket and every bucket is coun
               demanding an entry for all 111 of them is the difference between an
               inventory a human maintains and one they route around.
   excepted    carries an inventory entry, printed with its class, justification and date.
+              These are the occurrences NEITHER field governs, and the entry says why.
 
 WHY AN INVENTORY EXISTS AT ALL. Widening the space surfaces disagreements this repository
 already has, and which value is correct is an editorial claim belonging to the owner. The
 inventory lets the mechanism ship while every disagreement stays NAMED. Its classes are
 the classification issue #60 asks for:
 
-  mechanical-deferred  a real pin whose value awaits the owner's ruling (class i);
-  editorial            a claim a human must re-assert, not a value to sed (class ii);
   historical           "when this capability appeared" — MUST NOT MOVE (class iii);
+  dated-publication    a version literal inside a PUBLISHED article. The convener ruled on
+                       #60 (2026-09-05) that "docs make a standing claim, where green
+                       today is the point; an article makes a dated claim, and gating one
+                       forever means either freezing the product or rewriting history".
+                       Distinct from `historical`, which is a claim ABOUT a release;
   not-core             a different artifact in the group, with its own release line;
   not-pragmatica       a literal that is not a Pragmatica version at all.
 
-The script cannot infer class iii from class i: nothing in the text distinguishes "pinned
-at rc1" from "arrived in rc1". So classification is declared, and the declaration is made
+`mechanical-deferred` and `editorial` are RETIRED, and their retirement is the ruling
+landing rather than a simplification. Both existed because one field could not carry two
+answers: a coordinate whose value awaited a decision, and a claim a human had to re-assert
+rather than sed. Splitting the declaration gives each of them a real home — the first is
+depends_on, the second is verified_against — so an entry in either class is now a bug
+rather than a deferral, and the classes are gone so one cannot be written by habit.
+
+The script cannot infer class iii from a pin: nothing in the text distinguishes "pinned at
+rc1" from "arrived in rc1". So classification is declared, and the declaration is made
 to decay LOUDLY rather than silently — every entry is anchored to a substring of the line
 AND to the NUMBER of occurrences it covers, and an entry matching nothing, or a different
 number than it claims, FAILS. An exception cannot rot green, and clearing one is how the
 owner's ruling gets applied.
 
-HOW A DEFERRAL IS KEPT FROM BECOMING A HISTORICAL ENTRY. The two classes need opposite
-lifetimes: `historical` must survive every future bump, because "arrived in rc1" stays
-true forever, while `mechanical-deferred` exists only until the owner rules. So each
-deferral records `deferred_at_pin`, and the moment `pinned` differs from it the check
-FAILS and names the file. A deferral therefore cannot outlive the decision it is waiting
-for, and a bump PR is told exactly which files it still owes an edit — which is the
-difference between an inventory and a list of suppressions.
-
-WHAT A GREEN RESULT DOES NOT MEAN. Not that the repository is current with Pragmatica:
-only that every surface agrees with the declared pin and every disagreement is excepted in
-writing. The exception count prints on the summary line for exactly that reason. Nor does
-it mean anything at all about upstream, which --check no longer looks at.
+WHAT A GREEN RESULT DOES NOT MEAN, AND THE TWO FIELDS FAIL DIFFERENTLY HERE. For
+depends_on it means every coordinate equals the declared value; it does NOT mean that
+value is current with Central, which is a separate axis this run does not touch. For
+verified_against it means every document states its scope's declared version — and that
+is ALL it means. It is not evidence that the re-read happened, that it was thorough, or
+that the API did not change underneath it afterwards. Green on this axis says the
+paperwork agrees with itself; only a person reading source can say more. The exception
+count prints on the summary line for the same reason.
 
 WHY THE UPSTREAM AXIS LEFT --check, AND WHERE IT WENT. Every other axis here is hermetic: it
 asks whether this repository's own surfaces agree with this repository's own declaration,
@@ -134,10 +198,15 @@ where an axis went is precisely the kind of claim that rots green while the axis
 has been deleted.
 
   --check      classify the whole space; exit 1 on findings (default). Hermetic: no network
-  --list       print every occurrence with its bucket, out-of-scope ones included
-  --pinned     print the declared version and exit, for shell and build consumption
-  --upstream   ONLY the declaration-vs-upstream axis, strict: unreachable or malformed is a
-               FAILURE here, never a skip. This is what the scheduled workflow runs
+  --list       print every occurrence with its FIELD and bucket, out-of-scope ones included
+  --pinned     print depends_on.version and exit, for shell and build consumption. The name
+               is kept for callers; there is no value called "the pin" any more, and
+               verified_against is deliberately NOT reachable this way — nothing should be
+               able to sed a verification stamp from a shell pipeline
+  --upstream   ONLY the depends_on-vs-upstream axis, strict: unreachable or malformed is a
+               FAILURE here, never a skip. This is what the scheduled workflow runs. It has
+               nothing to say about verified_against, and cannot: an upstream release does
+               not re-read anything
 """
 
 import argparse
@@ -183,10 +252,32 @@ PROSE_RE = re.compile(r'(?:pragmatica(?:[\s-]+core)?|core)[\s:,*`()\[\]v_-]*$', 
 
 ARTIFACT_TAG_RE = re.compile(r'<artifactId>([^<]+)</artifactId>')
 
+# --- field-assignment forms. Each is matched against the text BEFORE the literal, so it
+# --- speaks about that one occurrence and never about its neighbours on the same line.
+
+# The literal is the version segment of a full coordinate: `org.pragmatica-lite:core:1.2.3`.
+COORD_SEGMENT_RE = re.compile(GROUP + r':[A-Za-z0-9_*.-]+:$')
+
+# The literal is the value of a `<pragmatica*.version>` property.
+VERSION_PROPERTY_RE = re.compile(r'<pragmatica[\w.-]*\.version>$')
+
+# The literal is a source ref — `release-1.0.0-rc3` — which names a tag somebody read AT,
+# not an artifact anybody depends on.
+RELEASE_REF_RE = re.compile(r'release-$')
+
+# A chapter header stating what the text was written against. check-drift.sh greps the
+# same form for the BOOK's version, which is why it is a safe marker: it already has a
+# second reader.
+BASED_ON_RE = re.compile(r'^\s*\*\*Based on:\*\*')
+
+DEPENDS_ON, VERIFIED_AGAINST = 'depends_on', 'verified_against'
+
+# `mechanical-deferred` and `editorial` are deliberately absent: the split gave both a real
+# field, so writing one now is a bug rather than a deferral. An unknown class fails.
+CLASSES = ('historical', 'dated-publication', 'not-core', 'not-pragmatica')
+
 # The sample group used by the articles and the Aether book for example coordinates.
 SAMPLE_RE = re.compile(r'org\.example:')
-
-CLASSES = ('mechanical-deferred', 'editorial', 'historical', 'not-core', 'not-pragmatica')
 
 # Where the upstream axis went, and the flag it must still be invoked with. Read on every
 # --check run rather than trusted; see the docstring.
@@ -271,6 +362,10 @@ def scan(decl):
                 occurrences.append({
                     'path': name, 'line': idx + 1, 'version': m.group(1),
                     'text': line.strip(), 'rule': rule, 'artifact': artifact,
+                    # The text preceding THIS literal, so a field rule speaks about one
+                    # occurrence and not about its neighbours: website/content/aether.md:5
+                    # carries four, of which two are coordinates and two are not.
+                    'before': line[:m.start()], 'raw': line,
                 })
     return occurrences, {'files_tracked': total, 'files_scanned': len(files),
                          'skipped_excluded': sk_glob, 'skipped_self': sk_self,
@@ -293,6 +388,51 @@ def apply_inventory(occurrences, inventory):
     return hits
 
 
+def mechanical_field(occ):
+    """depends_on / verified_against / None, from the FORM of this one occurrence.
+
+    None is not a default, it is a question handed to a human: see FIELD ASSIGNMENT in the
+    docstring for why there is no safe fallback in either direction."""
+    before = occ['before']
+    if RELEASE_REF_RE.search(before):
+        return VERIFIED_AGAINST                       # `release-1.0.0-rc3` — a source ref
+    if BASED_ON_RE.search(occ['raw']):
+        return VERIFIED_AGAINST                       # a chapter's "written against" header
+    if COORD_SEGMENT_RE.search(before):
+        return DEPENDS_ON                             # org.pragmatica-lite:core:<here>
+    if VERSION_PROPERTY_RE.search(before):
+        return DEPENDS_ON                             # <pragmatica.version><here>
+    if occ['rule'] == 'block':
+        return DEPENDS_ON                             # <version> under a pragmatica group
+    return None
+
+
+def apply_field_assignment(occurrences, assignments):
+    """Declared field for the occurrences no form rule reaches. Consulted ONLY for those,
+    so an entry's `count` measures what a human still had to decide — which is why adding a
+    mechanical rule later shrinks these counts loudly instead of leaving dead entries."""
+    hits = [0] * len(assignments)
+    for occ in occurrences:
+        if occ.get('exception') or not occ['rule'] or occ.get('field'):
+            continue
+        for i, entry in enumerate(assignments):
+            if entry['path'] != occ['path'] or entry['match'] not in occ['text']:
+                continue
+            occ['field'] = entry['field']
+            occ['field_source'] = 'declared'
+            hits[i] += 1
+            break
+    return hits
+
+
+def scope_for(occ, scopes):
+    """The scopes whose path globs own this verified_against occurrence. Returned as a
+    LIST rather than a scope-or-None, because zero and two are different failures and the
+    caller has to be able to say which."""
+    return [s for s in scopes
+            if any(fnmatch.fnmatch(occ['path'], p) for p in s['paths'])]
+
+
 def probe_upstream(decl):
     """The external fact defect (a) needs. An unreachable probe is an instrument failure,
     not a finding: it returns None and says so, because a run that could not check the
@@ -313,19 +453,27 @@ def probe_upstream(decl):
 
 
 def upstream_axis(decl):
-    """The declaration-vs-upstream axis, lifted out of --check unchanged in what it
+    """The depends_on-vs-upstream axis, lifted out of --check unchanged in what it
     COMPARES and changed in exactly one thing: an instrument failure now fails the run.
 
     That inversion is the entire point of the move. The same strictness inside a PR check
     would block merges on somebody else's outage, so the axis was reduced to printing
     'NOT checked' and passing. Here it blocks nothing, so it can afford to be honest, and
     silence about upstream costs a red scheduled run instead of hiding inside a green PR.
-    Note what did NOT change: a known_behind exception still passes, because it is anchored
-    to one exact upstream value and stops matching the day Central moves."""
-    pinned = decl['pinned']
+
+    IT COMPARES CENTRAL AGAINST depends_on, AND AGAINST NOTHING ELSE. Under the single
+    declaration this was "the pin", which is exactly why the pin could not move: a red here
+    demanded an edit that would also have advanced every verification stamp. depends_on is
+    the only field a repository probe can speak about — Central publishing a release is not
+    a person re-reading an API, and verified_against is unreachable from here on purpose.
+    A known_behind exception still passes if one is declared, because it is anchored to one
+    exact upstream value and stops matching the day Central moves."""
+    declared = decl['depends_on']['version']
     print('pragmatica pin check — upstream axis ONLY (hermetic axes run in check-drift.sh)')
-    print('  declared: %s for %s'
-          % (pinned, '/'.join(sorted(decl['governed_artifacts']))))
+    print('  declared depends_on: %s for %s'
+          % (declared, '/'.join(sorted(decl['depends_on']['artifacts']))))
+    print('  verified_against: NOT compared here and never can be — an upstream release '
+          'does not re-read an API')
     upstream, note = probe_upstream(decl)
     if upstream is None:
         print('FAIL: %s' % note)
@@ -333,20 +481,20 @@ def upstream_axis(decl):
               'is a FAILURE here rather than a skip — that is why the axis was moved')
         print('upstream axis: FAILURE ABOVE')
         return 1
-    if upstream == pinned:
-        print('  upstream: %s — agrees with the declared pin (%s)' % (upstream, note))
+    if upstream == declared:
+        print('  upstream: %s — agrees with declared depends_on (%s)' % (upstream, note))
         print('upstream axis: all green')
         return 0
     allowed = decl.get('upstream', {}).get('known_behind')
     if allowed and allowed.get('upstream') == upstream:
-        print('  upstream: %s — DISAGREES with declared %s; excepted %s: %s'
-              % (upstream, pinned, allowed['since'], allowed['why']))
+        print('  upstream: %s — DISAGREES with declared depends_on %s; excepted %s: %s'
+              % (upstream, declared, allowed['since'], allowed['why']))
         print('upstream axis: all green (disagreement excepted, not absent)')
         return 0
-    print('FAIL: upstream Maven Central publishes %s, this repository declares %s'
-          % (upstream, pinned))
-    print('  issue #60 item 6 is one PR moving the pin and every quoted block '
-          'together; clear upstream.known_behind when it lands')
+    print('FAIL: upstream Maven Central publishes %s, this repository declares '
+          'depends_on %s' % (upstream, declared))
+    print('  moving depends_on is mechanical and needs no ruling: bump it, re-read '
+          'known_versions, and leave every verified_against scope alone')
     print('upstream axis: FAILURE ABOVE')
     return 1
 
@@ -381,58 +529,130 @@ def main():
     args = ap.parse_args()
 
     decl = load_declaration()
-    pinned = decl['pinned']
+    depends_on = decl['depends_on']['version']
     if args.pinned:
-        print(pinned)
+        print(depends_on)
         return 0
     if args.upstream:
         return upstream_axis(decl)
 
     inventory = decl['inventory']
-    governed = set(decl['governed_artifacts'])
+    assignments = decl['field_assignment']
+    scopes = decl['verified_against']['scopes']
+    governed = set(decl['depends_on']['artifacts'])
     known = set(decl['known_versions']['versions'])
     occurrences, space = scan(decl)
     hits = apply_inventory(occurrences, inventory)
 
-    agrees, findings, needs_class, out_of_scope, excepted = [], [], [], [], []
+    for occ in occurrences:
+        if not occ.get('exception') and occ['rule']:
+            field = mechanical_field(occ)
+            if field:
+                occ['field'] = field
+                occ['field_source'] = 'form'
+    assign_hits = apply_field_assignment(occurrences, assignments)
+
+    agrees, findings, needs_class, out_of_scope, excepted, unassigned = \
+        [], [], [], [], [], []
     for occ in occurrences:
         if occ.get('exception'):
+            occ['bucket_field'] = 'n/a (excepted)'
             excepted.append(occ)
-        elif occ['rule'] and occ['artifact'] in governed:
-            (agrees if occ['version'] == pinned else findings).append(occ)
-        elif occ['rule']:
-            findings.append(occ)          # group-mate artifact, needs its own entry
-        elif SAMPLE_RE.search(occ['text']):
-            agrees.append(occ)
-        elif occ['version'] in known:
-            needs_class.append(occ)
+        elif not occ['rule']:
+            occ['bucket_field'] = 'n/a (unattributed)'
+            if SAMPLE_RE.search(occ['text']):
+                agrees.append(occ)
+            elif occ['version'] in known:
+                needs_class.append(occ)
+            else:
+                out_of_scope.append(occ)
+        elif not occ.get('field'):
+            occ['bucket_field'] = 'UNASSIGNED'
+            unassigned.append(occ)
+        elif occ['field'] == DEPENDS_ON:
+            occ['bucket_field'] = DEPENDS_ON
+            if occ['artifact'] not in governed:
+                occ['reason'] = ('artifact %r is not governed by depends_on — it releases '
+                                 'on its own line and needs its own inventory entry'
+                                 % occ['artifact'])
+                findings.append(occ)
+            elif occ['version'] == depends_on:
+                agrees.append(occ)
+            else:
+                occ['reason'] = 'depends_on declares %s' % depends_on
+                findings.append(occ)
         else:
-            out_of_scope.append(occ)
+            owners = scope_for(occ, scopes)
+            occ['bucket_field'] = '%s:%s' % (
+                VERIFIED_AGAINST, owners[0]['name'] if len(owners) == 1 else '?')
+            if len(owners) != 1:
+                occ['reason'] = ('%d verified_against scopes own this path — a verification '
+                                 'claim must have exactly one owner, or nobody is behind it'
+                                 % len(owners))
+                findings.append(occ)
+            elif occ['version'] == owners[0]['version']:
+                agrees.append(occ)
+            else:
+                occ['reason'] = ('scope %r was verified at %s; moving this literal without '
+                                 'a re-read fabricates a verification'
+                                 % (owners[0]['name'], owners[0]['version']))
+                findings.append(occ)
 
     fail = 0
-    print('pragmatica pin check: declared %s for %s'
-          % (pinned, '/'.join(sorted(governed))))
+    print('pragmatica pin check: depends_on %s for %s'
+          % (depends_on, '/'.join(sorted(governed))))
+    print('  verified_against: %s'
+          % ', '.join('%s=%s' % (s['name'], s['version']) for s in scopes))
     print('  space: %d tracked, %d scanned, %d excluded by glob, %d self-excluded (%s), '
           '%d symlink, %d undecodable'
           % (space['files_tracked'], space['files_scanned'], space['skipped_excluded'],
              space['skipped_self'], ', '.join(sorted(decl['space']['self_exclude'])),
              space['skipped_symlink'], space['skipped_undecodable']))
-    print('  occurrences: %d total — %d agree, %d excepted, %d findings, '
+    print('  occurrences: %d total — %d agree, %d excepted, %d findings, %d unassigned, '
           '%d need classification, %d out of scope'
-          % (len(occurrences), len(agrees), len(excepted), len(findings),
+          % (len(occurrences), len(agrees), len(excepted), len(findings), len(unassigned),
              len(needs_class), len(out_of_scope)))
+    fields = [o for o in occurrences if o.get('field')]
+    print('  fields: %d assigned — %d depends_on, %d verified_against '
+          '(%d by form, %d declared); %d excepted, governed by NEITHER field'
+          % (len(fields),
+             sum(1 for o in fields if o['field'] == DEPENDS_ON),
+             sum(1 for o in fields if o['field'] == VERIFIED_AGAINST),
+             sum(1 for o in fields if o['field_source'] == 'form'),
+             sum(1 for o in fields if o['field_source'] == 'declared'),
+             len(excepted)))
 
     pointer_fail, pointer_line = upstream_pointer()
     print(pointer_line)
     fail = fail or pointer_fail
 
+    # Two keys holding one value is the defect this split removes, one level down. The
+    # alias exists only because website/build.js reads `pinned` and belongs to an open PR.
+    if decl.get('pinned') != depends_on:
+        print('FAIL: the `pinned` compatibility alias reads %r but depends_on.version is '
+              '%r — website/build.js:55 renders the alias, so the site would publish a '
+              'version this check never examined' % (decl.get('pinned'), depends_on))
+        fail = 1
+
     if findings:
-        print('FAIL: version pin disagrees with the declared %s (%d):'
-              % (pinned, len(findings)))
+        print('FAIL: a surface disagrees with the field that governs it (%d):'
+              % len(findings))
         for o in findings:
-            print('  %s:%d  %s  [%s, artifact %s]  %s'
-                  % (o['path'], o['line'], o['version'], o['rule'], o['artifact'],
-                     o['text'][:88]))
+            print('  %s:%d  %s  [%s; %s, artifact %s]  %s'
+                  % (o['path'], o['line'], o['version'], o['bucket_field'], o['rule'],
+                     o['artifact'], o['text'][:72]))
+            print('      %s' % o['reason'])
+        fail = 1
+
+    if unassigned:
+        print('FAIL: attributed but assigned to NEITHER field (%d) — no rule reached it '
+              'and no field_assignment entry claims it. Decide in '
+              'ai-tools/pragmatica-version.json; it is never defaulted, because '
+              'defaulting a verification stamp into depends_on fabricates a '
+              'verification at the next bump:' % len(unassigned))
+        for o in unassigned:
+            print('  %s:%d  %s  [%s]  %s'
+                  % (o['path'], o['line'], o['version'], o['rule'], o['text'][:88]))
         fail = 1
 
     if needs_class:
@@ -451,18 +671,23 @@ def main():
                   % (e['path'], e['count'], hits[i], e['match'][:60]))
         fail = 1
 
-    # A deferral is temporary by construction and a historical entry is permanent, and
-    # nothing else in this file tells the two apart. Every mechanical-deferred entry
-    # records the pin it was written against; the moment the pin moves, the deferral has
-    # been overtaken by the owner's ruling and must be resolved rather than carried.
-    overtaken = [e for e in inventory if e['class'] == 'mechanical-deferred'
-                 and e.get('deferred_at_pin') != pinned]
-    if overtaken:
-        print('FAIL: the pin moved to %s, so these deferrals are overtaken — apply the '
-              'ruling to each file and delete the entry (%d):' % (pinned, len(overtaken)))
-        for e in overtaken:
-            print('  %s  deferred at pin %s  — %s'
-                  % (e['path'], e.get('deferred_at_pin'), e['match'][:60]))
+    stale_fa = [(i, e) for i, e in enumerate(assignments) if assign_hits[i] != e['count']]
+    if stale_fa:
+        print('FAIL: field_assignment entry no longer describes the file (%d) — either '
+              'the text moved, or a form rule now reaches the occurrence and the entry '
+              'is dead:' % len(stale_fa))
+        for i, e in stale_fa:
+            print('  %s  expected %d occurrence(s), matched %d  [%s]  — %s'
+                  % (e['path'], e['count'], assign_hits[i], e['field'], e['match'][:60]))
+        fail = 1
+
+    unknown = [e for e in inventory if e['class'] not in CLASSES]
+    if unknown:
+        print('FAIL: inventory entry carries a class this check does not know (%d) — '
+              '`mechanical-deferred` and `editorial` were retired when the declaration '
+              'split, because each now has a real field:' % len(unknown))
+        for e in unknown:
+            print('  %s  class %r  — %s' % (e['path'], e['class'], e['match'][:60]))
         fail = 1
 
     by_class = {c: [e for e in inventory if e['class'] == c] for c in CLASSES}
@@ -476,8 +701,10 @@ def main():
                      e['why']))
 
     if args.list:
-        print('  --- every occurrence ---')
+        print('  --- every occurrence: path:line, version, attribution rule, FIELD, '
+              'bucket ---')
         buckets = [(excepted, 'excepted'), (findings, 'FINDING'),
+                   (unassigned, 'UNASSIGNED'),
                    (needs_class, 'NEEDS-CLASS'), (out_of_scope, 'out-of-scope'),
                    (agrees, 'agrees')]
         label = {}
@@ -486,9 +713,9 @@ def main():
                 label[id(o)] = name if name != 'excepted' else \
                     'excepted:' + o['exception']['class']
         for o in sorted(occurrences, key=lambda x: (x['path'], x['line'])):
-            print('    %-56s %-12s %-14s %s'
+            print('    %-56s %-12s %-14s %-28s %s'
                   % ('%s:%d' % (o['path'], o['line']), o['version'],
-                     o['rule'] or 'unattributed', label[id(o)]))
+                     o['rule'] or 'unattributed', o['bucket_field'], label[id(o)]))
 
     print('pragmatica pin check: %s' % ('FINDINGS ABOVE' if fail else 'all green'))
     return fail

@@ -3,17 +3,20 @@
 # staleness. Skills are installed away from this repo (~/.claude/skills), so a stale
 # reference here becomes an invisible wrong answer there. Checks: retired-document
 # mentions, unresolvable links, links that cannot survive installation, version pins
-# that disagree with the declared canonical, and divergence from an installed copy.
+# that disagree with the field that governs them, and divergence from an installed copy.
 # Exit 0 = all green; non-zero = findings printed.
 set -u
 cd "$(dirname "$0")" || exit 2
 FAIL=0
 
-# Pragmatica Core version: derived, not declared here. ai-tools/pragmatica-version.json is
+# Pragmatica Core versions: derived, not declared here. ai-tools/pragmatica-version.json is
 # the single source (issue #60) and pragmatica-pins.py compares every surface in the
-# repository against it. The hard-coded constant this replaces was compared against
-# nothing external, over three paths, with a pattern that matched only `-rcN` — it could
-# not fail in any of the directions that mattered.
+# repository against it. It carries TWO fields since 2026-09-11, because one could answer
+# only one question at a time: `depends_on` is the coordinate a reader's build should use
+# and tracks Maven Central mechanically, while `verified_against` is what a human actually
+# re-read the API at and is per documentation scope. The hard-coded constant they replace
+# was compared against nothing external, over three paths, with a pattern that matched only
+# `-rcN` — it could not fail in any of the directions that mattered.
 #
 # What this script no longer runs is the declaration-VS-UPSTREAM axis. It is the only one
 # that needs the network, and inside a blocking check an unreachable Maven Central left it
@@ -97,10 +100,13 @@ if escaping:
 sys.exit(1 if (denied or dead or escaping) else 0)
 EOF
 
-# --- 4. Pragmatica Core pins agree with the derived declaration ---
+# --- 4. Pragmatica Core versions agree with the field that governs them ---
 # pragmatica-pins.py carries the mechanism, the space it searches, the four blindnesses of
 # the grep it replaces, and what a green result does NOT mean. It prints its own counts;
-# never add -q, and read the occurrence and exception counts rather than the exit status.
+# never add -q, and read the occurrence, field and exception counts rather than the exit
+# status. The `fields:` line is the one to read after a bump: it says how many occurrences
+# each of depends_on and verified_against governs, so a stamp that has quietly been
+# reclassified as a coordinate shows up as a moved count rather than as silence.
 # --check is hermetic and says so on its `upstream:` line, which also names the scheduled
 # workflow that owns that axis and FAILS here if that workflow has gone missing.
 python3 pragmatica-pins.py --check || FAIL=1

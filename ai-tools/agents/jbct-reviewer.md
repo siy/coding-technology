@@ -182,7 +182,7 @@ Run all searches from the Violation Hunting table. Report counts.
 - Zone-appropriate verbs
 
 ### Step 5: Build Configuration
-- Dependency: `org.pragmatica-lite:core:1.0.0-rc1`
+- Dependency: `org.pragmatica-lite:core:1.0.0-rc3`
 
 ### Step 6: Testing
 - Value objects: all rules tested (success + failure)

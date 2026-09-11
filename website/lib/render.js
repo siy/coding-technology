@@ -42,18 +42,42 @@ const FROM = [
 let channelSeq = 0;
 let checked = false;
 
-// pandoc is a hard build dependency now. Without this, its absence surfaces as
-// a bare "spawnSync pandoc ENOENT" partway through a page loop; CI does not
-// have pandoc by default, so name the requirement instead.
+// pandoc is a hard build dependency now, and "pandoc exists" is NOT the check
+// that matters. Netlify's build image bakes in its own pandoc (2.13 on the
+// focal image, per netlify/build-image's Dockerfile) — old enough to reject
+// the reader spec below, new enough that an existence check sails past it and
+// the build fails later with something obscure.
+//
+// So probe the thing that actually has to hold: that THIS pandoc accepts the
+// exact FROM string we render with. That is the constraint pandoc's own
+// extension parser enforces, rather than a version number standing in for it,
+// and it stays true when 3.8.4 ships. The exact version is pinned separately
+// in .github/actions/setup-pandoc, where reproducibility is the point.
 function requirePandoc() {
   if (checked) return;
+
+  let version;
   try {
-    execFileSync('pandoc', ['--version'], { stdio: 'ignore' });
+    version = execFileSync('pandoc', ['--version'], { encoding: 'utf-8' })
+      .split('\n')[0].trim();
   } catch {
     throw new Error(
       'pandoc not found on PATH. The site build requires it (as the book build ' +
       'scripts already do). Install it, or add a pinned pandoc step to CI.');
   }
+
+  try {
+    execFileSync('pandoc', ['--from', FROM, '--to', 'html5'],
+      { input: '', stdio: ['pipe', 'ignore', 'pipe'] });
+  } catch (e) {
+    throw new Error(
+      `${version} cannot read the site's markdown dialect, so heading anchors ` +
+      'and typography would not match what the slug gate pins. pandoc 3.x is ' +
+      'required (tested on 3.8.3, which CI installs via ' +
+      '.github/actions/setup-pandoc).\n  reader: ' + FROM +
+      '\n  pandoc said: ' + String(e.stderr || '').trim().split('\n')[0]);
+  }
+
   checked = true;
 }
 

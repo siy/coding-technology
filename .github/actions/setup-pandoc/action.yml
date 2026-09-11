@@ -1,0 +1,33 @@
+name: Set up pandoc
+description: >
+  Install a pinned, checksum-verified pandoc.
+
+  Two jobs need it and they must agree. website/lib/render.js shells out to pandoc to
+  render the site, and website/lib/site.lua -- which computes every heading anchor --
+  runs inside it. Anchors are URLs, and they depend on the reader's behaviour (`+smart`
+  typography in particular), so the slug gate and the build have to be measuring the
+  same pandoc. Duplicating the version and the digest across two workflows would let
+  them drift with nothing to notice, which is why this lives in one place.
+
+  An unpinned build tool is the same supply-chain surface the npm dependencies were
+  removed to avoid. Digest and size read from the release API for this exact asset.
+
+runs:
+  using: composite
+  steps:
+    - name: Install pandoc (pinned, checksum-verified)
+      shell: bash
+      run: |
+        set -euo pipefail
+        PANDOC_VERSION=3.8.3
+        PANDOC_DEB="pandoc-${PANDOC_VERSION}-1-amd64.deb"
+        PANDOC_SHA256=d7fac78b58b8c8da39254955eff321233ab97d74e8b2d461c0f0719a1fb5f357
+        curl --fail --silent --show-error --location \
+          --output "$PANDOC_DEB" \
+          "https://github.com/jgm/pandoc/releases/download/${PANDOC_VERSION}/${PANDOC_DEB}"
+        echo "${PANDOC_SHA256}  ${PANDOC_DEB}" | sha256sum --check --strict -
+        sudo dpkg --install "$PANDOC_DEB"
+        rm -f "$PANDOC_DEB"
+        # The pin is only a pin if a different version fails here.
+        pandoc --version | head -1
+        test "$(pandoc --version | head -1)" = "pandoc ${PANDOC_VERSION}"

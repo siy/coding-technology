@@ -24,26 +24,13 @@ jobs:
         with:
           node-version: '20'
 
-      # The site build renders markdown with pandoc (website/lib/render.js), so
-      # pandoc is a hard build dependency. Pinned to an exact version and
-      # checksum-verified: an unpinned build tool is the same supply-chain
-      # problem the npm dependencies were removed to avoid. Digest and size
-      # read from the release API for this exact asset.
+      # The site build renders markdown with pandoc (website/lib/render.js), so pandoc is
+      # a hard build dependency. The pinned, checksum-verified install lives in a
+      # composite action because the slug gate in checks.yml must install the SAME
+      # version: heading anchors depend on pandoc's reader, so two copies of the pin
+      # could drift apart with nothing to notice.
       - name: Install pandoc (pinned, checksum-verified)
-        run: |
-          set -euo pipefail
-          PANDOC_VERSION=3.8.3
-          PANDOC_DEB="pandoc-${PANDOC_VERSION}-1-amd64.deb"
-          PANDOC_SHA256=d7fac78b58b8c8da39254955eff321233ab97d74e8b2d461c0f0719a1fb5f357
-          curl --fail --silent --show-error --location \
-            --output "$PANDOC_DEB" \
-            "https://github.com/jgm/pandoc/releases/download/${PANDOC_VERSION}/${PANDOC_DEB}"
-          echo "${PANDOC_SHA256}  ${PANDOC_DEB}" | sha256sum --check --strict -
-          sudo dpkg --install "$PANDOC_DEB"
-          rm -f "$PANDOC_DEB"
-          # The pin is only a pin if a different version fails here.
-          pandoc --version | head -1
-          test "$(pandoc --version | head -1)" = "pandoc ${PANDOC_VERSION}"
+        uses: ./.github/actions/setup-pandoc
 
       - name: Install dependencies
         working-directory: ./website

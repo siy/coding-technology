@@ -189,7 +189,7 @@
       "field": "depends_on",
       "count": 2,
       "since": "2026-09-11",
-      "why": "Line 5 carries four literals; the two written as full coordinates are assigned mechanically, and these two are the prose 'The current candidate is <version>' and the `v<version>` fragment of the GitHub release-tag URL. Both name the release a reader downloads, so both are depends_on. Count 2 is what makes this honest: it covers only what the coordinate rule did not reach, and a fifth literal appearing on the line fails instead of being absorbed."
+      "why": "Line 5 carries three literals; the one written as a full coordinate (org.pragmatica-lite:core:<version>) is assigned mechanically, and these two are the prose 'The current candidate is <version>' and the `v<version>` fragment of the GitHub release-tag URL. Both name the release a reader downloads, so both are depends_on. Count 2 is what makes this honest: it covers only what the coordinate rule did not reach, and a fourth literal appearing on the line fails instead of being absorbed. The aether clause deliberately carries NO literal of its own -- it says 'at the same version' -- because naming the group with a wildcard was false (37 of 54 artifacts published at rc3; see _open_questions) and repeating the version there would add an unattributable literal for no reader benefit."
     }
   ],
   "render_exceptions": [],

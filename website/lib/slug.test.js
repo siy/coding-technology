@@ -112,7 +112,7 @@ const idOf = heading => headers(`# ${heading}\n`)[0].id;
 
 // ---------- tests ----------
 
-test('pandoc is installed (this suite must fail, never skip, without it)', () => {
+test('pandoc is present AND can read the site dialect (fails, never skips, if not)', () => {
   let version;
   try {
     version = execFileSync('pandoc', ['--version'], { encoding: 'utf-8' }).split('\n')[0];
@@ -127,6 +127,16 @@ test('pandoc is installed (this suite must fail, never skip, without it)', () =>
   // typography in particular), so the version is part of the evidence.
   console.log(`        pandoc in use: ${version}`);
   assert.match(version, /^pandoc \d+\./);
+
+  // PRESENCE IS NOT THE CONSTRAINT. Netlify's build image bakes in pandoc 2.13 -- new
+  // enough to answer `--version`, too old to accept render.js's reader spec. Checking
+  // only the first would let this named test report "installed" in green while the 35
+  // assertions below fail one at a time. Measured against a stub impersonating 2.13:
+  // with the version check alone the suite read `pass 1, fail 35`; driving a real render
+  // here makes it `pass 0, fail 36` with render.js's own message arriving first.
+  const html = render('# Errors & Recovery\n');
+  assert.match(html, /<h1 id="errors-recovery"/,
+    'pandoc ran but did not produce the expected anchor markup');
 });
 
 test(`the slug table: ${TABLE.length} rows through real pandoc + site.lua`, async t => {

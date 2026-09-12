@@ -939,10 +939,46 @@ function buildRedirects() {
   lines.push('/books.html / 301');
   lines.push('/CONTACT.html https://pragmaticalabs.io/ 301');
   lines.push('/MANAGEMENT_PERSPECTIVE.html https://pragmaticalabs.io/ 301');
+  // Declared in netlify.toml since the Netlify-builds era, where they never applied:
+  // only this generated file reaches production. Measured 2026-09-12 — /README 404'd
+  // while /books.html, two lines up, redirected.
+  lines.push('/README / 301');
+  lines.push('/README.html / 301');
   lines.push('/book/* /java/jbct/course/ 301');
 
   ensureDir(DIST_DIR);
   fs.writeFileSync(path.join(DIST_DIR, '_redirects'), lines.join('\n') + '\n');
+}
+
+// Headers reach production the same way redirects do — as a file inside the publish
+// directory. The deploy uploads website/dist only, so the repo-root netlify.toml was
+// never part of the upload and none of its [[headers]] ever applied: measured
+// 2026-09-12, pragmatica.dev served no X-Frame-Options, X-Content-Type-Options,
+// X-XSS-Protection or Referrer-Policy.
+//
+// Header NAMES are kept disjoint across rules on purpose. Netlify documents that a
+// wildcard may sit anywhere in a path segment, but does not document which rule wins
+// when two matching rules set the SAME header — so this file never puts it in that
+// position rather than relying on behaviour no doc promises.
+function buildHeaders() {
+  const lines = [];
+
+  lines.push('/*');
+  lines.push('  X-Frame-Options: DENY');
+  lines.push('  X-XSS-Protection: 1; mode=block');
+  lines.push('  X-Content-Type-Options: nosniff');
+  lines.push('  Referrer-Policy: strict-origin-when-cross-origin');
+
+  // No Cache-Control rules here, deliberately. netlify.toml carried three and none
+  // survives scrutiny: /*.js would pin an immutable year on the next-step engine's
+  // modules, which are imported unversioned (import … from './engine.js') and so have
+  // no invalidation path; /*.html matches the REQUEST path, so it would reach 7 legacy
+  // root pages and miss the 82 pretty URLs that are the site; and /*.css is the rule
+  // that caused #34 in July 2026 (HANDOVER-2026-07-04.md) — stale CSS on the bare URL.
+  // Netlify's own default, max-age=14400 + must-revalidate, is correct for all three.
+
+  ensureDir(DIST_DIR);
+  fs.writeFileSync(path.join(DIST_DIR, '_headers'), lines.join('\n') + '\n');
 }
 
 // ---------- Assets ----------
@@ -1179,6 +1215,7 @@ function build() {
 
   buildLegacyPages();
   buildRedirects();
+  buildHeaders();
 
   copyStyles();
   copyImages();

@@ -54,7 +54,7 @@ Current state:
 | AS   | 1.1.2 | released |
 | Aether | 0.1.0 | draft (pre-GA); manuscript in progress, not yet tagged |
 
-> The books use plain SemVer, not an `rc` suffix. The `1.0.0-rc1` in the text
+> The books use plain SemVer, not an `rc` suffix. The `1.0.0-rcN` in the text
 > refers to the Pragmatica Core *library*, not to any book.
 
 ## CHANGELOG.md format

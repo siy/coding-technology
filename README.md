@@ -346,13 +346,13 @@ Code written in these patterns reads as the business process it implements — t
 <dependency>
    <groupId>org.pragmatica-lite</groupId>
    <artifactId>core</artifactId>
-   <version>1.0.0-rc1</version>
+   <version>1.0.0-rc3</version>
 </dependency>
 ```
 
 **Gradle:**
 ```gradle
-implementation 'org.pragmatica-lite:core:1.0.0-rc1'
+implementation 'org.pragmatica-lite:core:1.0.0-rc3'
 ```
 
 ## 📄 License

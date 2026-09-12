@@ -68,6 +68,13 @@ All rebuilt.
 
 ## Release-day site swaps (prepared, apply on the day)
 
+> **Both swaps below carry a dead URL, and it is left wrong here on purpose. Do not paste from
+> them.** They name `leanpub.com/architecture-synthesis`, which 404s. The canonical slug is
+> `architecture-synthesis-the-next-correct-step` — see the STATUS header for why the short one
+> was abandoned mid-release. These lines are preserved as drafted 2026-07-15 so the record shows
+> what was *planned* against what *shipped*; the live surfaces were corrected via PR #36 and are
+> right today (`build.js`, `templates/front-door.html`, `content/architecture-synthesis.md`).
+
 1. `templates/front-door.html` AS card:
    `<a class="btn book" href="/method/architecture-synthesis/">Book &mdash; soon</a>`
    → `<a class="btn book" href="https://leanpub.com/architecture-synthesis" target="_blank" rel="noopener">Book</a>`

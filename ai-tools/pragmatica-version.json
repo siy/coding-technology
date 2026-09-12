@@ -1,23 +1,73 @@
 {
-  "_": "The one derived version declaration for issue #60. ai-tools/pragmatica-pins.py carries the mechanism and, more importantly, what a green result does NOT mean; read that first. `pinned` is the Pragmatica Core version every surface in this repository must quote. It is UNCHANGED from the constant it replaces (check-drift.sh:14, 1.0.0-rc1) — moving it is an editorial claim about what the books assert, and it belongs to the owner.",
-  "pinned": "1.0.0-rc1",
-  "pinned_since": "unchanged from ai-tools/check-drift.sh:14, moved here 2026-09-09",
-  "governed_artifacts": [
-    "core"
-  ],
-  "_governed_artifacts": "Artifacts in the group that this pin speaks for. org.pragmatica-lite:jbct-maven-plugin is at 0.4.6 and releases on its own line, so comparing it against core's pin would demand a wrong edit forever; it carries not-core inventory entries instead.",
+  "_": "The derived Pragmatica version declaration for issue #60, SPLIT INTO TWO FIELDS by the owner's ruling of 2026-09-11. ai-tools/pragmatica-pins.py carries the mechanism and, more importantly, what a green result does NOT mean; read that first. The single `pinned` field it replaces was answering two questions at once — what a reader's build should depend on, and what a human had actually re-read the API against — so it could never move: bumping it re-asserted every verification nobody had performed, and holding it still left every dependency snippet stale. Neither answer was available while one field carried both.",
+  "depends_on": {
+    "_": "The version a reader's build should use. A dependency coordinate, nothing more. It tracks Maven Central mechanically and needs no human judgement to move: a coordinate is right when it resolves and names what Central last published. Every <version> under an org.pragmatica-lite groupId, every org.pragmatica-lite:<artifact>:<version> coordinate, and every pragmatica*.version property in this repository is compared against it.",
+    "version": "1.0.0-rc3",
+    "artifacts": [
+      "core"
+    ],
+    "_artifacts": "Artifacts in the group this value speaks for. org.pragmatica-lite:jbct-maven-plugin is at 0.4.6 and releases on its own line, so comparing it here would demand a wrong edit forever; it carries not-core inventory entries instead. org.pragmatica-lite:jackson shares the release line and is published at 1.0.0-rc3 (read from its own maven-metadata.xml, 2026-09-11); examples/pom.xml drives it from the same property, which is why moving that property was checked against Central for BOTH artifacts and not just core.",
+    "since": "2026-09-11",
+    "moved_from": "1.0.0-rc1",
+    "why": "Central published 1.0.0-rc3 on 2026-09-02 (lastUpdated 20260902212949) and the repository declared 1.0.0-rc1. Under the single-field declaration this bump was blocked, because it would also have moved two chapter headers and two agent descriptions that assert what somebody read. Split apart, the coordinate axis has no such cost and no such judgement: it now agrees with Central."
+  },
+  "pinned": "1.0.0-rc3",
+  "_pinned": "COMPATIBILITY ALIAS, not a third opinion. website/build.js:55 reads `PIN_DECL.pinned` and that file is owned by an open pull request (#75), so the key stays until #75 lands and build.js can read depends_on.version directly. It is NOT trusted: pragmatica-pins.py --check FAILS if it differs from depends_on.version, because two keys holding one value is the same defect this split exists to remove, one level down. The site renders a dependency coordinate, so the alias mirrors depends_on and never verified_against.",
+  "verified_against": {
+    "_": "The version at which a human actually re-read the API surfaces a document describes. It moves only when a person does that work, and NEVER by sed: advancing the literal without the re-read fabricates a verification. It is NOT one value, and the evidence for that is in the repository rather than in this comment — see `_shape` below.",
+    "_shape": "PER SCOPE, where a scope is a documentation surface someone re-reads as a unit. Determined empirically, not assumed: (1) two values coexist TODAY — book/introduction.md:3 and book/from-process-to-patterns.md:3 say 1.0.0-rc1 while book-aether/appendix-a-api-reference.md:4 says 1.0.0-rc3 — so a single global field is already false for one of them; (2) the two are not a disagreement but verifications of DIFFERENT surfaces: the Aether appendix's own text reads 'Every signature below was read from Pragmatica source at release-1.0.0-rc3 head e123caafb (2026-08-26)' and then says the core types 'are the JBCT book's territory and its appendix covers them; this one starts where Aether starts' — it explicitly disclaims covering Pragmatica Core at all; (3) per-BOOK undercounts, because ai-tools/agents/jbct-coder.md:5 and ai-tools/agents/jbct-reviewer.md:11 carry their own 'with Pragmatica Core <version>' claims next to their own independent last-modified dates (2026-09-06 and 2026-04-06), and neither is a book. Three scopes, two distinct values, one of them about a surface that is not Pragmatica Core.",
+    "_why_not_merged": "jbct-book and jbct-tooling hold the same value today, so nothing in the current numbers forces them apart. They are kept apart on the repository's own recorded history instead: CLAUDE.md states the skills and agents are DERIVED artifacts that 'have drifted from it before', ai-tools/check-drift.sh exists because of that drift, and the two surfaces carry independent last-modified stamps. Merging them would mean that re-reading the book at a new release either fabricates a verification for a skill nobody touched, or blocks the book's — which is exactly the defect that splitting `pinned` was meant to remove, reproduced one level down. This is a judgement, and it is marked as one.",
+    "scopes": [
+      {
+        "name": "jbct-book",
+        "version": "1.0.0-rc1",
+        "surface": "Pragmatica Core's author-facing types as the JBCT book teaches them",
+        "paths": [
+          "book/*.md",
+          "README.md"
+        ],
+        "stamp": null,
+        "_stamp": "No tag, no head SHA and no date are recorded anywhere in the scanned space: the two chapter headers assert a version and nothing else, which is weaker provenance than the Aether scope carries. website-meta/COURSE-FIDELITY-CHECK.md:8 records a read of 'the actual Pragmatica Core 1.0.0-rc1 sources', but it sits under the `*-meta/*` exclusion and is a pointer, not a stamp. Recorded as null rather than invented.",
+        "why": "book/introduction.md:3 and book/from-process-to-patterns.md:3 ('**Based on:** JBCT v5.0.0 | **Pragmatica Core:** 1.0.0-rc1') plus README.md:218, which describes the same book. Moving this needs somebody to re-read Result/Option/Promise and the JBCT patterns against 1.0.0-rc3 source and say so."
+      },
+      {
+        "name": "jbct-tooling",
+        "version": "1.0.0-rc1",
+        "surface": "the same Core types as the installed skill and agents state them",
+        "paths": [
+          "ai-tools/agents/*.md",
+          "ai-tools/skills/jbct/*"
+        ],
+        "stamp": null,
+        "_stamp": "The two agent headers carry their own last-modified dates (jbct-coder 2026-09-06, jbct-reviewer 2026-04-06) but no Pragmatica tag or SHA.",
+        "why": "ai-tools/agents/jbct-coder.md:5 and ai-tools/agents/jbct-reviewer.md:11 state '(last modified: <date>) with Pragmatica Core 1.0.0-rc1'. These are installed away from this repository (~/.claude), so a stale claim here becomes an invisible wrong answer there — which is check-drift.sh's whole reason for existing."
+      },
+      {
+        "name": "aether-book",
+        "version": "1.0.0-rc3",
+        "surface": "AETHER's author-facing signatures — the slice contract and its resources — NOT Pragmatica Core",
+        "paths": [
+          "book-aether/*.md"
+        ],
+        "stamp": {
+          "tag": "release-1.0.0-rc3",
+          "head": "e123caafb",
+          "date": "2026-08-26"
+        },
+        "_stamp": "The only real provenance stamp in the repository: a tag, a head SHA and a date, which must move together or not at all. It asserts source read AT A SHA, never a build of it.",
+        "why": "book-aether/appendix-a-api-reference.md:4. Already at rc3 because somebody did the work in August. This is the scope that refutes a single global verified_against, and it is also the scope whose artifact is not `core` — the version is a pragmatica REPOSITORY tag, and the appendix attributes to `core` only as an artefact of the `release-<version>` attribution rule."
+      }
+    ]
+  },
   "upstream": {
     "maven_metadata": "https://repo1.maven.org/maven2/org/pragmatica-lite/core/maven-metadata.xml",
-    "_": "The external fact the old constant was never compared against. <release> is what Maven Central last published. Read 2026-09-09: 1.0.0-rc3, lastUpdated 20260902212949. The highest tag at github.com/pragmaticalabs/pragmatica is v1.0.0-rc3, so the two independent external sources agree; pragmatica HEAD sits on branch release-1.0.0-rc4 with no rc4 tag published.",
-    "known_behind": {
-      "upstream": "1.0.0-rc3",
-      "since": "2026-09-09",
-      "why": "Central published rc3 on 2026-09-02 and this repository still declares rc1. Which value the books should assert is the owner's ruling, not this PR's: bumping the pin re-asserts every dependency snippet and both chapter headers against a library nobody has re-read them against. Delete this key when the pin moves — with it gone the check fails until declaration and Central agree."
-    }
+    "_": "The external fact the old hard-coded constant was never compared against. <release> is what Maven Central last published. Read 2026-09-11: 1.0.0-rc3, lastUpdated 20260902212949 — unchanged since the 2026-09-09 reading. This axis compares Central against depends_on ONLY. It has nothing to say about verified_against, which is a claim about human work and can never be settled by a repository probe: an upstream release does not re-read anything.",
+    "_known_behind_removed": "The known_behind deferral is DELETED, per the instruction it carried ('Delete this key when the pin moves — with it gone the check fails until declaration and Central agree'). depends_on and Central now both read 1.0.0-rc3, so the axis is green on agreement rather than on an exception, and it goes red the day Central publishes rc4."
   },
   "known_versions": {
-    "_": "Every version org.pragmatica-lite:core has published, read from maven_metadata on 2026-09-09 (38 entries). It bounds the safety net: an UNATTRIBUTED literal is only worth a human's classification when Pragmatica has really shipped that version. Without it the check demands entries for all 111 book versions, POM model versions and URL fragments in the tree, and an inventory that size gets routed around rather than maintained. Refresh it in the same PR that moves the pin — note that plain 1.0.0 is NOT yet a published version, so a GA release must add it here.",
-    "read_at": "2026-09-09",
+    "_": "Every version org.pragmatica-lite:core has published, read from maven_metadata. It bounds the safety net: an UNATTRIBUTED literal is only worth a human's classification when Pragmatica has really shipped that version. Without it the check demands entries for all 111 book versions, POM model versions and URL fragments in the tree, and an inventory that size gets routed around rather than maintained. Refresh it in the same PR that moves depends_on — note that plain 1.0.0 is NOT yet a published version, so a GA release must add it here.",
+    "read_at": "2026-09-11",
+    "_read_at": "Re-read in full on 2026-09-11: 38 <version> entries, byte-identical to the 2026-09-09 list. The date moved; the list did not.",
     "versions": [
       "0.8.0",
       "0.8.1",
@@ -75,54 +125,85 @@
       "*-meta/*/*"
     ]
   },
-  "render_exceptions": [
+  "_field_assignment": "Which of the two fields an occurrence belongs to. Two mechanical rules decide the unambiguous forms and are not listed here: a DEPENDENCY COORDINATE (a <version> under an org.pragmatica-lite groupId, a full org.pragmatica-lite:<artifact>:<version>, or a pragmatica*.version property) is depends_on; a PROVENANCE FORM (a literal written as `release-<version>`, or a `**Based on:**` header line) is verified_against. Everything else is DECLARED below, because nothing in the text distinguishes 'the build uses rc1' from 'somebody read rc1' — the same reason the inventory's classes are declared rather than inferred. An attributed, non-excepted occurrence that neither rule nor declaration reaches FAILS as unassigned; it is never defaulted, because defaulting a verification stamp into the coordinate field is exactly how a fabricated verification would get sed'd in.",
+  "field_assignment": [
     {
-      "path": "website/content/aether.md",
-      "version": "1.0.0-rc3",
-      "count": 2,
-      "since": "2026-09-09",
-      "why": "The two coordinate forms on line 5 (org.pragmatica-lite:core and org.pragmatica-lite.aether:*). Paired with the mechanical-deferred inventory entry for the same file: the site agrees with Maven Central and the declaration does not, and the owner rules which moves. The page is NOT converted to {{PRAGMATICA_VERSION}} in this PR, because substituting it today would render rc1 and make the site LESS correct than it is now — the conversion is one edit, gated on the ruling."
-    }
-  ],
-  "_render_exceptions": "Read by website/build.js only, which guards the site's own voice (website/content/*.md) by coordinate form. The repository-wide check is ai-tools/pragmatica-pins.py; these two lists are separate because they answer different questions and the build must not depend on python3.",
-  "inventory": [
+      "path": "README.md",
+      "match": "Self-contained design-to-code methodology on Pragmatica Core",
+      "field": "verified_against",
+      "count": 1,
+      "since": "2026-09-11",
+      "why": "A bullet under 'Book changelog / Current version: 4.2.1' describing what the JBCT book is built on. It is a claim about the book, not an instruction to a build — the build instruction is the Maven block at README.md:349. Same file, both fields, which is why assignment is per-occurrence and never per-file."
+    },
+    {
+      "path": "ai-tools/README.md",
+      "match": "All tools use **Pragmatica Core",
+      "field": "depends_on",
+      "count": 1,
+      "since": "2026-09-11",
+      "why": "The prose sentence introducing the Maven block six lines below it. It states what the tooling depends on; if it disagreed with that block it would be a defect."
+    },
+    {
+      "path": "ai-tools/skills/jbct/SKILL.md",
+      "match": "JBCT uses **Pragmatica Core",
+      "field": "depends_on",
+      "count": 1,
+      "since": "2026-09-11",
+      "why": "Same shape as ai-tools/README.md:359 — prose heading the Maven block that follows it."
+    },
+    {
+      "path": "ai-tools/agents/jbct-coder.md",
+      "match": "description: Specialized agent for generating business logic",
+      "field": "verified_against",
+      "count": 1,
+      "since": "2026-09-11",
+      "why": "Frontmatter: '(last modified: 2026-09-06) with Pragmatica Core <version>'. It states what this agent was WRITTEN against, beside its own last-modified date. Moving it without re-reading the API asserts a review nobody did, in a file that is installed into ~/.claude and answers questions there."
+    },
+    {
+      "path": "ai-tools/agents/jbct-reviewer.md",
+      "match": "(last modified: 2026-04-06) with Pragmatica Core",
+      "field": "verified_against",
+      "count": 1,
+      "since": "2026-09-11",
+      "why": "Same form as jbct-coder.md:5, and the clearest case in the repository for splitting per-occurrence rather than per-file: this file's OTHER occurrence, line 185's `Dependency: org.pragmatica-lite:core:<version>`, is a coordinate and moves with depends_on."
+    },
+    {
+      "path": "examples/README.md",
+      "match": "is available on Maven Central",
+      "field": "depends_on",
+      "count": 1,
+      "since": "2026-09-11",
+      "why": "'Pragmatica Core <version> is available on Maven Central' — a statement about the artifact the examples resolve, which must agree with examples/pom.xml beside it. It did not: the README said rc1 while the POM said 0.9.0."
+    },
+    {
+      "path": "website/course/jbct/pragmatica-core-essentials.md",
+      "match": "Install the library",
+      "field": "depends_on",
+      "count": 1,
+      "since": "2026-09-11",
+      "why": "'Install the library (`org.pragmatica-lite:core`, <version>) before continuing' — an install instruction whose coordinate and version are written apart, so the coordinate rule does not reach it. It is a dependency claim in every other respect."
+    },
     {
       "path": "website/content/aether.md",
       "match": "The current candidate is",
-      "version": "1.0.0-rc3",
-      "count": 4,
-      "class": "mechanical-deferred",
-      "deferred_at_pin": "1.0.0-rc1",
-      "since": "2026-09-09",
-      "why": "The site states rc3 while this repository declares rc1; the site is the surface that agrees with Maven Central. Four occurrences on one line: the prose version, the core coordinate, the aether wildcard coordinate, and the GitHub release tag. Deferred, not edited, because the owner rules which value is canonical. SEPARATELY UNRESOLVED and NOT settled by this entry: whether `org.pragmatica-lite.aether:*` is a true wildcard. Two attempts to check it used unsound instruments (probing module names absent at the tag; an artifactId extraction disagreeing with git ls-tree). Deriving that line mechanically would freeze an unverified claim, so build.js substitutes the VERSION only."
-    },
+      "field": "depends_on",
+      "count": 2,
+      "since": "2026-09-11",
+      "why": "Line 5 carries three literals; the one written as a full coordinate (org.pragmatica-lite:core:<version>) is assigned mechanically, and these two are the prose 'The current candidate is <version>' and the `v<version>` fragment of the GitHub release-tag URL. Both name the release a reader downloads, so both are depends_on. Count 2 is what makes this honest: it covers only what the coordinate rule did not reach, and a fourth literal appearing on the line fails instead of being absorbed. The aether clause deliberately carries NO literal of its own -- it says 'at the same version' -- because naming the group with a wildcard was false (37 of 54 artifacts published at rc3; see _open_questions) and repeating the version there would add an unattributable literal for no reader benefit."
+    }
+  ],
+  "render_exceptions": [],
+  "_render_exceptions": "EMPTY, and that is the ruling's visible effect on the site. Read by website/build.js only, which guards website/content/*.md by coordinate form. The single entry here excepted website/content/aether.md for stating 1.0.0-rc3 while the repository declared 1.0.0-rc1. depends_on is now 1.0.0-rc3, so the page's coordinates equal the pin and the build passes on AGREEMENT rather than on a written-down disagreement. The page was deliberately NOT converted to {{PRAGMATICA_VERSION}}: its line also carries the `org.pragmatica-lite.aether:*` wildcard, which is a separate open question (see _open_questions), and templating the core half while the wildcard stayed literal would split one sentence across two mechanisms and let the unverified half drift silently at the next bump.",
+  "_open_questions": "RESOLVED 2026-09-11. The `org.pragmatica-lite.aether:*` wildcard formerly in website/content/aether.md:5 was FALSE as written and substantively fine, so the sentence was reworded rather than filed upstream. Measured at tag v1.0.0-rc3 by parsing the root-level <artifactId> of all 73 poms under aether/ (XML parse, 0 failures) and probing Maven Central: 54 jars carry groupId org.pragmatica-lite.aether; 37 are published at 1.0.0-rc3; 17 are not. Of those 17, 14 are deliberately suppressed -- aether/resource/pom.xml declares <skipPublishing>true</skipPublishing> (13) and aether/slice-testkit/pom.xml its own (1) -- and the remaining 3 are cloud-tests, e2e-tests and forge-tests. NO CONSUMABLE ARTIFACT IS MISSING, so nothing is wrong in pragmatica. Note for anyone re-deriving this: 12 further jars under aether/ belong to the DIFFERENT groups org.pragmatica-lite.aether.test and org.pragmatica.aether.test and were never covered by the claim -- counting them is what made two earlier attempts report a much larger gap. Control: 'node', which is published, has no suppression anywhere up its parent chain.",
+  "inventory": [
     {
-      "path": "examples/pom.xml",
-      "match": "<pragmatica.version>0.9.0</pragmatica.version>",
-      "version": "0.9.0",
-      "count": 1,
-      "class": "mechanical-deferred",
-      "deferred_at_pin": "1.0.0-rc1",
-      "since": "2026-09-09",
-      "why": "A live core pin, six releases behind: it feeds <version>${pragmatica.version}</version> for org.pragmatica-lite:core at examples/pom.xml:29, and examples/README.md:12,20 in the same directory claims 1.0.0-rc1. The examples build and its own README disagree. Outside the old check's three-path space and spelled `pragmatica.version` rather than `pragmatica-lite.version`, so nothing could see it. Class i, but it needs the owner's value like every other pin."
-    },
-    {
-      "path": "book-aether/appendix-a-api-reference.md",
-      "match": "Pragmatica source at `release-1.0.0-rc3` head `e123caafb`",
-      "version": "1.0.0-rc3",
-      "count": 1,
-      "class": "editorial",
-      "since": "2026-09-09",
-      "why": "Not a pin: a verified_at provenance stamp asserting the appendix's signatures were READ from source at a named tag and a named head SHA on a named date. Moving the version without re-reading the source at the new tag fabricates a verification nobody performed, and the tag, the SHA and the date have to move together or not at all. Needs a re-read, not a sed."
-    },
-    {
-      "path": "BOOK-VERSIONING.md",
-      "match": "The `1.0.0-rc1` in the text",
+      "path": "articles/legacy-adoption-strategy.md",
+      "match": "<version>1.0.0-rc1</version>",
       "version": "1.0.0-rc1",
       "count": 1,
-      "class": "editorial",
-      "since": "2026-09-09",
-      "why": "Explanatory prose telling readers that the rc suffix they see in book text belongs to the library and not to any book. It quotes the literal as an example. Whether the example should track the pin or be generalised to `1.0.0-rcN` is an editorial call, and either answer is defensible."
+      "class": "dated-publication",
+      "since": "2026-09-11",
+      "why": "SURFACED BY THIS SPLIT, and by nothing before it: at the old pin this snippet agreed by coincidence, so no inventory entry was needed and none existed. Moving depends_on to rc3 turns it into a finding, and the correct answer is that it must not move. The convener ruled on issue #60 (comment of 2026-09-05) that 'docs make a standing claim, where green today is the point; an article makes a dated claim, and gating one forever means either freezing the product or rewriting history'. This file is `published: true` with a canonical_url, so it is a dated claim. Distinct from the `historical` class and kept out of it deliberately: sources/articles/asynchronous-processing-in-java-with-promises.md:430 DECLARES its own class in its text ('most recent version at the time of writing') and stays historical; this one declares nothing and needed the ruling to classify. MARKED AS A JUDGEMENT: what would settle it is the owner saying whether articles/ is a live surface depends_on governs. If it is, this entry is deleted and the snippet moves."
     },
     {
       "path": "book/knowledge-gathering-pipelines.md",
@@ -266,7 +347,7 @@
       "count": 3,
       "class": "not-core",
       "since": "2026-09-09",
-      "why": "org.pragmatica-lite:jbct-maven-plugin, not core. Same group, independent release line, so it must never be compared against core's pin. Its own staleness is a real question and this check does not answer it — there is no declaration for the plugin, and adding one is out of scope for #60."
+      "why": "org.pragmatica-lite:jbct-maven-plugin, not core. Same group, independent release line, so it must never be compared against core's depends_on. Its own staleness is a real question and this check does not answer it — there is no declaration for the plugin, and adding one is out of scope for #60."
     },
     {
       "path": "README.md",

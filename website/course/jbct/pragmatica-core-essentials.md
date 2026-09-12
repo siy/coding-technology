@@ -1,5 +1,5 @@
 ---
-reviewed-at: 38b95c8b66f3dfd25124b0c4f3caa9529ff3f289
+reviewed-at: 8948516b4caa61225c1ef362bf577f0ca0e93c5f
 ---
 
 ## blurb
@@ -12,7 +12,7 @@ Installing Pragmatica Core and its shared vocabulary: map, flatMap, filter, and 
 - Result.all() accumulates failures; Promise.all() fails fast
 
 ## note
-Install the library (`org.pragmatica-lite:core`, 1.0.0-rc1) before continuing - every later lesson
+Install the library (`org.pragmatica-lite:core`, 1.0.0-rc3) before continuing - every later lesson
 assumes it's on your classpath.
 
 ## exercise

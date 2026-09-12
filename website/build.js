@@ -972,10 +972,15 @@ function buildHeaders() {
   // No Cache-Control rules here, deliberately. netlify.toml carried three and none
   // survives scrutiny: /*.js would pin an immutable year on the next-step engine's
   // modules, which are imported unversioned (import … from './engine.js') and so have
-  // no invalidation path; /*.html matches the REQUEST path, so it would reach 7 legacy
-  // root pages and miss the 82 pretty URLs that are the site; and /*.css is the rule
-  // that caused #34 in July 2026 (HANDOVER-2026-07-04.md) — stale CSS on the bare URL.
-  // Netlify's own default, max-age=14400 + must-revalidate, is correct for all three.
+  // no invalidation path; /*.css is the rule that caused #34 in July 2026
+  // (HANDOVER-2026-07-04.md) — stale CSS on the bare URL; and /*.html would have
+  // matched NOTHING this site serves, because _headers matches the request path and
+  // Netlify 301s /X.html to the extensionless /x (measured on production 2026-09-12:
+  // /CHANGELOG.html -> /changelog, /AI-TOOLING.html -> /ai-tooling).
+  //
+  // Netlify's own defaults are right for all three, and they DIFFER BY CONTENT TYPE —
+  // measured on production 2026-09-12, so quote the pair, not one number: HTML returns
+  // max-age=0 + must-revalidate; CSS and JS return max-age=14400 + must-revalidate.
 
   ensureDir(DIST_DIR);
   fs.writeFileSync(path.join(DIST_DIR, '_headers'), lines.join('\n') + '\n');

@@ -61,7 +61,7 @@ const TABLE = [
   ['pipe', 'A | B | C', 'a-b-c'],
   ['tilde', 'Approximately ~100ms', 'approximately-100ms'],
   ['digits and dots', 'Retry 1..100 times', 'retry-1100-times'],
-  ['version string', 'Pragmatica 1.0.0-rc1', 'pragmatica-100-rc1'],
+  ['version string', 'Pandoc 3.8.3-rc1', 'pandoc-383-rc1'],
   ['consecutive spaces collapse', 'Two  consecutive   spaces', 'two-consecutive-spaces'],
   // The ATX parser strips source-level whitespace before pandoc builds the AST, so this
   // row pins the END-TO-END result and NOT slugify's own trim: deleting that trim leaves

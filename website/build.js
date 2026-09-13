@@ -3,28 +3,7 @@
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
-const MarkdownIt = require('markdown-it');
-const markdownItAnchor = require('markdown-it-anchor');
-const { highlight } = require('./lib/highlight');
-
-function githubSlugify(s) {
-  return String(s)
-    .trim()
-    .toLowerCase()
-    .replace(/[^\w\s-]/g, '')
-    .replace(/\s+/g, '-');
-}
-
-const md = new MarkdownIt({
-  html: true,
-  linkify: true,
-  typographer: true,
-  breaks: false,
-  highlight
-}).use(markdownItAnchor, {
-  slugify: githubSlugify,
-  permalink: markdownItAnchor.permalink.headerLink()
-});
+const { render } = require('./lib/render');
 
 // Configuration
 const ROOT_DIR = path.join(__dirname, '..');
@@ -444,7 +423,7 @@ function buildLandingPage(cfg) {
   const title = getTitle(body) || cfg.fallbackTitle;
   const description = cfg.description || extractFirstParagraph(body);
   const renderSource = cfg.glossary ? preprocessGlossaryAnchors(body) : body;
-  const contentHtml = md.render(renderSource);
+  const contentHtml = render(renderSource);
 
   const template = readTemplate('landing');
   const outPath = path.join(DIST_DIR, cfg.out);
@@ -756,7 +735,7 @@ function buildLessonPages(course, flat) {
     const { title: h1Title, body: strippedBody } = stripLeadingH1(chapterBody);
     const title = h1Title || lesson.specTitle;
     const rewritten = rewriteBookLinks(strippedBody, course, courseByBookDir);
-    const bodyHtml = md.render(rewritten);
+    const bodyHtml = render(rewritten);
 
     const layerPath = path.join(course.layerDir, `${lesson.slug}.md`);
     let sections = {};
@@ -767,17 +746,17 @@ function buildLessonPages(course, flat) {
     }
 
     const learnBox = sections.learn
-      ? `<div class="learn">\n    <h2>In this lesson</h2>\n    ${md.render(sections.learn)}\n  </div>`
+      ? `<div class="learn">\n    <h2>In this lesson</h2>\n    ${render(sections.learn)}\n  </div>`
       : '';
     const noteBlock = sections.note
-      ? `<div class="lesson-note">${md.render(sections.note)}</div>`
+      ? `<div class="lesson-note">${render(sections.note)}</div>`
       : '';
     let exerciseBlock = '';
     if (sections.exercise) {
       const ex = parseExercise(sections.exercise);
       exerciseBlock = `<div class="exercise">
     <div class="bar">Exercise — ${escapeHtml(ex.title)} ${ex.minutes ? `<span>~${escapeHtml(ex.minutes)} min</span>` : '<span></span>'}</div>
-    <div class="body">${md.render(ex.body)}</div>
+    <div class="body">${render(ex.body)}</div>
   </div>`;
     }
     const description = sections.blurb || extractFirstParagraph(chapterBody) || `${title} — ${course.titleSuffix}.`;
@@ -874,7 +853,7 @@ function buildLegacyPages() {
     let content = rewriteLegacyLinks(body, srcDir, outDir);
     content = content.replace(/\.md(#[^)]*)?(\))/g, '.html$1$2');
 
-    let htmlContent = md.render(content);
+    let htmlContent = render(content);
     const title = getTitle(content) || page.out.replace('.html', '');
     if (!/^\s*<h1[\s>]/.test(htmlContent)) {
       htmlContent = `<h1>${escapeHtml(title)}</h1>\n` + htmlContent;

@@ -13,7 +13,7 @@ Four real systems — Stack Overflow, Shopify, Discord, a UK government registra
 - Cross-findings: contention is side-symmetric, team size never presses topology
 
 ## note
-The full replication kit — answer sheets, registered predictions, grading rubrics — is public at github.com/siy/derivation-artifacts. It's the open evidence behind this chapter's grades.
+The full replication kit — answer sheets, registered predictions, grading rubrics — is public at [github.com/siy/derivation-artifacts](https://github.com/siy/derivation-artifacts). It's the open evidence behind this chapter's grades.
 
 ## exercise
 ### Derive a System Before You Check It | ~30 min

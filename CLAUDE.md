@@ -41,16 +41,27 @@ repo in both directions. `check-drift.sh` reports that.
 ```bash
 cd website && npm run build          # the site; also the only link/orphan check
 node --test website/next-step/*.test.js   # the next_step derivation engine
+node --test website/lib/*.test.js    # the heading-slug mechanism (needs pandoc)
 ./ai-tools/check-drift.sh            # tooling staleness + AS chapter citations
 python3 ai-tools/sync-book-blocks.py --check   # book-owned blocks still in sync
 ```
 
-All four run in CI on push and pull request to `main`, but not from one workflow: the
-drift, block and next-step checks are in `.github/workflows/checks.yml`, while
+All five run in CI on push and pull request to `main`, but not from one workflow: the
+drift, block, next-step and slug checks are in `.github/workflows/checks.yml` (three
+jobs — `ai-tools-drift`, `next-step-engine`, `site-render`), while
 `npm run build` — the only link/orphan check — runs inside `deploy.yml`'s
 build-and-deploy job, so it is coupled to the deploy path rather than sitting with the
 others. `deploy.yml` publishes the site to Netlify on merge to `main`; `dist/` is
 gitignored and built at deploy time.
+
+**The link check cannot see heading anchors move.** It reads `id=` out of the HTML it
+just emitted and resolves hrefs against that same set, so a changed slug moves the id and
+its header-anchor href together and `All internal links resolve (89 pages checked)` stays
+green — verified by mutation, twice. Anchors are URLs, so that silence is a dead inbound
+link. `website/lib/slug.test.js` is the gate that does see it; it pins the mechanism
+rather than the 1,414-anchor corpus, so it reddens on an algorithm change and not on an
+edited heading. It runs the real pandoc against the real `website/lib/site.lua` and
+**fails rather than skips** when pandoc is absent.
 
 **A PR based on anything but `main` gets ZERO CI.** Both PR workflows filter
 `pull_request: branches: [main]`, which matches the *base*, so a stacked PR runs no checks at

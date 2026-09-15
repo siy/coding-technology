@@ -952,7 +952,7 @@ function buildHeaders() {
   // survives scrutiny: /*.js would pin an immutable year on the next-step engine's
   // modules, which are imported unversioned (import … from './engine.js') and so have
   // no invalidation path; /*.css is the rule that caused #34 in July 2026
-  // (HANDOVER-2026-07-04.md) — stale CSS on the bare URL; and /*.html would have
+  // (PR #34, merged 2026-07-03) — stale CSS on the bare URL; and /*.html would have
   // matched NOTHING this site serves, because _headers matches the request path and
   // Netlify 301s /X.html to the extensionless /x (measured on production 2026-09-12:
   // /CHANGELOG.html -> /changelog, /AI-TOOLING.html -> /ai-tooling).

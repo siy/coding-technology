@@ -106,9 +106,9 @@ choosing the instrument after seeing the data.
 
 ## Provenance
 
-Corpus: `../oss/internal/measurement-corpus/run1b/`, the ten Run 1b implementations unchanged, all
+Corpus: the private measurement corpus, the ten Run 1b implementations unchanged, all
 of which disclosed `READ_OUTSIDE_PROMPT: no`. Extractions:
-`../oss/internal/measurement-corpus/run1c-extractions/`, ten agents, one implementation each,
+the private measurement corpus, ten agents, one implementation each,
 working from a byte-identical brief that never named the hypothesis, the arms, or the existence of a
 comparison. Scoring: `run1c-score.py`, committed before extraction ran.
 

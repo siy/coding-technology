@@ -1,6 +1,6 @@
 # Aether — Book Voice (overlay)
 
-Aether-specific overlay to the shared **`../../oss/content/book-voice.md`** (prose
+Aether-specific overlay to **the shared voice document (private)** (prose
 discipline common to all books in the series). Read that first; this file adds and
 overrides only what is specific to the Aether book. Companion to `BOOK-PLAN.md`
 (structure, outline, code/spec conventions).
@@ -121,5 +121,5 @@ Run the shared `book-voice.md` checklist, plus:
 
 ---
 
-*Companion documents: `../../oss/content/book-voice.md` (shared prose discipline),
+*Companion documents: the shared voice document (private),
 `BOOK-PLAN.md` (structure, outline, code/spec conventions).*

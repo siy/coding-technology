@@ -2,7 +2,7 @@
 
 *Status: spec / not yet drafted. Target ~12K words. Position: post-spiral, before Brownfield. This file is a drafting brief; actual prose is written by the drafting agent.*
 
-> **Authority:** This brief **aligns to and defers to** the canonical outline in `oss/content/pfd-book-spec.md` lines **503–527**. Where this brief and canon differ, **canon wins** — re-read those lines before drafting. The brief's value-add over canon is (a) consolidating canon scattered across spec/considerations/validation/voice into one place, (b) specifying *how the external Metapatterns framework enters* (canon is silent on this — see §5), and (c) flagging the net-new authoring work (the per-axis heuristics, §4.2).
+> **Authority:** This brief **aligns to and defers to** the canonical outline in the PFD book spec (private) lines **503–527**. Where this brief and canon differ, **canon wins** — re-read those lines before drafting. The brief's value-add over canon is (a) consolidating canon scattered across spec/considerations/validation/voice into one place, (b) specifying *how the external Metapatterns framework enters* (canon is silent on this — see §5), and (c) flagging the net-new authoring work (the per-axis heuristics, §4.2).
 
 ## 1. Role and identity
 
@@ -156,10 +156,10 @@ The one axis whose selection procedure already exists (spec L179–208) — use 
 
 ## 7. Sources of truth (read before drafting)
 
-- `oss/content/pfd-book-spec.md` — **canonical module outline L503–527**; axes L137–148; Phase-4 L104–131; recovery L179–208; continuous-transformation L150–177.
-- `oss/content/pfd-book-considerations.md` — Theme 3 (L171–196, emergence-first), 6 (show possibility), 18 (L618–672, Temporal), 19 (L676–792), 22 (synthesis-is-a-module), 23 (L1309–1335, esp #4 L1332), 25 (determinism phase-scoped), 26 (integrative-not-delta).
-- `oss/content/pfd-validation-notes.md` — Gap 3 (recovery), Gap 5 (Phase-4 set), Gap 6 (six-axis); infeasible-vector contrast cases L668–676, L819–825; hybrid-normal L815.
-- `oss/content/pfd-book-voice.md` — register, em-dash, three-layer/named-device model, forbidden vocab, positive-crediting rule.
+- the PFD book spec (private) — **canonical module outline L503–527**; axes L137–148; Phase-4 L104–131; recovery L179–208; continuous-transformation L150–177.
+- the PFD considerations log (private) — Theme 3 (L171–196, emergence-first), 6 (show possibility), 18 (L618–672, Temporal), 19 (L676–792), 22 (synthesis-is-a-module), 23 (L1309–1335, esp #4 L1332), 25 (determinism phase-scoped), 26 (integrative-not-delta).
+- the PFD validation notes (private) — Gap 3 (recovery), Gap 5 (Phase-4 set), Gap 6 (six-axis); infeasible-vector contrast cases L668–676, L819–825; hybrid-normal L815.
+- the PFD voice document (private) — register, em-dash, three-layer/named-device model, forbidden vocab, positive-crediting rule.
 - `coding-technology/book-pfd/spiral-{1..4}.md`, `foundations.md`, `REVIEW-spirals-2026-05-27.md` — deferral promises, recovery taxonomy, running example.
 - `../architecture/.claude/skills/architecture-design/` — Metapatterns digest, for §5 convergence only.
 

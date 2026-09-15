@@ -129,5 +129,5 @@ meaningful tasks over many trivial ones.
 - **PR merged** → check the current branch; if it is not `main`, switch and pull.
 - **`jbct-coder.md` header**: preserve during edits. Update the description if needed;
   ask before changing other fields.
-- **Voice documents** live in the private `../oss/content/` repo — a shared
+- **Voice documents** live in a private repo — a shared
   `book-voice.md` plus per-book overlays. Never copy them into this public repo.

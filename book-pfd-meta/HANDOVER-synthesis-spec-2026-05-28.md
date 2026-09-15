@@ -64,10 +64,10 @@ From spec §8:
 - `HANDOVER-PFD-BOOK.md` was at `coding-technology/` repo root; archived 2026-09-14 to the
   project's private record. Its durable half is duplicated in the PFD book spec (private),
   which is authoritative.
-- `oss/content/pfd-book-spec.md` L503–527 is the **canonical module outline** (the spine you must align to).
-- `oss/content/pfd-book-considerations.md` carries the load-bearing themes: 3 (emergence-first), 6 (show possibility), 18 (Temporal/durable-workflow), 19 (show-don't-argue), 22 (Synthesis-is-a-module), 23 #4 (perf-vs-process-simplicity → phase separation), 25 (determinism is phase-scoped), 26 (integrative-not-delta).
-- `oss/content/pfd-validation-notes.md` Gaps 3 (recovery), 5 (Phase-4 set), 6 (six-axis); the infeasible-vector contrast-case rule; hybrid-normal.
-- `oss/content/pfd-book-voice.md` L44–63 (three-layer named-device model), L85–88 (forbidden vocab — NFR strictly), L116–121 (em-dash ≤2), L156 (register), L158 (positive-crediting rule).
+- the PFD book spec (private) L503–527 is the **canonical module outline** (the spine you must align to).
+- the PFD considerations log (private) carries the load-bearing themes: 3 (emergence-first), 6 (show possibility), 18 (Temporal/durable-workflow), 19 (show-don't-argue), 22 (Synthesis-is-a-module), 23 #4 (perf-vs-process-simplicity → phase separation), 25 (determinism is phase-scoped), 26 (integrative-not-delta).
+- the PFD validation notes (private) Gaps 3 (recovery), 5 (Phase-4 set), 6 (six-axis); the infeasible-vector contrast-case rule; hybrid-normal.
+- the PFD voice document (private) L44–63 (three-layer named-device model), L85–88 (forbidden vocab — NFR strictly), L116–121 (em-dash ≤2), L156 (register), L158 (positive-crediting rule).
 
 Working digest of the external Metapatterns framework: `architecture/.claude/skills/architecture-design/` — use for §5 Convergence callout content only; **cite the book** (Poltorak's *Architectural Metapatterns*, CC BY 4.0, https://metapatterns.io/), not the skill.
 

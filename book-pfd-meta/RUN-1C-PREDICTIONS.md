@@ -153,6 +153,6 @@ artifacts; nothing is re-run, so the Run 1b `RAN_TOOLS` wording defect has no be
 
 ## Corpus location
 
-`../oss/internal/measurement-corpus/run1b/` — preserved 2026-08-27 from a dead session's scratchpad
+the private measurement corpus — preserved 2026-08-27 from a dead session's scratchpad
 under `/private/tmp`, which is subject to OS purge. The implementations are one-shot agent output
 and cannot be regenerated; re-running would produce different implementations, not these.

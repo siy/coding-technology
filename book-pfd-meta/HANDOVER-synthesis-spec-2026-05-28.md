@@ -5,7 +5,7 @@
 ## TL;DR
 
 1. The **architecture-design skill** (Metapatterns digest) is **done** at `architecture/.claude/skills/architecture-design/`. Self-contained, ~1,700 lines, ~0.5% verbatim from source (measured). Treat as a tool, not as canon.
-2. The **Architecture Synthesis spec** for the PFD book exists at `coding-technology/book-pfd/SPEC-architecture-synthesis.md`. **It aligns to and defers to `(private path)` L503–527** (the canonical module outline). It is a drafting brief, not prose. Drafting agent has not yet been invoked.
+2. The **Architecture Synthesis spec** for the PFD book exists at `coding-technology/book-pfd/SPEC-architecture-synthesis.md`. **It aligns to and defers to the PFD book spec (private) L503–527** (the canonical module outline). It is a drafting brief, not prose. Drafting agent has not yet been invoked.
 3. **One load-bearing constraint dominates everything below — read §2 before doing anything.**
 4. An **adversarial-reviewer prompt was prepped, then paused by the user** before launching (see §8). It's ready to fire when the user wants the discussion.
 
@@ -34,7 +34,7 @@ If the next session feels temptation to "just use the catalog as the structure f
 **Target:** ~12K words of prose, drafted by another agent.
 **Position in book:** post-spiral, before Brownfield. Hourglass payoff. Integrative-not-delta.
 
-**Canon alignment.** The spec mirrors the **canonical 8-section spine at `(private path)` L503–527** (this fact is non-obvious — I only discovered it on the second extraction pass). Word sub-targets: Phase-4 elicitation 3K · six-axis vector 5K · selection mechanism 3K · Phase-5/6 boundary 1K · recovery-class selection 2K · continuous transformation 3K · walkthrough 1K. Threads advanced: **1, 2, 11, 13, 14, 15**. Sub-targets sum to ~18K vs ~12K total — flagged "indicative, scale with figure"; compression needed.
+**Canon alignment.** The spec mirrors the **canonical 8-section spine at the PFD book spec (private) L503–527** (this fact is non-obvious — I only discovered it on the second extraction pass). Word sub-targets: Phase-4 elicitation 3K · six-axis vector 5K · selection mechanism 3K · Phase-5/6 boundary 1K · recovery-class selection 2K · continuous transformation 3K · walkthrough 1K. Threads advanced: **1, 2, 11, 13, 14, 15**. Sub-targets sum to ~18K vs ~12K total — flagged "indicative, scale with figure"; compression needed.
 
 **Folded-in verbatim** so the drafter has it in one place: the 11 Phase-4 questions + 4 categories + 3 attachment scopes; the six axes + options; the recovery 4 judgment axes (the only axis with extant heuristics); Temporal placement + 3 traps; 6 cost/risk indicators + 5 failure modes; the event-ticketing three-profile walkthrough decision.
 
@@ -62,10 +62,10 @@ From spec §8:
 ## 6. Canonical sources — paths that aren't obvious
 
 - `HANDOVER-PFD-BOOK.md` is at `coding-technology/` **repo root**, NOT in `book-pfd/`. (Easy to miss.)
-- `(private path)` L503–527 is the **canonical module outline** (the spine you must align to).
-- `(private path)` carries the load-bearing themes: 3 (emergence-first), 6 (show possibility), 18 (Temporal/durable-workflow), 19 (show-don't-argue), 22 (Synthesis-is-a-module), 23 #4 (perf-vs-process-simplicity → phase separation), 25 (determinism is phase-scoped), 26 (integrative-not-delta).
-- `(private path)` Gaps 3 (recovery), 5 (Phase-4 set), 6 (six-axis); the infeasible-vector contrast-case rule; hybrid-normal.
-- `(private path)` L44–63 (three-layer named-device model), L85–88 (forbidden vocab — NFR strictly), L116–121 (em-dash ≤2), L156 (register), L158 (positive-crediting rule).
+- the PFD book spec (private) L503–527 is the **canonical module outline** (the spine you must align to).
+- the PFD considerations log (private) carries the load-bearing themes: 3 (emergence-first), 6 (show possibility), 18 (Temporal/durable-workflow), 19 (show-don't-argue), 22 (Synthesis-is-a-module), 23 #4 (perf-vs-process-simplicity → phase separation), 25 (determinism is phase-scoped), 26 (integrative-not-delta).
+- the PFD validation notes (private) Gaps 3 (recovery), 5 (Phase-4 set), 6 (six-axis); the infeasible-vector contrast-case rule; hybrid-normal.
+- the PFD voice document (private) L44–63 (three-layer named-device model), L85–88 (forbidden vocab — NFR strictly), L116–121 (em-dash ≤2), L156 (register), L158 (positive-crediting rule).
 
 Working digest of the external Metapatterns framework: `architecture/.claude/skills/architecture-design/` — use for §5 Convergence callout content only; **cite the book** (Poltorak's *Architectural Metapatterns*, CC BY 4.0, https://metapatterns.io/), not the skill.
 
@@ -85,10 +85,10 @@ CHALLENGE MODE: $500 on the line. You are a hard, adversarial reviewer — NOT a
 
 READ:
 - book-pfd/SPEC-architecture-synthesis.md  (under review)
-- (private path)  (L503–527 = canon outline; axes L137–148; Phase-4 L104–131; recovery L179–208; cont-transformation L150–177)
-- (private path)  (Themes 3, 6, 18, 19, 22, 23, 25, 26)
-- (private path)  (Gaps 3, 5, 6)
-- (private path)
+- the PFD book spec (private) (L503–527 = canon outline; axes L137–148; Phase-4 L104–131; recovery L179–208; cont-transformation L150–177)
+- the PFD considerations log (private) (Themes 3, 6, 18, 19, 22, 23, 25, 26)
+- the PFD validation notes (private) (Gaps 3, 5, 6)
+- the PFD voice document (private)
 - book-pfd/spiral-{1..4}.md, foundations.md
 - (private path)
 

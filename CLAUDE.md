@@ -141,7 +141,7 @@ meaningful tasks over many trivial ones.
 - **Voice documents** live in the private `(private path)` repo — a shared
   `book-voice.md` plus per-book overlays. Never copy them into this public repo.
 - **Draft status decides the repo, not sensitivity.** Capture and unshipped drafts go to
-  `a private repository` or `a private repository`; `articles/` here is for work committed to shipping. (Ruled
+  the project's private repositories; `articles/` here is for work committed to shipping. (Ruled
   2026-08-10. It does not by itself settle whether `articles/` is inside any given
   check's space — that question is still open for the pin check.)
 - **Published work is history.** It stays as written, whatever the current rules say.
@@ -151,8 +151,8 @@ meaningful tasks over many trivial ones.
   `printf`. A `cd` inside a compound command persists into later calls — prefer absolute
   paths. Both cost time in July 2026 and again on 2026-09-13.
 - **Handover retention.** The repository root keeps the current handover and its
-  immediate predecessor; older ones move to
-  `(private path)` at the next handover. Each handover
+  immediate predecessor; older ones move to the project's private record at the next
+  handover. Each handover
   names the one it continues, so the chain stays walkable across the move. A rule that
   belongs in a durable document goes there *when it is made* — a handover is a record of
   state, never the only home of a rule.

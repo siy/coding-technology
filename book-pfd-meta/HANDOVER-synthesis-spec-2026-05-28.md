@@ -61,9 +61,9 @@ From spec §8:
 
 ## 6. Canonical sources — paths that aren't obvious
 
-- `HANDOVER-PFD-BOOK.md` was at `coding-technology/` repo root; archived 2026-09-14 to
-  `(private path)`. Its durable half is duplicated in
-  `(private path)`, which is authoritative.
+- `HANDOVER-PFD-BOOK.md` was at `coding-technology/` repo root; archived 2026-09-14 to the
+  project's private record. Its durable half is duplicated in the PFD book spec (private),
+  which is authoritative.
 - `(private path)` L503–527 is the **canonical module outline** (the spine you must align to).
 - `(private path)` carries the load-bearing themes: 3 (emergence-first), 6 (show possibility), 18 (Temporal/durable-workflow), 19 (show-don't-argue), 22 (Synthesis-is-a-module), 23 #4 (perf-vs-process-simplicity → phase separation), 25 (determinism is phase-scoped), 26 (integrative-not-delta).
 - `(private path)` Gaps 3 (recovery), 5 (Phase-4 set), 6 (six-axis); the infeasible-vector contrast-case rule; hybrid-normal.

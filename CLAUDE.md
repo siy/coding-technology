@@ -113,11 +113,20 @@ meaningful tasks over many trivial ones.
   context. Bare "the document" historically meant the JBCT book (`book/`); the retired
   `CODING_GUIDE.md` and learning series were folded into it.
 - **Tag versions** only after an explicit command. Several changes may precede a tag.
-- **Releases**: branch → PR → `gh pr merge --admin` (branch protection) → per-book tag →
-  rebuild books → Leanpub. `./publish-leanpub.sh <slug> <pdf> [epub] [--sample]
-  [--publish]`, key in `../.env-pub`. The publish call prints a harmless "Unexpected
-  Server Error" even on success — always verify `last_published_at` moved. The `/release`
-  skill carries the full workflow.
+- **Releases**: branch → PR → `gh pr merge --merge` → per-book tag → rebuild books →
+  Leanpub. `./publish-leanpub.sh <slug> <pdf> [epub] [--sample] [--publish]`, key in
+  `../.env-pub`. The publish call prints a harmless "Unexpected Server Error" even on
+  success — always verify `last_published_at` moved. The `/release` skill carries the
+  full workflow, with the caveat below.
+- **`--admin` is not needed, and has not been since 2026-09-12.** Ruleset 9648960 is
+  scoped to `refs/heads/main` with `required_approving_review_count: 0`; its only rules
+  are `deletion`, `non_fast_forward` and `pull_request`. A 1-approval rule on a solo repo
+  was what forced every merge through `--admin` — never a tooling limitation. Verified by
+  three plain `--merge` merges on 2026-09-13 (#75, #81, #82); #78-#80 merged after the
+  ruleset change too, but by another session, so their invocation was not observed. **The installed `/release` skill
+  still says "Branch protection requires admin", and it is not tracked in `ai-tools/`**,
+  so `check-drift.sh` cannot see it: five of the ten installed skills are outside the
+  drift net.
 - **Publishing is not notifying.** `--publish` makes a new version live and emails
   nobody: Leanpub's `publish[email_readers]` defaults to `false` for books, and the
   script sends no parameters. Notifying readers is a separate, irreversible call that
@@ -131,3 +140,19 @@ meaningful tasks over many trivial ones.
   ask before changing other fields.
 - **Voice documents** live in the private `../oss/content/` repo — a shared
   `book-voice.md` plus per-book overlays. Never copy them into this public repo.
+- **Draft status decides the repo, not sensitivity.** Capture and unshipped drafts go to
+  the project's private repositories; `articles/` here is for work committed to shipping. (Ruled
+  2026-08-10. It does not by itself settle whether `articles/` is inside any given
+  check's space — that question is still open for the pin check.)
+- **Published work is history.** It stays as written, whatever the current rules say.
+- **Private material stays private, including in working records** — path references
+  only, never content, and check the headings as well as the prose.
+- **Shell gotchas (zsh).** `echo ===` fails with `=== not found`; quote it or use
+  `printf`. A `cd` inside a compound command persists into later calls — prefer absolute
+  paths. Both cost time in July 2026 and again on 2026-09-13.
+- **Handover retention.** The repository root keeps the current handover and its
+  immediate predecessor; older ones move to the project's private record at the next
+  handover. Each handover
+  names the one it continues, so the chain stays walkable across the move. A rule that
+  belongs in a durable document goes there *when it is made* — a handover is a record of
+  state, never the only home of a rule.

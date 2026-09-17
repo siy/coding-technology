@@ -132,7 +132,7 @@ code, MIXED is unreachable in the current tool, and the JBCT baseline is the aut
 
 # Correction — re-measured after the MIXED fix (2026-08-23)
 
-jbct-cli shipped the fix for `(private path)`. All five acceptance
+jbct-cli shipped the fix for the jbct-cli bug report (private). All five acceptance
 criteria pass, and the corpus was re-measured. **Two corrections to the record above.**
 
 ## Correction 1 — the JBCT baseline root set was inconsistent

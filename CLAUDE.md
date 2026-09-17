@@ -138,7 +138,7 @@ meaningful tasks over many trivial ones.
 - **PR merged** → check the current branch; if it is not `main`, switch and pull.
 - **`jbct-coder.md` header**: preserve during edits. Update the description if needed;
   ask before changing other fields.
-- **Voice documents** live in the private `(private path)` repo — a shared
+- **Voice documents** live in a private repo — a shared
   `book-voice.md` plus per-book overlays. Never copy them into this public repo.
 - **Draft status decides the repo, not sensitivity.** Capture and unshipped drafts go to
   the project's private repositories; `articles/` here is for work committed to shipping. (Ruled

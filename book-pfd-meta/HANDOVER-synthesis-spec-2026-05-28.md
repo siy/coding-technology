@@ -5,7 +5,7 @@
 ## TL;DR
 
 1. The **architecture-design skill** (Metapatterns digest) is **done** at `architecture/.claude/skills/architecture-design/`. Self-contained, ~1,700 lines, ~0.5% verbatim from source (measured). Treat as a tool, not as canon.
-2. The **Architecture Synthesis spec** for the PFD book exists at `coding-technology/book-pfd/SPEC-architecture-synthesis.md`. **It aligns to and defers to `oss/content/pfd-book-spec.md` L503–527** (the canonical module outline). It is a drafting brief, not prose. Drafting agent has not yet been invoked.
+2. The **Architecture Synthesis spec** for the PFD book exists at `coding-technology/book-pfd/SPEC-architecture-synthesis.md`. **It aligns to and defers to the PFD book spec (private) L503–527** (the canonical module outline). It is a drafting brief, not prose. Drafting agent has not yet been invoked.
 3. **One load-bearing constraint dominates everything below — read §2 before doing anything.**
 4. An **adversarial-reviewer prompt was prepped, then paused by the user** before launching (see §8). It's ready to fire when the user wants the discussion.
 
@@ -34,7 +34,7 @@ If the next session feels temptation to "just use the catalog as the structure f
 **Target:** ~12K words of prose, drafted by another agent.
 **Position in book:** post-spiral, before Brownfield. Hourglass payoff. Integrative-not-delta.
 
-**Canon alignment.** The spec mirrors the **canonical 8-section spine at `oss/content/pfd-book-spec.md` L503–527** (this fact is non-obvious — I only discovered it on the second extraction pass). Word sub-targets: Phase-4 elicitation 3K · six-axis vector 5K · selection mechanism 3K · Phase-5/6 boundary 1K · recovery-class selection 2K · continuous transformation 3K · walkthrough 1K. Threads advanced: **1, 2, 11, 13, 14, 15**. Sub-targets sum to ~18K vs ~12K total — flagged "indicative, scale with figure"; compression needed.
+**Canon alignment.** The spec mirrors the **canonical 8-section spine at the PFD book spec (private) L503–527** (this fact is non-obvious — I only discovered it on the second extraction pass). Word sub-targets: Phase-4 elicitation 3K · six-axis vector 5K · selection mechanism 3K · Phase-5/6 boundary 1K · recovery-class selection 2K · continuous transformation 3K · walkthrough 1K. Threads advanced: **1, 2, 11, 13, 14, 15**. Sub-targets sum to ~18K vs ~12K total — flagged "indicative, scale with figure"; compression needed.
 
 **Folded-in verbatim** so the drafter has it in one place: the 11 Phase-4 questions + 4 categories + 3 attachment scopes; the six axes + options; the recovery 4 judgment axes (the only axis with extant heuristics); Temporal placement + 3 traps; 6 cost/risk indicators + 5 failure modes; the event-ticketing three-profile walkthrough decision.
 
@@ -87,10 +87,10 @@ CHALLENGE MODE: $500 on the line. You are a hard, adversarial reviewer — NOT a
 
 READ:
 - /Users/sergiyyevtushenko/IdeaProjects/coding-technology/book-pfd/SPEC-architecture-synthesis.md  (under review)
-- /Users/sergiyyevtushenko/IdeaProjects/oss/content/pfd-book-spec.md  (L503–527 = canon outline; axes L137–148; Phase-4 L104–131; recovery L179–208; cont-transformation L150–177)
-- /Users/sergiyyevtushenko/IdeaProjects/oss/content/pfd-book-considerations.md  (Themes 3, 6, 18, 19, 22, 23, 25, 26)
-- /Users/sergiyyevtushenko/IdeaProjects/oss/content/pfd-validation-notes.md  (Gaps 3, 5, 6)
-- /Users/sergiyyevtushenko/IdeaProjects/oss/content/pfd-book-voice.md
+- the PFD book spec (private) (L503–527 = canon outline; axes L137–148; Phase-4 L104–131; recovery L179–208; cont-transformation L150–177)
+- the PFD considerations log (private) (Themes 3, 6, 18, 19, 22, 23, 25, 26)
+- the PFD validation notes (private) (Gaps 3, 5, 6)
+- the PFD voice document (private)
 - /Users/sergiyyevtushenko/IdeaProjects/coding-technology/book-pfd/spiral-{1..4}.md, foundations.md
 - /Users/sergiyyevtushenko/IdeaProjects/architecture/.claude/skills/architecture-design/
 

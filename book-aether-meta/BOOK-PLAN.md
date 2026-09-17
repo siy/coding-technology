@@ -438,7 +438,7 @@ glossary.
 ## 9. Voice & prose discipline
 
 Two-file model (series-wide voice split landed 2026-06-20, owned by `pfd-editor`):
-- **Shared base:** `../../oss/content/book-voice.md` — prose discipline common to all
+- **Shared base:** the shared voice document (private) — prose discipline common to all
   books: tempo/rhythm, tonal anchor, layering, editorial commitment + NFR ban,
   AI-tell discipline, consistency, framework-name default (§7), what-varies, review
   checklist, drift detection.
@@ -454,7 +454,7 @@ The detailed deltas live in the overlay; this plan defers to it.
 
 ## 10. Structural & code conventions (inherits PFD spec — with care)
 
-**Caveat:** `../../oss/content/pfd-book-spec.md` is dated 2026-05-17 and the PFD book
+**Caveat:** the PFD book spec (private) is dated 2026-05-17 and the PFD book
 has diverged since (structure, word targets, schedule are stale). Treat it as a
 *checklist of conventions*, not authority. Where it states code style it **defers to
 the live `jbct-coder` agent + `jbct` skill** — so do the same; anchor on those and on

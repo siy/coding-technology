@@ -196,5 +196,27 @@ else
   note "note: no installed copy at $INSTALLED — skipping install-drift check"
 fi
 
+# --- 9. Installed skills this repo does NOT track ---
+# Section 8 walks repo -> installed, so anything installed WITHOUT a counterpart here is
+# invisible to it BY CONSTRUCTION -- the check cannot report on what it never enumerates.
+# That blind spot shipped a false instruction: /release told every reader "Branch protection
+# requires admin" for days after the ruleset changed, and no check could see it because the
+# skill lived only in ~/.claude. Being untracked is not automatically wrong -- general-purpose
+# skills legitimately live outside this repo -- so this NAMES them instead of failing, and the
+# naming is the whole point: an uncovered set you can read is not the same as one you cannot.
+if [ -d "$INSTALLED/skills" ]; then
+  uncovered=""
+  for dst in "$INSTALLED"/skills/*/; do
+    [ -d "$dst" ] || continue
+    name=$(basename "$dst")
+    [ -d "skills/$name" ] || uncovered="$uncovered $name"
+  done
+  if [ -n "$uncovered" ]; then
+    note "note: installed skills outside the drift net (not tracked here):$uncovered"
+  else
+    note "every installed skill is tracked here"
+  fi
+fi
+
 [ "$FAIL" -eq 0 ] && note "ai-tools drift checks: all green" || note "ai-tools drift checks: FINDINGS ABOVE"
 exit "$FAIL"

@@ -248,8 +248,29 @@ glossary.
 payment → arrange shipping). It is the canonical saga/compensation domain, the
 lightest cognitive load, already the de-facto example across the existing
 articles/skill (`OrderService`/`InventoryService`/`PaymentService`/`commerce`
-blueprint), and a natural continuation after the JBCT book. The spine is a
-**fresh app built incrementally** — each chapter adds a slice to solve a problem.
+blueprint), and a natural continuation after the JBCT book.
+
+**Owner decision (2026-09-03, Q1): narrate directly on `examples/ecommerce`,
+promoted from answer-key to primary source.** The book does not build a
+from-scratch "orders" app. `examples/ecommerce` already exists in `pragmatica`
+at the rc3 tag — **five slices**, not three: `inventory`, `pricing`, `payment`,
+`fulfillment`, and `place-order` (the orchestrator), plus a `shared` module
+(verified against `v1.0.0-rc3` tree `c67664bd9a104581a54172cf824d7766a5713bcf`;
+the earlier count of three in the gap inventory undercounted `pricing` and
+`place-order`). Each service slice carries real `@Sql`-backed `resources.toml`,
+a `routes.toml`, and a Flyway-style schema migration; there is a full k6 suite
+(steady/ramp/spike/per-node). `PlaceOrder.java` is a Sequencer across the four
+sibling slices with Fork-Join for the independent price and shipping quotes,
+parse-don't-validate on the inbound request, and a compensation path (BER)
+that releases reserved stock when payment fails after the reservation. Its own
+doc comment states the gap the book needs: "Does NOT demonstrate: durable saga
+state. The whole order lives in one in-process promise chain, so a node that
+dies between reserving stock and releasing it strands the reservation until it
+expires on its own" (`place-order/src/main/java/.../PlaceOrder.java:52-54`).
+That is not a plan assumption — the shipped example says it about itself, which
+is the natural seam for the durable-saga flagship chapter in the gap→curriculum
+map below: chapters narrate the existing slices as they stand, then close the
+gaps the app already discloses.
 
 **Breadth via varied overview domains.** The single spine gives coherence; but
 *introductory/overview* sections (and chapter openers) draw illustrative vignettes
@@ -260,7 +281,10 @@ without fragmenting the running example.
 *(Context: `jbct-realworld` is **not** the Conduit/RealWorld demo — it is a loan
 app, misleading name. Loan was judged too domain-heavy for a teaching spine.)*
 
-**The loan apps — now idiom references, not the spine** (both loan-domain):
+**The loan apps — idiom and migration references, not the spine** (both
+loan-domain; superseded as the *source of real-resource idioms* now that
+`examples/ecommerce` demonstrates `@Sql`/`@Http` directly, but still the only
+source for two things the ecommerce app doesn't cover):
 
 - **`jbct-realworld`** (pragmatica `0.9.10`) — 8 slices, full loan lifecycle
   (KYC → credit → collateral → risk → pricing → booking → notify) driven by
@@ -269,35 +293,44 @@ app, misleading name. Loan was judged too domain-heavy for a teaching spine.)*
   context-record accumulation, **compensation stubs** (`reverseBooking`,
   `releaseHold`, `revokeVerification`). BUT: adapter-port with **in-memory** impls,
   **no Aether resource annotations, no `routes.toml`, no entrypoint — not runnable
-  or deployable**, behind on version.
+  or deployable**, behind on version. Kept only for its 8-slice orchestration
+  *shape* where `place-order`'s 4-sibling version is too small to illustrate a point.
 - **`jbct-loan`** (pragmatica `0.17.0`, current) — 4 slices
   (`ProcessLoanApplication`, `EvaluateCredit`, `DisburseLoan`, `ProcessRepayment`)
-  with **real resource injection** (`@LoanDb SqlConnector`, `@KycProvider`/
-  `@AmlProvider`/`@CreditBureau`/`@CollateralAppraiser` HttpClients) + a
-  `spring-boot/` sibling = **before/after migration** artifact.
+  with a `spring-boot/` sibling = **before/after migration** artifact. Kept only
+  for the legacy-migration chapter's "before" — `examples/ecommerce` has no
+  Spring counterpart.
 
-**Spine build (orders):** start from an empty Aether project; each chapter adds a
-slice to solve a stated problem, integrating into the running order app. Use
-`jbct-loan`'s real-resource idioms (current `0.17.0` API) as the reference for
-how `@Sql`/`@Http`/`@Notify` wiring is really done, and its Spring module as the
-migration chapter's "before." Borrow orchestration/compensation *shapes* from
-`jbct-realworld` (8-slice pipeline, fork-join, compensation stubs) where useful.
-Every chapter **starts from the problem and its analysis**, then integrates into
-the spine — the spine grows by solving problems, not touring features.
+**Spine build (orders):** chapters narrate `examples/ecommerce` as it exists at
+the rc3 tag, slice by slice (`inventory` → `pricing` → `payment` → `fulfillment`
+→ `place-order`), each chapter reading the real source rather than building a
+toy toward it. Once the existing surface is taught, later chapters close the
+gaps `place-order` documents about itself (durable saga, idempotency, and the
+rest of the gap→curriculum map below) by extending the same app, not a
+parallel one. `jbct-loan`'s Spring module remains the legacy-migration
+chapter's "before"; `jbct-realworld`'s 8-slice shape remains available where
+`place-order`'s 4-sibling pipeline is too small to make a point about
+orchestration at scale. Every chapter **starts from the problem and its
+analysis**, then locates it in the existing app — the spine is read and
+extended, not grown from nothing.
 
 ### Gap → curriculum map (domain-neutral problems) — seeds Part III
 These problems came from the loan-app audit but are domain-neutral; each maps
-cleanly onto the orders spine (the "spine hook" column shows the loan-app origin).
+cleanly onto the orders spine (the "spine hook" column shows the loan-app
+origin). Three rows below were written when the spine was still a from-scratch
+build and assumed the spine itself started without these; `examples/ecommerce`
+already has them, so those chapters teach by reading the existing slice, not by
+building the gap closed.
 | Problem (gap) | Spine hook | Category |
 |---|---|---|
-| Durable, restart-safe **saga** | compensation is in-memory only | INVENTED (flagship) |
+| Durable, restart-safe **saga** | compensation is in-memory only — confirmed true of `place-order` itself, by its own doc comment | INVENTED (flagship) |
 | **Idempotency** / exactly-once effects | `bookLoan` has no key → retry duplicates | INVENTED |
 | **Caching** + invalidation | `RatePolicyAdapter` called every request | INVENTED/VOLATILE |
 | **Batching / debouncing / coalescing** | 3 bureau calls, no coalescing | INVENTED |
-| Real **`@Sql`/`@Http`/`@Notify`** resources | in-memory adapters → real resources | VOLATILE |
-| **HTTP routing / entrypoint** | no `routes.toml`, not runnable | VOLATILE |
+| Real **`@Sql`/`@Http`/`@Notify`** resources | already real in `examples/ecommerce` (loan apps' gap: in-memory adapters) — teach by reading, not building | VOLATILE |
+| **HTTP routing / entrypoint** | already wired in `examples/ecommerce` (loan apps' gap: no `routes.toml`) — teach by reading, not building | VOLATILE |
 | **Streaming / event sourcing** | state transitions are fire-and-forget | INVENTED/VOLATILE |
-| **Schema migration** | no DB today | VOLATILE |
+| **Schema migration** | already migrated in `examples/ecommerce` (loan apps' gap: no DB) — teach by reading, not adding | VOLATILE |
 | **pg-notify / pub-sub** status events | only fire-and-forget notify | VOLATILE |
 | **Observability** / correlation IDs | `java.util.logging` only | STABLE+VOLATILE |
 | **Backpressure / rate limiting / bulkhead** | unbounded bureau fan-out | INVENTED |

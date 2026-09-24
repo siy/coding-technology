@@ -442,7 +442,7 @@ Two-file model (series-wide voice split landed 2026-06-20, owned by `pfd-editor`
   books: tempo/rhythm, tonal anchor, layering, editorial commitment + NFR ban,
   AI-tell discipline, consistency, framework-name default (§7), what-varies, review
   checklist, drift detection.
-- **Aether overlay:** `aether-book-voice.md` (this dir) — reading-mode target
+- **Aether overlay** (private) — reading-mode target
   (build-along, one Part per sitting), orders domain vocabulary, problem-driven
   structural discipline, source-first code fidelity, the "why" rule, the
   STABLE/VOLATILE/INVENTED tags, and the Part I skip-disclaimer device. Framework

@@ -7,8 +7,8 @@ Claude Code integration for Java Backend Coding Technology - skills, agents, and
 JBCT ships three complementary tool families. This page covers the **AI tools**; the other two have their own pages:
 
 - **AI tools** (this page) - Claude Code skills and subagents: learning the patterns, generating JBCT code, and reviewing for compliance.
-- **JBCT CLI** (`jbct`) - a fast command-line **formatter and linter** that enforces JBCT structure deterministically; ideal for pre-commit hooks and CI/CD. See [CLI Tools](../CLI-TOOLING.md).
-- **Maven plugin** - the same formatting and lint checks wired into the build, so they run as part of `mvn verify`. See [Maven Plugin](../MAVEN-PLUGIN.md).
+- **JBCT CLI** (`jbct`) - a fast command-line **formatter and linter** that enforces JBCT structure deterministically; ideal for pre-commit hooks and CI/CD. See [JBCT tools](https://pragmatica.dev/java/jbct/tools/).
+- **Maven plugin** - the same formatting and lint checks wired into the build, so they run as part of `mvn verify`. See [JBCT tools](https://pragmatica.dev/java/jbct/tools/).
 
 The CLI and Maven plugin keep structure mechanically correct on every build; the AI tools add context-aware generation and review on top. Together they cover authoring, verification, and review.
 
@@ -338,7 +338,7 @@ User: /jbct-review src/main/java
 
 ## Integration with JBCT CLI
 
-For automated checks in CI/CD, use [JBCT CLI](../CLI-TOOLING.md):
+For automated checks in CI/CD, use the [JBCT CLI](https://pragmatica.dev/java/jbct/tools/):
 
 ```bash
 # Check if installed
@@ -373,6 +373,6 @@ Library documentation: https://central.sonatype.com/artifact/org.pragmatica-lite
 ## Resources
 
 - [JBCT book](../book/index.md) - Complete technical reference
-- [CLI Tools](../CLI-TOOLING.md) - Command-line formatting and linting
-- [Maven Plugin](../MAVEN-PLUGIN.md) - Build integration
+- [JBCT tools](https://pragmatica.dev/java/jbct/tools/) - the CLI and Maven plugin: formatting and linting
+- [JBCT rules](https://pragmatica.dev/java/jbct/rules/) - every rule the linter checks
 - [GitHub Repository](https://github.com/siy/coding-technology)

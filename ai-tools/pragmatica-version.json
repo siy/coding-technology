@@ -6,7 +6,7 @@
     "artifacts": [
       "core"
     ],
-    "_artifacts": "Artifacts in the group this value speaks for. org.pragmatica-lite:jbct-maven-plugin is at 0.4.6 and releases on its own line, so comparing it here would demand a wrong edit forever; it carries not-core inventory entries instead. org.pragmatica-lite:jackson shares the release line and is published at 1.0.0-rc3 (read from its own maven-metadata.xml, 2026-09-11); examples/pom.xml drives it from the same property, which is why moving that property was checked against Central for BOTH artifacts and not just core.",
+    "_artifacts": "Artifacts in the group this value speaks for. org.pragmatica-lite:jbct-maven-plugin is NOT listed, although it has shared the release line since 1.0.0-rc1 (its own maven-metadata.xml on Central lists 1.0.0-rc1, rc2 and rc3; read 2026-09-27). An earlier note here said it released on its own line at 0.4.6: that described two stale 0.4.6 snippets (MAVEN-PLUGIN.md, README.md), removed 2026-09-27 with their not-core inventory entries. The site states the plugin version through {{PRAGMATICA_VERSION}} (website/content/jbct-tools.md), which assumes the shared line; if the plugin ever ships on its own line again, that page is the one to change. org.pragmatica-lite:jackson shares the release line and is published at 1.0.0-rc3 (read from its own maven-metadata.xml, 2026-09-11); examples/pom.xml drives it from the same property, which is why moving that property was checked against Central for BOTH artifacts and not just core.",
     "since": "2026-09-11",
     "moved_from": "1.0.0-rc1",
     "why": "Central published 1.0.0-rc3 on 2026-09-02 (lastUpdated 20260902212949) and the repository declared 1.0.0-rc1. Under the single-field declaration this bump was blocked, because it would also have moved two chapter headers and two agent descriptions that assert what somebody read. Split apart, the coordinate axis has no such cost and no such judgement: it now agrees with Central."
@@ -339,24 +339,6 @@
       "class": "historical",
       "since": "2026-09-09",
       "why": "NOT named by issue #60, and it declares its own class: line 424 reads 'most recent version at the time of writing'. An archived article source, published elsewhere; 0.7.6 predates every version Maven Central still lists."
-    },
-    {
-      "path": "MAVEN-PLUGIN.md",
-      "match": "<version>0.4.6</version>",
-      "version": "0.4.6",
-      "count": 3,
-      "class": "not-core",
-      "since": "2026-09-09",
-      "why": "org.pragmatica-lite:jbct-maven-plugin, not core. Same group, independent release line, so it must never be compared against core's depends_on. Its own staleness is a real question and this check does not answer it — there is no declaration for the plugin, and adding one is out of scope for #60."
-    },
-    {
-      "path": "README.md",
-      "match": "<version>0.4.6</version>",
-      "version": "0.4.6",
-      "count": 1,
-      "class": "not-core",
-      "since": "2026-09-09",
-      "why": "org.pragmatica-lite:jbct-maven-plugin again, in the README's build-integration snippet."
     },
     {
       "path": "BOOK-VERSIONING.md",

@@ -10,7 +10,7 @@ The linter checks **[72 rules](/java/jbct/rules/)**. Each rule on that list link
 - **The layering rules only see packages they can classify.** `JBCT-ARCH-*` and `JBCT-MIX-01` place a package in a layer by a keyword in its name (`domain`, `application`/`usecase`, `adapter`/`integration`/`infra`, `bootstrap`/`main`), or by globs in `[lint.layers]`. A package that matches neither gets no layering diagnostics at all.
 - **Two rules are off unless you turn them on.** `JBCT-SHAPE-02` and `JBCT-SHAPE-03` are census rules that are disabled by default. Enable them in `[lint.rules]` when you want a shape census.
 - **Test sources aren't checked by default.** The Maven goals skip `src/test/java` unless `jbct.includeTests` is set. The CLI checks exactly the paths you give it.
-- **A run over zero files passes.** The CLI prints `No Java files found.` and exits 0. The Maven goals print a file count (`Linting N Java file(s)`), so read that count rather than trusting a green build.
+- **A run over zero files usually passes.** `lint`, `check` and `format` print `No Java files found.` and exit 0 (`score` exits 1). The Maven goals print a warning instead of a file count and pass. On a real run each goal logs a count (`Linting N Java file(s)`, `Running JBCT check on N Java file(s)`), so read that count rather than trusting a green build.
 
 ## Install the CLI
 
@@ -20,7 +20,7 @@ The CLI needs JDK 25 or later. To install this release on Linux or macOS:
 curl -fsSL https://raw.githubusercontent.com/pragmaticalabs/pragmatica/v{{PRAGMATICA_VERSION}}/jbct/install.sh | sh -s -- --version {{PRAGMATICA_VERSION}}
 ```
 
-The installer puts `jbct.jar` in `~/.jbct/lib` (set `JBCT_HOME` to change that), writes a `jbct` wrapper to `~/.jbct/bin`, and adds that directory to `PATH` in your shell's rc file. Without `--version` it installs the newest release. To install by hand instead, download `jbct.jar` from the [GitHub release](https://github.com/pragmaticalabs/pragmatica/releases/tag/v{{PRAGMATICA_VERSION}}) and run `java -jar jbct.jar`.
+The installer puts `jbct.jar` in `~/.jbct/lib` (set `JBCT_HOME` to change that) and writes a `jbct` wrapper to `~/.jbct/bin`. If `~/.zshrc`, `~/.bashrc` or `~/.bash_profile` exists, it appends `export PATH="$HOME/.jbct/bin:$PATH"` to the first one it finds. That line always names the default directory, so with a custom `JBCT_HOME` you need to add its `bin` to `PATH` yourself. Without `--version` it installs the newest release. To install by hand instead, download `jbct.jar` from the [GitHub release](https://github.com/pragmaticalabs/pragmatica/releases/tag/v{{PRAGMATICA_VERSION}}) and run `java -jar jbct.jar`.
 
 Check the installation with `jbct --version`.
 
@@ -39,18 +39,20 @@ Check the installation with `jbct --version`.
 
 Every analysis command takes `--config <file>`, which overrides `jbct.toml` key by key. `jbct --help` lists the rest, including the Aether slice scaffolding commands.
 
+Warnings fail the CLI only with `-w`: the CLI ignores `failOnWarning` in `jbct.toml`, which only the Maven goals read.
+
 In `score`, the `STYLE` category is **advisory**: it covers formatting, logging, member ordering and zone naming. Those rules are counted and reported separately, and they are left out of the total density, so they can't inflate the headline number.
 
 ### Exit codes
 
-The commands don't use exit codes the same way in this release, so check the one your CI runs:
+The commands don't use exit codes the same way in this release, so check the one your CI runs. For every command, an unknown option or bad argument also exits 2.
 
 | Command | 0 | 1 | 2 |
 |---|---|---|---|
 | `lint` | no errors (warnings allowed) | warnings, with `-w` | **any ERROR finding**, or a file that could not be parsed |
 | `check` | everything passed | a formatting issue, a lint error, or warnings with `-w` | a file the formatter or parser could not process |
 | `format --check` | all files formatted | some file needs formatting | a file the formatter could not process |
-| `score` | at or below `--max-density` | above `--max-density` | — |
+| `score` | at or below `--max-density` (files that fail to parse are left out, not failed) | above `--max-density`, or no Java files found | — |
 
 ### What a finding looks like
 
@@ -87,6 +89,7 @@ Declaring the plugin alone runs nothing. A goal runs when an execution binds it,
 | Goal | Default phase | What it does |
 |---|---|---|
 | `jbct:format` | `process-sources` | Formats sources in place. |
+| `jbct:process` | `process-sources` | Formats in place and lints, in one pass. |
 | `jbct:format-check` | `verify` | Fails if any file needs formatting. |
 | `jbct:lint` | `verify` | Fails on any ERROR finding, or on warnings when `failOnWarning = true`. |
 | `jbct:check` | `verify` | Format check plus lint. |
@@ -110,7 +113,7 @@ maxLineLength = 120
 indentSize = 4
 
 [lint]
-failOnWarning = false
+failOnWarning = false     # read by the Maven goals only; the CLI uses -w
 excludePackages = ["com.example.generated.**"]
 
 [lint.rules]
@@ -121,7 +124,7 @@ JBCT-STY-06 = "off"
 domain = ["com.example.**.domain.**"]
 ```
 
-Settings are merged key by key, lowest priority first: built-in defaults, then `~/.jbct/config.toml`, then every `jbct.toml` from the repository root down to the working directory, then `--config`. The walk stops at the first directory containing `.git`, so a stray `jbct.toml` in your home directory never gets picked up.
+Settings are merged key by key, lowest priority first: built-in defaults, then `~/.jbct/config.toml`, then every `jbct.toml` from the repository root down to the working directory, then `--config`. Inside a git repository the walk stops at the repository root, so a `jbct.toml` above it is never read. Outside a repository nothing stops the walk, so a `jbct.toml` in any parent directory, including your home directory, applies.
 
 A `[lint.rules]` value is `error`, `warning` (or `warn`), `info`, or `off` (or `disabled`). **Any other value is silently ignored.** A typo such as `"eror"` leaves the rule at its default, and nothing tells you.
 

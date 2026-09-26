@@ -8,4 +8,4 @@ The pitch is usually told as noise removal — technical detail pushed to the ed
 
 The [free course](/java/jbct/course/) on this site walks the whole method with worked examples. The book, *Java Backend Coding Technology*, is the complete argument, on [Leanpub](https://leanpub.com/jbct-book). [Pragmatica Core](/java/pragmatica/) is the library the method is written against.
 
-Most of the rules can be checked by a machine. The [`jbct` CLI and Maven plugin](/java/jbct/tools/) format code and lint it against [72 rules](/java/jbct/rules/), each linked to the course section that explains it.
+Most of the rules can be checked by a machine. The [`jbct` CLI and Maven plugin](/java/jbct/tools/) format code and lint it against [72 rules](/java/jbct/rules/), most of them linked to the course section that explains them.

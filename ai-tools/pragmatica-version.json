@@ -128,6 +128,14 @@
   "_field_assignment": "Which of the two fields an occurrence belongs to. Two mechanical rules decide the unambiguous forms and are not listed here: a DEPENDENCY COORDINATE (a <version> under an org.pragmatica-lite groupId, a full org.pragmatica-lite:<artifact>:<version>, or a pragmatica*.version property) is depends_on; a PROVENANCE FORM (a literal written as `release-<version>`, or a `**Based on:**` header line) is verified_against. Everything else is DECLARED below, because nothing in the text distinguishes 'the build uses rc1' from 'somebody read rc1' — the same reason the inventory's classes are declared rather than inferred. An attributed, non-excepted occurrence that neither rule nor declaration reaches FAILS as unassigned; it is never defaulted, because defaulting a verification stamp into the coordinate field is exactly how a fabricated verification would get sed'd in.",
   "field_assignment": [
     {
+      "path": "website/data/jbct-rules.json",
+      "match": "pragmaticalabs/pragmatica@v1.0.0-rc3",
+      "field": "depends_on",
+      "count": 1,
+      "since": "2026-09-27",
+      "why": "The Pragmatica release tag the rules page's data was generated from (ai-tools/jbct-rules.py). It names the release whose rules the site documents, so it must track the declared version exactly like a dependency coordinate: website/build.js already refuses to render when it differs from `pinned`, and assigning it here makes this check flag the same disagreement the moment depends_on moves. Regenerate the file at the new tag rather than editing this literal."
+    },
+    {
       "path": "README.md",
       "match": "Self-contained design-to-code methodology on Pragmatica Core",
       "field": "verified_against",

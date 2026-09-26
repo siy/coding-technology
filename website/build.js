@@ -433,8 +433,9 @@ function jbctRulesMarkdown() {
   const data = readData('jbct-rules.json');
   const links = readData('jbct-rule-book-links.json').links;
 
-  if (data.tag !== `v${PINNED_VERSION}`) {
-    throw new Error(`website/data/jbct-rules.json was generated at ${data.tag}, but the site declares ` +
+  const tag = (data.source || '').split('@')[1];
+  if (tag !== `v${PINNED_VERSION}`) {
+    throw new Error(`website/data/jbct-rules.json was generated at ${tag}, but the site declares ` +
                     `Pragmatica ${PINNED_VERSION}. Regenerate: python3 ai-tools/jbct-rules.py ` +
                     `--pragmatica <clone> --tag v${PINNED_VERSION}`);
   }
@@ -468,7 +469,7 @@ function jbctRulesMarkdown() {
     '# JBCT Rules',
     '',
     `These are the ${data.count} rules the JBCT linter checks in Pragmatica ` +
-    `**${data.tag.replace(/^v/, '')}**. Each rule's one-line description is the tool's own, ` +
+    `**${tag.replace(/^v/, '')}**. Each rule's one-line description is the tool's own, ` +
     `taken from the rule's source at that tag ([${data.commit.slice(0, 9)}]` +
     `(https://github.com/pragmaticalabs/pragmatica/tree/${data.commit}/jbct/jbct-lint)). ` +
     'The [tools page](/java/jbct/tools/) covers how to run them.',
@@ -1045,7 +1046,10 @@ function buildRedirects() {
   // The tool docs were root pages (CLI-TOOLING.md, MAVEN-PLUGIN.md) until 2026-09-27, when their
   // stale content was replaced by the tools and rules pages. Netlify served them at both the
   // .html path and its extensionless form, so both keep resolving.
-  ['/CLI-TOOLING.html', '/cli-tooling', '/MAVEN-PLUGIN.html', '/maven-plugin'].forEach(old => {
+  // Listed in both cases because whether Netlify matches redirect paths case-insensitively is
+  // unverified here; the extra lines cost nothing.
+  ['/CLI-TOOLING.html', '/CLI-TOOLING', '/cli-tooling.html', '/cli-tooling',
+   '/MAVEN-PLUGIN.html', '/MAVEN-PLUGIN', '/maven-plugin.html', '/maven-plugin'].forEach(old => {
     lines.push(`${old} /java/jbct/tools/ 301`);
   });
   lines.push('/book/* /java/jbct/course/ 301');

@@ -81,8 +81,8 @@ attribute the BOOK's 5.0.0 to Pragmatica. Coordinates under `org.example:` are t
 group used by the articles and the Aether book and are never attributed.
 
 ARTIFACTS DO NOT SHARE A VERSION, which the issue does not consider and the widened space
-found: `org.pragmatica-lite:jbct-maven-plugin` is at 0.4.6 in MAVEN-PLUGIN.md and
-README.md while core is at 1.0.0-rc3. Attribution therefore carries the artifact id, and
+found: `org.pragmatica-lite:jbct-maven-plugin` at 0.4.6 in MAVEN-PLUGIN.md and README.md
+while core was at 1.0.0-rc3 (both snippets removed 2026-09-27). Attribution therefore carries the artifact id, and
 only `depends_on.artifacts` from the declaration are compared against depends_on. Anything
 else in the group needs its own inventory entry, so a second pin cannot hide inside the
 first one's check.

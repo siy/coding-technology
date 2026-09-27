@@ -241,35 +241,12 @@ cp -r skills/jbct skills/jbct-review ~/.claude/skills/
 cp jbct-coder.md jbct-reviewer.md ~/.claude/agents/
 ```
 
-### CLI Tools
+### CLI and Maven Plugin
 
-**[CLI Documentation](CLI-TOOLING.md)** - Command-line formatting and linting:
+The `jbct` CLI and the `jbct-maven-plugin` format code and check it against the JBCT rules. Both are documented on the site, for the Pragmatica release the site declares:
 
-| Command | Description |
-|---------|-------------|
-| `jbct format` | Format Java code to JBCT style |
-| `jbct lint` | Check JBCT compliance (37 rules) |
-| `jbct check` | Combined format + lint (recommended for CI) |
-| `jbct init` | Scaffold new JBCT project |
-
-**Quick Install (Linux/macOS):**
-```bash
-curl -fsSL https://raw.githubusercontent.com/siy/jbct-cli/main/install.sh | sh
-```
-
-### Maven Plugin
-
-**[Maven Plugin Documentation](MAVEN-PLUGIN.md)** - Build integration:
-
-```xml
-<plugin>
-    <groupId>org.pragmatica-lite</groupId>
-    <artifactId>jbct-maven-plugin</artifactId>
-    <version>0.4.6</version>
-</plugin>
-```
-
-**Requirements:** Java 25+, Maven 3.9+
+- **[JBCT tools](https://pragmatica.dev/java/jbct/tools/)** - install, commands, exit codes, Maven goals, `jbct.toml`, suppression
+- **[JBCT rules](https://pragmatica.dev/java/jbct/rules/)** - every rule the linter checks, with its default severity and the course section that explains it
 
 ## 📂 Repository Structure
 
@@ -283,8 +260,6 @@ coding-technology/
 ├── MANAGEMENT_PERSPECTIVE.md    # Business case and ROI
 ├── CHANGELOG.md                 # Version history
 ├── AI-TOOLING.md                # AI tools documentation
-├── CLI-TOOLING.md               # CLI tools documentation
-├── MAVEN-PLUGIN.md              # Maven plugin documentation
 ├── ai-tools/                    # Claude Code skills and agents
 │   ├── skills/jbct/             # JBCT main skill
 │   ├── skills/jbct-review/      # Parallel review skill (/jbct-review)

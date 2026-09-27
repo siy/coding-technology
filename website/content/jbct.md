@@ -7,3 +7,5 @@ The method rests on typed failures instead of exceptions, parse-don't-validate a
 The pitch is usually told as noise removal — technical detail pushed to the edges so the business flow stands out. The stronger half is what survives: the business facts live in the types. A return type states whether a step can fail; an `Option` parameter states that the domain allows absence; `all()` states that steps are independent; a sealed error type states the complete failure catalog. **Hide the machinery, keep the meaning** — the code executes and testifies at once, and the compiler keeps the testimony true.
 
 The [free course](/java/jbct/course/) on this site walks the whole method with worked examples. The book, *Java Backend Coding Technology*, is the complete argument, on [Leanpub](https://leanpub.com/jbct-book). [Pragmatica Core](/java/pragmatica/) is the library the method is written against.
+
+Most of the rules can be checked by a machine. The [`jbct` CLI and Maven plugin](/java/jbct/tools/) format code and lint it against [72 rules](/java/jbct/rules/), most of them linked to the course section that explains them.

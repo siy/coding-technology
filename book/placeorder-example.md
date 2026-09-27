@@ -153,7 +153,7 @@ public record Money(BigDecimal value) {
     }
 
     public static Result<Money> money(String raw) {
-        return Result.lift(() -> new BigDecimal(raw))
+        return Number.parseBigDecimal(raw)
             .mapError(_ -> Causes.cause("Invalid money format"))
             .flatMap(Money::money);
     }

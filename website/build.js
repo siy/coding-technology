@@ -476,8 +476,10 @@ function jbctRulesMarkdown() {
     '`jbct.toml` enables them.',
     '- **Category** is where `jbct score` counts the rule. Style rules are advisory: they are ' +
     'reported, but left out of the total density.',
-    `- **Course section** links to where the book explains the rule. ${gaps.length} rules have no ` +
-    `section: ${gaps.join(', ')}. The linter checks them, but the book doesn't teach them yet.`,
+    '- **Course section** links to where the book states the rule.' + (gaps.length
+      ? ` ${gaps.length} rules have no such section: ${gaps.join(', ')}. The linter checks them, ` +
+        "but the book doesn't teach them yet."
+      : ' Every rule has one.'),
     ''
   ];
 

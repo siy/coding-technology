@@ -98,6 +98,7 @@ Can this operation fail?
 | R3 | Using `Promise<Result<T>>`? | Use `Promise<T>` only |
 | R4 | Returning Void? | Use Unit |
 | R5 | Returning null? | Use `Option<T>` |
+| R6 | `Optional`, `CompletableFuture`, `CompletionStage`, `Mono`, `Flux` or `ResponseEntity` in business code? | `Option`, `Promise`, or a plain domain response record |
 
 ---
 
@@ -149,6 +150,9 @@ public record Config(DbUrl url, DbPassword pass) {
 | D2 | Does it mix I/O with domain logic? | Split into separate types |
 | D3 | Are primitives used for domain concepts? | Extract value objects |
 | D4 | Does naming match the zone? | Adjust naming style |
+| D5 | Step or use-case implementation with a non-final field or a `setX(...)` method? | Pass dependencies to the factory; keep every field final |
+| D6 | Does an import point outward - domain importing a use case, adapter or config; a use case importing an adapter or config; an adapter importing config; or domain importing a framework (e.g. Spring, Jackson, jOOQ, JPA)? | Depend only inward: config -> adapter -> use case -> domain |
+| D7 | `lift(...)` called outside an adapter? | Convert foreign exceptions at the adapter boundary; business code receives typed causes |
 
 ### Zone Placement
 
@@ -177,6 +181,8 @@ Zone C (Infrastructure): DB, external APIs, config loading
 | M2 | Chain length <= 5 steps? | Split into composed methods |
 | M3 | Side effects only in terminal ops? | Move to `.onSuccess()/.onFailure()` |
 | M4 | Logging mixed with logic? | Move logging to appropriate layer |
+| M5 | `orElseThrow()` to get a value out of an `Optional`? | Stay in the chain: `Option.from(optional)`, then `.toResult(cause)` or `.async(cause)` |
+| M6 | Can a mapper throw - `getFirst()`, `getLast()`, `get(i)`, `get()`, `iterator().next()`, `orElseThrow`, `throw`, or a method reference to one (`Optional::orElseThrow`)? | Make the mapper total, or return a typed failure |
 
 ### Pattern Separation
 
@@ -213,6 +219,7 @@ private Result<ValidRequest> validateOrder(ValidRequest req) {
 | G2 | Logger passed as parameter? | Move logging to owner |
 | G3 | Logging in pure transformation? | Move to terminal operation |
 | G4 | Duplicate logging across layers? | Single layer logs |
+| G5 | Log call wrapped in a level check (`if (log.isDebugEnabled())`)? | Remove the check; the logger filters by level |
 
 ### Ownership Pattern
 
@@ -238,12 +245,16 @@ public Result<Integer> refresh() {
 ### Verification Checklist
 
 - [ ] Every lambda checked against L1-L5
-- [ ] Every return type checked against R1-R5
+- [ ] Every return type checked against R1-R6
 - [ ] Every factory method checked against F1-F4
-- [ ] Every new type checked against D1-D4
-- [ ] Every monadic chain checked against M1-M4
-- [ ] Every log statement checked against G1-G4
+- [ ] Every new type checked against D1-D7
+- [ ] Every monadic chain checked against M1-M6
+- [ ] Every log statement checked against G1-G5
 - [ ] No FQCNs in code (use imports)
+- [ ] Pragmatica factories statically imported - `success(...)`, `failure(...)`, `some(...)`, `none()`, `option(...)`, `cause(...)`, `promise(...)`, `resolved(...)`, `failed(...)` rather than `Result.success(...)`. (The examples in this book qualify these calls so that each snippet reads on its own, without its import list.)
+- [ ] No parameter reassigned (`p = ...`, `p += ...`, `p++`) - introduce a local instead
+- [ ] No local variable that exists only to be returned on the next line - return the expression
+- [ ] No `if`/`else` whose branches each hold a single `return` - return one conditional expression
 - [ ] Test names follow `method_[scenario_]expectation` (two or more segments)
 
 ---
@@ -281,6 +292,8 @@ static GenerationCache generationCache(WorkConfig config) {
     );
 }
 ```
+
+The local record is named in lowercase camelCase - `generationCache`, the same convention as a local variable - because it is an implementation detail of the factory, not part of the type vocabulary. Records declared at top level or in a type body keep PascalCase.
 
 **Lambda pattern** (functional interface, no state):
 ```java

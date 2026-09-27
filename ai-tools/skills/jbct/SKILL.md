@@ -702,6 +702,8 @@ The patterns above answer "this operation failed — what value do I return inst
 - **Design-out.** Change the model so the invalidation cannot arise: a reservation type where two bookings of one seat is structurally impossible; an idempotent write safe to repeat; an append-only log corrected by appending. The failure mode is removed rather than handled — the strongest option, when the model permits it.
 
 Which applies is a judgment — reversibility, the value of partial progress, the domain's shape, coordination cost — and mixed strategies are normal: one booking flow can use BER for the payment, FER for the confirmation email, and design-out for the seat model, all at once. Name the triple for each step that changes state, and recovery becomes a design decision rather than an afterthought.
+
+**Record the choice where a failure is absorbed.** `.recover(...)` turns a failure into a value and ends its journey. That is often exactly right - a notification that fails must not fail the purchase it reports - but an absorption nobody explained is indistinguishable from an accident. Name the response as BER, FER or design-out in a comment at the absorption, followed by the reason: `// FER: a lost receipt email must not void the sale`. A reason without the name does not say which of the three was chosen. Every absorption carries its own, so adding a `.recover(...)` means adding its sentence, even in a file that already explains others.
 <!-- /book:recovery-triple -->
 
 ## Naming Conventions

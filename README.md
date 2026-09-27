@@ -224,7 +224,7 @@ JBCT provides comprehensive tooling for AI-assisted development and automated co
 
 ### AI Tools
 
-**[AI Tooling Documentation](AI-TOOLING.md)** - Complete guide to Claude Code integration:
+**[AI Tooling Documentation](ai-tools/README.md)** - Complete guide to Claude Code integration:
 
 | Tool | Purpose |
 |------|---------|
@@ -259,7 +259,6 @@ coding-technology/
 │   └── CHANGELOG.md             # Book version history
 ├── MANAGEMENT_PERSPECTIVE.md    # Business case and ROI
 ├── CHANGELOG.md                 # Version history
-├── AI-TOOLING.md                # AI tools documentation
 ├── ai-tools/                    # Claude Code skills and agents
 │   ├── skills/jbct/             # JBCT main skill
 │   ├── skills/jbct-review/      # Parallel review skill (/jbct-review)

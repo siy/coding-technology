@@ -77,11 +77,7 @@ const SITEMAP_URLS = [];
 // else with no inbound link is a build error, not a style preference.
 // These are legacy root pages kept so previously-published URLs do not 404;
 // they are not part of the current IA and nothing should link to them.
-// AI-TOOLING.html joined 2026-09-27: its only inbound links were the retired
-// CLI-TOOLING/MAVEN-PLUGIN pages, themselves unlinked, and it has not been audited
-// for currency, so the new tools page deliberately does not link it.
 const ORPHAN_ALLOWED = new Set([
-  'AI-TOOLING.html',
   'CHANGELOG.html',
   'PL_IMPROVEMENTS.html',
   'jbct-coder.html',
@@ -941,7 +937,6 @@ function buildLessonPages(course, flat) {
 const LEGACY_PAGES = [
   { src: 'CHANGELOG.md', out: 'CHANGELOG.html', description: 'Changelog for the JBCT repository and shared assets: tooling, AI skills, and build scripts.' },
   { src: 'PL_IMPROVEMENTS.md', out: 'PL_IMPROVEMENTS.html', description: 'Language-level improvements that would make functional Java backends simpler — observations from applying JBCT in practice.' },
-  { src: 'AI-TOOLING.md', out: 'AI-TOOLING.html', description: 'Claude Code skills, subagents, and review commands for JBCT — the toolchain for AI-assisted Java backend development.' },
   { src: 'jbct-coder.md', out: 'jbct-coder.html', description: 'The jbct-coder subagent: JBCT-compliant Java code generation with Claude Code.' },
   { src: 'jbct-reviewer.md', out: 'jbct-reviewer.html', description: 'The jbct-reviewer subagent: JBCT compliance review for Java backend code.' }
 ];
@@ -1051,6 +1046,11 @@ function buildRedirects() {
   ['/CLI-TOOLING.html', '/CLI-TOOLING', '/cli-tooling.html', '/cli-tooling',
    '/MAVEN-PLUGIN.html', '/MAVEN-PLUGIN', '/maven-plugin.html', '/maven-plugin'].forEach(old => {
     lines.push(`${old} /java/jbct/tools/ 301`);
+  });
+  // AI-TOOLING.html (the ai-tools/README.md symlink) retired 2026-09-27 on owner ruling: unlinked
+  // from the site and unaudited. The README stays in the repository, which is where it now points.
+  ['/AI-TOOLING.html', '/AI-TOOLING', '/ai-tooling.html', '/ai-tooling'].forEach(old => {
+    lines.push(`${old} https://github.com/siy/coding-technology/tree/main/ai-tools 301`);
   });
   lines.push('/book/* /java/jbct/course/ 301');
 

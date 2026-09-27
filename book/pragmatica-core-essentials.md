@@ -246,7 +246,7 @@ Result<Integer> adult = age.filter(
 
 ```java
 Promise<Config> config = loadFromDatabase()
-    .recover(cause -> Config.defaults());  // any failure -> built-in defaults
+    .recover(cause -> Config.defaults());  // FER: any failure -> built-in defaults
 ```
 
 `recover`'s mapper is synchronous — it turns a failure into a plain value. When the

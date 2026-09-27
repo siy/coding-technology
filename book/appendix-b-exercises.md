@@ -519,7 +519,7 @@ public interface LoadDashboard {
         return userId -> Promise.all(fetchProfile.apply(userId),
                                     fetchOrders.apply(userId),
                                     fetchRecommendations.apply(userId)
-                                        .recover(cause -> List.of()))
+                                        .recover(cause -> List.of()))  // FER: empty list, keep going
                                 .map(Dashboard::new);
     }
 }

@@ -151,7 +151,7 @@ public record Config(DbUrl url, DbPassword pass) {
 | D3 | Are primitives used for domain concepts? | Extract value objects |
 | D4 | Does naming match the zone? | Adjust naming style |
 | D5 | Step or use-case implementation with a non-final field or a `setX(...)` method? | Pass dependencies to the factory; keep every field final |
-| D6 | Does an import point outward - domain importing a use case or adapter, a use case importing an adapter, or domain importing a framework (Spring, Jackson, jOOQ, JPA)? | Depend only inward: bootstrap -> adapter -> use case -> domain |
+| D6 | Does an import point outward - domain importing a use case, adapter or config; a use case importing an adapter or config; an adapter importing config; or domain importing a framework (e.g. Spring, Jackson, jOOQ, JPA)? | Depend only inward: config -> adapter -> use case -> domain |
 | D7 | `lift(...)` called outside an adapter? | Convert foreign exceptions at the adapter boundary; business code receives typed causes |
 
 ### Zone Placement
@@ -181,8 +181,8 @@ Zone C (Infrastructure): DB, external APIs, config loading
 | M2 | Chain length <= 5 steps? | Split into composed methods |
 | M3 | Side effects only in terminal ops? | Move to `.onSuccess()/.onFailure()` |
 | M4 | Logging mixed with logic? | Move logging to appropriate layer |
-| M5 | `orElseThrow()` to get out of `Option` or `Optional`? | Stay in the chain: `.toResult(cause)` or `.async(cause)` |
-| M6 | Can a mapper throw - `getFirst()`, `get(i)`, `get()`, `orElseThrow`, `throw`, or a method reference to one (`List::getFirst`)? | Make the mapper total, or return a typed failure |
+| M5 | `orElseThrow()` to get a value out of an `Optional`? | Stay in the chain: `Option.from(optional)`, then `.toResult(cause)` or `.async(cause)` |
+| M6 | Can a mapper throw - `getFirst()`, `getLast()`, `get(i)`, `get()`, `iterator().next()`, `orElseThrow`, `throw`, or a method reference to one (`Optional::orElseThrow`)? | Make the mapper total, or return a typed failure |
 
 ### Pattern Separation
 

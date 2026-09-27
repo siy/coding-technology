@@ -213,16 +213,24 @@ interface CheckEmailUniqueness {
 }
 ```
 
-**HashPassword (business leaf):**
+**HashPassword (adapter leaf):** hashing is computation, but `BCryptPasswordEncoder` is third-party code that can throw, and turning a foreign exception into a typed `Cause` is adapter work. The step interface stays in the use case; the implementation that lifts the exception lives in the adapter package.
 ```java
 interface HashPassword {
     Result<HashedPassword> apply(Password password);
+}
 
-    static HashPassword hashPassword(BCryptPasswordEncoder encoder) {
-        return password -> Result.lift1(t -> RegistrationError.PasswordHashingFailed.FACTORY.apply(Causes.fromThrowable(t)),
-                                        encoder::encode,
-                                        password.value())
-                                 .map(HashedPassword::new);
+class BcryptPasswordHasher implements HashPassword {
+    private final BCryptPasswordEncoder encoder;
+
+    BcryptPasswordHasher(BCryptPasswordEncoder encoder) {
+        this.encoder = encoder;
+    }
+
+    public Result<HashedPassword> apply(Password password) {
+        return Result.lift1(t -> RegistrationError.PasswordHashingFailed.FACTORY.apply(Causes.fromThrowable(t)),
+                            encoder::encode,
+                            password.value())
+                     .map(HashedPassword::new);
     }
 }
 ```

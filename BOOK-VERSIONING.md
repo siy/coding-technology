@@ -49,7 +49,7 @@ Current state:
 
 | Book | Version | Status |
 |------|---------|--------|
-| JBCT | 5.0.0 | released; continues its existing history |
+| JBCT | 5.1.0 | released; continues its existing history |
 | PFD  | 3.0.0 | released |
 | AS   | 1.1.2 | released |
 | Aether | 0.1.0 | draft (pre-GA); manuscript in progress, not yet tagged |

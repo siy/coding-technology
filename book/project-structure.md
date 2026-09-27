@@ -423,12 +423,15 @@ public class JooqUserRepository implements GetUserProfile.FetchUser {
     }
 
     public Promise<User> apply(UserId userId) {
-        return Promise.lift(ProfileError.DatabaseFailure::cause,
-            () -> dsl.selectFrom(USERS)
-                     .where(USERS.ID.eq(userId.value()))
-                     .fetchOptional()
-                     .map(this::toDomain)
-                     .orElseThrow(() -> new NotFoundException()));
+        return Promise.lift(ProfileError.DatabaseFailure::cause, () -> findRow(userId))
+                      .flatMap(found -> found.async(ProfileError.UserNotFound.FACTORY.apply(userId)));
+    }
+
+    private Option<User> findRow(UserId userId) {
+        return Option.from(dsl.selectFrom(USERS)
+                              .where(USERS.ID.eq(userId.value()))
+                              .fetchOptional())
+                     .map(this::toDomain);
     }
 
     private User toDomain(Record record) {

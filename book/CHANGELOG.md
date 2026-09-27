@@ -7,7 +7,24 @@ All notable changes to the JBCT book, newest first. Format:
 Earlier history (1.x–2.x) predates per-book changelogs and lives in the
 repository root `CHANGELOG.md`.
 
-## [Unreleased]
+## [5.1.0] - 2026-09-27
+
+### Added
+- **Every rule the JBCT linter checks is now stated in the book.** Of the 72 rules the `jbct` linter enforces
+  at Pragmatica 1.0.0-rc3, eleven had no statement anywhere in the book (`pragmatica.dev/java/jbct/rules/`
+  listed them as not covered) and four more were only implied by a related section. *Systematic Application Guide*: checkpoint rows R6 (no `Optional`, `CompletableFuture`,
+  `CompletionStage`, `Mono`, `Flux` or `ResponseEntity` in business code), D6 (imports point inward only, and
+  no framework in the domain), D7 (`lift(...)` only at the adapter boundary), M6 (mappers are total, including
+  method references), D5 (step and use-case
+  implementations take dependencies through the factory, with no non-final field or setter), M5 (no
+  `orElseThrow()` to leave `Option`/`Optional`; stay in the chain with `.toResult(cause)` or
+  `.async(cause)`) and G5 (no log-level guard around a log call); four review-checklist items (Pragmatica
+  factories statically imported, with a note that the book's examples qualify them so each snippet reads on
+  its own; no parameter reassignment; no variable that exists only to be returned; no `if`/`else` whose
+  branches each hold a single `return`); and the lowercase naming of a factory's local record. *Null Policy &
+  Error Recovery*: wire records bound by a JSON or XML mapper, whose reference components may be `null`; and
+  recording the chosen response in a comment wherever `.recover(...)` absorbs a failure. The recovery-triple
+  addition reaches the `jbct` skill through its synced block.
 
 ### Removed
 - **The co-existence framing with other architectures** (*Comparison with Other Approaches*,
@@ -48,6 +65,13 @@ repository root `CHANGELOG.md`.
   measurement. The criteria are now named dimensions with stated directions, the marks are stated as
   ordinal, the total is gone, and a comparison that is close on every dimension is allowed to say so. The
   per-pattern marks elsewhere in the book are unchanged and are governed by this definition. Same review.
+- **The logging aspect example passed a logger as a parameter** (*Advanced Patterns*, Logging Philosophy),
+  which the book's own Checkpoint 6 (G2) forbids; the linter flagged `create(DataSource ds, Logger log)` and
+  `withLogging(Logger log, ...)`. The aspect now creates its logger from the name it is given, and the
+  `processOrder` factory no longer takes one.
+- **The jOOQ adapter example used `orElseThrow`** (*Project Structure & Framework Integration*) to turn an
+  absent row into an exception inside `Promise.lift`. It now converts the row with `Option.from(...)` and
+  fails with `ProfileError.UserNotFound` through `.async(cause)`, the query extracted into a named method.
 
 ## [5.0.0] - 2026-08-28
 

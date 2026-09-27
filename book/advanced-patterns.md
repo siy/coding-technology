@@ -537,19 +537,20 @@ static <I, O> Fn1<I, Promise<O>> withRetry(RetryPolicy policy, Fn1<I, Promise<O>
 - Boundaries are where we interact with external systems - the points of uncertainty
 - Everything else is composition - deterministic routing of values through the system
 
-**Implementation:** Wrap leaf implementations in a logging aspect at construction:
+**Implementation:** Wrap leaf implementations in a logging aspect at construction. The aspect owns its logger - it creates it from the name it is given - so no logger is ever passed as a parameter:
 
 ```java
 public interface UserRepository {
     Promise<User> findById(UserId id);
 
-    static UserRepository create(DataSource ds, Logger log) {
+    static UserRepository create(DataSource ds) {
         var impl = new UserRepositoryImpl(ds);
-        return withLogging(log, "UserRepository", impl);
+        return withLogging("UserRepository", impl);
     }
 }
 
-public static UserRepository withLogging(Logger log, String name, UserRepository impl) {
+public static UserRepository withLogging(String name, UserRepository impl) {
+    var log = LoggerFactory.getLogger(name);
     return id -> {
         var correlationId = CorrelationContext.current();
         log.debug("[{}] {}.findById input: {}", correlationId, name, id);
@@ -576,8 +577,8 @@ return validateInput(request)
     .flatMap(this::processOrder);
 
 // DO: Wrap leaves at construction
-static ProcessOrder processOrder(UserRepository users, Logger log) {
-    return new ProcessOrderImpl(withLogging(log, "users", users));
+static ProcessOrder processOrder(UserRepository users) {
+    return new ProcessOrderImpl(withLogging("users", users));
 }
 ```
 

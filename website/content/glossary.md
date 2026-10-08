@@ -407,6 +407,10 @@ Handling a failure and potentially converting it to success: a function `Cause -
 The three responses to an invalidated step, where most discourse names only the first: [BER](#ber) (compensate by inverse), [FER](#fer) (continue degraded), [design-out](#design-out) (make the invalidation impossible). AS carries the same three classes under long names — see the [crosswalk](#crosswalk).
 *Defined in: PFD, AS*
 
+**Residual** {#residual}
+An effect that has escaped the system and that no inverse can undo, such as a confirmation email already read. A workflow answers each one at design time by forward correction, by naming it as acknowledged, or by restructuring so it never arises. Not to be confused with [data as residue](#data-as-residue): a residue is the state a process leaves inside the system; a residual is what a reversal cannot reach outside it.
+*Defined in: PFD*
+
 **Result** {#result}
 A type for a synchronous operation that may fail, holding either a success value or a Cause.
 *Defined in: JBCT*

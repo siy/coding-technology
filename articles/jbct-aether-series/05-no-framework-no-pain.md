@@ -307,5 +307,5 @@ No framework. No pain.
 
 - [Pragmatica Aether](https://pragmaticalabs.io/aether.html) -- distributed Java runtime
 - [GitHub Repository](https://github.com/pragmaticalabs/pragmatica) -- source code
-- [Slice Development Guide](https://github.com/pragmaticalabs/pragmatica/blob/main/aether/docs/slice-developers/development-guide.md) -- full reference
+- [Slice Development Guide](https://github.com/pragmaticalabs/pragmatica/blob/main/aether/docs/slice-developers/README.md) -- full reference
 

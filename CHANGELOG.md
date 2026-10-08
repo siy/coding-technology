@@ -13,6 +13,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Dead "Slice Development Guide" link in article 05** (`articles/jbct-aether-series/05-no-framework-no-pain.md`) — pointed at
+  `aether/docs/slice-developers/development-guide.md`, absent on pragmatica `main` and `release-1.0.0-rc4`; now
+  `README.md`, matching the other copy (`articles/no-framework-no-pain.md`).
+
 ### Added
 - **Series glossary entry *Residual*** (`website/content/glossary.md`) — mirrors the PFD 3.0.1 glossary entry
   and links it to *data as residue*, so the two terms are told apart on the site as in the book.

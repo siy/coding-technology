@@ -7,9 +7,14 @@ All notable changes to the PFD book, newest first. Format:
 `0.x` versions were preview editions; `1.0.0` marked the first edition released to
 readers, and `1.x` are its maintenance and expansion releases.
 
-## [Unreleased]
+## [3.0.1] - 2026-10-08
 
 ### Fixed
+- **The glossary separates *residual* from *data as residue*** (*Glossary*). The workflow chapter names
+  effects no inverse can undo as **residuals** and answers them three ways; the book's central data claim
+  calls stored state the **residue** a process leaves behind. Two near-identical words for opposite
+  things, and only the second had an entry. *Residual* now has its own, which states the difference: a
+  residue is owned state inside the system, a residual is what a reversal cannot reach outside it.
 - **The Architecture Synthesis module no longer contradicts its own successor** (*Architecture Synthesis*).
   The module argued that getting from nine answers to six axis values "is deliberately not a procedure that
   hands back an answer", having considered and rejected a per-axis decision tree and an axis-by-axis

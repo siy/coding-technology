@@ -4,6 +4,8 @@
 > recorded in `book-pfd/CHANGELOG.md`. Manuscript em-dash style applies once moved into the book;
 > notes here are internal.
 
+**Added (2026-10-08):** item **21** (residuality theory / stressor analysis intake; AS side is AS item 6).
+
 **Status (2026-08-01):** Items 1, 6, 9 shipped in **PFD 1.6.0** (the *Edge Cases* chapter and its
 objections-answered close). Items 2–5 shipped earlier (1.3.0 / 1.4.0: glossary, change-driver
 tracking, ownership dynamics, the named principles). Item 8 shipped in **JBCT 4.2.0**; the JBCT-side
@@ -1372,6 +1374,53 @@ Two small edits to *The Data Question*, ruled together with the schema-synthesis
   Synthesis.
 - **One orphaned sentence gets its home:** config is owned state — the Data Question applies
   as-is, with operations as the writer and its own change cadence. One sentence, not a section.
+
+## 21. Residuality theory and stressor analysis — intake (2026-10-08) `proposed` `[PFD]` `[AS]`
+
+**Source.** Martin Dilger, "Combining Residuality Theory with Event Modeling", LinkedIn, 2026-10-05
+(<https://www.linkedin.com/pulse/combining-residuality-theory-event-modeling-martin-dilger-8ogcf/>), read in
+full with its ten screenshots and thirteen comments, including Barry O'Reilly's. Residuality (O'Reilly):
+apply randomly chosen stressors, examine the *residue* (what is left of the system), fix the
+unacceptable residues; one fix tends to answer many stressors. The article maps stressors onto Event
+Modeling slices, ranks slices by stressor hits, and has an agent propose fix walkthroughs. Nothing
+here is ruled. The no-competitor-counterexample rule applies: keep any measurement, don't name the
+framework as a foil. Citing O'Reilly as the source of an idea is lineage and is fine.
+
+**Observation — the method is process-first under event-sourcing vocabulary.** The unit of analysis
+is a process step ("every slice is essentially a step in the business process"), never an
+aggregate. Fixes are *new steps* (expire open invitations, remove guests after licence end), and the
+smallest fix leaves finished slices untouched because "everything downstream already reacts to the
+cancel events". That is PFD's moves, reached from a different starting point.
+
+- **21.1 Hotspots look like mixed-driver shared state — `hypothesis`, testable.** The top-ranked
+  elements in the article's stressor x slice table are shared counts and records ("guest seats used"
+  8 hits, "Assigned Guest Seats" 7), and the first fix's summary is "seats are counted once per
+  person in one place", i.e. one owner for the invariant (*Edge Cases*, the conference ticket). The
+  hypothesis: **stressor hit count is an empirical proxy for state written by more than one change
+  driver.** Residuality *finds* what driver attribution *prevents*. Test: run PFD driver attribution
+  and a random stressor pass on the same model (the ticketing spiral is the natural corpus) and
+  check whether the mixed-driver records are the top-ranked hotspots. Pre-register under item 18's
+  protocol before any data is touched. If it holds, it belongs in *Edge Cases* as a worked exercise;
+  if not, the negative is a finding too.
+- **21.2 O'Reilly's event-sourcing remark has a PFD explanation.** He observes that applying
+  residuality to distributed systems produces something close to event sourcing in places. PFD's
+  account: *derive state, don't store it* (*Edge Cases*: availability derived from active reservations,
+  "no `is_free` boolean to drift"). Derived state is the residue-resistant shape because nothing
+  stored can drift. Residuality converges on it by stressing; PFD starts there. Candidate: one
+  paragraph in *Edge Cases* or *The Data Question*, with O'Reilly cited as lineage.
+- **21.3 Terminology collision — SHIPPED in PFD 3.0.1 (glossary entry *Residual*, site glossary too).**
+  Corrected on implementation: the manuscript's main "residue" is the central concept **data as residue**
+  (stored state is what a process leaves behind; glossary, *Foundations*, reference cards), and
+  *Edge Cases*' "owned residue" is an instance of it, not a separate meaning. The real gap was
+  **residual** (`spiral-2-workflow.md:160`, an effect compensation cannot undo), which had no glossary
+  entry. Residuality's **residue** (what remains after a stressor) is a third sense; any future citation
+  of residuality must still name which one it means.
+- **21.4 Two cautions if the book ever describes a stressor pass.** (a) *Agent-generated stressors are
+  not random.* They are conditioned on the visible model and the model's priors; the article's second
+  batch was explicitly "aimed at the elements ... the first list barely touched". O'Reilly's own
+  comment says the randomness is what produces the result. (b) *Coverage scores aggregate
+  incommensurables* ("5 of 25 fully solved" counts a court-ordered deletion and a mistyped email as one
+  each), which is the trap the AS judgment chapter dissolves for MTTR/MTBF.
 
 ## Release scope & versions
 

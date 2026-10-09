@@ -7,6 +7,34 @@ All notable changes to the JBCT book, newest first. Format:
 Earlier history (1.x–2.x) predates per-book changelogs and lives in the
 repository root `CHANGELOG.md`.
 
+## [5.2.0] - 2026-10-09
+
+### Added
+- **A translated failure carries the failure it translates** (*Error Handling*, "Wrapped and Terminal Causes";
+  *Systematic Application Guide*, checkpoint row M7). The mapper passed to `mapError` must use its argument: as
+  the `origin` of a `Cause.Wrapped` record or as the source of a bare cause (`Causes.cause(text,
+  Option.some(cause))`). Ignoring the argument (`_ -> FAILURE`) and keeping only its text (`e.message()`) both
+  count as discarding it. No exceptions. A failure decided before any cause exists is supplied at the source
+  (`Verify.ensure(value, predicate, cause)`, `filter(cause, predicate)`) instead of mapped afterwards.
+- **A wrapper's message template does not format its origin.** Aether renders the top failure's `message()` as
+  the problem `detail` sent to the client, so an origin printed into it exposes store and network text. The origin
+  travels as a component.
+- **Retry classification of a wrapper at Pragmatica 1.0.0-rc3:** `Cause.Wrapped` does not inherit `isTerminal()`
+  from its origin; a wrapper that should be terminal exactly when its origin is overrides it.
+
+### Changed
+- Examples brought in line with M7: *PlaceOrder* (`ProductId`, `Quantity`, `Money`, `Address`), *TransferFunds*
+  (`validateRequestId`, `validateInitiator`), *RegisterUser* (`TOKEN_GENERATION_FAILED` constant replaced by the
+  `TokenGenerationFailed` wrapper record; `mapTokenError` removed).
+- Wrapper templates no longer format the origin: `PaymentFailed` (*Error Handling*, *PlaceOrder*),
+  `DatabaseFailure` (*Error Handling*), `PasswordHashingFailed` (*RegisterUser*). Three of them wrapped
+  `Causes.fromThrowable(t)`, whose message is a full stack trace.
+
+### Fixed
+- `Verify` imported from `org.pragmatica.lang.utils` in *PlaceOrder* (2 snippets) and *Pragmatica Core Essentials*
+  (1); it lives in `org.pragmatica.lang`. *PlaceOrder*'s `Money` snippet used `Number.parseBigDecimal` without
+  importing `org.pragmatica.lang.parse.Number`.
+
 ## [5.1.0] - 2026-09-27
 
 ### Added

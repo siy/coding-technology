@@ -83,17 +83,15 @@ com.example.shop.domain.shared/
 ```java
 package com.example.shop.domain.shared;
 
+import org.pragmatica.lang.Option;
 import org.pragmatica.lang.Result;
-import org.pragmatica.lang.Cause;
 import org.pragmatica.lang.utils.Causes;
 import org.pragmatica.lang.parse.Network;
 
 public record ProductId(String value) {
-    private static final Cause INVALID_PRODUCT_ID = Causes.cause("Invalid product ID format");
-
     public static Result<ProductId> productId(String raw) {
         return Network.parseUUID(raw)
-            .mapError(_ -> INVALID_PRODUCT_ID)
+            .mapError(cause -> Causes.cause("Invalid product ID format", Option.some(cause)))
             .map(uuid -> new ProductId(uuid.toString()));
     }
 }
@@ -107,15 +105,14 @@ package com.example.shop.domain.shared;
 import org.pragmatica.lang.Result;
 import org.pragmatica.lang.Cause;
 import org.pragmatica.lang.utils.Causes;
-import org.pragmatica.lang.utils.Verify;
+import org.pragmatica.lang.Verify;
 
 public record Quantity(int value) {
     private static final Cause NOT_POSITIVE = Causes.cause("Quantity must be positive");
     private static final Cause EXCEEDS_LIMIT = Causes.cause("Quantity cannot exceed 100");
 
     public static Result<Quantity> quantity(int raw) {
-        return Verify.ensure(raw, Verify.Is::positive)
-            .mapError(_ -> NOT_POSITIVE)
+        return Verify.ensure(raw, Verify.Is::positive, NOT_POSITIVE)
             .filter(EXCEEDS_LIMIT, v -> Verify.Is.lessThanOrEqualTo(v, 100))
             .map(Quantity::new);
     }
@@ -131,9 +128,11 @@ public record Quantity(int value) {
 ```java
 package com.example.shop.domain.shared;
 
+import org.pragmatica.lang.Option;
 import org.pragmatica.lang.Result;
 import org.pragmatica.lang.Cause;
 import org.pragmatica.lang.utils.Causes;
+import org.pragmatica.lang.parse.Number;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -154,7 +153,7 @@ public record Money(BigDecimal value) {
 
     public static Result<Money> money(String raw) {
         return Number.parseBigDecimal(raw)
-            .mapError(_ -> Causes.cause("Invalid money format"))
+            .mapError(cause -> Causes.cause("Invalid money format", Option.some(cause)))
             .flatMap(Money::money);
     }
 
@@ -178,7 +177,7 @@ package com.example.shop.domain.shared;
 import org.pragmatica.lang.Result;
 import org.pragmatica.lang.Cause;
 import org.pragmatica.lang.utils.Causes;
-import org.pragmatica.lang.utils.Verify;
+import org.pragmatica.lang.Verify;
 
 public record Address(
     String street,
@@ -201,8 +200,7 @@ public record Address(
     }
 
     private static Result<String> validateField(String value, Cause error) {
-        return Verify.ensure(value, Verify.Is::notBlank)
-            .mapError(_ -> error)
+        return Verify.ensure(value, Verify.Is::notBlank, error)
             .map(String::trim);
     }
 }
@@ -259,7 +257,7 @@ public sealed interface OrderError extends Cause {
 
     record PaymentFailed(Cause origin, String message) implements OrderError, Cause.Wrapped {
         static final Fn1<PaymentFailed, Cause> FACTORY =
-            Causes.forOneValue("Payment processing failed: %s", PaymentFailed::new);
+            Causes.forOneValue("Payment processing failed", PaymentFailed::new);
     }
 }
 ```

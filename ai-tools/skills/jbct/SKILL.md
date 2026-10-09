@@ -870,7 +870,7 @@ Two mixins nested in `Cause` remove the remaining overrides. A failure wrapping 
 ```java
 record PaymentFailed(Cause origin, String message) implements TransferError, Cause.Wrapped {
     static final Fn1<PaymentFailed, Cause> FACTORY =
-        Causes.forOneValue("Payment step failed: %s", PaymentFailed::new);
+        Causes.forOneValue("Payment step failed", PaymentFailed::new);
 }
 
 // translation at a composition boundary:
@@ -878,6 +878,12 @@ paymentStep.execute(order).mapError(PaymentFailed.FACTORY);
 ```
 
 Composition sites accept the fully-typed factory directly. Where only some constants of an enum are terminal, a constant body overrides `isTerminal()` per constant.
+
+**A translated failure carries the failure it translates.** The mapper passed to `mapError` uses its argument: it becomes the `origin` of a `Cause.Wrapped` record, or the source of a bare cause (`Causes.cause("Invalid money format", Option.some(cause))`). A mapper that ignores its argument (`_ -> INVALID_ID`) discards the cause, and so does one that keeps only its text (`e -> Failure.FACTORY.apply(e.message())`): the type, the chain and the retry classification are gone, and the diagnosis goes with them. The rule has no exceptions. A technical failure translated into a domain one is exactly where the original is most valuable, because it is the only record of what the infrastructure actually reported. Where the failure is decided before any cause exists, supply it at the source instead of translating afterwards: `Verify.ensure(value, predicate, cause)` and `filter(cause, predicate)` fail with the intended cause directly, leaving nothing to discard.
+
+**Carry the origin; do not print it.** The wrapper's message template does not format `origin`. The message of the top failure is what a boundary is most likely to show a client (Aether's HTTP layer renders it as the problem `detail`), and an origin formatted into it carries store and network internals along. The origin travels as a component and is read where the chain is logged, through `source()`, `iterate` or `stream()`.
+
+At Pragmatica 1.0.0-rc3 `Cause.Wrapped` does not hand the origin's classification to the wrapper: a wrapper around a terminal failure is not itself terminal. Where a retry facility consults the wrapper, a wrapper that should stop retrying exactly when its origin is terminal overrides `isTerminal()` to return `origin().isTerminal()`.
 <!-- /book:wrapped-terminal-causes -->
 
 ### When a Bare Cause Is Enough

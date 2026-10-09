@@ -96,24 +96,24 @@ public static Result<Email> email(String raw) {
 
 ```java
 public record UserId(UUID value) {
-    private static final Fn1<Cause, String> INVALID_USER_ID =
-        Causes.forValue("Invalid user ID: {}");
-
-    private UserId {}
+    private static final Cause USER_ID_REQUIRED = Causes.cause("User ID is required");
 
     public static Result<UserId> userId(String raw) {
-        return Verify.ensure(raw, Verify.Is::present)
+        return Verify.ensure(raw, Verify.Is::present, USER_ID_REQUIRED)
             .map(String::trim)
-            .filter(INVALID_USER_ID, Verify.Is::notEmpty)
-            .flatMap(str -> Result.lift(() -> UUID.fromString(str))
-                                  .mapError(e -> INVALID_USER_ID.apply(raw)))
+            .flatMap(UserId::parseUuid)
             .map(UserId::new);
     }
 
     public static Result<UserId> userId(UUID value) {
-        return Verify.ensure(value, Verify.Is::notNull)
-            .mapError(e -> INVALID_USER_ID.apply("null"))
+        return Verify.ensure(value, Verify.Is::notNull, USER_ID_REQUIRED)
             .map(UserId::new);
+    }
+
+    // The parse failure is carried, not replaced: mapError uses its argument
+    private static Result<UUID> parseUuid(String raw) {
+        return Network.parseUUID(raw)
+            .mapError(cause -> Causes.cause("Invalid user ID: " + raw, Option.some(cause)));
     }
 }
 ```

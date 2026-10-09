@@ -133,13 +133,11 @@ public record ValidTransfer(
     }
 
     private static Result<String> validateRequestId(String requestId) {
-        return Verify.ensure(requestId, Verify.Is::notBlank)
-            .mapError(_ -> Causes.cause("Request ID is required"));
+        return Verify.ensure(requestId, Verify.Is::notBlank, Causes.cause("Request ID is required"));
     }
 
     private static Result<String> validateInitiator(String initiatedBy) {
-        return Verify.ensure(initiatedBy, Verify.Is::notBlank)
-            .mapError(_ -> Causes.cause("Initiator is required"));
+        return Verify.ensure(initiatedBy, Verify.Is::notBlank, Causes.cause("Initiator is required"));
     }
 }
 ```

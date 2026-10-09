@@ -269,15 +269,11 @@ class TokenServiceClient implements GenerateToken {
         return httpClient.post("/tokens/confirm",
                                Map.of("userId", user.id().value()))
                          .map(resp -> buildResponse(user.id(), resp))
-                         .mapError(this::mapTokenError);
+                         .mapError(RegistrationError.TokenGenerationFailed.FACTORY);
     }
 
     private Response buildResponse(UserId userId, Map<String, String> resp) {
         return new Response(userId, new ConfirmationToken(resp.get("token")));
-    }
-
-    private Cause mapTokenError(Cause cause) {
-        return RegistrationError.General.TOKEN_GENERATION_FAILED;
     }
 }
 ```
@@ -290,8 +286,7 @@ class TokenServiceClient implements GenerateToken {
 public sealed interface RegistrationError extends Cause {
     enum General implements RegistrationError {
         EMAIL_ALREADY_REGISTERED("Email already registered"),
-        WEAK_PASSWORD_FOR_PREMIUM("Premium codes require 10+ char passwords"),
-        TOKEN_GENERATION_FAILED("Token generation failed");
+        WEAK_PASSWORD_FOR_PREMIUM("Premium codes require 10+ char passwords");
 
         private final String message;
 
@@ -307,7 +302,12 @@ public sealed interface RegistrationError extends Cause {
 
     record PasswordHashingFailed(Cause origin, String message) implements RegistrationError, Cause.Wrapped {
         static final Fn1<PasswordHashingFailed, Cause> FACTORY =
-            Causes.forOneValue("Password hashing failed: %s", PasswordHashingFailed::new);
+            Causes.forOneValue("Password hashing failed", PasswordHashingFailed::new);
+    }
+
+    record TokenGenerationFailed(Cause origin, String message) implements RegistrationError, Cause.Wrapped {
+        static final Fn1<TokenGenerationFailed, Cause> FACTORY =
+            Causes.forOneValue("Token generation failed", TokenGenerationFailed::new);
     }
 }
 ```

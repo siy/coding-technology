@@ -356,7 +356,8 @@ Causes.forOneValue("Invalid email: %s", InvalidEmail::new) // typed:
 
 // Result manipulation
 .mapResult(Fn1<Result<U>, Result<T>>)  // Transform result
-.trace(Fn1<Cause, Cause>)              // Transform error (alias: mapError)
+.mapError(Fn1<Cause, Cause>)           // Transform error; the mapper carries its argument (M7)
+.trace()                               // Wrap a failure with the call-site location
 ```
 
 ---

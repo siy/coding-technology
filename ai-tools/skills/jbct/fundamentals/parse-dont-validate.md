@@ -30,7 +30,7 @@ public record Email(String value) {
         Pattern.compile("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$");
 
     private static final Fn1<Cause, String> INVALID_EMAIL =
-        Causes.forValue("Invalid email: {}");
+        Causes.forOneValue("Invalid email: %s");
 
     // Private constructor - cannot construct directly
     private Email {}
@@ -126,12 +126,12 @@ public record Password(String value) {
     private static final Pattern HAS_DIGIT = Pattern.compile(".*\\d.*");
     private static final Pattern HAS_UPPER = Pattern.compile(".*[A-Z].*");
 
-    private static final Fn1<Cause, String> TOO_SHORT =
-        Causes.forValue("Password too short (min " + MIN_LENGTH + "): {}");
-    private static final Fn1<Cause, String> NO_DIGIT =
-        Causes.forValue("Password must contain digit: {}");
-    private static final Fn1<Cause, String> NO_UPPER =
-        Causes.forValue("Password must contain uppercase: {}");
+    private static final Cause TOO_SHORT =
+        Causes.cause("Password too short (min " + MIN_LENGTH + ")");
+    private static final Cause NO_DIGIT =
+        Causes.cause("Password must contain digit");
+    private static final Cause NO_UPPER =
+        Causes.cause("Password must contain uppercase");
 
     private Password {}
 
@@ -179,10 +179,10 @@ Use constants with descriptive names:
 
 ```java
 private static final Fn1<Cause, String> INVALID_EMAIL =
-    Causes.forValue("Invalid email: {}");
+    Causes.forOneValue("Invalid email: %s");
 
-private static final Fn1<Cause, String> TOO_SHORT =
-    Causes.forValue("Password too short: {}");
+private static final Cause TOO_SHORT =
+    Causes.cause("Password too short");
 ```
 
 ## Validated Inputs
@@ -303,7 +303,7 @@ public record UserProfile(
 ```java
 public record OrderItems(List<Item> items) {
     private static final Fn1<Cause, Integer> MIN_ITEMS_ERROR =
-        Causes.forValue("Order must have at least {} items");
+        Causes.forOneValue("Order must have at least %s items");
 
     private OrderItems {}
 

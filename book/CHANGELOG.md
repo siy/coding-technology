@@ -34,6 +34,8 @@ repository root `CHANGELOG.md`.
 - `Verify` imported from `org.pragmatica.lang.utils` in *PlaceOrder* (2 snippets) and *Pragmatica Core Essentials*
   (1); it lives in `org.pragmatica.lang`. *PlaceOrder*'s `Money` snippet used `Number.parseBigDecimal` without
   importing `org.pragmatica.lang.parse.Number`.
+- *Appendix A* listed `.trace(Fn1<Cause, Cause>)` as an alias of `mapError`; at rc3 `trace()` takes no argument and
+  wraps a failure with the call-site location. Both are now listed separately.
 
 ## [5.1.0] - 2026-09-27
 

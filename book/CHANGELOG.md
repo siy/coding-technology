@@ -11,21 +11,31 @@ repository root `CHANGELOG.md`.
 
 ### Added
 - **A translated failure carries the failure it translates** (*Error Handling*, "Wrapped and Terminal Causes";
-  *Systematic Application Guide*, checkpoint row M7). The mapper passed to `mapError` must use its argument: as
-  the `origin` of a `Cause.Wrapped` record or as the source of a bare cause (`Causes.cause(text,
-  Option.some(cause))`). Ignoring the argument (`_ -> FAILURE`) and keeping only its text (`e.message()`) both
-  count as discarding it. No exceptions. A failure decided before any cause exists is supplied at the source
+  *Systematic Application Guide*, checkpoint row M7). Every failure translator, meaning the mapper passed to
+  `mapError` and the exception mapper passed to `lift`, must use its argument: as the `origin` of a
+  `Cause.Wrapped` record or as the source of a bare cause (`Causes.cause(text, Option.some(cause))`); a
+  `Throwable` goes through `Causes.fromThrowable(t)` first. Ignoring the argument (`_ -> FAILURE`, a method
+  returning a constant) and keeping only its text (`e.message()`, `t.getMessage()`) both count as discarding
+  it. No exceptions. A failure decided before any cause exists is supplied at the source
   (`Verify.ensure(value, predicate, cause)`, `filter(cause, predicate)`) instead of mapped afterwards.
 - **A wrapper's message template does not format its origin.** Aether renders the top failure's `message()` as
   the problem `detail` sent to the client, so an origin printed into it exposes store and network text. The origin
   travels as a component.
 - **Retry classification of a wrapper at Pragmatica 1.0.0-rc3:** `Cause.Wrapped` does not inherit `isTerminal()`
-  from its origin; a wrapper that should be terminal exactly when its origin is overrides it.
+  from its origin; a wrapper that should be terminal exactly when its origin is overrides it. A bare cause
+  cannot be classified at all.
+- **`JBCT-CAUSE-04` at rc3 flags a wrapper whose template does not format `origin`.** Until the linter exempts a
+  `Cause.Wrapped` origin, the book says to suppress that one rule on the wrapper record.
 
 ### Changed
-- Examples brought in line with M7: *PlaceOrder* (`ProductId`, `Quantity`, `Money`, `Address`), *TransferFunds*
-  (`validateRequestId`, `validateInitiator`), *RegisterUser* (`TOKEN_GENERATION_FAILED` constant replaced by the
-  `TokenGenerationFailed` wrapper record; `mapTokenError` removed).
+- Examples brought in line with M7: *PlaceOrder* (`ProductId`, `Quantity`, `Money`, `Address`; the
+  `PAYMENT_DECLINED`, `PAYMENT_TIMEOUT` and `DATABASE_ERROR` constants replaced by the `PaymentDeclined`,
+  `PaymentTimedOut` and `OrderNotSaved` wrapper records, which `mapPaymentError` and `JooqOrderRepository` now
+  build from the exception), *TransferFunds* (`validateRequestId`, `validateInitiator`; `TRANSFER_FAILED`
+  replaced by the `TransferFailed` wrapper in `IdempotencyChecker` and `TransferExecutor`), *RegisterUser*
+  (`TOKEN_GENERATION_FAILED` replaced by the `TokenGenerationFailed` wrapper record; `mapTokenError` removed),
+  *Migration Strategies* (`mapPaymentException` and `mapLegacyError` carry the exception instead of
+  `getMessage()` or a constant).
 - Wrapper templates no longer format the origin: `PaymentFailed` (*Error Handling*, *PlaceOrder*),
   `DatabaseFailure` (*Error Handling*), `PasswordHashingFailed` (*RegisterUser*). Three of them wrapped
   `Causes.fromThrowable(t)`, whose message is a full stack trace.

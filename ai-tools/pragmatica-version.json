@@ -222,6 +222,30 @@
       "count": 1,
       "since": "2026-10-09",
       "why": "Synced copy of book/error-handling.md's wrapped-terminal-causes block (sync-book-blocks.py); same claim, same reason."
+    },
+    {
+      "path": "book/error-handling.md",
+      "match": "At Pragmatica 1.0.0-rc3 the linter's `JBCT-CAUSE-04`",
+      "field": "depends_on",
+      "count": 1,
+      "since": "2026-10-10",
+      "why": "Read from CstCauseFactoryArityRule at tag v1.0.0-rc3: the arity equation counts origin, so a carry-don't-print wrapper template is flagged. Owner ruled 2026-10-10 that the linter will exempt a Cause.Wrapped origin; the next bump must fail here so the suppression advice is re-checked against the new linter and removed if the exemption shipped."
+    },
+    {
+      "path": "ai-tools/skills/jbct/SKILL.md",
+      "match": "At Pragmatica 1.0.0-rc3 the linter's `JBCT-CAUSE-04`",
+      "field": "depends_on",
+      "count": 1,
+      "since": "2026-10-10",
+      "why": "Synced copy of book/error-handling.md's wrapped-terminal-causes block; same claim, same reason."
+    },
+    {
+      "path": "ai-tools/agents/jbct-coder.md",
+      "match": "At Pragmatica 1.0.0-rc3 the linter's `JBCT-CAUSE-04`",
+      "field": "depends_on",
+      "count": 1,
+      "since": "2026-10-10",
+      "why": "Synced copy of book/error-handling.md's wrapped-terminal-causes block; same claim, same reason."
     }
   ],
   "render_exceptions": [],

@@ -451,9 +451,9 @@ public Promise<Payment> processPayment(PaymentRequest request) {
 
 private Cause mapPaymentException(Throwable t) {
     return switch (t) {
-        case InsufficientFundsException e -> new PaymentError.InsufficientFunds(e.getMessage());
-        case CardDeclinedException e -> new PaymentError.CardDeclined(e.getMessage());
-        case NetworkException e -> new PaymentError.ServiceUnavailable(e.getMessage());
+        case InsufficientFundsException e -> PaymentError.InsufficientFunds.FACTORY.apply(Causes.fromThrowable(e));
+        case CardDeclinedException e -> PaymentError.CardDeclined.FACTORY.apply(Causes.fromThrowable(e));
+        case NetworkException e -> PaymentError.ServiceUnavailable.FACTORY.apply(Causes.fromThrowable(e));
         default -> Causes.fromThrowable(t);
     };
 }
@@ -485,7 +485,7 @@ public class UserServiceAdapter implements FindUser {
 
     private Cause mapLegacyError(Throwable t) {
         return switch (t) {
-            case UserNotFoundException e -> UserError.NotFound.INSTANCE;
+            case UserNotFoundException e -> UserError.NotFound.FACTORY.apply(Causes.fromThrowable(e));
             default -> Causes.fromThrowable(t);
         };
     }

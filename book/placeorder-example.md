@@ -226,10 +226,7 @@ public sealed interface OrderError extends Cause {
 
     // Fixed-message errors grouped in enum
     enum General implements OrderError {
-        EMPTY_ORDER("Order must contain at least one item"),
-        PAYMENT_DECLINED("Payment was declined"),
-        PAYMENT_TIMEOUT("Payment service timed out"),
-        DATABASE_ERROR("Failed to save order");
+        EMPTY_ORDER("Order must contain at least one item");
 
         private final String message;
 
@@ -258,6 +255,21 @@ public sealed interface OrderError extends Cause {
     record PaymentFailed(Cause origin, String message) implements OrderError, Cause.Wrapped {
         static final Fn1<PaymentFailed, Cause> FACTORY =
             Causes.forOneValue("Payment processing failed", PaymentFailed::new);
+    }
+
+    record PaymentDeclined(Cause origin, String message) implements OrderError, Cause.Wrapped {
+        static final Fn1<PaymentDeclined, Cause> FACTORY =
+            Causes.forOneValue("Payment was declined", PaymentDeclined::new);
+    }
+
+    record PaymentTimedOut(Cause origin, String message) implements OrderError, Cause.Wrapped {
+        static final Fn1<PaymentTimedOut, Cause> FACTORY =
+            Causes.forOneValue("Payment service timed out", PaymentTimedOut::new);
+    }
+
+    record OrderNotSaved(Cause origin, String message) implements OrderError, Cause.Wrapped {
+        static final Fn1<OrderNotSaved, Cause> FACTORY =
+            Causes.forOneValue("Failed to save order", OrderNotSaved::new);
     }
 }
 ```
@@ -666,14 +678,17 @@ public class PaymentProcessor implements ProcessPayment {
         ).map(txId -> new PaymentConfirmation(txId, Instant.now()));
     }
 
+    // Every branch carries the exception: the classification is a choice of wrapper, never a replacement
     private Cause mapPaymentError(Throwable t) {
+        var origin = Causes.fromThrowable(t);
+
         if (t instanceof TimeoutException) {
-            return OrderError.General.PAYMENT_TIMEOUT;
+            return OrderError.PaymentTimedOut.FACTORY.apply(origin);
         }
         if (isDeclined(t)) {
-            return OrderError.General.PAYMENT_DECLINED;
+            return OrderError.PaymentDeclined.FACTORY.apply(origin);
         }
-        return OrderError.PaymentFailed.FACTORY.apply(Causes.fromThrowable(t));
+        return OrderError.PaymentFailed.FACTORY.apply(origin);
     }
 
     private boolean isDeclined(Throwable t) {
@@ -709,7 +724,7 @@ public class JooqOrderRepository implements CreateOrder {
     @Override
     public Promise<OrderId> apply(ReservedInventory reservation, PaymentConfirmation payment) {
         return Promise.lift(
-            _ -> OrderError.General.DATABASE_ERROR,
+            t -> OrderError.OrderNotSaved.FACTORY.apply(Causes.fromThrowable(t)),
             () -> {
                 var orderId = UUID.randomUUID().toString();
 
@@ -1010,7 +1025,7 @@ class PlaceOrderTest {
                 new ReservedInventory("res-123", List.of(), Instant.now().plusMinutes(15))
             );
             PlaceOrder.ProcessPayment failingPayment = (res, total) ->
-                OrderError.General.PAYMENT_DECLINED.promise();
+                OrderError.PaymentDeclined.FACTORY.apply(Causes.cause("Card declined")).promise();
             PlaceOrder.ReleaseInventory releaseInventory = res -> {
                 released.set(true);
                 return Promise.success(null);

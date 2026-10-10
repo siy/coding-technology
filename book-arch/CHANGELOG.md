@@ -3,7 +3,7 @@
 All notable manuscript changes. Format: keep-a-changelog-ish; the top entry's version is
 what the build stamps on the PDF (single source of truth).
 
-## [Unreleased]
+## [1.1.3] — 2026-10-08
 
 ### Fixed
 - **The series note scopes what the PFD module previews** (*About the Series*). It said the module "remains

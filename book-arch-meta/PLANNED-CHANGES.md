@@ -128,6 +128,28 @@ author 2026-08-24; the session record carries the full argument.
   physical poorly (four single-RDBMS monoliths), so physical axes validate against the
   documented-systems corpus at AS-grade evidence.
 
+### 6. Stressor analysis as an input generator for the entry gate (2026-10-08) — `proposed`
+
+**Source:** intake in `book-pfd-meta/PLANNED-CHANGES.md` item 21 (residuality theory / stressor
+analysis, from a 2026-10-05 article and its comment thread). Nothing ruled.
+
+- **The division of work.** *What the procedure refuses to decide* (`derivation.md`) says the derivation
+  does not set targets; the business does. The method also cannot produce the questions the business
+  never thought to answer. A random stressor pass produces exactly those. So: **residuality feeds
+  the entry gate; AS prices the responses.** Deciding which residue is "acceptable" is the human
+  judgment *The Judgment That Stays Human* keeps human; O'Reilly's caution that choosing acceptability
+  introduces bias reads as that boundary seen from the other side. Candidate: a short note in the
+  elicitation chapter (stressors as one legitimate source of entry-gate questions), not a new step.
+- **Two parallels to state, neither to borrow.** (a) A stressor x slice table resembles the pressure
+  matrix (rows of inputs, the elements each hits, the result, a traceability record afterwards). The
+  difference worth keeping: the matrix records *which axis a demand presses*; the stressor table records
+  *which steps a stressor hits*. (b) "What is the smallest solution that would help?" is the selection
+  rule (cheapest containing value, fewest new mechanisms, narrowest scope, design-out checked first),
+  which AS makes step 4 rather than a follow-up prompt.
+- **Caution carried over:** stressor coverage percentages aggregate incommensurables. The MTTR/MTBF
+  dissolution in *The Judgment That Stays Human* already argues why; any mention must not present a
+  coverage score as a result.
+
 ## Carried from the book review
 
 ### 4. The design space is not proven complete — `open`

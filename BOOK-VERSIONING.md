@@ -50,8 +50,8 @@ Current state:
 | Book | Version | Status |
 |------|---------|--------|
 | JBCT | 5.1.0 | released; continues its existing history |
-| PFD  | 3.0.0 | released |
-| AS   | 1.1.2 | released |
+| PFD  | 3.0.1 | released |
+| AS   | 1.1.3 | released |
 | Aether | 0.1.0 | draft (pre-GA); manuscript in progress, not yet tagged |
 
 > The books use plain SemVer, not an `rc` suffix. The `1.0.0-rcN` in the text

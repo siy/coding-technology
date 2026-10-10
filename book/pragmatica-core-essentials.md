@@ -367,7 +367,7 @@ Promise<User> user = Promise.lift(
 ### Verify.Is Predicates
 
 ```java
-import org.pragmatica.lang.utils.Verify;
+import org.pragmatica.lang.Verify;
 
 // String checks
 Verify.ensure(value, Verify.Is::notNull)

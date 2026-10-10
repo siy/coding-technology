@@ -217,37 +217,32 @@ public Promise<User> loadUser(UserId id) {
 
 ```java
 public sealed interface DatabaseError extends Cause {
+    // Every branch carries the exception (book M7); the template never prints it
     static Cause connectionError(Throwable throwable) {
+        var origin = Causes.fromThrowable(throwable);
+
         if (throwable instanceof SQLTimeoutException) {
-            return Timeout.INSTANCE;
+            return Timeout.FACTORY.apply(origin);
         }
         if (throwable instanceof SQLIntegrityConstraintViolationException) {
-            return ConstraintViolation.INSTANCE;
+            return ConstraintViolation.FACTORY.apply(origin);
         }
-        return UnknownError.of(throwable.getMessage());
+        return Failed.FACTORY.apply(origin);
     }
 
-    enum Timeout implements DatabaseError {
-        INSTANCE;
-        @Override
-        public String message() {
-            return "Database operation timed out";
-        }
+    record Timeout(Cause origin, String message) implements DatabaseError, Cause.Wrapped {
+        static final Fn1<Timeout, Cause> FACTORY =
+            Causes.forOneValue("Database operation timed out", Timeout::new);
     }
 
-    enum ConstraintViolation implements DatabaseError {
-        INSTANCE;
-        @Override
-        public String message() {
-            return "Database constraint violation";
-        }
+    record ConstraintViolation(Cause origin, String message) implements DatabaseError, Cause.Wrapped {
+        static final Fn1<ConstraintViolation, Cause> FACTORY =
+            Causes.forOneValue("Database constraint violation", ConstraintViolation::new);
     }
 
-    record UnknownError(String detail) implements DatabaseError {
-        @Override
-        public String message() {
-            return "Database error: " + detail;
-        }
+    record Failed(Cause origin, String message) implements DatabaseError, Cause.Wrapped {
+        static final Fn1<Failed, Cause> FACTORY =
+            Causes.forOneValue("Database operation failed", Failed::new);
     }
 }
 ```

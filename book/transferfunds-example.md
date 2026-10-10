@@ -74,8 +74,7 @@ public sealed interface TransferError extends Cause {
         INSUFFICIENT_FUNDS("Insufficient funds in source account"),
         SAME_ACCOUNT("Cannot transfer to same account"),
         DUPLICATE_REQUEST("Transfer request already processed"),
-        ACCOUNT_NOT_FOUND("Account not found"),
-        TRANSFER_FAILED("Transfer execution failed");
+        ACCOUNT_NOT_FOUND("Account not found");
 
         private final String message;
 
@@ -93,6 +92,11 @@ public sealed interface TransferError extends Cause {
         static final Fn2<AuthorizationRequired, Money, Money> FACTORY =
             Causes.forTwoValues("Transfer of %s requires authorization (threshold: %s)",
                                 AuthorizationRequired::new);
+    }
+
+    record TransferFailed(Cause origin, String message) implements TransferError, Cause.Wrapped {
+        static final Fn1<TransferFailed, Cause> FACTORY =
+            Causes.forOneValue("Transfer execution failed", TransferFailed::new);
     }
 }
 ```
@@ -133,13 +137,11 @@ public record ValidTransfer(
     }
 
     private static Result<String> validateRequestId(String requestId) {
-        return Verify.ensure(requestId, Verify.Is::notBlank)
-            .mapError(_ -> Causes.cause("Request ID is required"));
+        return Verify.ensure(requestId, Verify.Is::notBlank, Causes.cause("Request ID is required"));
     }
 
     private static Result<String> validateInitiator(String initiatedBy) {
-        return Verify.ensure(initiatedBy, Verify.Is::notBlank)
-            .mapError(_ -> Causes.cause("Initiator is required"));
+        return Verify.ensure(initiatedBy, Verify.Is::notBlank, Causes.cause("Initiator is required"));
     }
 }
 ```
@@ -322,7 +324,7 @@ public class IdempotencyChecker implements TransferFunds.CheckIdempotency {
     @Override
     public Promise<ValidTransfer> apply(ValidTransfer transfer) {
         return Promise.lift(
-            _ -> TransferError.General.TRANSFER_FAILED,
+            t -> TransferError.TransferFailed.FACTORY.apply(Causes.fromThrowable(t)),
             () -> store.exists(transfer.requestId())
         ).flatMap(exists -> exists
             ? TransferError.General.DUPLICATE_REQUEST.promise()
@@ -361,7 +363,7 @@ public class TransferExecutor implements TransferFunds.ExecuteTransfer {
     @Override
     public Promise<TransferResult> apply(ValidTransfer transfer) {
         return Promise.lift(
-            _ -> TransferError.General.TRANSFER_FAILED,
+            t -> TransferError.TransferFailed.FACTORY.apply(Causes.fromThrowable(t)),
             () -> executeInTransaction(transfer)
         );
     }

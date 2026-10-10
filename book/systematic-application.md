@@ -183,6 +183,7 @@ Zone C (Infrastructure): DB, external APIs, config loading
 | M4 | Logging mixed with logic? | Move logging to appropriate layer |
 | M5 | `orElseThrow()` to get a value out of an `Optional`? | Stay in the chain: `Option.from(optional)`, then `.toResult(cause)` or `.async(cause)` |
 | M6 | Can a mapper throw - `getFirst()`, `getLast()`, `get(i)`, `get()`, `iterator().next()`, `orElseThrow`, `throw`, or a method reference to one (`Optional::orElseThrow`)? | Make the mapper total, or return a typed failure |
+| M7 | Does a failure translator (a `mapError` mapper, or an exception mapper passed to `lift`) ignore its argument (`_ -> FAILURE`, a method returning a constant) or keep only its text (`e.message()`, `t.getMessage()`)? | Carry the cause: a `Cause.Wrapped` record's `FACTORY`, or `Causes.cause(text, Option.some(cause))`; a `Throwable` through `Causes.fromThrowable(t)`; where the failure is known before any cause exists, pass it to the source (`Verify.ensure(value, predicate, cause)`) |
 
 ### Pattern Separation
 
@@ -248,7 +249,7 @@ public Result<Integer> refresh() {
 - [ ] Every return type checked against R1-R6
 - [ ] Every factory method checked against F1-F4
 - [ ] Every new type checked against D1-D7
-- [ ] Every monadic chain checked against M1-M6
+- [ ] Every monadic chain checked against M1-M7
 - [ ] Every log statement checked against G1-G5
 - [ ] No FQCNs in code (use imports)
 - [ ] Pragmatica factories statically imported - `success(...)`, `failure(...)`, `some(...)`, `none()`, `option(...)`, `cause(...)`, `promise(...)`, `resolved(...)`, `failed(...)` rather than `Result.success(...)`. (The examples in this book qualify these calls so that each snippet reads on its own, without its import list.)

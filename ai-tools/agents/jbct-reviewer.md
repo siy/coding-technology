@@ -39,6 +39,7 @@ Run these searches and report ALL hits:
 | Missing intent annotation | `void` method without `@Contract`; `return null` without `@NullReturn` in production code | Annotate or refactor (Unit return / Option) |
 | Abandoned values | Statement-style calls to methods returning `Result`/`Promise` without using return value | Every Result/Promise must be returned or chained |
 | FQCN in method body | Fully-qualified class names inline | Add the import |
+| Discarded cause | Fixed-string search (`grep -F` / `rg -F`) for `mapError(_ ->`; then read EVERY `mapError(` and every exception mapper passed to `lift`: a lambda whose parameter is unused or read only via `.message()`/`getMessage()`, and a method reference (`this::mapX`) whose body returns a constant, both discard | Carry the cause: a `Cause.Wrapped` record's `FACTORY`, or `Causes.cause(text, Option.some(cause))`; a failure known before any cause exists goes to the source, `Verify.ensure(value, predicate, cause)` (book M7) |
 | Hand-rolled Verify duplicate | Predicate lambdas re-implementing `Verify.Is` catalog entries (null/blank/length/range/regex) | `Verify.ensure` + `Is::` predicate — catalog in `Verify.java` header |
 | Hand-rolled built-in VO | Custom `Email`/`Url`/`Uuid`/`NonBlankString`/`IsoDateTime` | Use `org.pragmatica.lang.vo` — catalog in `vo/package-info.java` |
 
@@ -51,6 +52,9 @@ For each method:
 - Method ≤10 lines or justified?
 - Growing context in Sequencers (named intermediate records)?
 - Lambda format compliant (method ref > single expression > extract)?
+
+For each `Cause.Wrapped` record:
+- Message template does not format `origin`? The top message can reach a client (Aether renders it as the problem `detail`); the origin travels as a component, never as text.
 
 For each Fork-Join:
 - All inputs immutable? No shared mutable state?

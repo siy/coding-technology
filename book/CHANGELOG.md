@@ -7,6 +7,14 @@ All notable changes to the JBCT book, newest first. Format:
 Earlier history (1.x–2.x) predates per-book changelogs and lives in the
 repository root `CHANGELOG.md`.
 
+## [Unreleased]
+
+### Fixed
+- *Parse, Don't Validate*: the paragraph after the `Email` example said the constructor is private (or
+  package-private), contradicting the note beneath it — a record's canonical constructor must be at least as
+  accessible as the record, so `private Email {}` does not compile. It now says the factory is the only
+  *intended* way in.
+
 ## [5.2.0] - 2026-10-09
 
 ### Added

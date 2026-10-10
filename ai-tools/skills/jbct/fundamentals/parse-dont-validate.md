@@ -13,7 +13,7 @@
 public record Email(String value) {
     public Result<Email> validate() {
         if (value == null || !value.matches(PATTERN)) {
-            return Result.failure(EmailError.Invalid.INSTANCE);
+            return EmailError.Invalid.INSTANCE.result();
         }
         return Result.success(this);
     }
@@ -23,48 +23,45 @@ public record Email(String value) {
 Email bad = new Email(null);  // Compiles, but invalid!
 ```
 
-**Parse, Don't Validate** (✅ Correct):
+**Parse, Don't Validate** (✅ Correct), from the book:
+
+<!-- book:pdv-approach -->
 ```java
+// DO: Validation IS construction
 public record Email(String value) {
     private static final Pattern EMAIL_PATTERN =
         Pattern.compile("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$");
-
     private static final Fn1<Cause, String> INVALID_EMAIL =
-        Causes.forOneValue("Invalid email: %s");
+        Causes.forOneValue("Invalid email format: %s");
 
-    // Private constructor - cannot construct directly
-    private Email {}
-
-    // Static factory - only way to create Email
     public static Result<Email> email(String raw) {
         return Verify.ensure(raw, Verify.Is::present)
-            .map(String::trim)
-            .filter(INVALID_EMAIL, EMAIL_PATTERN.asMatchPredicate())
-            .map(Email::new);
+                     .map(String::trim)
+                     .filter(INVALID_EMAIL, EMAIL_PATTERN.asMatchPredicate())
+                     .map(Email::new);
     }
 }
 
-// Usage
-Result<Email> result = Email.email(userInput);
-// If result is success, Email is guaranteed valid
+// Client code gets the Result:
+Result<Email> result = Email.email(input);
+// If this is a Success, the Email is valid. Guaranteed.
 ```
+
+The static factory `email()`, which returns `Result<Email>`, is the only intended way to get an `Email`. If you have an `Email` that came through it, it's valid - no separate check needed.
+
+> **Note:** As of current Java versions, records do not support declaring the canonical constructor as private. Rely on team discipline and code review to ensure value objects are only constructed through their factory methods. Direct `new Email(...)` calls stand out immediately and are easy to catch.
+
+> **Library Value Objects:** For common types like email, URL, and UUID, Pragmatica Core provides production-ready implementations in `org.pragmatica.lang.vo`. The examples in this chapter demonstrate the *pattern* — for production use, prefer the library VOs over hand-rolled versions.
+<!-- /book:pdv-approach -->
 
 ## Key Elements
 
-### 1. Private Constructor
+### 1. The Factory Is the Only Intended Path
 
-Make constructor private or package-private:
-
-```java
-public record Email(String value) {
-    private Email {}  // Private canonical constructor
-}
-
-// Or package-private:
-public record Email(String value) {
-    Email {}  // Package-private
-}
-```
+A record's canonical constructor cannot be made private: it must be at least as accessible as
+the record, so `private Email {}` (or a package-private `Email {}` in a public record) is a
+compile error. Nothing stops `new Email(...)`; the guarantee comes from discipline and review.
+A direct `new Email(...)` outside the factory is easy to spot and is the thing to flag.
 
 ### 2. Static Factory Method
 
@@ -133,8 +130,6 @@ public record Password(String value) {
     private static final Cause NO_UPPER =
         Causes.cause("Password must contain uppercase");
 
-    private Password {}
-
     public static Result<Password> password(String raw) {
         return Verify.ensure(raw, Verify.Is::present)
             .map(String::trim)
@@ -150,8 +145,6 @@ public record Password(String value) {
 
 ```java
 public record Credentials(Email email, Password password) {
-    private Credentials {}
-
     public static Result<Credentials> credentials(String emailRaw, String passwordRaw) {
         return Result.all(Email.email(emailRaw),
                          Password.password(passwordRaw))
@@ -195,9 +188,6 @@ public interface RegisterUser {
 
     // Validated input with Valid prefix
     record ValidRequest(Email email, Password password) {
-        // Private constructor
-        private ValidRequest {}
-
         // Factory method
         static Result<ValidRequest> validRequest(Request raw) {
             return Result.all(Email.email(raw.email()),
@@ -219,10 +209,7 @@ public interface RegisterUser {
 ### Type Safety
 
 ```java
-// Cannot create invalid email
-Email email = new Email("invalid");  // Compilation error: private constructor
-
-// Must go through validation
+// The intended way in - and the only one review should let through
 Result<Email> result = Email.email("test@example.com");
 result.onSuccess(validEmail -> {
     // validEmail is guaranteed valid here
@@ -266,46 +253,43 @@ result.onFailure(cause -> {
 
 ### Optional Fields
 
+From the book: a field that is optional but must be valid when present is `Result<Option<T>>`,
+built with `Verify.ensureOption()` - never `Option<Result<T>>`.
+
+<!-- book:optional-fields -->
+What if a field is optional but must be valid when present? Use `Result<Option<T>>` with `Verify.ensureOption()`:
+
 ```java
-public record UserProfile(
-    Email email,
-    Option<String> middleName,
-    Option<PhoneNumber> phone
-) {
-    private UserProfile {}
+public record ReferralCode(String value) {
+    private static final Pattern PATTERN = Pattern.compile("^[A-Z0-9]{6}$");
+    private static final Cause INVALID_FORMAT = Causes.cause("Invalid referral code format");
 
-    public static Result<UserProfile> userProfile(
-        String emailRaw,
-        String middleNameRaw,
-        String phoneRaw
-    ) {
-        Result<Email> emailResult = Email.email(emailRaw);
-
-        // Optional fields: parse if present, Option.none() if null/empty
-        Option<Result<PhoneNumber>> phoneResult =
-            Option.option(phoneRaw)
-                  .filter(s -> !s.isBlank())
-                  .map(PhoneNumber::phoneNumber);
-
-        return emailResult.flatMap(email ->
-            phoneResult.map(pr -> pr.map(phone ->
-                new UserProfile(email, Option.option(middleNameRaw), Option.some(phone))
-            )).orElse(Result.success(
-                new UserProfile(email, Option.option(middleNameRaw), Option.none())
-            ))
-        );
+    public static Result<Option<ReferralCode>> referralCode(String raw) {
+        return Verify.ensureOption(
+            Option.option(raw).map(String::trim).filter(s -> !s.isEmpty()),
+            PATTERN.asMatchPredicate(),
+            INVALID_FORMAT
+        ).map(opt -> opt.map(ReferralCode::new));
     }
 }
 ```
+
+The `Verify.ensureOption()` method (Pragmatica Core 0.9.0+) handles this pattern elegantly:
+- If the `Option` is empty, succeeds with `Option.none()` - no validation needed
+- If present and valid, succeeds with `Option.some(value)`
+- If present and invalid, fails with the provided cause
+
+**Caller semantics:**
+- `Failure(cause)`: Invalid input (provided but doesn't match pattern)
+- `Success(None)`: No value provided (valid state)
+- `Success(Some(code))`: Valid code provided
+<!-- /book:optional-fields -->
 
 ### Collections
 
 ```java
 public record OrderItems(List<Item> items) {
-    private static final Fn1<Cause, Integer> MIN_ITEMS_ERROR =
-        Causes.forOneValue("Order must have at least %s items");
-
-    private OrderItems {}
+    private static final Cause NO_ITEMS = Causes.cause("Order must have at least one item");
 
     public static Result<OrderItems> orderItems(List<String> rawItems) {
         // Validate each item
@@ -315,7 +299,7 @@ public record OrderItems(List<Item> items) {
 
         // Collect all results
         return Result.allOf(itemResults)
-            .filter(MIN_ITEMS_ERROR, list -> !list.isEmpty())
+            .filter(NO_ITEMS, list -> !list.isEmpty())
             .map(OrderItems::new);
     }
 }

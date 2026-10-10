@@ -352,6 +352,15 @@
       "why": "NOT named by issue #60. Availability floor for Verify.ensureOption()."
     },
     {
+      "path": "ai-tools/skills/jbct/fundamentals/parse-dont-validate.md",
+      "match": "(Pragmatica Core 0.9.0+)",
+      "version": "0.9.0",
+      "count": 1,
+      "class": "historical",
+      "since": "2026-10-10",
+      "why": "Synced copy (block optional-fields) of book/parse-dont-validate.md's availability floor for Verify.ensureOption(). Must not move; it changes only when the book's line does."
+    },
+    {
       "path": "book/registeruser-example.md",
       "match": "(Pragmatica Core 0.9.0+)",
       "version": "0.9.0",

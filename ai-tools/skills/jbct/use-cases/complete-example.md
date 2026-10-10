@@ -44,8 +44,6 @@ public record Email(String value) {
     private static final Fn1<Cause, String> INVALID_EMAIL =
         Causes.forOneValue("Invalid email: %s");
 
-    private Email {}
-
     public static Result<Email> email(String raw) {
         return Verify.ensure(raw, Verify.Is::present)
             .map(String::trim)
@@ -72,8 +70,6 @@ public record Password(String value) {
     private static final Cause NO_UPPER =
         Causes.cause("Password must contain uppercase letter");
 
-    private Password {}
-
     public static Result<Password> password(String raw) {
         return Verify.ensure(raw, Verify.Is::present)
             .map(String::trim)
@@ -93,8 +89,6 @@ package com.example.domain.shared;
 import org.pragmatica.lang.parse.Network;
 
 public record UserId(UUID value) {
-    private UserId {}
-
     public static Result<UserId> userId(String raw) {
         return Network.parseUUID(raw)
             .map(UserId::new);
@@ -113,8 +107,6 @@ public interface RegisterUser extends UseCase.WithPromise<Response, Request> {
     // ... Request, Response ...
 
     record ValidRequest(Email email, Password password) {
-        private ValidRequest {}
-
         static Result<ValidRequest> validRequest(Request raw) {
             return Result.all(Email.email(raw.email()),
                              Password.password(raw.password()))

@@ -446,7 +446,7 @@ public User getUser(UserId id) {
 
 ```java
 // DON'T
-Result.failure(Causes.fromMessage("User not found"));
+Causes.cause("User not found").result();
 
 // DO
 UserError.NotFound.INSTANCE.result();

@@ -80,7 +80,7 @@ Result<Email> result = Email.email(input);
 // If this is a Success, the Email is valid. Guaranteed.
 ```
 
-The constructor is private (or package-private). The only way to get an `Email` is through the static factory `email()`, which returns `Result<Email>`. If you have an `Email` instance, it's valid - no separate check needed.
+The static factory `email()`, which returns `Result<Email>`, is the only intended way to get an `Email`. If you have an `Email` that came through it, it's valid - no separate check needed.
 
 > **Note:** As of current Java versions, records do not support declaring the canonical constructor as private. Rely on team discipline and code review to ensure value objects are only constructed through their factory methods. Direct `new Email(...)` calls stand out immediately and are easy to catch.
 

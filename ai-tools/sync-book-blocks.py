@@ -119,6 +119,18 @@ BLOCKS = [
         'dest': ['skills/jbct/SKILL.md', 'agents/jbct-coder.md'],
     },
     {
+        'id': 'pdv-approach',
+        'source': '../book/parse-dont-validate.md',
+        'heading': "## The Parse-Don't-Validate Approach",
+        'dest': 'skills/jbct/fundamentals/parse-dont-validate.md',
+    },
+    {
+        'id': 'optional-fields',
+        'source': '../book/parse-dont-validate.md',
+        'heading': '## Optional Fields with Validation',
+        'dest': 'skills/jbct/fundamentals/parse-dont-validate.md',
+    },
+    {
         'id': 'module-promotion',
         'source': '../book/project-structure.md',
         'heading': '## Module Promotion',

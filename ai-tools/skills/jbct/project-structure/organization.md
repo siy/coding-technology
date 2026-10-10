@@ -344,7 +344,6 @@ public interface RegisterUser extends UseCase.WithPromise<Response, Request> {
     record Response(UserId userId, ConfirmationToken token) {}
 
     record ValidRequest(Email email, Password password) {
-        private ValidRequest {}
         static Result<ValidRequest> validRequest(Request raw) { ... }
     }
 

@@ -9,6 +9,8 @@ repository root `CHANGELOG.md`.
 
 ## [Unreleased]
 
+## [5.2.1] - 2026-10-11
+
 ### Fixed
 - *Parse, Don't Validate*: the paragraph after the `Email` example said the constructor is private (or
   package-private), contradicting the note beneath it — a record's canonical constructor must be at least as

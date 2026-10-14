@@ -9,6 +9,13 @@ repository root `CHANGELOG.md`.
 
 ## [Unreleased]
 
+### Fixed
+- *Advanced Patterns*, Fork-Join: `any()` is one special case covering all three types. `Promise.any` races in parallel;
+  `Result.any` and `Option.any` are its synchronous flavor, tried in order, with lazy `Supplier` overloads. The
+  section now states what each returns when nothing succeeds, and the `Promise.any(failureResult, ...)` overload.
+- *Diagrams*, Pattern Selection Decision Tree: the "first wins" leaf now names Fork-Join instead of `Promise.any()`
+  alone, so the tree agrees with the chapter that files `any()` under Fork-Join.
+
 ## [5.2.1] - 2026-10-11
 
 ### Fixed

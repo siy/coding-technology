@@ -277,7 +277,9 @@ private Report createReport(List<Result<HealthStatus>> results) {
 
 Returns `Promise<List<Result<T>>>` - unlike `Promise.all()` which fails fast, `allOf()` waits for all promises to complete and collects both successes and failures.
 
-**2. `Promise.any(Promise<T>...)` - First-success wins:**
+**2. `any(...)` - First-success wins:**
+
+The same split as `all()`: `Promise.any` races its inputs in parallel, while `Result.any` and `Option.any` are its synchronous flavor.
 
 ```java
 // Racing multiple data sources
@@ -288,7 +290,16 @@ Promise<ExchangeRate> fetchRate(Currency from, Currency to) {
 }
 ```
 
-Returns the first successfully completed Promise, canceling remaining operations.
+Returns the first successfully completed Promise, canceling remaining operations. If none succeeds, it fails with `CoreError.Cancelled`; pass a failure `Result` as the first argument, `Promise.any(failureResult, ...)`, to choose that cause instead.
+
+```java
+// Synchronous: first present value, alternatives tried in order
+Option<Locale> locale = Option.any(user.locale(),
+                                   tenant::locale,
+                                   () -> Option.some(Locale.ENGLISH));
+```
+
+`Result.any` and `Option.any` are synchronous, so they examine their inputs in order and return the first success (or present value). The overloads taking `Supplier`s evaluate an alternative only when everything before it failed. If none succeeds, `Result.any` returns the first failure and `Option.any` returns an empty `Option`.
 
 ### Independence and Thread Safety
 

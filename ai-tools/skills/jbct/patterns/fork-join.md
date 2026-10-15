@@ -27,9 +27,9 @@ public Promise<Dashboard> loadDashboard(UserId userId) {
 }
 ```
 
-### Up to 9 Parallel Operations
+### Up to 15 Parallel Operations
 
-Promise.all supports 1-9 operations:
+Promise.all supports 1-15 operations:
 
 ```java
 // 2 operations
@@ -40,7 +40,7 @@ Promise.all(op1, op2)
 Promise.all(op1, op2, op3)
     .map((r1, r2, r3) -> combine(r1, r2, r3));
 
-// ... up to 9 operations
+// ... up to 15 operations
 ```
 
 ## With Result.all for Validation
@@ -55,7 +55,36 @@ public Result<ValidRequest> validate(Request request) {
 }
 ```
 
-**Key difference**: `Result.all` accumulates all failures (CompositeCause), while `Promise.all` fails fast on first error.
+`Result.all` and `Promise.all` both accumulate all failures (CompositeCause). `Promise.all` waits for every input, even after one has failed; use `Promise.allOrCancel` to fail fast.
+
+## Combinators by Carrier
+
+| Form | `Result` (sync) | `Option` (sync) | `Promise` (parallel) |
+|------|-----------------|-----------------|----------------------|
+| `all(a, b, ...)` (1-15) | accumulates all failures | empty if any is empty | waits for all, accumulates all failures |
+| `allOrCancel(a, b, ...)` (1-15) | - | - | fail-fast: first failure, cancels the rest |
+| `allOf(collection)` | `Result<List<T>>`, accumulates failures | `Option<List<T>>`, empty if any is empty | `Promise<List<Result<T>>>`, never fails |
+| `allOfOrCancel(collection)` | - | - | fail-fast: first failure, cancels the rest |
+| `any(...)` | ordered fallback: first success in order; none -> first failure | ordered fallback: first present; none -> empty | race: first success, cancels the rest; none -> `CoreError.Cancelled` |
+| `any(first, Supplier...)` | lazy ordered fallback | lazy ordered fallback | - |
+| `any(failureResult, ...)` | - | - | race, with the cause to use if none succeeds |
+
+`Result.allOf` also accepts a `Stream`, `Option.allOf` and `Promise.any` a `List`. There is no `anyOf`. In a join of two or more, even a single failure arrives as a `CompositeCause`. "Cancels" means the remaining promises resolve as `CoreError.Cancelled`; work already running is not stopped.
+
+### First Success: Race vs Ordered Fallback
+
+Race and ordered fallback are separate forms: a race runs alternatives at once, a fallback tries them one after another.
+
+```java
+// Race - all providers queried in parallel, first success wins
+Promise<ExchangeRate> rate = Promise.any(primary.getRate(from, to),
+                                         secondary.getRate(from, to));
+
+// Ordered fallback - synchronous; suppliers run only if everything before failed
+Option<Locale> locale = Option.any(user.locale(),
+                                   tenant::locale,
+                                   () -> Option.some(Locale.ENGLISH));
+```
 
 ## Thread Safety
 
@@ -115,7 +144,20 @@ Promise.all(fetchA, fetchB, fetchC)
     .map((a, b, c) -> new Combined(a, b, c));
 ```
 
-### 3. Don't Nest Fork-Joins
+### 3. Prefer all() Over allOrCancel()
+
+`all()` reports every failure at once (CompositeCause); `allOrCancel()` reports only the first. Use `allOrCancel()` only when the caller must hear about a failure before the slowest input could finish, and the first failure alone decides the outcome. It saves waiting, not work: cancelled promises resolve as `CoreError.Cancelled`, but operations already running continue.
+
+```java
+// ✅ DEFAULT - caller sees every failure
+Promise.all(checkStock, checkCredit, checkAddress).map(combine);
+
+// ⚠️ ONLY WHEN THE FIRST FAILURE MUST ANSWER NOW - first failure only; the rest
+// are resolved as cancelled, their running work is not stopped
+Promise.allOrCancel(checkFraud, quoteShipping).map(combine);
+```
+
+### 4. Don't Nest Fork-Joins
 
 ```java
 // ❌ WRONG - Nested Promise.all
@@ -174,11 +216,16 @@ public Promise<Report> generateReport(ReportId id) {
 
 ## Error Handling
 
-### Fail-Fast Behavior
+### Accumulating vs Fail-Fast
 
 ```java
-// If any promise fails, entire Fork-Join fails immediately
+// Waits for all three; any failures arrive together as a CompositeCause
 Promise.all(operation1, operation2, operation3)
+    .map(combine)
+    .recover(cause -> handleFailure(cause));
+
+// Fails with the first failure and cancels the remaining operations
+Promise.allOrCancel(operation1, operation2, operation3)
     .map(combine)
     .recover(cause -> handleFailure(cause));
 ```

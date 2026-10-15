@@ -45,7 +45,7 @@ flowchart TB
         B --> Join
         C --> Join
         Join -->|All Success| Output([Combined Result])
-        Join -->|Any Failure| Error([First Error])
+        Join -->|Any Failure| Error([All Failures])
     end
 ```
 
@@ -467,7 +467,7 @@ flowchart TB
     Q1 -->|No| Q3{Depends on<br/>previous step?}
 
     Q2 -->|Yes| ForkJoin[Fork-Join]
-    Q2 -->|No, first wins| Any["Promise.any()"]
+    Q2 -->|No, first wins| Any["Fork-Join: any()"]
 
     Q3 -->|Yes| Sequencer[Sequencer]
     Q3 -->|No| Q4{Route by value?}

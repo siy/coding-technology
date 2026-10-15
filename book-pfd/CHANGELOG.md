@@ -7,6 +7,15 @@ All notable changes to the PFD book, newest first. Format:
 `0.x` versions were preview editions; `1.0.0` marked the first edition released to
 readers, and `1.x` are its maintenance and expansion releases.
 
+## [Unreleased]
+
+### Fixed
+- *Spiral 1*: `Promise.allOrCancel` was said to accumulate failures like `Result.all`; it stops at the first failure
+  and cancels the rest. Only `Promise.all` accumulates. The Fork-Join walkthrough now says failures arrive collected in
+  a composite cause, even when only one check fails.
+- *Spiral 2*: "failure-fast or all-or-cancel variants" named one variant that does not exist; `allOf` collects every
+  outcome and never fails, `allOfOrCancel` is the fail-fast form.
+
 ## [3.0.1] - 2026-10-08
 
 ### Fixed

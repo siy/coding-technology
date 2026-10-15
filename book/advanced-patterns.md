@@ -245,7 +245,9 @@ private Dashboard createDashboard(Profile profile,
 }
 ```
 
-All three fetches run concurrently. The Promise completes when all inputs complete successfully or fails immediately if any input fails.
+All three fetches run concurrently. The Promise resolves once every input has resolved: with the combined values if all succeed, otherwise with a `CompositeCause` holding every failure, as `Result.all()` does. It waits for the slowest input even after one has failed. `Promise.allOrCancel(...)` is the fail-fast form: it resolves with the first failure and cancels the remaining inputs.
+
+**Rule: prefer `all()`.** It reports every failure at once, so the caller learns everything that went wrong from one call instead of fixing one cause, retrying, and meeting the next. Reach for `allOrCancel()` only when the caller must hear about a failure before the slowest input could finish, and the first failure alone already decides the outcome. It saves waiting, not work: cancelling resolves the remaining promises as `CoreError.Cancelled`, and operations already running continue to completion.
 
 ### Special Fork-Join Cases
 
@@ -275,9 +277,11 @@ private Report createReport(List<Result<HealthStatus>> results) {
 }
 ```
 
-Returns `Promise<List<Result<T>>>` - unlike `Promise.all()` which fails fast, `allOf()` waits for all promises to complete and collects both successes and failures.
+Returns `Promise<List<Result<T>>>` - unlike `Promise.all()`, which turns any failure into a failure of the whole, `allOf()` never fails: it collects each input's own outcome, success or failure. `Promise.allOfOrCancel(...)` instead fails with the first failure and cancels the rest.
 
-**2. `Promise.any(Promise<T>...)` - First-success wins:**
+**2. `any(...)` - First-success wins:**
+
+It comes in two forms. `Promise.any` is a **race**: its inputs run in parallel and the first success wins. `Result.any` and `Option.any` are an **ordered fallback**: synchronous, so alternatives are tried one after another and the first success in order wins.
 
 ```java
 // Racing multiple data sources
@@ -288,7 +292,16 @@ Promise<ExchangeRate> fetchRate(Currency from, Currency to) {
 }
 ```
 
-Returns the first successfully completed Promise, canceling remaining operations.
+Returns the first successfully completed Promise, canceling remaining operations. If none succeeds, it fails with `CoreError.Cancelled`; pass a failure `Result` as the first argument, `Promise.any(failureResult, ...)`, to choose that cause instead.
+
+```java
+// Synchronous: first present value, alternatives tried in order
+Option<Locale> locale = Option.any(user.locale(),
+                                   tenant::locale,
+                                   () -> Option.some(Locale.ENGLISH));
+```
+
+They examine their inputs in order and return the first success (or present value). The overloads taking `Supplier`s evaluate an alternative only when everything before it failed. If none succeeds, `Result.any` returns the first failure and `Option.any` returns an empty `Option`.
 
 ### Independence and Thread Safety
 
@@ -444,7 +457,7 @@ var decoratedStep = withMetrics(metricsPolicy,
 
 ```java
 // Timeout resolves promise but underlying HTTP call may complete
-promise.timeout(TimeSpan.seconds(5))  // Returns TimeoutError after 5s
+promise.timeout(TimeSpan.timeSpan(5).seconds())  // Fails with CoreError.Timeout after 5s
        .onFailure(this::logTimeout);   // Operation may still finish
 ```
 

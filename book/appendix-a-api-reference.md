@@ -142,28 +142,33 @@ Promise.liftFn1(ThrowingFn1<R, T1> fn)  // Returns Fn1<Promise<R>, T1>
 ```java
 Result.all(Result<T1>)                    // -> Mapper1<T1>
 Result.all(Result<T1>, Result<T2>)        // -> Mapper2<T1, T2>
-// ... up to Mapper9
+// ... up to Mapper15; accumulates all failures (CompositeCause)
 
 Result.allOf(Result<T>...)                // -> Result<List<T>>
 Result.allOf(List<Result<T>>)             // -> Result<List<T>>
 ```
 
-### Promise.all (fail-fast)
+### Promise.all
 
 ```java
 Promise.all(Promise<T1>)                  // -> Mapper1<T1>
 Promise.all(Promise<T1>, Promise<T2>)     // -> Mapper2<T1, T2>
-// ... up to Mapper9
+// ... up to Mapper15; waits for all, failures accumulate (CompositeCause)
+Promise.allOrCancel(Promise<T1>, ...)     // fail-fast: first failure, cancels the rest
 
-Promise.allOf(Collection<Promise<T>>)     // -> Promise<List<Result<T>>>
+Promise.allOf(Collection<Promise<T>>)     // -> Promise<List<Result<T>>>, never fails
+Promise.allOfOrCancel(Collection<Promise<T>>) // fail-fast: first failure, cancels the rest
 ```
 
 ### any Methods
 
 ```java
-Option.any(Option<T>...)   // First present option
-Result.any(Result<T>...)   // First success result
-Promise.any(Promise<T>...) // First success, cancels others
+Option.any(Option<T>...)                     // First present option, in order
+Option.any(Option<T>, Supplier<Option<T>>...) // Lazy: later ones evaluated only if needed
+Result.any(Result<T>, Result<T>...)          // First success, in order
+Result.any(Result<T>, Supplier<Result<T>>...) // Lazy: later ones evaluated only if needed
+Promise.any(Promise<T>...)                   // First success, cancels others
+Promise.any(Result<T>, Promise<T>...)        // Same, with the cause to use if none succeeds
 ```
 
 ---

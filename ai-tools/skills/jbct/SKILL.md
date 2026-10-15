@@ -631,11 +631,12 @@ cause.promise()
 Result.all(result1, result2, result3)
        .map((v1, v2, v3) -> combine(v1, v2, v3));
 
-// Promise.all - Parallel, fail-fast on first failure (1-15 params)
+// Promise.all - Parallel, waits for all, accumulates failures (1-15 params)
 Promise.all(promise1, promise2, promise3)
         .map((v1, v2, v3) -> combine(v1, v2, v3));
 
-// Promise.allOrCancel - Like all(), but cancels remaining on first failure (1-15 params)
+// Promise.allOrCancel - Fail-fast: first failure, cancels the rest (1-15 params)
+// PREFER all(): it reports every failure. allOrCancel only when waiting is costly
 Promise.allOrCancel(promise1, promise2, promise3)
         .map((v1, v2, v3) -> combine(v1, v2, v3));
 
@@ -644,15 +645,17 @@ Option.all(opt1, opt2, opt3)
        .map((v1, v2, v3) -> combine(v1, v2, v3));
 
 // Collection variants
-Promise.allOf(collection)             // Promise<List<Result<T>>> - collects all
+Promise.allOf(collection)             // Promise<List<Result<T>>> - collects all, never fails
 Promise.allOfOrCancel(collection)     // Like allOf(), cancels remaining on first failure
-Promise.any(promise1, promise2)       // First success wins
+Promise.any(promise1, promise2)       // First success wins (race)
+Result.any(r1, () -> r2)              // First success, tried in order (ordered fallback)
+Option.any(o1, () -> o2)              // First present, tried in order (ordered fallback)
 Result.allOf(collection)              // Result<List<T>> - accumulates failures
 ```
 
 **Instance variants** (for-comprehension style, same semantics):
 ```java
-promise.all(fn1, fn2, fn3).map(combine);            // Parallel, fail-fast
+promise.all(fn1, fn2, fn3).map(combine);            // Parallel, accumulates failures
 promise.allOrCancel(fn1, fn2, fn3).map(combine);     // Parallel, fail-fast + cancel
 ```
 

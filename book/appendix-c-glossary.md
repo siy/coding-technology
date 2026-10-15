@@ -15,7 +15,7 @@ A component that bridges between external systems and the domain. Adapters imple
 The architectural layer containing adapters. Converts between external representations (JSON, SQL) and domain types. The only place where Promise.lift() should appear.
 
 **Aggregation**
-Combining multiple Result or Promise values into one. `Result.all()` accumulates all failures. `Promise.all()` fails fast on first failure.
+Combining multiple Result or Promise values into one. `Result.all()` and `Promise.all()` accumulate all failures. `Promise.allOrCancel()` fails fast on the first failure. Prefer `all()`: it reports every failure.
 
 **Aspects Pattern**
 A structural pattern for cross-cutting concerns like retry, timeout, logging, and audit. Implemented as wrapper functions that compose around a core operation.
@@ -74,7 +74,7 @@ Everything outside your application: databases, external APIs, message queues, f
 A static method that creates instances of value objects or use cases. Value object factories return `Result<T>` to enforce validation.
 
 **Fail-Fast**
-Stopping at the first failure. `flatMap()` chains and `Promise.all()` are fail-fast.
+Stopping at the first failure. `flatMap()` chains and `Promise.allOrCancel()` are fail-fast; `Promise.all()` is not.
 
 **flatMap**
 The monadic bind operation. Chains dependent operations. If input is failure, skips the operation. Prevents nested monads (`Result<Result<T>>`).

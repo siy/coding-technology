@@ -34,7 +34,7 @@ The architectural layer holding adapters, converting between external representa
 *Defined in: JBCT*
 
 **Aggregation** {#aggregation}
-Combining multiple Result or Promise values into one. `Result.all()` accumulates every failure; `Promise.all()` fails fast on the first.
+Combining multiple Result or Promise values into one. `Result.all()` and `Promise.all()` accumulate every failure; `Promise.allOrCancel()` fails fast on the first.
 *Defined in: JBCT*
 
 **Altitude** {#altitude}
@@ -204,7 +204,7 @@ A static method creating a value object or use case instance; value-object facto
 *Defined in: JBCT*
 
 **Fail-Fast** {#fail-fast}
-Stopping at the first failure. `flatMap()` chains and `Promise.all()` are fail-fast; contrast [Result.all](#result-all).
+Stopping at the first failure. `flatMap()` chains and `Promise.allOrCancel()` are fail-fast; `Promise.all()` is not - contrast [Result.all](#result-all).
 *Defined in: JBCT*
 
 **Failure Budget** {#failure-budget}

@@ -226,7 +226,7 @@ Result.all(customerIdResult,
       .map(BuyTicket.ValidRequest::validRequest);
 ```
 
-The composition collects per-field failures rather than short-circuiting at the first; a caller receiving the structured rejection sees every invalid field at once, which is what a customer-facing client needs to render. Async equivalents (`Promise.all`, `Promise.allOrCancel`) accumulate the same way for I/O-touching factories.
+The composition collects per-field failures rather than short-circuiting at the first; a caller receiving the structured rejection sees every invalid field at once, which is what a customer-facing client needs to render. The async equivalent, `Promise.all`, accumulates the same way for I/O-touching factories; `Promise.allOrCancel` does not, since it stops at the first failure and cancels the rest.
 
 ### Types evolve within the use case
 
@@ -309,7 +309,7 @@ return Promise.all(
     .flatMap(reserveSeat::apply);
 ```
 
-`checkEventSelling` returns `Promise<EventSaleStatus>`; `checkCustomerEligibility` returns `Promise<CustomerBookingContext>`. `Promise.all` runs both concurrently and joins them into a tuple, propagating either's typed failure if it occurs. The `.map` builds the next step's context: `ReservationContext` combines the validated request with both statuses. `reserveSeat::apply` is a single-arg method reference taking that context. The step interface stays single-method, single-arg, as the methodology asks; the growing context absorbs what the Fork-Join produced.
+`checkEventSelling` returns `Promise<EventSaleStatus>`; `checkCustomerEligibility` returns `Promise<CustomerBookingContext>`. `Promise.all` runs both concurrently and joins them into a tuple, propagating the typed failure of whichever fails (both, as a composite, if both do). The `.map` builds the next step's context: `ReservationContext` combines the validated request with both statuses. `reserveSeat::apply` is a single-arg method reference taking that context. The step interface stays single-method, single-arg, as the methodology asks; the growing context absorbs what the Fork-Join produced.
 
 The implementation depends on the runtime's concurrency primitives (futures, promises, fibers, threads, whatever the language and stack provide). The methodology's commitment is independent of the primitive: the pattern is Fork-Join, the implementation honors what the host language calls it.
 

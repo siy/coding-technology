@@ -375,8 +375,8 @@ Option.some(value) / Option.none() / Option.option(nullable)
 ```java
 Result.all(a, b, c).map(Ctor::new)       // Parallel validation (collects failures)
 Result.allOf(list)                         // Collection → Result<List<T>>
-Promise.all(a, b, c).map(this::combine)   // Parallel async (fail-fast, 1-15 params)
-Promise.allOrCancel(a, b, c).map(combine) // Like all(), cancels remaining on failure
+Promise.all(a, b, c).map(this::combine)   // Parallel async (accumulates failures, 1-15 params)
+Promise.allOrCancel(a, b, c).map(combine) // Fail-fast: first failure, cancels the rest (prefer all())
 Promise.allOf(list)                        // Collect all results
 Promise.allOfOrCancel(list)                // Like allOf(), cancels remaining on failure
 Promise.any(a, b, c)                      // First success wins

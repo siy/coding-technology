@@ -273,7 +273,7 @@ Result.all(Email.email(emailRaw),
            Password.password(passwordRaw))
       .map(ValidCredentials::new);
 
-// Promise.all - fail-fast on first failure
+// Promise.all - waits for all inputs, accumulates failures (allOrCancel fails fast)
 Promise.all(fetchProfile.apply(userId),
             fetchPreferences.apply(userId),
             fetchOrders.apply(userId))

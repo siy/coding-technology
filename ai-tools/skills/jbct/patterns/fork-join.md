@@ -69,7 +69,7 @@ public Result<ValidRequest> validate(Request request) {
 | `any(first, Supplier...)` | lazy ordered fallback | lazy ordered fallback | - |
 | `any(failureResult, ...)` | - | - | race, with the cause to use if none succeeds |
 
-`Result.allOf` also accepts a `Stream`, `Option.allOf` and `Promise.any` a `List`. There is no `anyOf`.
+`Result.allOf` also accepts a `Stream`, `Option.allOf` and `Promise.any` a `List`. There is no `anyOf`. In a join of two or more, even a single failure arrives as a `CompositeCause`. "Cancels" means the remaining promises resolve as `CoreError.Cancelled`; work already running is not stopped.
 
 ### First Success: Race vs Ordered Fallback
 
@@ -146,14 +146,15 @@ Promise.all(fetchA, fetchB, fetchC)
 
 ### 3. Prefer all() Over allOrCancel()
 
-`all()` reports every failure at once (CompositeCause); `allOrCancel()` reports only the first. Use `allOrCancel()` only when letting the remaining inputs finish is costly (long-running or resource-holding) and the first failure alone decides the outcome.
+`all()` reports every failure at once (CompositeCause); `allOrCancel()` reports only the first. Use `allOrCancel()` only when the caller must hear about a failure before the slowest input could finish, and the first failure alone decides the outcome. It saves waiting, not work: cancelled promises resolve as `CoreError.Cancelled`, but operations already running continue.
 
 ```java
 // ✅ DEFAULT - caller sees every failure
 Promise.all(checkStock, checkCredit, checkAddress).map(combine);
 
-// ⚠️ ONLY WHEN WAITING IS COSTLY - first failure only, rest cancelled
-Promise.allOrCancel(renderVideo, transcodeAudio).map(combine);
+// ⚠️ ONLY WHEN THE FIRST FAILURE MUST ANSWER NOW - first failure only; the rest
+// are resolved as cancelled, their running work is not stopped
+Promise.allOrCancel(checkFraud, quoteShipping).map(combine);
 ```
 
 ### 4. Don't Nest Fork-Joins

@@ -10,11 +10,25 @@ repository root `CHANGELOG.md`.
 ## [Unreleased]
 
 ### Fixed
-- *Advanced Patterns*, Fork-Join: `any()` is one special case covering all three types. `Promise.any` races in parallel;
-  `Result.any` and `Option.any` are its synchronous flavor, tried in order, with lazy `Supplier` overloads. The
-  section now states what each returns when nothing succeeds, and the `Promise.any(failureResult, ...)` overload.
+- `Promise.all()` was described as fail-fast in six places (*Advanced Patterns* twice, *Pragmatica Core Essentials*,
+  *Appendix A*, *Appendix C* glossary twice, *Chapter Summaries*). It waits for every input and, if any fail,
+  accumulates all failures into a `CompositeCause`, as `Result.all()` does; `Promise.allOrCancel()` and
+  `Promise.allOfOrCancel()` are the fail-fast forms (first failure, the rest cancelled). Measured against core
+  1.0.0-rc3 and rc4: with two inputs failing at 50 ms and one succeeding at 800 ms, `all` resolved at ~827 ms with
+  both causes and `allOrCancel` at ~52 ms with the first.
+- *Advanced Patterns*, Fork-Join: `any()` is one special case in two forms - `Promise.any` is a race (parallel, first
+  success, rest cancelled); `Result.any` and `Option.any` are an ordered fallback (synchronous, tried in order, with
+  lazy `Supplier` overloads). The section states what each returns when nothing succeeds, and the
+  `Promise.any(failureResult, ...)` overload.
+- *Appendix A*: `Result.all`/`Promise.all` go up to `Mapper15`, not `Mapper9`; adds `allOrCancel`, `allOfOrCancel` and
+  the lazy and `failureResult` overloads of `any`.
 - *Diagrams*, Pattern Selection Decision Tree: the "first wins" leaf now names Fork-Join instead of `Promise.any()`
   alone, so the tree agrees with the chapter that files `any()` under Fork-Join.
+
+### Added
+- *Advanced Patterns*, Fork-Join: rule - prefer `all()`, which reports every failure at once; `allOrCancel()` only when
+  letting the remaining inputs finish is costly and the first failure alone decides the outcome. Echoed in the
+  *Appendix C* aggregation entry.
 
 ## [5.2.1] - 2026-10-11
 

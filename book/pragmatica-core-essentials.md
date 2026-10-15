@@ -289,7 +289,7 @@ Promise<Dashboard> dashboard = Promise.all(
 ).map(Dashboard::new);
 ```
 
-**Behavior:** Executes in parallel, fails fast on first failure.
+**Behavior:** Executes in parallel and waits for every input. If any fail, accumulates ALL failures into CompositeCause, like `Result.all`. `Promise.allOrCancel` is the fail-fast form: first failure, remaining inputs cancelled.
 
 ### Result.allOf / Promise.allOf - Collection Aggregation
 

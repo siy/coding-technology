@@ -245,7 +245,9 @@ private Dashboard createDashboard(Profile profile,
 }
 ```
 
-All three fetches run concurrently. The Promise completes when all inputs complete successfully or fails immediately if any input fails.
+All three fetches run concurrently. The Promise resolves once every input has resolved: with the combined values if all succeed, otherwise with a `CompositeCause` holding every failure, as `Result.all()` does. It waits for the slowest input even after one has failed. `Promise.allOrCancel(...)` is the fail-fast form: it resolves with the first failure and cancels the remaining inputs.
+
+**Rule: prefer `all()`.** It reports every failure at once, so the caller learns everything that went wrong from one call instead of fixing one cause, retrying, and meeting the next. Reach for `allOrCancel()` only when letting the remaining inputs finish is costly, such as long-running or resource-holding operations, and the first failure alone already decides the outcome.
 
 ### Special Fork-Join Cases
 
@@ -275,11 +277,11 @@ private Report createReport(List<Result<HealthStatus>> results) {
 }
 ```
 
-Returns `Promise<List<Result<T>>>` - unlike `Promise.all()` which fails fast, `allOf()` waits for all promises to complete and collects both successes and failures.
+Returns `Promise<List<Result<T>>>` - unlike `Promise.all()`, which turns any failure into a failure of the whole, `allOf()` never fails: it collects each input's own outcome, success or failure. `Promise.allOfOrCancel(...)` instead fails with the first failure and cancels the rest.
 
 **2. `any(...)` - First-success wins:**
 
-The same split as `all()`: `Promise.any` races its inputs in parallel, while `Result.any` and `Option.any` are its synchronous flavor.
+It comes in two forms. `Promise.any` is a **race**: its inputs run in parallel and the first success wins. `Result.any` and `Option.any` are an **ordered fallback**: synchronous, so alternatives are tried one after another and the first success in order wins.
 
 ```java
 // Racing multiple data sources
@@ -299,7 +301,7 @@ Option<Locale> locale = Option.any(user.locale(),
                                    () -> Option.some(Locale.ENGLISH));
 ```
 
-`Result.any` and `Option.any` are synchronous, so they examine their inputs in order and return the first success (or present value). The overloads taking `Supplier`s evaluate an alternative only when everything before it failed. If none succeeds, `Result.any` returns the first failure and `Option.any` returns an empty `Option`.
+They examine their inputs in order and return the first success (or present value). The overloads taking `Supplier`s evaluate an alternative only when everything before it failed. If none succeeds, `Result.any` returns the first failure and `Option.any` returns an empty `Option`.
 
 ### Independence and Thread Safety
 

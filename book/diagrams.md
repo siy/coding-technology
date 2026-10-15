@@ -45,7 +45,7 @@ flowchart TB
         B --> Join
         C --> Join
         Join -->|All Success| Output([Combined Result])
-        Join -->|Any Failure| Error([First Error])
+        Join -->|Any Failure| Error([All Failures])
     end
 ```
 

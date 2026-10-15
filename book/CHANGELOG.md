@@ -21,13 +21,19 @@ repository root `CHANGELOG.md`.
   lazy `Supplier` overloads). The section states what each returns when nothing succeeds, and the
   `Promise.any(failureResult, ...)` overload.
 - *Appendix A*: `Result.all`/`Promise.all` go up to `Mapper15`, not `Mapper9`; adds `allOrCancel`, `allOfOrCancel` and
-  the lazy and `failureResult` overloads of `any`.
+  the lazy and `failureResult` overloads of `any`; `Result.any` takes `(Result<T>, Result<T>...)`.
+- *Diagrams*, Fork-Join: the failure edge led to "First Error"; it now reads "All Failures".
+- *Advanced Patterns* and *Testing in Practice*: `TimeSpan.seconds(5)` and `TimeSpan.millis(100)` do not exist in core;
+  now `TimeSpan.timeSpan(5).seconds()` and `TimeSpan.timeSpan(100).millis()` (compiled against 1.0.0-rc3). The timeout
+  fails with `CoreError.Timeout`, not `TimeoutError`.
 - *Diagrams*, Pattern Selection Decision Tree: the "first wins" leaf now names Fork-Join instead of `Promise.any()`
   alone, so the tree agrees with the chapter that files `any()` under Fork-Join.
 
 ### Added
 - *Advanced Patterns*, Fork-Join: rule - prefer `all()`, which reports every failure at once; `allOrCancel()` only when
-  letting the remaining inputs finish is costly and the first failure alone decides the outcome. Echoed in the
+  the caller must hear about a failure before the slowest input could finish and the first failure alone decides the
+  outcome. It saves waiting, not work: `cancel()` resolves a promise as `CoreError.Cancelled` and does not stop
+  operations already running (measured: a 300 ms input ran to completion after `allOrCancel` returned). Echoed in the
   *Appendix C* aggregation entry.
 
 ## [5.2.1] - 2026-10-11

@@ -247,7 +247,7 @@ private Dashboard createDashboard(Profile profile,
 
 All three fetches run concurrently. The Promise resolves once every input has resolved: with the combined values if all succeed, otherwise with a `CompositeCause` holding every failure, as `Result.all()` does. It waits for the slowest input even after one has failed. `Promise.allOrCancel(...)` is the fail-fast form: it resolves with the first failure and cancels the remaining inputs.
 
-**Rule: prefer `all()`.** It reports every failure at once, so the caller learns everything that went wrong from one call instead of fixing one cause, retrying, and meeting the next. Reach for `allOrCancel()` only when letting the remaining inputs finish is costly, such as long-running or resource-holding operations, and the first failure alone already decides the outcome.
+**Rule: prefer `all()`.** It reports every failure at once, so the caller learns everything that went wrong from one call instead of fixing one cause, retrying, and meeting the next. Reach for `allOrCancel()` only when the caller must hear about a failure before the slowest input could finish, and the first failure alone already decides the outcome. It saves waiting, not work: cancelling resolves the remaining promises as `CoreError.Cancelled`, and operations already running continue to completion.
 
 ### Special Fork-Join Cases
 
@@ -457,7 +457,7 @@ var decoratedStep = withMetrics(metricsPolicy,
 
 ```java
 // Timeout resolves promise but underlying HTTP call may complete
-promise.timeout(TimeSpan.seconds(5))  // Returns TimeoutError after 5s
+promise.timeout(TimeSpan.timeSpan(5).seconds())  // Fails with CoreError.Timeout after 5s
        .onFailure(this::logTimeout);   // Operation may still finish
 ```
 

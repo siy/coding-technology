@@ -533,7 +533,7 @@ void async_succeeds() {
 @Test
 void async_completesWithinTimeout() {
     useCase.execute(request)
-           .await(TimeSpan.seconds(5))  // Fail if takes > 5s
+           .await(TimeSpan.timeSpan(5).seconds())  // Fail if takes > 5s
            .onFailure(cause -> {
                if (cause instanceof CoreError.Timeout) {
                    fail("Operation timed out");
@@ -556,7 +556,7 @@ void timeout_failsSlowOperation() {
     var useCase = UseCase.useCase(slowStep);
 
     useCase.execute(request)
-           .timeout(TimeSpan.millis(100))
+           .timeout(TimeSpan.timeSpan(100).millis())
            .await()
            .onSuccess(Assertions::fail)  // Should not succeed
            .onFailure(cause -> assertInstanceOf(CoreError.Timeout.class, cause));

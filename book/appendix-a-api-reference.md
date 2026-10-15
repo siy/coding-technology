@@ -165,7 +165,7 @@ Promise.allOfOrCancel(Collection<Promise<T>>) // fail-fast: first failure, cance
 ```java
 Option.any(Option<T>...)                     // First present option, in order
 Option.any(Option<T>, Supplier<Option<T>>...) // Lazy: later ones evaluated only if needed
-Result.any(Result<T>...)                     // First success, in order
+Result.any(Result<T>, Result<T>...)          // First success, in order
 Result.any(Result<T>, Supplier<Result<T>>...) // Lazy: later ones evaluated only if needed
 Promise.any(Promise<T>...)                   // First success, cancels others
 Promise.any(Result<T>, Promise<T>...)        // Same, with the cause to use if none succeeds

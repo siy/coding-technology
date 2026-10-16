@@ -500,13 +500,17 @@ The topic itself is one configuration section:
 
 ```toml
 [messaging.order-events]
-topicName = "order-events"
+topic_name = "order-events"
 ```
 
-`topicName` is the only field. A bare name like `order-events` is scoped to the application at
-deploy; a fully qualified `namespace:topic:version` is taken as written. In the manifest the
-publisher and subscriber appear as data the runtime reads before loading a class, the publisher
-as a `publish.topic` entry and the subscriber among the reactive bindings:
+`topic_name` is the only field this ephemeral declaration needs, the default tier, so the
+zero-config path stays cheap. A bare name like `order-events` is scoped to the application at
+deploy; a fully qualified `namespace:topic:version` is taken as written. The same section can
+instead declare the topic durable, trading the zero-config default for a stronger guarantee; that
+variant is its own subsection later in this module, once streams have introduced the substrate it
+is built on. In the manifest the publisher and subscriber appear as data the runtime reads before
+loading a class, the publisher as a `publish.topic` entry and the subscriber among the reactive
+bindings:
 
 ```
 publish.topic.0.config=messaging.order-events
@@ -522,14 +526,16 @@ persist the message, and it does not retry a subscriber that is down. Because th
 waits on those subscribers, a caller that chains work onto it, as `orderService` does above with
 `events.publish(placed).map(() -> placed)`, pays the subscribers' latency in its own response time,
 so keep subscriber work short or move the slow part to a stream. That the publisher waits on present
-subscribers is today's behavior, not a fixed contract; a durable pub-sub variant on the roadmap
-would decouple the two. Delivery is at-most-once: a subscriber that is absent misses the event, and
-there is no log
+subscribers, and that a missing one is simply missed, is a property of the ephemeral tier, the
+default, not a fixed contract of pub-sub itself; declaring the same topic durable decouples the
+two, covered once streams are in hand. Delivery here is at-most-once: a subscriber that is absent
+misses the event, and there is no log
 to catch up from. One consequence is friendly: publishing to a topic with no subscribers is a
 success, so a quiet system does not fail `placeOrder` for lack of listeners. The other is the
-constraint that decides when to use it. Pub-sub fits when missing a message is acceptable, a
-dashboard that refreshes a moment later, a cache that warms on the next read. When a message must
-not be lost, the tool is a stream, and that is the next chapter.
+constraint that decides when to use it. Ephemeral pub-sub fits when missing a message is
+acceptable, a dashboard that refreshes a moment later, a cache that warms on the next read. When a
+message must not be lost, reach for a stream, covered next, or declare the topic itself durable,
+covered right after it once the mechanism a durable topic is built on has been introduced.
 
 ## Events that must not be lost
 
@@ -707,9 +713,23 @@ recovers its log, but not safe against losing the node's disk and not safe again
 Lose that node and its single copy goes with it: a consumer reads empty until the node returns. For a
 stream whose whole point is that no event is lost, one disk is not enough.
 
+One failure sits earlier than any of this: the node's WAL directory itself. A node that finds it
+cannot write there refuses to start, rather than come up and stream non-durably behind a single
+warning buried in the log — the same fail-stop-at-boot idiom the cluster-name and TLS checks use
+(`#634` item 2, `AetherNode.java:875-987`, `verifyWalBootable`/`decideWalAvailability`, wired
+through `Main`'s boot sequence). A deployment that genuinely wants best-effort streaming over no
+streaming at all opts in explicitly with `-Daether.allowNonDurableStreams=true` (or
+`AETHER_ALLOW_NON_DURABLE_STREAMS=true`); a node constructed directly rather than through `Main` —
+Forge, a test, an embedded runtime — bypasses this check and keeps the old warn-and-degrade
+behavior, since it is not the deployment the guard protects.
+
 Durability across the loss of a node is what `min-sync-replicas` buys. Set it to `2` or more and
-every write waits for at least one copy beyond the owner, so a caught-up replica always exists. Then
-losing the owner is survivable for reads: after the owner is killed, a reader still gets the complete
+every write waits for at least one copy beyond the owner, so a caught-up replica always exists —
+and that copy is fsynced on the replica before its ack counts, the same bar the owner clears, so a
+power loss on owner and replica together inside an unsynced window cannot silently erase a write
+the caller was told reached the configured replication factor (`#634` item 1,
+`ReplicationReceiveHandler.java:92-93,255-257`). Then losing the owner is survivable for reads:
+after the owner is killed, a reader still gets the complete
 prior history and the ordered tail, nothing dropped and nothing reordered. That is proven end to
 end, an owner killed mid-stream and every earlier event still served in offset order alongside the
 events that follow.
@@ -725,18 +745,104 @@ case, a stream configured for durability survives an owner loss with its reads i
 its own redundancy afterward, with the wider failure envelope still being validated, so verify
 against the current runtime before you rely on behavior past that single-failure path.
 
-### Pub-sub or stream?
+### The durable pub-sub tier
 
-Both deliver a message from one slice to others through the same two mechanisms, and they trade
-on a single axis: what happens to a message no one is ready for.
+Pub-sub and streams are not the only two points on this axis. The same topic can be declared
+durable, keeping the pub-sub shape, publish a value, receive a value, no offsets for the slice to
+manage, while buying most of a stream's delivery guarantee. The one-argument subscriber method
+from the previous section is unaffected; declaring a topic durable does not require touching the
+Java at all. Only the configuration section grows:
 
-- Reach for **pub-sub** when the message is a live signal and missing one is acceptable:
-  refreshing a dashboard, warming or invalidating a cache, an in-app nudge, fanning out to
-  whoever happens to be listening. It is the loosest coupling and the cheapest, at-most-once,
-  with no bookkeeping.
-- Reach for a **stream** when every message counts and order or catch-up matters: audit ledgers,
-  event-sourced read models, anything a restarted or late consumer must reprocess. It is durable,
-  ordered, and at-least-once, at the cost of managing offsets and writing idempotent handlers.
+```toml
+[messaging.order-events]
+topic_name = "order-events"
+durability = "durable"        # "ephemeral" (default) | "durable"
+partitions = 1                 # durable only; default 1
+replicas = 2                   # durable only; default 2
+min_sync_replicas = 2          # durable only; default = replicas
+retention = "7d"               # durable only; default 7d
+```
+
+`durability` is the switch. The four knobs below it exist only for a durable declaration; declare
+them on an ephemeral topic and the build rejects the section rather than silently ignoring the
+keys, the same config-honesty stance a stream's own knobs take. A durable topic is backed
+internally by a replicated stream plus its own dead-letter stream, both provisioned the moment
+the topic is provisioned, not lazily on first publish, and a publish resolves once the write
+reaches the replication floor below, not merely once it lands on the owner.
+
+The `replicas >= 2` and `min_sync_replicas == replicas` pairing above is not an arbitrary
+default, it is exactly the stream configuration the previous section proved survives an owner
+kill with every prior event intact. Declare anything outside it, `replicas = 1`, say, or
+`min_sync_replicas` short of `replicas`, and the build rejects the declaration at parse rather
+than silently accepting a weaker guarantee than the one advertised.
+
+What the tier buys, and no more:
+
+- **Delivery to a subscriber group.** Ephemeral is at-most-once: a single invoke to a
+  round-robin instance, dropped on RPC failure, crash, or absence, never retried, never
+  persisted. Durable is **at-least-once per group**: a group cursor plus bounded redelivery,
+  five attempts with exponential backoff, then the group-attributed dead-letter queue.
+- **Subscriber failure.** Ephemeral failure is invisible to the runtime, logged, no redelivery.
+  Durable retries and then lands the event in `topic:<address>.dlq` as a group-attributed
+  envelope carrying the original message id, source position, failing group, attempt count, and
+  last cause. The source cursor does not advance past an event whose DLQ append has not itself
+  succeeded, so a stalled dead-letter sink stalls the partition visibly instead of silently
+  dropping the event.
+- **Duplicate exposure.** None for ephemeral, zero or one delivery. Durable can redeliver up to
+  the cursor-checkpoint window on crash or restart, at most 1000 acknowledged events or 500ms
+  per partition, whichever comes first; both figures are fixed constants today, not per-topic
+  configuration.
+- **Consumer-group identity.** Version-stable (`groupId:artifactId#method`), so a blue-green
+  deploy window collapses to one dispatch loop per group and partition instead of doubling
+  delivery across the two versions in flight.
+
+A durable subscriber may opt into a second parameter, `Promise<Unit> handler(T event,
+MessageContext context)`. `context.messageId()` is the field worth keying on, a publisher-minted
+id stable across a retry and across a dead-letter hop; `context.partition()` and
+`context.offset()` describe only where this particular delivery landed and change on redelivery,
+so using either to de-duplicate reintroduces the duplicates the id exists to catch. The build
+rejects the two-argument shape on a topic that is not durable, there being no envelope to build a
+context from.
+
+A redelivered message carries the same `messageId` as the original; the handler is what dedupes
+on it, not the runtime. The strongest claim the runtime makes is at-least-once with
+de-duplication left to the handler, the same discipline Module D asks of any at-least-once path.
+
+**What is still open.** The guarantee above is verified single-node: publish and dispatch proven
+end to end on one node, and subscriber registration is crash-durable regardless of tier, a
+Rabia-replicated write, so the topology survives a restart even though an ephemeral topic's
+in-flight messages do not. The multi-node composed path, a publish landing on one node and
+dispatch owned by another, including a failover between them, is **design intent, unverified
+pending forge e2e**. There is also no operator surface yet for the durable tier: no DLQ
+inspection or redrive route, no lag or stall alarm, no per-topic retention override on the
+dead-letter stream. A dead-lettered event is real, durable data today, readable only by reading
+the `.dlq` stream directly, awaiting the management surface that turns redriving it into a
+command instead of a stream read.
+
+A related but distinct surface: `@Notify` for email or HTTP is at-least-once with retries and may
+duplicate, but it is not pub-sub and carries no DLQ; the guarantees above do not extend to it.
+
+### Pub-sub, durable pub-sub, or stream?
+
+All three deliver a message from one slice to others, and the same two resource types cover them,
+`Publisher`/`Subscriber` for both pub-sub tiers, `StreamPublisher`/`StreamSubscriber`/
+`StreamAccess` for streams. What varies is what happens to a message no one is ready for, and how
+much bookkeeping buying a stronger answer costs.
+
+- Reach for **ephemeral pub-sub** when the message is a live signal and missing one is
+  acceptable: refreshing a dashboard, warming or invalidating a cache, an in-app nudge, fanning
+  out to whoever happens to be listening. It is the loosest coupling and the cheapest,
+  at-most-once, with no bookkeeping and no configuration beyond a topic name.
+- Reach for a **durable topic** when the shape you want is still pub-sub, publish a value,
+  receive a value, no offsets to manage by hand, but a subscriber that is temporarily down must
+  still get the event once it returns. It costs a handful of configuration keys and buys
+  at-least-once per group with a dead-letter queue for what a handler cannot process, at the
+  price documented above: bounded duplicate exposure, and a multi-node failover path still
+  unverified.
+- Reach for a **stream** when every message counts, order matters, or a late or replayed
+  consumer must reprocess history it missed entirely: audit ledgers, event-sourced read models.
+  It is durable, ordered, and at-least-once, at the cost of managing offsets, or letting the
+  declarative consumer do it, and writing idempotent handlers.
 
 The stream has a deeper use, foreshadowed by Module A's dual-write. When `placeOrder` must both
 commit the order and record an event reliably, the event written to a durable stream is the safe
@@ -744,9 +850,10 @@ record, and the rest of the system is built by reading that stream. Making that 
 reliable when neither the commit nor the emit may be lost is the dual-write problem, and Module D
 solves it with an idempotency key rather than a separate outbox to operate. The
 model to carry forward is unchanged from Part I: a parameter to send, an annotated method to
-receive, and the runtime reading the manifest to wire both. Messaging added two resource types
-and reused the model intact. The next module collects the smaller resources a slice reaches for,
-HTTP, notifications, scheduled work, and the interceptors that wrap them.
+receive, and the runtime reading the manifest to wire both. Messaging added two resource types —
+a durable declaration on the first is configuration, not a third — and reused the model intact.
+The next module collects the smaller resources a slice reaches for, HTTP, notifications,
+scheduled work, and the interceptors that wrap them.
 
 # Module C — Other resources
 
@@ -1104,11 +1211,14 @@ operation has to stay correct across several.
 > _Status: split by layer. The durable entity at the module's core is shipped: the resource is on
 > a deployed node's classpath, a slice injects it like any other resource, and the write,
 > replication, forwarding, and read paths taught below are source-verified at the pinned runtime
-> head, with the crash gate run against a live cluster. Two bounds hold. Entity timers are
-> durably recorded but the driver that fires them is not yet wired into a deployed node
-> (pragmatica #351), so a scheduled timer never fires in production today; and the proven
-> durability envelope is the loss and replacement of an owner in a live cluster, with a
-> full-cluster cold restart riding the storage work still in flight (#349). The workflow and saga
+> head, with the crash gate run against a live cluster. Entity timers are durably recorded and
+> fire on a deployed node as of 2026-08-27 (#351); the interval is a documented 1-second constant,
+> not a config knob. The proven durability envelope covers both the loss and replacement of an
+> owner in a live cluster and a full cluster restart that keeps the node data directories (#349,
+> re-verified at rc3): the per-partition WAL and the entity's own log are fsynced and replayed at
+> boot. Two things fall outside that envelope: the DHT key-value store, which is in-memory only
+> and does not survive a restart, and an ungraceful power loss of every node or a partition
+> reassigned to a different owner afterward, both still untested. The workflow and saga
 > facades later in the module remain intended design (INVENTED, prototype-gated): pinned against
 > the entity's verified primitives, with no runtime code behind them yet. The manual baseline
 > that opens the module runs now on plain JBCT._
@@ -1394,12 +1504,12 @@ the round, and only then serves, so the read reflects every write acknowledged b
 The price is a consensus round per read. Default to the bounded-stale form and escalate per call,
 so the code shows exactly which reads paid for certainty.
 
-Timers need one honest sentence more than the interface suggests. `scheduleTimer` and
+Timers need one honest sentence about their bound, not their existence. `scheduleTimer` and
 `cancelTimer` work against the entity's log — a pending timer is a durable record, scheduled at
-an absolute instant, surviving handover and restart like any other state — but the driver that
-fires due timers is not yet wired into a deployed node, so today a scheduled timer is remembered
-and never fires (pragmatica #351). Design with them where the design wants them; do not stake a
-production behavior on a fire until the driver lands.
+an absolute instant, surviving handover and restart like any other state — and the driver that
+fires due timers is wired into a deployed node as of 2026-08-27 (pragmatica #351): a scheduled
+timer fires there, at or after its instant, never before. The check runs on a documented
+1-second constant, not a config knob, so do not design around a finer grain than that.
 
 One observation pays off immediately. A fenced single writer per key is a lease. If a slice needs a
 distributed lock, a leader for some resource, or a guarantee that only one worker touches an account
@@ -1413,9 +1523,14 @@ least one peer — so an acknowledged write survives the owner's death, and the 
 exercises exactly that: an owner killed mid-traffic, every acknowledged write still present with
 its exact value after the cluster heals. A log whose fsync fails stops accepting writes rather
 than acknowledging what the disk did not take: fail-stop, visible to the operator, instead of
-silent loss. Two bounds keep the claim honest. The proven envelope is the loss and replacement of
-an owner in a live cluster; a full-cluster cold restart rides the storage work still in flight
-(#349). And the timer half of the surface is recorded but inert, as the timers note above says.
+silent loss. The proven envelope, stated with the same rigor as the write above, now covers a
+full cluster restart too: the write survives its owner being replaced and a full cluster restart
+that keeps the node data directories, because the same fsync-before-ack discipline applies to the
+per-partition WAL — replayed in full at boot — and the entity's own log restores its snapshot the
+same way (#349, re-verified at rc3). Two things sit outside that envelope: the DHT key-value
+store, which is in-memory only and loses its contents on any restart, and an ungraceful power
+loss of every node or a partition reassigned to a different owner afterward, both still untested.
+The timer half of the surface is recorded and firing, as the timers note above says.
 Read the two chapters that follow differently: they are facades not yet built, designed against
 the verified entity underneath them.
 
@@ -1675,8 +1790,8 @@ cover monitoring and operator recovery.
 A closing note on what is real today, because this module asks the reader to hold two registers
 at once. The manual saga runs now: plain JBCT over resources you already have. The entity is real
 too — injectable in a deployed slice, its writes fenced, replicated, and fsynced before they
-acknowledge, its reads served replica-aware, with its timers durably recorded but not yet fired
-(#351). The workflow and the saga above it are the module's intended design: pinned against those
+acknowledge, its reads served replica-aware, with its timers durably recorded and firing on
+schedule (#351). The workflow and the saga above it are the module's intended design: pinned against those
 verified primitives, with no runtime code behind them yet. Write the manual baseline when you
 need compensation now, reach for the entity directly when you need durable per-key state now, and
 verify the workflow and saga surfaces against the runtime before you stake an order on them.

@@ -2,7 +2,7 @@
 
 Most of JBCT's rules can be checked by a machine, and two tools do the checking: the `jbct` command-line tool and the `jbct-maven-plugin`. Both run the same formatter and the same linter, read the same `jbct.toml`, and ship in the same Pragmatica release. This page describes release **{{PRAGMATICA_VERSION}}**.
 
-The linter checks **[72 rules](/java/jbct/rules/)**. Each rule on that list links to the course section that explains it, or says plainly that the book does not cover it.
+The linter checks **[73 rules](/java/jbct/rules/)**. Each rule on that list links to the course section that explains it, or says plainly that the book does not cover it.
 
 ## What a clean run means, and what it doesn't
 
@@ -140,6 +140,6 @@ Suppressions go on the element and cover it and everything inside it:
 
 ## Links
 
-- [The rules](/java/jbct/rules/): all 72, with defaults and course sections
+- [The rules](/java/jbct/rules/): all 73, with defaults and course sections
 - [Tool source](https://github.com/pragmaticalabs/pragmatica/tree/v{{PRAGMATICA_VERSION}}/jbct): `jbct/` in the Pragmatica repository
 - [JBCT course](/java/jbct/course/): the method the rules come from

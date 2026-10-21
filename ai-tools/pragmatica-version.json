@@ -2,7 +2,7 @@
   "_": "The derived Pragmatica version declaration for issue #60, SPLIT INTO TWO FIELDS by the owner's ruling of 2026-09-11. ai-tools/pragmatica-pins.py carries the mechanism and, more importantly, what a green result does NOT mean; read that first. The single `pinned` field it replaces was answering two questions at once — what a reader's build should depend on, and what a human had actually re-read the API against — so it could never move: bumping it re-asserted every verification nobody had performed, and holding it still left every dependency snippet stale. Neither answer was available while one field carried both.",
   "depends_on": {
     "_": "The version a reader's build should use. A dependency coordinate, nothing more. It tracks Maven Central mechanically and needs no human judgement to move: a coordinate is right when it resolves and names what Central last published. Every <version> under an org.pragmatica-lite groupId, every org.pragmatica-lite:<artifact>:<version> coordinate, and every pragmatica*.version property in this repository is compared against it.",
-    "version": "1.0.0-rc3",
+    "version": "1.0.0-rc4",
     "artifacts": [
       "core"
     ],
@@ -11,7 +11,7 @@
     "moved_from": "1.0.0-rc1",
     "why": "Central published 1.0.0-rc3 on 2026-09-02 (lastUpdated 20260902212949) and the repository declared 1.0.0-rc1. Under the single-field declaration this bump was blocked, because it would also have moved two chapter headers and two agent descriptions that assert what somebody read. Split apart, the coordinate axis has no such cost and no such judgement: it now agrees with Central."
   },
-  "pinned": "1.0.0-rc3",
+  "pinned": "1.0.0-rc4",
   "_pinned": "COMPATIBILITY ALIAS, not a third opinion. website/build.js:55 reads `PIN_DECL.pinned` and that file is owned by an open pull request (#75), so the key stays until #75 lands and build.js can read depends_on.version directly. It is NOT trusted: pragmatica-pins.py --check FAILS if it differs from depends_on.version, because two keys holding one value is the same defect this split exists to remove, one level down. The site renders a dependency coordinate, so the alias mirrors depends_on and never verified_against.",
   "verified_against": {
     "_": "The version at which a human actually re-read the API surfaces a document describes. It moves only when a person does that work, and NEVER by sed: advancing the literal without the re-read fabricates a verification. It is NOT one value, and the evidence for that is in the repository rather than in this comment — see `_shape` below.",
@@ -61,13 +61,13 @@
   },
   "upstream": {
     "maven_metadata": "https://repo1.maven.org/maven2/org/pragmatica-lite/core/maven-metadata.xml",
-    "_": "The external fact the old hard-coded constant was never compared against. <release> is what Maven Central last published. Read 2026-09-11: 1.0.0-rc3, lastUpdated 20260902212949 — unchanged since the 2026-09-09 reading. This axis compares Central against depends_on ONLY. It has nothing to say about verified_against, which is a claim about human work and can never be settled by a repository probe: an upstream release does not re-read anything.",
+    "_": "The external fact the old hard-coded constant was never compared against. <release> is what Maven Central last published. Read 2026-10-21: 1.0.0-rc4, lastUpdated 20261018034300 (previously 1.0.0-rc3, read 2026-09-11). This axis compares Central against depends_on ONLY. It has nothing to say about verified_against, which is a claim about human work and can never be settled by a repository probe: an upstream release does not re-read anything.",
     "_known_behind_removed": "The known_behind deferral is DELETED, per the instruction it carried ('Delete this key when the pin moves — with it gone the check fails until declaration and Central agree'). depends_on and Central now both read 1.0.0-rc3, so the axis is green on agreement rather than on an exception, and it goes red the day Central publishes rc4."
   },
   "known_versions": {
     "_": "Every version org.pragmatica-lite:core has published, read from maven_metadata. It bounds the safety net: an UNATTRIBUTED literal is only worth a human's classification when Pragmatica has really shipped that version. Without it the check demands entries for all 111 book versions, POM model versions and URL fragments in the tree, and an inventory that size gets routed around rather than maintained. Refresh it in the same PR that moves depends_on — note that plain 1.0.0 is NOT yet a published version, so a GA release must add it here.",
-    "read_at": "2026-09-11",
-    "_read_at": "Re-read in full on 2026-09-11: 38 <version> entries, byte-identical to the 2026-09-09 list. The date moved; the list did not.",
+    "read_at": "2026-10-21",
+    "_read_at": "Re-read in full on 2026-10-21: 39 <version> entries, the 38 of the 2026-09-11 list plus 1.0.0-rc4.",
     "versions": [
       "0.8.0",
       "0.8.1",
@@ -106,7 +106,8 @@
       "0.25.0",
       "1.0.0-rc1",
       "1.0.0-rc2",
-      "1.0.0-rc3"
+      "1.0.0-rc3",
+      "1.0.0-rc4"
     ]
   },
   "space": {
@@ -129,7 +130,7 @@
   "field_assignment": [
     {
       "path": "website/data/jbct-rules.json",
-      "match": "pragmaticalabs/pragmatica@v1.0.0-rc3",
+      "match": "pragmaticalabs/pragmatica@v1.0.0-rc4",
       "field": "depends_on",
       "count": 1,
       "since": "2026-09-27",
@@ -201,15 +202,15 @@
     },
     {
       "path": "book/error-handling.md",
-      "match": "At Pragmatica 1.0.0-rc3 `Cause.Wrapped`",
+      "match": "At Pragmatica 1.0.0-rc4 `Cause.Wrapped`",
       "field": "depends_on",
       "count": 1,
       "since": "2026-10-09",
-      "why": "A behaviour statement about the declared release, read from Core source at tag v1.0.0-rc3 (Cause.java: Wrapped derives source() only; no isTransient() exists at that tag). It is depends_on so the next bump FAILS here: rc4 adds Cause.Transient/isTransient(), and a planned Core change (owner, 2026-10-09) makes Wrapped delegate classification to its origin, either of which falsifies the sentence. Re-read Cause.java at the new tag and rewrite the sentence; never move the literal alone."
+      "why": "A behaviour statement about the declared release. Re-read at tag v1.0.0-rc4 on 2026-10-21 (Cause.java: Wrapped still derives source() only and delegates neither isTerminal() nor isTransient(), which rc4 added), so the sentence was rewritten to name both classifications, not merely re-dated; first read at v1.0.0-rc3 on 2026-10-09. It stays depends_on so the next bump FAILS here: a planned Core change (owner, 2026-10-09) makes Wrapped delegate classification to its origin, which falsifies the sentence. Re-read Cause.java at the new tag and rewrite the sentence; never move the literal alone."
     },
     {
       "path": "ai-tools/skills/jbct/SKILL.md",
-      "match": "At Pragmatica 1.0.0-rc3 `Cause.Wrapped`",
+      "match": "At Pragmatica 1.0.0-rc4 `Cause.Wrapped`",
       "field": "depends_on",
       "count": 1,
       "since": "2026-10-09",
@@ -217,7 +218,7 @@
     },
     {
       "path": "ai-tools/agents/jbct-coder.md",
-      "match": "At Pragmatica 1.0.0-rc3 `Cause.Wrapped`",
+      "match": "At Pragmatica 1.0.0-rc4 `Cause.Wrapped`",
       "field": "depends_on",
       "count": 1,
       "since": "2026-10-09",
@@ -225,15 +226,15 @@
     },
     {
       "path": "book/error-handling.md",
-      "match": "At Pragmatica 1.0.0-rc3 the linter's `JBCT-CAUSE-04`",
+      "match": "At Pragmatica 1.0.0-rc4 the linter's `JBCT-CAUSE-04`",
       "field": "depends_on",
       "count": 1,
       "since": "2026-10-10",
-      "why": "Read from CstCauseFactoryArityRule at tag v1.0.0-rc3: the arity equation counts origin, so a carry-don't-print wrapper template is flagged. Owner ruled 2026-10-10 that the linter will exempt a Cause.Wrapped origin; the next bump must fail here so the suppression advice is re-checked against the new linter and removed if the exemption shipped."
+      "why": "Read from CstCauseFactoryArityRule at tag v1.0.0-rc3, and re-read at v1.0.0-rc4 on 2026-10-21 (the file is byte-identical at both tags, blob 996abeb4): the arity equation counts origin, so a carry-don't-print wrapper template is flagged. Owner ruled 2026-10-10 that the linter will exempt a Cause.Wrapped origin; the next bump must fail here so the suppression advice is re-checked against the new linter and removed if the exemption shipped."
     },
     {
       "path": "ai-tools/skills/jbct/SKILL.md",
-      "match": "At Pragmatica 1.0.0-rc3 the linter's `JBCT-CAUSE-04`",
+      "match": "At Pragmatica 1.0.0-rc4 the linter's `JBCT-CAUSE-04`",
       "field": "depends_on",
       "count": 1,
       "since": "2026-10-10",
@@ -241,7 +242,7 @@
     },
     {
       "path": "ai-tools/agents/jbct-coder.md",
-      "match": "At Pragmatica 1.0.0-rc3 the linter's `JBCT-CAUSE-04`",
+      "match": "At Pragmatica 1.0.0-rc4 the linter's `JBCT-CAUSE-04`",
       "field": "depends_on",
       "count": 1,
       "since": "2026-10-10",

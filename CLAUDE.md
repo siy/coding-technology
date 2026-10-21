@@ -34,6 +34,13 @@ are tracked; they were untracked until 2026-07-29.
 installed by copying to `~/.claude/`, so a copy on this machine can diverge from the
 repo in both directions. `check-drift.sh` reports that.
 
+**`ai-tools/` is shipped to users.** `jbct init` and `jbct update` copy all of it into the
+user's project `.claude/` (pragmatica `AiToolsInstaller`), so only JBCT tools belong there.
+This repository's own skills (`release`, `fix-all`, `read-point-planning`) and the generic
+`code-reviewer` live privately in `oss/internal/ai-tools-internal/` (owner ruling
+2026-10-21). Pinned installs fetch at tag `ai-tools-v<jbct version>` (pragmatica #2363);
+cut it per Core release, on command, after the tools describe that release.
+
 ---
 
 ## Build and check

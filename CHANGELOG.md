@@ -13,6 +13,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+- **Internal skills and the generic agent from `ai-tools/`** (`skills/release`, `skills/fix-all`, `skills/read-point-planning`, `agents/code-reviewer.md`) — `jbct init`/`jbct update` copy all of `ai-tools/` into users' `.claude/`, so this repository's release workflow and other non-JBCT tools landed in their projects. `ai-tools/` now ships only JBCT tools: skills `jbct`, `jbct-review`, `aether-coder`; agents `jbct-coder`, `jbct-designer`, `jbct-reviewer`. The removed files moved to the private record.
+
 ### Fixed
 - **Timeout aspect that never timed out** (`ai-tools/skills/jbct/patterns/aspects.md`) — `withTimeout` raced the operation against a timeout promise with `Promise.any`, which ignores a failing input, so the timeout's failure could never win; it also called a one-argument `Promise.promise(timeout)` that does not exist. Now `operation.timeout(timeout)`. `TimeSpan.seconds(5)` (3 sites, not in core) is `TimeSpan.timeSpan(5).seconds()`.
 - **Site glossary said `Promise.all` is fail-fast** (`website/content/glossary.md`, *Aggregation* and *Fail-Fast*) — same correction as the book.

@@ -16,6 +16,7 @@
     "JBCT-CAUSE-08": ["error-handling", "defining-typed-errors"],
     "JBCT-EX-01": ["error-handling", "no-business-exceptions"],
     "JBCT-EX-02": ["systematic-application", "rules-to-check-4"],
+    "JBCT-EX-03": ["error-handling", "adapter-exceptions-the-boundary"],
     "JBCT-INJ-01": ["systematic-application", "rules-to-check-3"],
     "JBCT-LAM-01": ["basic-patterns", "single-level-of-abstraction"],
     "JBCT-LAM-02": ["systematic-application", "allowed-lambda-forms-exhaustive"],

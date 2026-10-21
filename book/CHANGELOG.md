@@ -9,6 +9,15 @@ repository root `CHANGELOG.md`.
 
 ## [Unreleased]
 
+### Changed
+- Dependency coordinates move to Pragmatica Core **1.0.0-rc4** (*Pragmatica Core Essentials*, *Appendix A*), the
+  release Maven Central last published. The API verification baseline is unchanged.
+- *Error Handling*, "Carry the origin; do not print it": both version-stamped statements re-read against Core source
+  at tag `v1.0.0-rc4` and re-dated. `JBCT-CAUSE-04` still counts `origin` (the rule is byte-identical to rc3), so the
+  suppression advice stands. `Cause.Wrapped` still delegates no classification, and rc4 adds `isTransient()`
+  alongside `isTerminal()`: a wrapper around a transient failure is not itself transient, so the sentence now names
+  both and the override returns `origin().isTransient()` as well as `origin().isTerminal()`.
+
 ### Fixed
 - `Promise.all()` was described as fail-fast in six places (*Advanced Patterns* twice, *Pragmatica Core Essentials*,
   *Appendix A*, *Appendix C* glossary twice, *Chapter Summaries*). It waits for every input and, if any fail,

@@ -13,6 +13,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **Pragmatica `depends_on` 1.0.0-rc3 -> 1.0.0-rc4** (`ai-tools/pragmatica-version.json`) — Central published rc4 on 2026-10-18 and the scheduled upstream-pin check had failed since. `known_versions` gains rc4 (39 entries, re-read 2026-10-21). Coordinates moved in `README.md`, `examples/`, `training/pom.xml`, `ai-tools/README.md`, the `jbct` skill, `jbct-reviewer`, the course and `website/content/aether.md` (release date 2026-10-17). `verified_against` is untouched. The three `field_assignment` tripwires on the wrapped-cause sentences fired as designed; both claims were re-read at `v1.0.0-rc4` before re-dating, and the entries record the re-read and stay armed. `website/data/jbct-rules.json` regenerated at `v1.0.0-rc4` (the rc3 regeneration was byte-identical first, as a control): 72 -> 73 rules, adding `JBCT-EX-03` (`catch` outside a marked JDK boundary), linked to *Error Handling*, "Adapter Exceptions: The Boundary". The rule count on the JBCT and tools pages is now 73. The two course blurbs whose chapters changed were re-asserted and re-stamped.
+
 ### Removed
 - **Internal skills and the generic agent from `ai-tools/`** (`skills/release`, `skills/fix-all`, `skills/read-point-planning`, `agents/code-reviewer.md`) — `jbct init`/`jbct update` copy all of `ai-tools/` into users' `.claude/`, so this repository's release workflow and other non-JBCT tools landed in their projects. `ai-tools/` now ships only JBCT tools: skills `jbct`, `jbct-review`, `aether-coder`; agents `jbct-coder`, `jbct-designer`, `jbct-reviewer`. The removed files moved to the private record.
 

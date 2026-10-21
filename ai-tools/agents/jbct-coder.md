@@ -234,9 +234,9 @@ Composition sites accept the fully-typed factory directly. Where only some const
 
 **Carry the origin; do not print it.** The wrapper's message template does not format `origin`. The message of the top failure is what a boundary is most likely to show a client (Aether's HTTP layer renders it as the problem `detail`), and an origin formatted into it carries store and network internals along. The origin travels as a component and is read where the chain is logged, through `source()` or `iterate`.
 
-At Pragmatica 1.0.0-rc3 the linter's `JBCT-CAUSE-04` still counts `origin` among the values a template must format, so it flags a wrapper written this way. Until the linter exempts a `Cause.Wrapped` origin, suppress that one rule on the wrapper record: `@SuppressWarnings("JBCT-CAUSE-04")`.
+At Pragmatica 1.0.0-rc4 the linter's `JBCT-CAUSE-04` still counts `origin` among the values a template must format, so it flags a wrapper written this way. Until the linter exempts a `Cause.Wrapped` origin, suppress that one rule on the wrapper record: `@SuppressWarnings("JBCT-CAUSE-04")`.
 
-Carrying the cause does not carry its retry classification. At Pragmatica 1.0.0-rc3 `Cause.Wrapped` does not hand the origin's classification to the wrapper: a wrapper around a terminal failure is not itself terminal. Where a retry facility consults the wrapper, a wrapper that should stop retrying exactly when its origin is terminal overrides `isTerminal()` to return `origin().isTerminal()`. A bare cause cannot override anything, so a failure whose classification matters is a `Wrapped` record, not `Causes.cause(text, source)`.
+Carrying the cause does not carry its retry classification. At Pragmatica 1.0.0-rc4 `Cause.Wrapped` does not hand the origin's classification to the wrapper: a wrapper around a terminal failure is not itself terminal, and a wrapper around a transient one is not itself transient. Where a retry facility consults the wrapper, a wrapper that should be classified exactly as its origin overrides `isTerminal()` to return `origin().isTerminal()` and `isTransient()` to return `origin().isTransient()`. A bare cause cannot override anything, so a failure whose classification matters is a `Wrapped` record, not `Causes.cause(text, source)`.
 <!-- /book:wrapped-terminal-causes -->
 
 <!-- book:bare-cause -->

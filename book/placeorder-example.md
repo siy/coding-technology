@@ -58,20 +58,27 @@ This chapter walks through building a complete e-commerce order placement use ca
 ## Package Structure
 
 ```
-com.example.shop.usecase.placeorder/
-  PlaceOrder.java           # Use case interface + factory
-  OrderError.java           # Sealed error interface
-  ValidOrderRequest.java    # Validated request record
-  OrderLine.java            # Validated line item
-  ReservedInventory.java    # Intermediate state
-
-com.example.shop.domain.shared/
-  CustomerId.java
-  ProductId.java
-  Quantity.java
-  Money.java
-  Address.java
-  OrderId.java
+com.example.shop/
+|-- placeorder/
+|   |-- PlaceOrder.java           # @UseCase interface: response, steps, factory
+|   |-- OrderError.java           # Sealed error interface
+|   |-- ValidOrderRequest.java    # Validated request record
+|   |-- OrderLine.java            # Validated line item
+|   |-- ReservedInventory.java    # Intermediate state
+|   |-- CheckInventory.java       # Business step with a sub-step of its own (Step 6)
+|   |-- io/                       # I/O steps that outgrew PlaceOrder.java (Step 6)
+|       |-- ProcessPayment.java
+|       |-- CreateOrder.java
+|
+|-- shared/                       # Value objects used across the shop's use cases
+|   |-- CustomerId.java
+|   |-- ProductId.java
+|   |-- Quantity.java
+|   |-- Money.java
+|   |-- Address.java
+|   |-- OrderId.java
+|-- io/
+    |-- Tables.java               # jOOQ-generated schema, used by every database step
 ```
 
 ---
@@ -81,7 +88,7 @@ com.example.shop.domain.shared/
 ### ProductId
 
 ```java
-package com.example.shop.domain.shared;
+package com.example.shop.shared;
 
 import org.pragmatica.lang.Option;
 import org.pragmatica.lang.Result;
@@ -100,7 +107,7 @@ public record ProductId(String value) {
 ### Quantity
 
 ```java
-package com.example.shop.domain.shared;
+package com.example.shop.shared;
 
 import org.pragmatica.lang.Result;
 import org.pragmatica.lang.Cause;
@@ -126,7 +133,7 @@ public record Quantity(int value) {
 ### Money
 
 ```java
-package com.example.shop.domain.shared;
+package com.example.shop.shared;
 
 import org.pragmatica.lang.Option;
 import org.pragmatica.lang.Result;
@@ -172,7 +179,7 @@ public record Money(BigDecimal value) {
 ### Address
 
 ```java
-package com.example.shop.domain.shared;
+package com.example.shop.shared;
 
 import org.pragmatica.lang.Result;
 import org.pragmatica.lang.Cause;
@@ -211,14 +218,14 @@ public record Address(
 ## Step 2: Error Types
 
 ```java
-package com.example.shop.usecase.placeorder;
+package com.example.shop.placeorder;
 
 import org.pragmatica.lang.Cause;
 import org.pragmatica.lang.Functions.Fn1;
 import org.pragmatica.lang.Functions.Fn3;
 import org.pragmatica.lang.utils.Causes;
-import com.example.shop.domain.shared.ProductId;
-import com.example.shop.domain.shared.Quantity;
+import com.example.shop.shared.ProductId;
+import com.example.shop.shared.Quantity;
 
 import java.util.List;
 
@@ -253,22 +260,22 @@ public sealed interface OrderError extends Cause {
     }
 
     record PaymentFailed(Cause origin, String message) implements OrderError, Cause.Wrapped {
-        static final Fn1<PaymentFailed, Cause> FACTORY =
+        public static final Fn1<PaymentFailed, Cause> FACTORY =
             Causes.forOneValue("Payment processing failed", PaymentFailed::new);
     }
 
     record PaymentDeclined(Cause origin, String message) implements OrderError, Cause.Wrapped {
-        static final Fn1<PaymentDeclined, Cause> FACTORY =
+        public static final Fn1<PaymentDeclined, Cause> FACTORY =
             Causes.forOneValue("Payment was declined", PaymentDeclined::new);
     }
 
     record PaymentTimedOut(Cause origin, String message) implements OrderError, Cause.Wrapped {
-        static final Fn1<PaymentTimedOut, Cause> FACTORY =
+        public static final Fn1<PaymentTimedOut, Cause> FACTORY =
             Causes.forOneValue("Payment service timed out", PaymentTimedOut::new);
     }
 
     record OrderNotSaved(Cause origin, String message) implements OrderError, Cause.Wrapped {
-        static final Fn1<OrderNotSaved, Cause> FACTORY =
+        public static final Fn1<OrderNotSaved, Cause> FACTORY =
             Causes.forOneValue("Failed to save order", OrderNotSaved::new);
     }
 }
@@ -281,7 +288,7 @@ public sealed interface OrderError extends Cause {
 ### Raw Request (from API)
 
 ```java
-package com.example.shop.usecase.placeorder;
+package com.example.shop.placeorder;
 
 import java.util.List;
 
@@ -298,11 +305,11 @@ public record OrderRequest(
 ### Validated Order Line
 
 ```java
-package com.example.shop.usecase.placeorder;
+package com.example.shop.placeorder;
 
 import org.pragmatica.lang.Result;
-import com.example.shop.domain.shared.ProductId;
-import com.example.shop.domain.shared.Quantity;
+import com.example.shop.shared.ProductId;
+import com.example.shop.shared.Quantity;
 
 public record OrderLine(ProductId productId, Quantity quantity) {
 
@@ -318,13 +325,13 @@ public record OrderLine(ProductId productId, Quantity quantity) {
 ### Validated Request
 
 ```java
-package com.example.shop.usecase.placeorder;
+package com.example.shop.placeorder;
 
 import org.pragmatica.lang.Result;
 import org.pragmatica.lang.Cause;
 import org.pragmatica.lang.utils.Causes;
-import com.example.shop.domain.shared.CustomerId;
-import com.example.shop.domain.shared.Address;
+import com.example.shop.shared.CustomerId;
+import com.example.shop.shared.Address;
 
 import java.util.List;
 
@@ -366,14 +373,18 @@ public record ValidOrderRequest(
 
 ## Step 4: Step Interfaces
 
+Every step starts as an interface nested in the use case, implemented by its own static
+factory (Step 6). Three of them outgrow this file in Step 6 and move out unchanged.
+
 ```java
-package com.example.shop.usecase.placeorder;
+package com.example.shop.placeorder;
 
 import org.pragmatica.lang.Promise;
 import org.pragmatica.lang.Result;
-import com.example.shop.domain.shared.OrderId;
-import com.example.shop.domain.shared.Money;
+import com.example.shop.shared.OrderId;
+import com.example.shop.shared.Money;
 
+@UseCase
 public interface PlaceOrder {
 
     record Response(OrderId orderId, Money total) {}
@@ -471,7 +482,7 @@ public interface PlaceOrder {
 ### ReservedInventory
 
 ```java
-package com.example.shop.usecase.placeorder;
+package com.example.shop.placeorder;
 
 import java.time.Instant;
 import java.util.List;
@@ -488,7 +499,7 @@ public record ReservedInventory(
 ### PaymentConfirmation
 
 ```java
-package com.example.shop.usecase.placeorder;
+package com.example.shop.placeorder;
 
 import java.time.Instant;
 
@@ -501,14 +512,14 @@ public record PaymentConfirmation(
 ### PriceCalculator
 
 The only leaf in this use case with a decision space worth counting. Everything else here
-either validates one field or calls one adapter; this one combines three independent rules
+either validates one field or calls one I/O step; this one combines three independent rules
 and has to resolve what happens when two of them apply at once.
 
 ```java
-package com.example.shop.usecase.placeorder;
+package com.example.shop.placeorder;
 
-import com.example.shop.domain.shared.Money;
-import com.example.shop.domain.shared.ProductId;
+import com.example.shop.shared.Money;
+import com.example.shop.shared.ProductId;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -529,14 +540,14 @@ public interface PriceCalculator {
 
     static PriceCalculator priceCalculator(PriceList prices) {
         return request -> {
-            var subtotal = request.lines()
+            var subtotal = request.items()
                                   .stream()
                                   .map(line -> prices.unitPrice(line.productId())
                                                      .multiply(line.quantity().value()))
                                   .reduce(Money.ZERO, Money::add)
                                   .value();
 
-            var itemCount = request.lines()
+            var itemCount = request.items()
                                    .stream()
                                    .mapToInt(line -> line.quantity().value())
                                    .sum();
@@ -555,7 +566,7 @@ public interface PriceCalculator {
             var discounted = subtotal.multiply(BigDecimal.ONE.subtract(volumeRate.max(valueRate)));
 
             // Rule 4: shipping, decided after the discount.
-            var oversized = request.lines()
+            var oversized = request.items()
                                    .stream()
                                    .anyMatch(line -> prices.isOversized(line.productId()));
             var shipping = oversized                                          ? OVERSIZED_SHIPPING.value()
@@ -580,40 +591,54 @@ short of eighteen. Neither instrument sees the space.
 
 ## Step 6: Step Implementations
 
+Each step's static factory is its implementation. Three steps carry more than
+`PlaceOrder.java` holds comfortably, so each moves out of it unchanged: the same interface,
+now a top-level type with its factory. `CheckInventory` has a sub-step of its own, so it goes
+to its own file in the use case package; `ProcessPayment` and `CreateOrder` are I/O leaves
+with helpers and imports of their own, so they go to `placeorder/io/`. `PlaceOrder.java`
+drops the three nested declarations and gains two imports; the `placeOrder` factory keeps
+the same parameter types.
+
 ### CheckInventory (Fork-Join Pattern)
 
-```java
-package com.example.shop.adapter.inventory;
+Deciding that an order cannot proceed is a business rule, so the Fork-Join is business
+code. The only I/O is one stock lookup per line, and that leaf is the nested `LoadStock`.
 
+```java
+package com.example.shop.placeorder;
+
+import org.pragmatica.lang.Cause;
 import org.pragmatica.lang.Promise;
-import com.example.shop.usecase.placeorder.PlaceOrder.CheckInventory;
-import com.example.shop.usecase.placeorder.ValidOrderRequest;
-import com.example.shop.usecase.placeorder.OrderLine;
-import com.example.shop.usecase.placeorder.OrderError;
-import com.example.shop.domain.shared.ProductId;
+import org.pragmatica.lang.Result;
+import com.example.shop.shared.ProductId;
+import com.example.shop.shared.Quantity;
 
 import java.util.List;
+import java.util.stream.Stream;
 
-public class InventoryChecker implements CheckInventory {
-    private final InventoryClient inventoryClient;
+public interface CheckInventory {
+    Promise<ValidOrderRequest> apply(ValidOrderRequest request);
 
-    public InventoryChecker(InventoryClient inventoryClient) {
-        this.inventoryClient = inventoryClient;
+    // I/O leaf: available stock for one product
+    interface LoadStock {
+        Promise<Quantity> apply(ProductId productId);
+
+        // InventoryApi is the inventory service's SDK; it appears only here
+        static LoadStock loadStock(InventoryApi inventory) {
+            return inventory::getAvailable;
+        }
     }
 
-    @Override
-    public Promise<ValidOrderRequest> apply(ValidOrderRequest request) {
+    static CheckInventory checkInventory(LoadStock loadStock) {
         // Check all items in parallel (Fork-Join)
-        var checks = request.items().stream()
-            .map(this::checkItem)
-            .toList();
-
-        return Promise.allOf(checks)
+        return request -> Promise.allOf(request.items().stream()
+                                               .map(line -> checkItem(loadStock, line))
+                                               .toList())
             .flatMap(results -> aggregateResults(results, request));
     }
 
-    private Promise<OrderLine> checkItem(OrderLine line) {
-        return inventoryClient.getAvailable(line.productId())
+    private static Promise<OrderLine> checkItem(LoadStock loadStock, OrderLine line) {
+        return loadStock.apply(line.productId())
             .flatMap(available -> available.value() >= line.quantity().value()
                 ? Promise.success(line)
                 : OrderError.InvalidQuantity.FACTORY.apply(
@@ -623,13 +648,12 @@ public class InventoryChecker implements CheckInventory {
                   ).promise());
     }
 
-    private Promise<ValidOrderRequest> aggregateResults(
+    private static Promise<ValidOrderRequest> aggregateResults(
         List<Result<OrderLine>> results,
         ValidOrderRequest request
     ) {
         var failures = results.stream()
-            .filter(Result::isFailure)
-            .map(r -> r.cause())
+            .flatMap(r -> r.fold(cause -> Stream.of(cause), _ -> Stream.<Cause>empty()))
             .toList();
 
         if (failures.isEmpty()) {
@@ -649,37 +673,32 @@ public class InventoryChecker implements CheckInventory {
 ### ProcessPayment (Leaf with Error Mapping)
 
 ```java
-package com.example.shop.adapter.payment;
+package com.example.shop.placeorder.io;
 
 import org.pragmatica.lang.Cause;
 import org.pragmatica.lang.Promise;
 import org.pragmatica.lang.utils.Causes;
-import com.example.shop.usecase.placeorder.PlaceOrder.ProcessPayment;
-import com.example.shop.usecase.placeorder.ReservedInventory;
-import com.example.shop.usecase.placeorder.PaymentConfirmation;
-import com.example.shop.usecase.placeorder.OrderError;
-import com.example.shop.domain.shared.Money;
+import com.example.shop.placeorder.ReservedInventory;
+import com.example.shop.placeorder.PaymentConfirmation;
+import com.example.shop.placeorder.OrderError;
+import com.example.shop.shared.Money;
 
 import java.time.Instant;
 import java.util.concurrent.TimeoutException;
 
-public class PaymentProcessor implements ProcessPayment {
-    private final PaymentGateway gateway;
+public interface ProcessPayment {
+    Promise<PaymentConfirmation> apply(ReservedInventory reservation, Money total);
 
-    public PaymentProcessor(PaymentGateway gateway) {
-        this.gateway = gateway;
-    }
-
-    @Override
-    public Promise<PaymentConfirmation> apply(ReservedInventory reservation, Money total) {
-        return Promise.lift(
-            this::mapPaymentError,
-            () -> gateway.charge(total.value())
+    // PaymentsApi is the payment provider's SDK; it appears only here
+    static ProcessPayment processPayment(PaymentsApi payments) {
+        return (reservation, total) -> Promise.lift(
+            ProcessPayment::mapPaymentError,
+            () -> payments.charge(total.value())
         ).map(txId -> new PaymentConfirmation(txId, Instant.now()));
     }
 
     // Every branch carries the exception: the classification is a choice of wrapper, never a replacement
-    private Cause mapPaymentError(Throwable t) {
+    private static Cause mapPaymentError(Throwable t) {
         var origin = Causes.fromThrowable(t);
 
         if (t instanceof TimeoutException) {
@@ -691,7 +710,7 @@ public class PaymentProcessor implements ProcessPayment {
         return OrderError.PaymentFailed.FACTORY.apply(origin);
     }
 
-    private boolean isDeclined(Throwable t) {
+    private static boolean isDeclined(Throwable t) {
         return t.getMessage() != null && t.getMessage().contains("declined");
     }
 }
@@ -700,54 +719,66 @@ public class PaymentProcessor implements ProcessPayment {
 ### CreateOrder (Leaf - Database)
 
 ```java
-package com.example.shop.adapter.persistence;
+package com.example.shop.placeorder.io;
 
 import org.pragmatica.lang.Promise;
+import org.pragmatica.lang.utils.Causes;
 import org.jooq.DSLContext;
-import com.example.shop.usecase.placeorder.PlaceOrder.CreateOrder;
-import com.example.shop.usecase.placeorder.ReservedInventory;
-import com.example.shop.usecase.placeorder.PaymentConfirmation;
-import com.example.shop.usecase.placeorder.OrderError;
-import com.example.shop.domain.shared.OrderId;
+import com.example.shop.placeorder.ReservedInventory;
+import com.example.shop.placeorder.PaymentConfirmation;
+import com.example.shop.placeorder.OrderError;
+import com.example.shop.shared.OrderId;
 
 import java.util.UUID;
 
-import static com.example.shop.adapter.persistence.Tables.*;
+import static com.example.shop.io.Tables.*;
 
-public class JooqOrderRepository implements CreateOrder {
-    private final DSLContext dsl;
+public interface CreateOrder {
+    Promise<OrderId> apply(ReservedInventory reservation, PaymentConfirmation payment);
 
-    public JooqOrderRepository(DSLContext dsl) {
-        this.dsl = dsl;
-    }
-
-    @Override
-    public Promise<OrderId> apply(ReservedInventory reservation, PaymentConfirmation payment) {
-        return Promise.lift(
+    static CreateOrder createOrder(DSLContext dsl) {
+        return (reservation, payment) -> Promise.lift(
             t -> OrderError.OrderNotSaved.FACTORY.apply(Causes.fromThrowable(t)),
-            () -> {
-                var orderId = UUID.randomUUID().toString();
-
-                dsl.insertInto(ORDERS)
-                    .set(ORDERS.ID, orderId)
-                    .set(ORDERS.RESERVATION_ID, reservation.reservationId())
-                    .set(ORDERS.PAYMENT_TX_ID, payment.transactionId())
-                    .set(ORDERS.STATUS, "CONFIRMED")
-                    .execute();
-
-                for (var item : reservation.items()) {
-                    dsl.insertInto(ORDER_ITEMS)
-                        .set(ORDER_ITEMS.ORDER_ID, orderId)
-                        .set(ORDER_ITEMS.PRODUCT_ID, item.productId())
-                        .set(ORDER_ITEMS.QUANTITY, item.quantity())
-                        .execute();
-                }
-
-                return new OrderId(orderId);
-            }
+            () -> insertOrder(dsl, reservation, payment)
         );
     }
+
+    private static OrderId insertOrder(DSLContext dsl,
+                                       ReservedInventory reservation,
+                                       PaymentConfirmation payment) {
+        var orderId = UUID.randomUUID().toString();
+
+        dsl.insertInto(ORDERS)
+            .set(ORDERS.ID, orderId)
+            .set(ORDERS.RESERVATION_ID, reservation.reservationId())
+            .set(ORDERS.PAYMENT_TX_ID, payment.transactionId())
+            .set(ORDERS.STATUS, "CONFIRMED")
+            .execute();
+
+        for (var item : reservation.items()) {
+            dsl.insertInto(ORDER_ITEMS)
+                .set(ORDER_ITEMS.ORDER_ID, orderId)
+                .set(ORDER_ITEMS.PRODUCT_ID, item.productId())
+                .set(ORDER_ITEMS.QUANTITY, item.quantity())
+                .execute();
+        }
+
+        return new OrderId(orderId);
+    }
 }
+```
+
+In a plain Java program, assembly calls the factories at the root; otherwise the runtime
+generates it. `reserveInventory`, `sendConfirmation` and `releaseInventory` stand for the
+factory calls of the steps this chapter does not implement:
+
+```java
+var placeOrder = PlaceOrder.placeOrder(
+    CheckInventory.checkInventory(CheckInventory.LoadStock.loadStock(inventory)),
+    reserveInventory, ProcessPayment.processPayment(payments),
+    CreateOrder.createOrder(dsl), sendConfirmation, releaseInventory,
+    PriceCalculator.priceCalculator(prices)
+);
 ```
 
 ---
@@ -866,7 +897,7 @@ fact about the chain, so it needs exactly one test in `PlaceOrderTest` -- and it
 void execute_chargesTheCalculatedTotal() {
     var charged = new AtomicReference<Money>();
 
-    PlaceOrder.ProcessPayment processPayment = (reserved, total) -> {
+    ProcessPayment processPayment = (reserved, total) -> {
         charged.set(total);
         return Promise.success(new PaymentConfirmation("tx-456", Instant.now()));
     };
@@ -890,49 +921,50 @@ address, and an `await()` -- roughly fourteen lines against one row in a table. 
 those is about two hundred lines that assemble the whole use case to check a multiplication,
 and every failure reports "PlaceOrder failed" rather than naming the rule that broke.
 
-### Adapter Contract Tests
+### I/O Step Contract Tests
 
-Every stub above is an assumption about a boundary. `checkInventory` returning
-`Promise.success` asserts that the real `InventoryChecker` succeeds that way, and nothing
-in the use case tests checks it. **That is what adapter contract tests are for, and a suite
-without them is a suite whose stubs nobody has verified.**
+Every stub above is an assumption about a boundary. `processPayment` returning
+`Promise.success` asserts that the real `ProcessPayment.processPayment` succeeds that way, and
+nothing in the use case tests checks it. **That is what contract tests of I/O steps are for,
+and a suite without them is a suite whose stubs nobody has verified.**
 
-Adapters get success and error modes -- not thirty repetitions of the happy path:
+I/O steps get success and error modes -- not thirty repetitions of the happy path:
 
 ```java
-class InventoryCheckerTest {
+class ProcessPaymentTest {
     @Test
-    void apply_succeeds_whenAllItemsInStock() {
-        var checker = new InventoryChecker(stockOf(PRODUCT, 10));
+    void apply_succeeds_whenTheChargeGoesThrough() {
+        var processPayment = ProcessPayment.processPayment(charging("tx-456"));
 
-        checker.apply(requestFor(PRODUCT, 2))
-               .await()
-               .onFailure(Assertions::fail);
+        processPayment.apply(RESERVATION, TOTAL)
+                      .await()
+                      .onFailure(Assertions::fail);
     }
 
     @Test
-    void apply_fails_whenAnItemIsOutOfStock() {
-        var checker = new InventoryChecker(stockOf(PRODUCT, 1));
+    void apply_fails_whenTheCardIsDeclined() {
+        var processPayment = ProcessPayment.processPayment(failingWith(new IllegalStateException("card declined")));
 
-        checker.apply(requestFor(PRODUCT, 2))
-               .await()
-               .onSuccess(Assertions::fail);
+        processPayment.apply(RESERVATION, TOTAL)
+                      .await()
+                      .onSuccess(Assertions::fail)
+                      .onFailure(cause -> assertInstanceOf(OrderError.PaymentDeclined.class, cause));
     }
 
     @Test
-    void apply_wrapsTheFailure_whenTheInventoryServiceIsDown() {
-        var checker = new InventoryChecker(failingClient(new IOException("connection reset")));
+    void apply_wrapsTheFailure_whenThePaymentServiceTimesOut() {
+        var processPayment = ProcessPayment.processPayment(failingWith(new TimeoutException("no response")));
 
-        checker.apply(requestFor(PRODUCT, 2))
-               .await()
-               .onSuccess(Assertions::fail)
-               .onFailure(cause -> assertInstanceOf(OrderError.InsufficientInventory.class, cause));
+        processPayment.apply(RESERVATION, TOTAL)
+                      .await()
+                      .onSuccess(Assertions::fail)
+                      .onFailure(cause -> assertInstanceOf(OrderError.PaymentTimedOut.class, cause));
     }
 }
 ```
 
-The third one matters most: it pins the translation from an exception at the boundary to a
-typed failure inside the domain. That translation is the adapter's entire job, and it is
+The error modes matter most: they pin the translation from an exception at the boundary to a
+typed failure inside the business code. That translation is the I/O step's entire job, and it is
 the one thing no use case test can reach.
 
 ### Use Case Integration Test
@@ -944,14 +976,14 @@ class PlaceOrderTest {
     @BeforeEach
     void setup() {
         // All stubs - happy path
-        PlaceOrder.CheckInventory checkInventory = req -> Promise.success(req);
+        CheckInventory checkInventory = req -> Promise.success(req);
         PlaceOrder.ReserveInventory reserveInventory = req -> Promise.success(
             new ReservedInventory("res-123", List.of(), Instant.now().plusMinutes(15))
         );
-        PlaceOrder.ProcessPayment processPayment = (res, total) -> Promise.success(
+        ProcessPayment processPayment = (res, total) -> Promise.success(
             new PaymentConfirmation("tx-456", Instant.now())
         );
-        PlaceOrder.CreateOrder createOrder = (res, pay) -> Promise.success(
+        CreateOrder createOrder = (res, pay) -> Promise.success(
             new OrderId("order-789")
         );
         PlaceOrder.SendConfirmation sendConfirmation = (id, req) -> Promise.success(null);
@@ -1005,7 +1037,7 @@ class PlaceOrderTest {
     class StepFailures {
         @Test
         void execute_fails_whenInventoryInsufficient() {
-            PlaceOrder.CheckInventory failingCheck = req ->
+            CheckInventory failingCheck = req ->
                 OrderError.InsufficientInventory.FACTORY.apply(List.of()).promise();
 
             var failingUseCase = PlaceOrder.placeOrder(
@@ -1024,7 +1056,7 @@ class PlaceOrderTest {
             PlaceOrder.ReserveInventory reserveInventory = req -> Promise.success(
                 new ReservedInventory("res-123", List.of(), Instant.now().plusMinutes(15))
             );
-            PlaceOrder.ProcessPayment failingPayment = (res, total) ->
+            ProcessPayment failingPayment = (res, total) ->
                 OrderError.PaymentDeclined.FACTORY.apply(Causes.cause("Card declined")).promise();
             PlaceOrder.ReleaseInventory releaseInventory = res -> {
                 released.set(true);
@@ -1069,7 +1101,7 @@ class PlaceOrderTest {
 |---------|------------|---------|
 | Fork-Join | ValidOrderRequest, CheckInventory | Parallel field validation, parallel inventory checks |
 | Sequencer | Main flow | Reserve -> Pay -> Create |
-| Leaf | ProcessPayment, CreateOrder | Single I/O operations |
+| Leaf | LoadStock, ProcessPayment, CreateOrder | Single I/O operations |
 | Condition | Error mapping in ProcessPayment | Route to specific error types |
 | Aspects | SendConfirmation | Best-effort with failure tolerance |
 
@@ -1109,6 +1141,6 @@ PlaceOrder demonstrates:
 - **Sequencer with compensation** - Reserve -> Pay -> Create with rollback on failure
 - **Error type hierarchy** - Grouped enum for fixed messages, records for data-carrying errors
 - **Best-effort operations** - Notification doesn't fail the order
-- **Adapter isolation** - All external calls wrapped in Promise.lift
+- **I/O isolation** - All external calls live in I/O step factories, exceptions lifted into typed causes
 
 The pattern composition remains simple despite the complex business requirements. Each step is independently testable, and the compensation logic is explicit rather than hidden in catch blocks.

@@ -125,6 +125,7 @@ public record ValidArticle(
 ## Use Case with Condition Pattern
 
 ```java
+@UseCase
 public interface PublishArticle {
 
     Promise<PublishResult> execute(ArticleRequest request);

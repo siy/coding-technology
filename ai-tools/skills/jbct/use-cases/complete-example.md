@@ -4,28 +4,28 @@ Complete walkthrough of implementing a user registration use case from start to 
 
 ## Requirements
 
-- Accept email and password
-- Validate email format and password strength
+- Accept email, password and an optional referral code
+- Validate email format, password strength and referral code
 - Check email not already registered
-- Hash password
+- Create the user with a hashed password
 - Save user to database
-- Send confirmation email
+- Generate a confirmation token
 - Return user ID and confirmation token
 
 ## Step 1: Define Use Case Interface
 
 ```java
-package com.example.usecase.registeruser;
+package com.example.app.registeruser;
 
-import org.pragmatica.result.Result;
-import org.pragmatica.promise.Promise;
+import org.pragmatica.lang.Promise;
+import org.pragmatica.lang.Result;
 
-public interface RegisterUser extends UseCase.WithPromise<Response, Request> {
-    record Request(String email, String password) {}
+@UseCase
+public interface RegisterUser {
+    record Request(String email, String password, String referralCode) {}
 
-    record Response(String userId, String confirmationToken) {}
+    record Response(UserId userId, ConfirmationToken token) {}
 
-    @Override
     Promise<Response> execute(Request request);
 }
 ```
@@ -35,7 +35,7 @@ public interface RegisterUser extends UseCase.WithPromise<Response, Request> {
 ### Email
 
 ```java
-package com.example.domain.shared;
+package com.example.app.shared;
 
 public record Email(String value) {
     private static final Pattern EMAIL_PATTERN =
@@ -56,7 +56,7 @@ public record Email(String value) {
 ### Password
 
 ```java
-package com.example.domain.shared;
+package com.example.app.shared;
 
 public record Password(String value) {
     private static final int MIN_LENGTH = 8;
@@ -84,7 +84,7 @@ public record Password(String value) {
 ### UserId
 
 ```java
-package com.example.domain.shared;
+package com.example.app.shared;
 
 import org.pragmatica.lang.parse.Network;
 
@@ -103,13 +103,15 @@ public record UserId(UUID value) {
 ## Step 3: Create ValidRequest
 
 ```java
-public interface RegisterUser extends UseCase.WithPromise<Response, Request> {
+@UseCase
+public interface RegisterUser {
     // ... Request, Response ...
 
-    record ValidRequest(Email email, Password password) {
+    record ValidRequest(Email email, Password password, Option<ReferralCode> referralCode) {
         static Result<ValidRequest> validRequest(Request raw) {
             return Result.all(Email.email(raw.email()),
-                             Password.password(raw.password()))
+                              Password.password(raw.password()),
+                              ReferralCode.referralCode(raw.referralCode()))
                          .map(ValidRequest::new);
         }
     }
@@ -119,23 +121,24 @@ public interface RegisterUser extends UseCase.WithPromise<Response, Request> {
 ## Step 4: Define Steps
 
 ```java
-public interface RegisterUser extends UseCase.WithPromise<Response, Request> {
+@UseCase
+public interface RegisterUser {
     // ... records ...
 
-    interface CheckEmailAvailability {
+    interface CheckEmailUniqueness {
         Promise<ValidRequest> apply(ValidRequest valid);
     }
 
-    interface HashPassword {
-        Promise<HashedPassword> apply(Password password);
+    interface CreateValidUser {
+        Promise<ValidUser> apply(ValidRequest valid);
     }
 
     interface SaveUser {
-        Promise<User> apply(Email email, HashedPassword hashed);
+        Promise<User> apply(ValidUser validUser);
     }
 
-    interface SendConfirmationEmail {
-        Promise<ConfirmationToken> apply(User user);
+    interface GenerateToken {
+        Promise<Response> apply(User user);
     }
 }
 ```
@@ -143,248 +146,197 @@ public interface RegisterUser extends UseCase.WithPromise<Response, Request> {
 ## Step 5: Implement Factory Method
 
 ```java
-public interface RegisterUser extends UseCase.WithPromise<Response, Request> {
+@UseCase
+public interface RegisterUser {
     // ... all records and interfaces ...
 
-    static RegisterUser registerUser(
-        CheckEmailAvailability checkEmail,
-        HashPassword hashPassword,
-        SaveUser saveUser,
-        SendConfirmationEmail sendEmail
-    ) {
+    static RegisterUser registerUser(CheckEmailUniqueness checkEmail,
+                                     CreateValidUser createValidUser,
+                                     SaveUser saveUser,
+                                     GenerateToken generateToken) {
         return request -> ValidRequest.validRequest(request)
-            .async()
-            .flatMap(checkEmail::apply)
-            .flatMap(valid ->
-                hashPassword.apply(valid.password())
-                    .flatMap(hashed -> saveUser.apply(valid.email(), hashed))
-            )
-            .flatMap(sendEmail::apply)
-            .map(token -> new Response(
-                user.id().value().toString(),
-                token.value()
-            ));
+                                      .async()
+                                      .flatMap(checkEmail::apply)
+                                      .flatMap(createValidUser::apply)
+                                      .flatMap(saveUser::apply)
+                                      .flatMap(generateToken::apply);
     }
 }
 ```
 
-## Step 6: Implement Adapters
+## Step 6: Implement the Step Factories
 
-### CheckEmailAvailability
+Each step's static factory is its implementation. An I/O step's factory takes the infrastructure and implements the step with a lambda; the library types and `lift` appear only inside these factories, and the use case's factory above never sees them. Where a step needs both a lookup and a decision, the lookup is a nested I/O leaf and the decision stays in the step's business code.
 
 ```java
-package com.example.adapter.persistence;
+@UseCase
+public interface RegisterUser {
+    // ... records, execute, factory ...
 
-public class CheckEmailAvailabilityAdapter implements RegisterUser.CheckEmailAvailability {
-    private final UserRepository userRepository;
+    interface CheckEmailUniqueness {
+        Promise<ValidRequest> apply(ValidRequest valid);
 
-    public CheckEmailAvailabilityAdapter(UserRepository userRepository) {
-        this.userRepository = userRepository;
-    }
+        interface FindUser {
+            Promise<Option<User>> apply(Email email);
 
-    @Override
-    public Promise<ValidRequest> apply(ValidRequest valid) {
-        return Promise.lift(
-            DatabaseError::cause,
-            () -> {
-                if (userRepository.existsByEmail(valid.email().value())) {
-                    throw new EmailAlreadyExistsException();
-                }
-                return valid;
+            static FindUser findUser(DSLContext dsl) {
+                return email -> Promise.lift(t -> RegistrationError.DatabaseFailure.FACTORY.apply(Causes.fromThrowable(t)),
+                                             () -> dsl.selectFrom(USERS)
+                                                      .where(USERS.EMAIL.eq(email.value()))
+                                                      .fetchOptional()
+                                                      .map(FindUser::toUser))
+                                   .map(Option::from);
             }
-        );
+        }
+
+        static CheckEmailUniqueness checkEmailUniqueness(FindUser findUser) {
+            return valid -> findUser.apply(valid.email())
+                                    .flatMap(user -> checkPresence(user, valid));
+        }
+
+        static Promise<ValidRequest> checkPresence(Option<User> user, ValidRequest valid) {
+            return user.isPresent()
+                   ? RegistrationError.General.EMAIL_ALREADY_REGISTERED.promise()
+                   : Promise.success(valid);
+        }
     }
 
-    public static CheckEmailAvailability checkEmail(UserRepository repo) {
-        return new CheckEmailAvailabilityAdapter(repo);
+    interface CreateValidUser {
+        Promise<ValidUser> apply(ValidRequest valid);
+
+        interface HashPassword {
+            Result<HashedPassword> apply(Password password);
+
+            static HashPassword hashPassword(BCryptPasswordEncoder encoder) {
+                return password -> Result.lift1(t -> RegistrationError.PasswordHashingFailed.FACTORY.apply(Causes.fromThrowable(t)),
+                                                encoder::encode,
+                                                password.value())
+                                         .map(HashedPassword::new);
+            }
+        }
+
+        static CreateValidUser createValidUser(HashPassword hashPassword) {
+            return valid -> hashPassword.apply(valid.password())
+                                        .map(hashed -> new ValidUser(valid.email(), hashed, valid.referralCode()))
+                                        .async();
+        }
+    }
+
+    interface SaveUser {
+        Promise<User> apply(ValidUser validUser);
+
+        static SaveUser saveUser(DSLContext dsl) {
+            return user -> Promise.lift(t -> RegistrationError.DatabaseFailure.FACTORY.apply(Causes.fromThrowable(t)),
+                                        () -> insertUser(dsl, user));
+        }
+
+        private static User insertUser(DSLContext dsl, ValidUser user) {
+            var userId = UserId.random();
+
+            dsl.insertInto(USERS)
+               .set(USERS.ID, userId.value())
+               .set(USERS.EMAIL, user.email().value())
+               .set(USERS.PASSWORD_HASH, user.hashed().value())
+               .set(USERS.REFERRAL_CODE, user.refCode().map(ReferralCode::value).or(null))
+               .execute();
+            return new User(userId, user.email());
+        }
+    }
+
+    interface GenerateToken {
+        Promise<Response> apply(User user);
+
+        static GenerateToken generateToken(HttpClient httpClient) {
+            return user -> httpClient.post("/tokens/confirm", Map.of("userId", user.id().value().toString()))
+                                     .map(resp -> new Response(user.id(), new ConfirmationToken(resp.get("token"))))
+                                     .mapError(RegistrationError.TokenGenerationFailed.FACTORY);
+        }
     }
 }
 ```
 
-### HashPassword
+The errors are the use case's own sealed `Cause`. Each `FACTORY` is `public`, because a step that moves to `registeruser/io/` references it from another package:
 
 ```java
-package com.example.adapter.security;
+package com.example.app.registeruser;
 
-public class HashPasswordAdapter implements RegisterUser.HashPassword {
-    private final PasswordEncoder passwordEncoder;
+public sealed interface RegistrationError extends Cause {
+    enum General implements RegistrationError {
+        EMAIL_ALREADY_REGISTERED("Email already registered");
 
-    public HashPasswordAdapter(PasswordEncoder passwordEncoder) {
-        this.passwordEncoder = passwordEncoder;
+        private final String message;
+
+        General(String message) {
+            this.message = message;
+        }
+
+        @Override
+        public String message() {
+            return message;
+        }
     }
 
-    @Override
-    public Promise<HashedPassword> apply(Password password) {
-        return Promise.lift(
-            SecurityError::cause,
-            () -> {
-                String hashed = passwordEncoder.encode(password.value());
-                return new HashedPassword(hashed);
-            }
-        );
+    record PasswordHashingFailed(Cause origin, String message) implements RegistrationError, Cause.Wrapped {
+        public static final Fn1<PasswordHashingFailed, Cause> FACTORY =
+            Causes.forOneValue("Password hashing failed", PasswordHashingFailed::new);
     }
 
-    public static HashPassword hashPassword(PasswordEncoder encoder) {
-        return new HashPasswordAdapter(encoder);
-    }
-}
-```
-
-### SaveUser
-
-```java
-package com.example.adapter.persistence;
-
-public class SaveUserAdapter implements RegisterUser.SaveUser {
-    private final UserRepository userRepository;
-
-    public SaveUserAdapter(UserRepository userRepository) {
-        this.userRepository = userRepository;
+    record TokenGenerationFailed(Cause origin, String message) implements RegistrationError, Cause.Wrapped {
+        public static final Fn1<TokenGenerationFailed, Cause> FACTORY =
+            Causes.forOneValue("Token generation failed", TokenGenerationFailed::new);
     }
 
-    @Override
-    public Promise<User> apply(Email email, HashedPassword hashed) {
-        return Promise.lift(
-            DatabaseError::cause,
-            () -> {
-                User user = new User(
-                    UserId.random(),
-                    email,
-                    hashed,
-                    Instant.now()
-                );
-                userRepository.save(user);
-                return user;
-            }
-        );
-    }
-
-    public static SaveUser saveUser(UserRepository repo) {
-        return new SaveUserAdapter(repo);
+    record DatabaseFailure(Cause origin, String message) implements RegistrationError, Cause.Wrapped {
+        public static final Fn1<DatabaseFailure, Cause> FACTORY =
+            Causes.forOneValue("Database operation failed", DatabaseFailure::new);
     }
 }
 ```
 
-### SendConfirmationEmail
-
-```java
-package com.example.adapter.messaging;
-
-public class SendConfirmationEmailAdapter implements RegisterUser.SendConfirmationEmail {
-    private final EmailService emailService;
-
-    public SendConfirmationEmailAdapter(EmailService emailService) {
-        this.emailService = emailService;
-    }
-
-    @Override
-    public Promise<ConfirmationToken> apply(User user) {
-        return Promise.lift(
-            EmailError::cause,
-            () -> {
-                ConfirmationToken token = ConfirmationToken.generate();
-                emailService.send(
-                    user.email().value(),
-                    "Confirm your registration",
-                    "Token: " + token.value()
-                );
-                return token;
-            }
-        );
-    }
-
-    public static SendConfirmationEmail sendEmail(EmailService service) {
-        return new SendConfirmationEmailAdapter(service);
-    }
-}
-```
+When a step outgrows the file - it needs a row mapper, a wire record, an error type of its own - the same interface moves to `registeruser/io/` unchanged, carrying its factory. No new type is introduced to extract it.
 
 ## Step 7: Assemble Use Case
 
-```java
-@Configuration
-public class RegisterUserConfig {
-    @Bean
-    public RegisterUser registerUser(
-        UserRepository userRepository,
-        PasswordEncoder passwordEncoder,
-        EmailService emailService
-    ) {
-        var checkEmail = CheckEmailAvailabilityAdapter.checkEmail(userRepository);
-        var hashPassword = HashPasswordAdapter.hashPassword(passwordEncoder);
-        var saveUser = SaveUserAdapter.saveUser(userRepository);
-        var sendEmail = SendConfirmationEmailAdapter.sendEmail(emailService);
-
-        return RegisterUser.registerUser(
-            checkEmail,
-            hashPassword,
-            saveUser,
-            sendEmail
-        );
-    }
-}
-```
-
-## Step 8: Create Controller
+Endpoints and assembly are generated by the runtime. In a plain Java program, assembly is one call at the root - the only place that calls the I/O factories:
 
 ```java
-@RestController
-@RequestMapping("/api/users")
-public class UserController {
-    private final RegisterUser registerUser;
-
-    public UserController(RegisterUser registerUser) {
-        this.registerUser = registerUser;
-    }
-
-    @PostMapping("/register")
-    public Promise<ResponseEntity<RegisterUser.Response>> register(
-        @RequestBody RegisterUser.Request request
-    ) {
-        return registerUser.execute(request)
-            .map(ResponseEntity::ok)
-            .recover(this::handleError);
-    }
-
-    private Result<ResponseEntity<RegisterUser.Response>> handleError(Cause cause) {
-        if (cause instanceof CompositeCause composite) {
-            return Result.success(ResponseEntity.badRequest().build());
-        }
-        if (cause instanceof EmailAlreadyExistsError) {
-            return Result.success(ResponseEntity.status(409).build());
-        }
-        return Result.success(ResponseEntity.internalServerError().build());
-    }
-}
+var registerUser = RegisterUser.registerUser(CheckEmailUniqueness.checkEmailUniqueness(FindUser.findUser(dsl)),
+                                             CreateValidUser.createValidUser(HashPassword.hashPassword(encoder)),
+                                             SaveUser.saveUser(dsl),
+                                             GenerateToken.generateToken(httpClient));
 ```
+
+## Step 8: Endpoints
+
+There is no hand-written controller. The runtime generates the inbound endpoint from the use case's `Request`/`Response` and maps its typed errors (`RegistrationError.General.EMAIL_ALREADY_REGISTERED`, validation failures) to responses.
 
 ## Step 9: Write Tests
+
+Tests pass lambdas for the steps; no I/O factory is called.
 
 ```java
 class RegisterUserTest {
     @Test
     void execute_succeeds_withValidInput() {
-        var checkEmail = stub(valid -> Promise.success(valid));
-        var hashPassword = stub(pwd -> Promise.success(new HashedPassword("hashed")));
-        var saveUser = stub((email, hash) -> Promise.success(testUser()));
-        var sendEmail = stub(user -> Promise.success(testToken()));
-
-        var useCase = RegisterUser.registerUser(
-            checkEmail, hashPassword, saveUser, sendEmail
-        );
+        var useCase = RegisterUser.registerUser(valid -> Promise.success(valid),
+                                                valid -> Promise.success(new ValidUser(valid.email(),
+                                                                                       new HashedPassword("hashed"),
+                                                                                       valid.referralCode())),
+                                                validUser -> Promise.success(testUser()),
+                                                user -> Promise.success(new Response(user.id(), testToken())));
 
         useCase.execute(validRequest())
                .await()
                .onFailure(Assertions::fail)
                .onSuccess(response -> {
                    assertNotNull(response.userId());
-                   assertNotNull(response.confirmationToken());
+                   assertNotNull(response.token());
                });
     }
 
     @Test
     void execute_fails_whenEmailInvalid() {
-        var request = new RegisterUser.Request("invalid", "ValidPass123");
+        var request = new RegisterUser.Request("invalid", "ValidPass123", null);
 
         useCase.execute(request)
                .await()
@@ -393,7 +345,7 @@ class RegisterUserTest {
 
     @Test
     void execute_fails_whenPasswordWeak() {
-        var request = new RegisterUser.Request("test@example.com", "weak");
+        var request = new RegisterUser.Request("test@example.com", "weak", null);
 
         useCase.execute(request)
                .await()
@@ -402,9 +354,7 @@ class RegisterUserTest {
 
     @Test
     void execute_fails_whenEmailExists() {
-        var checkEmail = stub(valid ->
-            EmailError.AlreadyExists.INSTANCE.promise()
-        );
+        RegisterUser.CheckEmailUniqueness checkEmail = valid -> RegistrationError.General.EMAIL_ALREADY_REGISTERED.promise();
 
         var useCase = RegisterUser.registerUser(checkEmail, ...);
 
@@ -418,27 +368,21 @@ class RegisterUserTest {
 ## Project Structure
 
 ```
-com.example/
-├── usecase/
-│   └── registeruser/
-│       └── RegisterUser.java (interface + all nested types)
-├── domain/
-│   └── shared/
-│       ├── Email.java
-│       ├── Password.java
-│       └── UserId.java
-└── adapter/
-    ├── persistence/
-    │   ├── CheckEmailAvailabilityAdapter.java
-    │   └── SaveUserAdapter.java
-    ├── security/
-    │   └── HashPasswordAdapter.java
-    └── messaging/
-        └── SendConfirmationEmailAdapter.java
+com.example.app/
+├── registeruser/
+│   ├── RegisterUser.java (@UseCase interface + all nested types, step factories included)
+│   └── RegistrationError.java (sealed error interface)
+└── shared/
+    ├── Email.java
+    ├── Password.java
+    └── UserId.java
 ```
+
+Once a step outgrows the file it moves out unchanged: `registeruser/io/SaveUser.java` for an I/O step, `registeruser/` for a business step, and to the `io` or `shared` package at the lowest common ancestor when a second use case needs it.
 
 ## Related
 
 - [structure.md](structure.md) - Use case anatomy
 - [../patterns/sequencer.md](../patterns/sequencer.md) - Composition pattern
 - [../testing/patterns.md](../testing/patterns.md) - Testing strategies
+- [../project-structure/organization.md](../project-structure/organization.md) - Package layout and step placement

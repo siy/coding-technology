@@ -16,30 +16,30 @@ return step1(input)
 ## Structure
 
 ```java
-public interface RegisterUser extends UseCase.WithPromise<Response, Request> {
-    record Request(String email, String password) {}
-    record Response(UserId userId, String confirmationToken) {}
+@UseCase
+public interface RegisterUser {
+    record Request(String email, String password, String referralCode) {}
+    record Response(UserId userId, ConfirmationToken token) {}
+
+    Promise<Response> execute(Request request);
 
     // Steps as single-method interfaces
-    interface CheckEmail { Promise<ValidRequest> apply(ValidRequest valid); }
-    interface HashPassword { Promise<HashedPassword> apply(ValidRequest valid); }
-    interface SaveUser { Promise<User> apply(HashedPassword hashed); }
-    interface SendConfirmation { Promise<String> apply(User user); }
+    interface CheckEmailUniqueness { Promise<ValidRequest> apply(ValidRequest valid); }
+    interface CreateValidUser { Promise<ValidUser> apply(ValidRequest valid); }
+    interface SaveUser { Promise<User> apply(ValidUser validUser); }
+    interface GenerateToken { Promise<Response> apply(User user); }
 
     // Factory returns lambda with sequencer composition
-    static RegisterUser registerUser(
-        CheckEmail checkEmail,
-        HashPassword hashPassword,
-        SaveUser saveUser,
-        SendConfirmation sendConfirmation
-    ) {
+    static RegisterUser registerUser(CheckEmailUniqueness checkEmail,
+                                     CreateValidUser createValidUser,
+                                     SaveUser saveUser,
+                                     GenerateToken generateToken) {
         return request -> ValidRequest.validRequest(request)
-            .async()
-            .flatMap(checkEmail::apply)
-            .flatMap(hashPassword::apply)
-            .flatMap(saveUser::apply)
-            .flatMap(sendConfirmation::apply)
-            .map(token -> new Response(user.id(), token));
+                                      .async()
+                                      .flatMap(checkEmail::apply)
+                                      .flatMap(createValidUser::apply)
+                                      .flatMap(saveUser::apply)
+                                      .flatMap(generateToken::apply);
     }
 }
 ```
@@ -166,9 +166,7 @@ return loadUser(id)
 ```java
 @Test
 void execute_succeeds_withValidInput() {
-    var checkEmail = successStub();
-    var saveUser = userStub();
-    var useCase = RegisterUser.registerUser(checkEmail, saveUser);
+    var useCase = RegisterUser.registerUser(successStub(), validUserStub(), userStub(), responseStub());
 
     useCase.execute(validRequest())
            .await()
@@ -180,8 +178,8 @@ void execute_succeeds_withValidInput() {
 
 @Test
 void execute_fails_whenEmailExists() {
-    var checkEmail = failureStub(EmailError.AlreadyExists.INSTANCE);
-    var useCase = RegisterUser.registerUser(checkEmail, successStub());
+    var checkEmail = failureStub(RegistrationError.General.EMAIL_ALREADY_REGISTERED);
+    var useCase = RegisterUser.registerUser(checkEmail, validUserStub(), userStub(), responseStub());
 
     useCase.execute(validRequest())
            .await()
@@ -192,21 +190,24 @@ void execute_fails_whenEmailExists() {
 ## Complete Example
 
 ```java
-public interface GetUserProfile extends UseCase.WithPromise<Response, Request> {
+@UseCase
+public interface GetUserProfile {
     record Request(String userId) {}
     record Response(String userId, String email, String displayName, List<String> orders) {}
+
+    Promise<Response> execute(Request request);
 
     // Intermediate context for growing data
     record UserContext(User user, List<Order> orders) {}
 
-    interface FetchUser { Promise<User> apply(UserId id); }
-    interface FetchOrders { Promise<List<Order>> apply(UserId id); }
+    interface LoadUser { Promise<User> apply(UserId id); }
+    interface LoadOrders { Promise<List<Order>> apply(UserId id); }
 
-    static GetUserProfile getUserProfile(FetchUser fetchUser, FetchOrders fetchOrders) {
+    static GetUserProfile getUserProfile(LoadUser loadUser, LoadOrders loadOrders) {
         return request -> UserId.userId(request.userId())
             .async()
-            .flatMap(fetchUser::apply)
-            .flatMap(user -> fetchOrders.apply(user.id())
+            .flatMap(loadUser::apply)
+            .flatMap(user -> loadOrders.apply(user.id())
                 .map(orders -> new UserContext(user, orders)))
             .map(GetUserProfile::toResponse);
     }

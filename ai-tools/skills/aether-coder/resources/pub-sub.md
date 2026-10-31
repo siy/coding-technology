@@ -12,8 +12,8 @@ public @interface OrderEvents {}
 
 Usage:
 ```java
-static OrderService orderService(@OrderEvents Publisher<OrderPlacedEvent> events,
-                                  @Sql SqlConnector db) {
+static Ordering ordering(@OrderEvents Publisher<OrderPlacedEvent> events,
+                         @Sql SqlConnector db) {
     return request -> processOrder(db, request)
                          .onSuccess(order -> events.publish(new OrderPlacedEvent(order.id())));
 }
@@ -30,7 +30,7 @@ public @interface OrderEventSubscription {}
 Usage:
 ```java
 @Slice
-public interface AnalyticsService {
+public interface Analytics {
     @OrderEventSubscription
     Promise<Unit> onOrderPlaced(OrderPlacedEvent event);
 }

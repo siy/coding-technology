@@ -49,7 +49,7 @@ public Result<User> registerUser(Email email, Password password) {
 
 // Each step returns Result<T> with typed failures
 private Result<Email> checkEmailAvailable(Email email) {
-    if (userRepository.existsByEmail(email.value())) {
+    if (registeredEmails.contains(email)) {
         return RegistrationError.EmailAlreadyExists.INSTANCE.result();
     }
     return Result.success(email);
@@ -196,18 +196,18 @@ Promise<User> promise = Promise.failure(DatabaseError.ConnectionFailed.INSTANCE)
 
 ## Exception Boundaries
 
-### Lift Exceptions at Adapter Edges
+### Lift Exceptions in I/O Step Factories
 
-Technical exceptions (I/O, network, database) should be caught at adapter boundaries:
+Technical exceptions (I/O, network, database) are caught in the factory of the I/O step that touches the outside world, and nowhere else:
 
 ```java
-public Promise<User> loadUser(UserId id) {
-    return Promise.lift(
+static LoadUser loadUser(JdbcTemplate jdbcTemplate) {
+    return id -> Promise.lift(
         DatabaseError::connectionError,  // Map SQLException → DatabaseError
         () -> jdbcTemplate.queryForObject(
             "SELECT * FROM users WHERE id = ?",
-            new Object[]{id.value()},
-            this::mapUser
+            LoadUser::mapUser,
+            id.value()
         )
     );
 }
@@ -413,15 +413,15 @@ if (!isValid(email)) {
 ### 5. Lift Technical Exceptions Only at Boundaries
 
 ```java
-// Adapter layer - lift exceptions
-public Promise<User> loadUser(UserId id) {
-    return Promise.lift(
-        DatabaseError::cause,
-        () -> repository.findById(id)
+// I/O step factory - lift exceptions
+static LoadUser loadUser(JdbcTemplate jdbcTemplate) {
+    return id -> Promise.lift(
+        DatabaseError::connectionError,
+        () -> jdbcTemplate.queryForObject(FIND_USER, LoadUser::mapUser, id.value())
     );
 }
 
-// Business logic layer - use Result/Promise
+// Business code - use Result/Promise
 public Result<Order> validateOrder(Order order) {
     if (order.items().isEmpty()) {
         return OrderError.EmptyCart.INSTANCE.result();
@@ -469,5 +469,5 @@ try {
 
 - [four-return-kinds.md](four-return-kinds.md) - Result<T> and Promise<T> for failures
 - [parse-dont-validate.md](parse-dont-validate.md) - Validation failures as Causes
-- [../patterns/leaf.md](../patterns/leaf.md) - Exception lifting in adapters
+- [../patterns/leaf.md](../patterns/leaf.md) - Exception lifting in I/O steps
 - [../testing/patterns.md](../testing/patterns.md) - Testing error cases

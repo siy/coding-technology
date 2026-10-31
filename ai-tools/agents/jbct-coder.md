@@ -20,8 +20,10 @@ Before reporting completion, you MUST:
    - `-> {` (multi-statement lambdas)
    - `Result.failure(` / `Promise.failure(` (static failure factories)
    - `new <ValueObject>(` outside factory methods (constructor bypass)
-   - `throw new` / `try {` in domain/usecase packages
-   - `.await()` in domain/usecase packages (must have `@TerminalOperation` if legitimate)
+   - `throw new` / `try {` in business code (anything outside `io` packages and I/O step factories)
+   - `.await()` in business code (must have `@TerminalOperation` if legitimate)
+   - Package layout: no `usecase`/`domain`/`adapter`/`config` packages; no `*Repository`/`*Dao`/`*Controller`/`*Adapter`/`*Gateway`/`*Client`/`*Impl`/`*Service`/`*Manager`/`*Helper`/`*Util` and no `Jooq*`/`Jpa*`/`Jdbc*`/`Postgres*`/`Http*`/`Rest*` declared types
+   - Every use case interface carries `@UseCase`; I/O types (`DSLContext`, HTTP clients) and `lift` only in `io` packages or nested I/O step factories; no sideways imports between sibling use cases or workflows
    - `@SuppressWarnings` used instead of `@Contract` / `@TerminalOperation` / `@NullReturn`
    - Statement-style calls discarding `Result`/`Promise` return values
    - Fully-qualified class names in method bodies (add the import instead)
@@ -75,9 +77,11 @@ These are **strictly prohibited**. Stop and rewrite if you catch yourself writin
 | Forbidden | Correct |
 |-----------|---------|
 | `*Impl` classes | Lambda or method reference |
+| Technical names (`*Repository`, `*Controller`, `*Service`, `Jooq*`...), layer packages (`usecase`, `domain`, `adapter`, `config`) | Business names: Zone-2 intent verbs for steps (`LoadUser`, `SaveOrder`); packages per the telescope rule |
+| Marker supertype (`extends UseCase...`, a `Step` interface) | `@UseCase` on the use case interface; plain nested step interfaces |
 | `null` checks in business logic | `Option<T>` from source |
 | `throw` in business logic | `Result<T>` / `Promise<T>` with `Cause` |
-| `try-catch` in business logic | `lift()` at adapter boundary |
+| `try-catch` in business logic | `lift()` in the I/O step's factory |
 | Public constructors on validated types | Factory method with validation |
 | `Result.failure(cause)` / `Promise.failure(cause)` | `cause.result()` / `cause.promise()` |
 | `Void` type parameter | `Unit` (`Result<Unit>`, `Promise<Unit>`). Note: `void` return OK with `@Contract` (external API) or fire-and-forget |
@@ -243,7 +247,7 @@ Carrying the cause does not carry its retry classification. At Pragmatica 1.0.0-
 `Causes.cause("Age must be 0-150")` remains the sanctioned form where no caller can act on the distinction - value-object validation whose failures all land in the same composite. The line is behavioral: when a caller would branch on the failure, render it separately, or count it, it is worth a type. The single-argument template overloads (`Causes.forOneValue(String)` and friends) belong to this same ad-hoc tier; in domain code a parameterized failure is worth naming, because the template form bakes its data into prose and discards it.
 <!-- /book:bare-cause -->
 
-At `lift` boundaries, apply the factory to the converted throwable: `t -> RepositoryError.DatabaseFailure.FACTORY.apply(Causes.fromThrowable(t))`
+At `lift` boundaries, apply the factory to the converted throwable: `t -> UserError.DatabaseFailure.FACTORY.apply(Causes.fromThrowable(t))`
 
 ### State-Machine State Types
 
@@ -279,7 +283,7 @@ Extract anything complex to a named method.
 ### Null Policy
 
 - **Business logic:** Never return or check null. Use `Option<T>`.
-- **Adapter boundaries only:** `Option.option(nullable)` to wrap external APIs, `opt.orElse(null)` for nullable DB columns, `null` in test validation inputs.
+- **I/O code only** (I/O step factories, `io` packages): `Option.option(nullable)` to wrap external APIs, `opt.orElse(null)` for nullable DB columns, `null` in test validation inputs.
 
 ### Intent Annotations (apply at WRITE time, not after lint complains)
 
@@ -392,7 +396,7 @@ r.ensureWith(T::field, op)                 // op result discarded; success gates
                                            //   (transient gates only — if read later, return evidence + mapWith)
 ```
 
-### Error Handling in Adapters
+### Error Handling in I/O Steps
 
 ```java
 Promise.lift(t -> Error.FACTORY.apply(Causes.fromThrowable(t)), () -> ioOperation())    // Exception → Cause
@@ -441,22 +445,26 @@ Empty/null → `Success(None)`, present+valid → `Success(Some)`, present+inval
 // Business Leaf — pure computation
 static Price calculateDiscount(Price original, Percentage rate) { return original.multiply(rate); }
 
-// Adapter Leaf — I/O with lift
-public Promise<User> apply(UserId id) {
-    return Promise.lift(t -> Error.FACTORY.apply(Causes.fromThrowable(t)),
-                        () -> dsl.selectFrom(USERS).where(USERS.ID.eq(id.value())).fetchOptional())
-                  .flatMap(opt -> opt.map(this::toDomain).orElse(NOT_FOUND.promise()));
+// I/O Leaf — a step whose factory takes the infrastructure; lift lives here
+interface LoadUser {
+    Promise<User> apply(UserId id);
+
+    static LoadUser loadUser(DSLContext dsl) {
+        return id -> Promise.lift(t -> Error.FACTORY.apply(Causes.fromThrowable(t)),
+                                  () -> Option.from(dsl.selectFrom(USERS).where(USERS.ID.eq(id.value())).fetchOptional()))
+                            .flatMap(found -> found.map(LoadUser::toUser).async(NOT_FOUND));
+    }
 }
 ```
 
 ### Sequencer
 
 ```java
-static RegisterUser registerUser(CheckEmail check, HashPassword hash, SaveUser save, GenerateToken gen) {
+static RegisterUser registerUser(CheckEmailUniqueness check, CreateValidUser create, SaveUser save, GenerateToken gen) {
     return request -> ValidRequest.validRequest(request)
                                   .async()
                                   .flatMap(check::apply)
-                                  .flatMapWith(ValidRequest::password, hash::apply, ValidUser::validUser)
+                                  .flatMap(create::apply)
                                   .flatMap(save::apply)
                                   .flatMap(gen::apply);
 }
@@ -536,7 +544,7 @@ Static import all factory methods and common Pragmatica methods. Keep regular im
 
 ### Philosophy: Integration-First, Evolutionary
 
-Test assembled use cases with all business logic; stub only adapters. Evolve: stubs → real implementations incrementally.
+Test assembled use cases with all business logic; stub only I/O steps, with lambdas. Evolve: stubs → real I/O step factories incrementally.
 
 ### Test Patterns
 
@@ -553,14 +561,14 @@ Test assembled use cases with all business logic; stub only adapters. Evolve: st
 | Value object validation | All rules, success + failure |
 | Use case happy path | At least one, all steps stubbed |
 | Use case step failures | One test per step |
-| Adapters (recommended) | Success + error handling |
+| I/O steps (recommended) | Success + error handling |
 
 ### Stubs
 
 Use type declarations, not casts:
 ```java
-CheckEmail checkEmail = req -> Promise.success(req);    // DO
-var checkEmail = (CheckEmail) req -> Promise.success(req); // DON'T
+CheckEmailUniqueness checkEmail = req -> Promise.success(req);    // DO
+var checkEmail = (CheckEmailUniqueness) req -> Promise.success(req); // DON'T
 ```
 
 ### Organization
@@ -573,14 +581,17 @@ Use `@Nested` classes: `ValidationTests`, `HappyPath`, `StepFailures`. Extract c
 
 ```
 com.example.app/
-├── usecase/<usecasename>/    # Vertical slice: interface + factory + errors + internal types
-├── domain/shared/            # Reusable value objects (move here when 2nd use case needs it)
-├── adapter/rest/             # Inbound (HTTP controllers)
-├── adapter/persistence/      # Outbound (DB repositories implementing step interfaces)
-└── config/                   # Framework wiring only
+├── <usecasename>/            # Vertical slice: @UseCase interface + nested steps with factories + errors + internal types
+│   └── io/                   # This use case's I/O steps, once they outgrow the use case file
+├── shared/                   # Business code used by 2+ use cases (move here when the 2nd user appears)
+└── io/                       # I/O steps used by 2+ use cases
 ```
 
-**Dependencies:** use case → domain.shared; adapter → use case; config → both. Never: use case → adapter.
+Packages carry business names only; `shared` and `io` are the two reserved role packages, placed at the lowest common ancestor of their users. As workflows and subsystems appear, use cases move under them (telescope rule — `~/.claude/skills/jbct/project-structure/organization.md`). No controllers or configuration classes: endpoints and assembly are generated by the runtime; plain Java and tests assemble at the root by calling factories (`GetUserProfile.getUserProfile(LoadUser.loadUser(dsl))`).
+
+**Steps:** nested in the use case interface, each with its static factory; an I/O step's factory takes the infrastructure and returns a lambda. A step that outgrows the file moves out unchanged (I/O → `<usecase>/io/`, business → the use case package, then a sub-package named for its intent). Never introduce a new type to extract a step.
+
+**Dependencies:** imports point up the tree (ancestors, `shared`/`io` on the path, own subtree), never sideways to a sibling use case or workflow. Business code takes `io` steps as parameters and never calls their factories. A materialized workflow is a `@UseCase` directly in its workflow package, composing its child use cases.
 
 ## File Structure
 
@@ -594,7 +605,7 @@ com.example.app/
 | Use case interface | Request/Response → execute → internal types → step interfaces → domain fragments → factory |
 | Value object | Static constants → factory → helpers |
 | Error interface | Enum variants → record variants |
-| Step implementation | Dependencies → constructor → interface methods → private helpers |
+| Step interface (own file) | Abstract method → static factory method(s) → private static helpers |
 
 ### Utility Interface Pattern
 
@@ -636,7 +647,7 @@ jbct check src/main/java     # Format + lint (combined)
 | Multi-statement lambda | Extract to method |
 | Nested monadic ops `.flatMap(x -> y.map(...))` | Extract inner to method |
 | Always-succeeding `Result.success(new X())` | Return `X` directly |
-| Mixed I/O and domain | Split to adapter |
+| Mixed I/O and business logic | Split: I/O into a leaf I/O step, logic into business code |
 | Primitive obsession (`String url`) | Create value object |
 | FQCN in method body | Add import |
 

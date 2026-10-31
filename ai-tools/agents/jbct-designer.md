@@ -185,7 +185,7 @@ public sealed interface UserError extends Cause {
 
 For each step in the use case:
 
-1. **Name**: Verb + noun (`CheckEmailUniqueness`, `CreateUser`)
+1. **Name**: Verb + noun (`CheckEmailUniqueness`, `CreateValidUser`)
 2. **Input**: Value objects from previous step
 3. **Output**: `Result<T>` or `Promise<T>`
 4. **Pattern**: Leaf, Sequencer, Fork-Join, etc.
@@ -193,16 +193,16 @@ For each step in the use case:
 Example:
 ```
 Step: CheckEmailUniqueness
-- Input: Email
-- Output: Promise<Unit>
-- Pattern: Leaf (adapter)
-- Failure: EmailAlreadyExists
+- Input: ValidRequest
+- Output: Promise<ValidRequest>
+- Pattern: Condition over a nested I/O leaf (FindUser: Email -> Promise<Option<User>>)
+- Failure: EMAIL_ALREADY_REGISTERED (the decision is business code; FindUser only loads)
 
 Step: CreateValidUser
-- Input: (Email, Password, Option<ReferralCode>)
-- Output: Result<ValidUser>
-- Pattern: Fork-Join (validate all, combine)
-- Failures: Validation errors from each field
+- Input: ValidRequest
+- Output: Promise<ValidUser>
+- Pattern: Sequencer over a nested I/O leaf (HashPassword: Password -> Result<HashedPassword>)
+- Failures: PasswordHashingFailed
 ```
 
 ### Step 8: Compose the Use Case
@@ -334,21 +334,23 @@ Verify design respects zone boundaries:
 - No I/O
 - Composes Zone B and C
 
-**Zone B (Domain/Steps):**
+**Zone B (Business Steps):**
 - Business logic
 - Pure functions where possible
-- No direct I/O (delegates to adapters)
+- No direct I/O (takes I/O steps as parameters)
 
-**Zone C (Adapters):**
-- All I/O happens here
+**Zone C (I/O Steps):**
+- All I/O happens here: the step's static factory takes the infrastructure (`static LoadUser loadUser(DSLContext dsl)`) and returns a lambda
 - Database, HTTP, messaging
-- Wraps external APIs
+- Wraps external APIs; `lift` lives here
+- Leaves only: an I/O step never composes other steps
 
 **Check:**
 - [ ] Use case only composes steps
-- [ ] Steps don't call adapters directly (injected via interface)
-- [ ] Adapters are behind interfaces
-- [ ] No I/O in domain package
+- [ ] Business code takes I/O steps as parameters and never calls their factories
+- [ ] Every step is an interface nested in the use case, with its own static factory
+- [ ] I/O types (`DSLContext`, HTTP clients) appear only in I/O step factories or `io` packages
+- [ ] Step names are business intent verbs (`LoadUser`, `ChargePayment`), never technical (`*Repository`, `*Client`, `Jooq*`)
 
 ---
 
@@ -358,21 +360,22 @@ Each use case should be self-contained:
 
 ```
 com.example.app/
-└── usecase/
-    └── registeruser/           # Everything for RegisterUser
-        ├── RegisterUser.java   # Interface + factory
-        ├── ValidRequest.java   # Or nested in RegisterUser
-        ├── UserError.java      # Use-case specific errors
-        └── steps/              # Internal steps
-            ├── CheckEmailUniqueness.java
-            └── CreateUser.java
+├── registeruser/               # Everything for RegisterUser
+│   ├── RegisterUser.java       # @UseCase interface + nested steps (each with its factory) + factory
+│   ├── RegistrationError.java  # Use-case specific errors
+│   └── io/                     # I/O steps that outgrew RegisterUser.java, moved unchanged
+│       └── FindUser.java
+└── shared/                     # Business code used by 2+ use cases
+    └── Email.java
 ```
 
 **Check:**
-- [ ] Use case has single package
-- [ ] No dependencies on other use case internals
-- [ ] Shared types in separate `domain` package
-- [ ] Steps are internal (package-private or nested)
+- [ ] Use case has single package, directly under the app root or under the workflow/subsystem package the design discovered (telescope rule)
+- [ ] Packages carry business names only: no `usecase`, `domain`, `adapter`, `config`, `steps`, `impl` packages
+- [ ] No imports from sibling use cases or workflows; imports point up the tree
+- [ ] Shared types in `shared` (business) or `io` (I/O) at the lowest common ancestor of their users
+- [ ] Steps nested in the use case; moved out unchanged only when they outgrow the file (no new types for the move)
+- [ ] Use case interface carries `@UseCase`; no marker supertypes
 
 ---
 
@@ -381,7 +384,7 @@ com.example.app/
 When design is complete, provide:
 
 1. **Design document** (format above)
-2. **Package structure** (where files go)
+2. **Package structure** (where files go: derived by the telescope rule, business names only, `shared`/`io` at the lowest common ancestor)
 3. **Interface signatures** (exact method signatures)
 4. **Test scenarios** (what to test)
 
@@ -413,9 +416,9 @@ Stop and clarify if you see:
 
 2. **Patterns:**
    - Validate: Fork-Join (parallel validation of fields)
-   - Check uniqueness: Leaf (adapter call)
-   - Create: Leaf (adapter call)
-   - Send welcome: Leaf (adapter call)
+   - Check uniqueness: Leaf (I/O step)
+   - Create: Leaf (I/O step)
+   - Send welcome: Leaf (I/O step)
    - Overall: Sequencer (dependent steps)
 
 3. **Value Objects:**
@@ -433,7 +436,7 @@ Stop and clarify if you see:
 5. **Errors:**
    - Validation: InvalidEmail, WeakPassword, InvalidReferralCode
    - Business: EmailAlreadyExists
-   - Infrastructure: DatabaseUnavailable, EmailServiceDown
+   - Infrastructure: DatabaseUnavailable, MailUnavailable
 
 6. **Composition:**
    ```

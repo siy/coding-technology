@@ -11,7 +11,7 @@ public @interface AuditStream {}
 ```
 
 ```java
-static AuditService auditService(@AuditStream StreamPublisher<AuditEvent> stream) {
+static AuditLog auditLog(@AuditStream StreamPublisher<AuditEvent> stream) {
     return event -> stream.publish(event);
 }
 ```
@@ -43,7 +43,7 @@ public interface AuditProcessor {
 @Retention(RUNTIME) @Target(PARAMETER)
 public @interface AuditAccess {}
 
-static ReplayService replayService(@AuditAccess StreamAccess<AuditEvent> stream) {
+static AuditReplay auditReplay(@AuditAccess StreamAccess<AuditEvent> stream) {
     return (fromOffset, count) -> stream.fetch(fromOffset, count);
 }
 ```

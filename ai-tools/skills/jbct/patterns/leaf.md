@@ -6,7 +6,7 @@
 
 A Leaf performs exactly one of:
 1. **Business logic computation** - Pure domain logic
-2. **I/O adapter operation** - External system interaction
+2. **I/O operation** - External system interaction, inside an I/O step's factory
 
 Leaves are the building blocks. All other patterns compose leaves.
 
@@ -50,83 +50,91 @@ private int calculateLoyaltyPoints(Order order) {
 }
 ```
 
-## I/O Adapter Leaves
+## I/O Leaves
+
+An I/O leaf is an I/O step: an interface whose static factory takes the infrastructure and implements the step with a lambda. It sits nested in its use case, or in an `io` package once it outgrows the file. Library types and `lift` appear only inside such factories, and an I/O step never composes other steps.
 
 ### Database Query
 
 ```java
-public Promise<Option<User>> findUser(UserId id) {
-    return Promise.lift(
-        DatabaseError::cause,
-        () -> {
-            User user = jdbcTemplate.queryForObject(
-                "SELECT * FROM users WHERE id = ?",
-                new Object[]{id.value()},
-                this::mapToUser
-            );
-            return Option.option(user);
-        }
-    );
+interface FindUser {
+    Promise<Option<User>> apply(Email email);
+
+    static FindUser findUser(JdbcTemplate jdbcTemplate) {
+        return email -> Promise.lift(t -> StorageError.DatabaseFailure.FACTORY.apply(Causes.fromThrowable(t)),
+                                     () -> Option.from(jdbcTemplate.query("SELECT * FROM users WHERE email = ?",
+                                                                          FindUser::mapToUser,
+                                                                          email.value())
+                                                                   .stream()
+                                                                   .findFirst()));
+    }
+
+    private static User mapToUser(ResultSet rs, int rowNum) throws SQLException {
+        return new User(UserId.unsafe(UUID.fromString(rs.getString("id"))),
+                        Email.unsafe(rs.getString("email")),
+                        rs.getString("display_name"));
+    }
 }
 ```
 
 ### Database Insert
 
 ```java
-public Promise<UserId> saveUser(User user) {
-    return Promise.lift(
-        DatabaseError::cause,
-        () -> {
-            jdbcTemplate.update(
-                "INSERT INTO users (id, email, display_name) VALUES (?, ?, ?)",
-                user.id().value(),
-                user.email().value(),
-                user.displayName()
-            );
-            return user.id();
-        }
-    );
+interface SaveUser {
+    Promise<UserId> apply(User user);
+
+    static SaveUser saveUser(JdbcTemplate jdbcTemplate) {
+        return user -> Promise.lift(t -> StorageError.DatabaseFailure.FACTORY.apply(Causes.fromThrowable(t)),
+                                    () -> insert(jdbcTemplate, user));
+    }
+
+    private static UserId insert(JdbcTemplate jdbcTemplate, User user) {
+        jdbcTemplate.update("INSERT INTO users (id, email, display_name) VALUES (?, ?, ?)",
+                            user.id().value(),
+                            user.email().value(),
+                            user.displayName());
+        return user.id();
+    }
 }
 ```
 
 ### HTTP Request
 
 ```java
-public Promise<ExchangeRate> fetchExchangeRate(Currency from, Currency to) {
-    return Promise.lift(
-        ApiError::cause,
-        () -> restClient.get()
-            .uri("/rates?from={from}&to={to}", from.code(), to.code())
-            .retrieve()
-            .body(ExchangeRate.class)
-    );
+interface FetchExchangeRate {
+    Promise<ExchangeRate> apply(Currency from, Currency to);
+
+    static FetchExchangeRate fetchExchangeRate(RestClient restClient) {
+        return (from, to) -> Promise.lift(t -> RateError.ServiceFailure.FACTORY.apply(Causes.fromThrowable(t)),
+                                          () -> restClient.get()
+                                                          .uri("/rates?from={from}&to={to}", from.code(), to.code())
+                                                          .retrieve()
+                                                          .body(ExchangeRate.class));
+    }
 }
 ```
 
 ### Message Queue
 
 ```java
-public Promise<Unit> publishEvent(OrderPlaced event) {
-    return Promise.lift(
-        QueueError::cause,
-        () -> {
-            rabbitTemplate.convertAndSend(
-                EXCHANGE_NAME,
-                ROUTING_KEY,
-                event
-            );
-            return Unit.unit();
-        }
-    );
+interface PublishOrderPlaced {
+    Promise<Unit> apply(OrderPlaced event);
+
+    static PublishOrderPlaced publishOrderPlaced(RabbitTemplate rabbitTemplate) {
+        return event -> Promise.lift(t -> OrderError.PublishFailed.FACTORY.apply(Causes.fromThrowable(t)),
+                                     () -> rabbitTemplate.convertAndSend(EXCHANGE_NAME, ROUTING_KEY, event));
+    }
 }
 ```
+
+The step names say what the step does for the business (`FindUser`, `PublishOrderPlaced`); the technology shows only in the factory's parameter type.
 
 ## Thread Safety
 
 **Leaf operations are thread-safe through confinement.** Each leaf operation executes independently without shared mutable state.
 
 - **Business logic leaves**: Pure functions or thread-confined mutable state
-- **I/O adapter leaves**: Framework handles thread safety (connection pools, etc.)
+- **I/O leaves**: Framework handles thread safety (connection pools, etc.)
 
 ```java
 // OK - Mutable local state (thread-confined)
@@ -149,7 +157,7 @@ Each leaf does ONE thing:
 // ❌ WRONG - two operations in one leaf
 public Promise<User> loadAndValidateUser(UserId id) {
     return Promise.lift(() -> {
-        User user = repository.findById(id);
+        User user = fetchUser(dsl, id);
         if (user.isLocked()) {
             throw new UserLockedException();
         }
@@ -160,8 +168,8 @@ public Promise<User> loadAndValidateUser(UserId id) {
 // ✅ CORRECT - Separate leaves
 public Promise<User> loadUser(UserId id) {
     return Promise.lift(
-        DatabaseError::cause,
-        () -> repository.findById(id)
+        t -> StorageError.DatabaseFailure.FACTORY.apply(Causes.fromThrowable(t)),
+        () -> fetchUser(dsl, id)
     );
 }
 
@@ -188,8 +196,8 @@ public Promise<User> loadUserWithProfile(UserId id) {
 // ✅ CORRECT - Leaf does only I/O
 public Promise<User> loadUser(UserId id) {
     return Promise.lift(
-        DatabaseError::cause,
-        () -> repository.findById(id)
+        t -> StorageError.DatabaseFailure.FACTORY.apply(Causes.fromThrowable(t)),
+        () -> fetchUser(dsl, id)
     );
 }
 
@@ -222,15 +230,15 @@ public class TaxCalculator {
 }
 ```
 
-### 4. Lift Exceptions at Adapter Boundaries
+### 4. Lift Exceptions in I/O Step Factories
 
-Always wrap throwing code in adapters:
+Always wrap throwing code in the I/O step's factory, and nowhere else:
 
 ```java
 // ✅ CORRECT
-public Promise<User> loadUser(UserId id) {
-    return Promise.lift(
-        DatabaseError::cause,  // Exception → Cause mapping
+static LoadUser loadUser(JdbcTemplate jdbcTemplate) {
+    return id -> Promise.lift(
+        t -> StorageError.DatabaseFailure.FACTORY.apply(Causes.fromThrowable(t)),  // Exception → Cause mapping
         () -> jdbcTemplate.queryForObject(...)
     );
 }
@@ -252,7 +260,9 @@ void calculateTax_applies_correctRate() {
 }
 ```
 
-### Testing Adapter Leaves with Stubs
+### Testing I/O Leaves with Stubs
+
+Call the step's factory with a stubbed library object, then apply the step:
 
 ```java
 @Test
@@ -260,26 +270,28 @@ void loadUser_succeeds_whenUserExists() {
     UserId id = UserId.random();
     User expected = TestData.user(id);
 
-    // Stub the repository
-    when(repository.findById(id.value()))
+    // Stub the library the factory takes
+    when(jdbcTemplate.queryForObject(anyString(), any(RowMapper.class), eq(id.value())))
         .thenReturn(expected);
 
-    adapter.loadUser(id)
-           .await()
-           .onFailure(Assertions::fail)
-           .onSuccess(user -> assertEquals(expected, user));
+    LoadUser.loadUser(jdbcTemplate)
+            .apply(id)
+            .await()
+            .onFailure(Assertions::fail)
+            .onSuccess(user -> assertEquals(expected, user));
 }
 
 @Test
 void loadUser_fails_whenUserNotFound() {
     UserId id = UserId.random();
 
-    when(repository.findById(id.value()))
+    when(jdbcTemplate.queryForObject(anyString(), any(RowMapper.class), eq(id.value())))
         .thenThrow(new EmptyResultDataAccessException(1));
 
-    adapter.loadUser(id)
-           .await()
-           .onSuccess(Assertions::fail);  // Should fail
+    LoadUser.loadUser(jdbcTemplate)
+            .apply(id)
+            .await()
+            .onSuccess(Assertions::fail);  // Should fail
 }
 ```
 
@@ -290,8 +302,8 @@ void loadUser_fails_whenUserNotFound() {
 ```java
 public Promise<Option<Theme>> findTheme(UserId id) {
     return Promise.lift(
-        DatabaseError::cause,
-        () -> Option.option(repository.findThemeByUserId(id.value()))
+        t -> StorageError.DatabaseFailure.FACTORY.apply(Causes.fromThrowable(t)),
+        () -> Option.option(fetchTheme(dsl, id))
     );
 }
 ```
@@ -318,9 +330,9 @@ public Result<ValidOrder> checkInventory(Order order) {
 ```java
 public Promise<Unit> sendEmail(Email to, String subject, String body) {
     return Promise.lift(
-        EmailError::cause,
+        t -> EmailError.SendFailed.FACTORY.apply(Causes.fromThrowable(t)),
         () -> {
-            emailService.send(to.value(), subject, body);
+            mailer.send(to.value(), subject, body);
             return Unit.unit();
         }
     );
@@ -332,7 +344,7 @@ public Promise<Unit> sendEmail(Email to, String subject, String body) {
 ```java
 public Promise<List<User>> loadUsers(List<UserId> ids) {
     return Promise.lift(
-        DatabaseError::cause,
+        t -> StorageError.DatabaseFailure.FACTORY.apply(Causes.fromThrowable(t)),
         () -> jdbcTemplate.query(
             "SELECT * FROM users WHERE id IN (?)",
             new Object[]{ids.stream().map(UserId::value).toList()},
@@ -353,7 +365,7 @@ public Promise<Order> validateAndSaveOrder(Order order) {
         if (order.items().isEmpty()) {
             throw new InvalidOrderException();
         }
-        return repository.save(order);
+        return insertOrder(dsl, order);
     });
 }
 ```
@@ -374,13 +386,13 @@ public Promise<User> loadUserWithDefaults(UserId id) {
 // DON'T - @Autowired in business logic
 public class OrderValidator {
     @Autowired
-    private InventoryService inventory;
+    private DSLContext dsl;
 
     public Result<Order> validate(Order order) { ... }
 }
 ```
 
-### ❌ Uncaught Exceptions in Adapters
+### ❌ Uncaught Exceptions in I/O Steps
 
 ```java
 // DON'T - Let exceptions escape
@@ -394,8 +406,8 @@ public Promise<User> loadUser(UserId id) {
 
 ## When to Use Leaf Pattern
 
-- Implementing repository methods (database access)
-- Creating REST client calls
+- Implementing I/O steps (database access)
+- Calling remote services over HTTP
 - Writing pure business logic functions
 - Implementing validation rules
 - Calculating derived values

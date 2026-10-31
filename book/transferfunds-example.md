@@ -151,6 +151,7 @@ public record ValidTransfer(
 ## Use Case with Aspects
 
 ```java
+@UseCase
 public interface TransferFunds {
 
     Promise<TransferResult> execute(TransferRequest request);
@@ -168,7 +169,7 @@ public interface TransferFunds {
         Promise<TransferResult> apply(ValidTransfer transfer);
     }
 
-    interface AuditLog {
+    interface RecordAudit {
         Promise<Unit> apply(AuditEntry entry);
     }
 
@@ -177,14 +178,14 @@ public interface TransferFunds {
         CheckIdempotency checkIdempotency,
         CheckBalance checkBalance,
         ExecuteTransfer executeTransfer,
-        AuditLog auditLog,
+        RecordAudit auditLog,
         TimeSpan timeout,
         RetryPolicy retryPolicy
     ) {
         // Wrap executeTransfer with aspects
         var decoratedExecute = withRetry(retryPolicy,
             withTimeout(timeout,
-                withAudit(auditLog, executeTransfer)
+                withAudit(auditLog, executeTransfer::apply)
             )
         );
 
@@ -196,17 +197,17 @@ public interface TransferFunds {
     }
 
     // ASPECT: Timeout
-    private static Fn1<ValidTransfer, Promise<TransferResult>> withTimeout(
+    private static Fn1<Promise<TransferResult>, ValidTransfer> withTimeout(
         TimeSpan timeout,
-        Fn1<ValidTransfer, Promise<TransferResult>> step
+        Fn1<Promise<TransferResult>, ValidTransfer> step
     ) {
         return transfer -> step.apply(transfer).timeout(timeout);
     }
 
     // ASPECT: Retry
-    private static Fn1<ValidTransfer, Promise<TransferResult>> withRetry(
+    private static Fn1<Promise<TransferResult>, ValidTransfer> withRetry(
         RetryPolicy policy,
-        Fn1<ValidTransfer, Promise<TransferResult>> step
+        Fn1<Promise<TransferResult>, ValidTransfer> step
     ) {
         return transfer -> retryWithPolicy(policy, () -> step.apply(transfer));
     }
@@ -231,9 +232,9 @@ public interface TransferFunds {
     }
 
     // ASPECT: Audit (wraps execution with before/after logging)
-    private static Fn1<ValidTransfer, Promise<TransferResult>> withAudit(
-        AuditLog auditLog,
-        Fn1<ValidTransfer, Promise<TransferResult>> step
+    private static Fn1<Promise<TransferResult>, ValidTransfer> withAudit(
+        RecordAudit auditLog,
+        Fn1<Promise<TransferResult>, ValidTransfer> step
     ) {
         return transfer -> {
             var startTime = Instant.now();
@@ -244,7 +245,7 @@ public interface TransferFunds {
     }
 
     private static void logAuditEntry(
-        AuditLog auditLog,
+        RecordAudit auditLog,
         ValidTransfer transfer,
         Result<TransferResult> result,
         Instant startTime
@@ -311,24 +312,40 @@ public record RetryPolicy(
 
 ## Step Implementations
 
+Each step stays nested in `TransferFunds`, and its static factory is the implementation.
+`ExecuteTransfer` is an I/O step: its factory takes the database handle. `CheckIdempotency` and
+`CheckBalance` make business decisions, so each is business code over a nested I/O leaf that
+only loads - the same shape as `CheckEmailUniqueness` and its `FindUser`. jOOQ appears only in
+the leaves' factories.
+
 ### CheckIdempotency
 
 ```java
-public class IdempotencyChecker implements TransferFunds.CheckIdempotency {
-    private final IdempotencyStore store;
+interface CheckIdempotency {
+    Promise<ValidTransfer> apply(ValidTransfer transfer);
 
-    public IdempotencyChecker(IdempotencyStore store) {
-        this.store = store;
+    // I/O leaf: has this request already been processed?
+    interface LoadProcessedFlag {
+        Promise<Boolean> apply(String requestId);
+
+        static LoadProcessedFlag loadProcessedFlag(DSLContext dsl) {
+            return requestId -> Promise.lift(
+                t -> TransferError.TransferFailed.FACTORY.apply(Causes.fromThrowable(t)),
+                () -> dsl.fetchExists(PROCESSED_REQUESTS,
+                                      PROCESSED_REQUESTS.REQUEST_ID.eq(requestId))
+            );
+        }
     }
 
-    @Override
-    public Promise<ValidTransfer> apply(ValidTransfer transfer) {
-        return Promise.lift(
-            t -> TransferError.TransferFailed.FACTORY.apply(Causes.fromThrowable(t)),
-            () -> store.exists(transfer.requestId())
-        ).flatMap(exists -> exists
+    static CheckIdempotency checkIdempotency(LoadProcessedFlag loadProcessedFlag) {
+        return transfer -> loadProcessedFlag.apply(transfer.requestId())
+                                            .flatMap(processed -> rejectIfProcessed(processed, transfer));
+    }
+
+    private static Promise<ValidTransfer> rejectIfProcessed(boolean processed, ValidTransfer transfer) {
+        return processed
             ? TransferError.General.DUPLICATE_REQUEST.promise()
-            : Promise.success(transfer));
+            : Promise.success(transfer);
     }
 }
 ```
@@ -336,19 +353,33 @@ public class IdempotencyChecker implements TransferFunds.CheckIdempotency {
 ### CheckBalance
 
 ```java
-public class BalanceChecker implements TransferFunds.CheckBalance {
-    private final AccountRepository accounts;
+interface CheckBalance {
+    Promise<ValidTransfer> apply(ValidTransfer transfer);
 
-    public BalanceChecker(AccountRepository accounts) {
-        this.accounts = accounts;
+    // I/O leaf: the current balance of one account
+    interface LoadBalance {
+        Promise<Money> apply(AccountId accountId);
+
+        static LoadBalance loadBalance(DSLContext dsl) {
+            return accountId -> Promise.lift(
+                t -> TransferError.TransferFailed.FACTORY.apply(Causes.fromThrowable(t)),
+                () -> new Money(dsl.select(ACCOUNTS.BALANCE)
+                                   .from(ACCOUNTS)
+                                   .where(ACCOUNTS.ID.eq(accountId.value()))
+                                   .fetchSingle(ACCOUNTS.BALANCE))
+            );
+        }
     }
 
-    @Override
-    public Promise<ValidTransfer> apply(ValidTransfer transfer) {
-        return accounts.getBalance(transfer.sourceAccount())
-            .flatMap(balance -> balance.isGreaterThan(transfer.amount())
-                ? Promise.success(transfer)
-                : TransferError.General.INSUFFICIENT_FUNDS.promise());
+    static CheckBalance checkBalance(LoadBalance loadBalance) {
+        return transfer -> loadBalance.apply(transfer.sourceAccount())
+                                      .flatMap(balance -> ensureSufficient(balance, transfer));
+    }
+
+    private static Promise<ValidTransfer> ensureSufficient(Money balance, ValidTransfer transfer) {
+        return balance.isGreaterThan(transfer.amount())
+            ? Promise.success(transfer)
+            : TransferError.General.INSUFFICIENT_FUNDS.promise();
     }
 }
 ```
@@ -356,23 +387,29 @@ public class BalanceChecker implements TransferFunds.CheckBalance {
 ### ExecuteTransfer
 
 ```java
-public class TransferExecutor implements TransferFunds.ExecuteTransfer {
-    private final AccountRepository accounts;
-    private final IdempotencyStore idempotencyStore;
+interface ExecuteTransfer {
+    Promise<TransferResult> apply(ValidTransfer transfer);
 
-    @Override
-    public Promise<TransferResult> apply(ValidTransfer transfer) {
-        return Promise.lift(
+    static ExecuteTransfer executeTransfer(DSLContext dsl) {
+        return transfer -> Promise.lift(
             t -> TransferError.TransferFailed.FACTORY.apply(Causes.fromThrowable(t)),
-            () -> executeInTransaction(transfer)
+            () -> dsl.transactionResult(config -> executeInTransaction(config.dsl(), transfer))
         );
     }
 
-    private TransferResult executeInTransaction(ValidTransfer transfer) {
-        // Transaction boundary
-        accounts.debit(transfer.sourceAccount(), transfer.amount());
-        accounts.credit(transfer.destinationAccount(), transfer.amount());
-        idempotencyStore.record(transfer.requestId());
+    private static TransferResult executeInTransaction(DSLContext tx, ValidTransfer transfer) {
+        // Transaction boundary: debit, credit and the idempotency record commit together
+        tx.update(ACCOUNTS)
+          .set(ACCOUNTS.BALANCE, ACCOUNTS.BALANCE.minus(transfer.amount().value()))
+          .where(ACCOUNTS.ID.eq(transfer.sourceAccount().value()))
+          .execute();
+        tx.update(ACCOUNTS)
+          .set(ACCOUNTS.BALANCE, ACCOUNTS.BALANCE.plus(transfer.amount().value()))
+          .where(ACCOUNTS.ID.eq(transfer.destinationAccount().value()))
+          .execute();
+        tx.insertInto(PROCESSED_REQUESTS)
+          .set(PROCESSED_REQUESTS.REQUEST_ID, transfer.requestId())
+          .execute();
 
         return new TransferResult(
             new TransferId(UUID.randomUUID().toString()),
@@ -487,7 +524,7 @@ class TransferFundsTest {
         void execute_auditsSuccessfulTransfer() {
             var auditedEntries = new ArrayList<AuditEntry>();
 
-            TransferFunds.AuditLog auditLog = entry -> {
+            TransferFunds.RecordAudit auditLog = entry -> {
                 auditedEntries.add(entry);
                 return Promise.success(Unit.unit());
             };
@@ -513,7 +550,7 @@ class TransferFundsTest {
         void execute_auditsFailedTransfer() {
             var auditedEntries = new ArrayList<AuditEntry>();
 
-            TransferFunds.AuditLog auditLog = entry -> {
+            TransferFunds.RecordAudit auditLog = entry -> {
                 auditedEntries.add(entry);
                 return Promise.success(Unit.unit());
             };
@@ -538,7 +575,7 @@ class TransferFundsTest {
 
         @Test
         void execute_succeedsEvenIfAuditFails() {
-            TransferFunds.AuditLog failingAudit = entry ->
+            TransferFunds.RecordAudit failingAudit = entry ->
                 Causes.cause("Audit service unavailable").promise();
 
             var useCase = TransferFunds.transferFunds(

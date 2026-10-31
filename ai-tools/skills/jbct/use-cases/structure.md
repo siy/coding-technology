@@ -5,12 +5,15 @@
 ## Basic Template
 
 ```java
-public interface UseCaseName extends UseCase.WithPromise<Response, Request> {
+@UseCase
+public interface UseCaseName {
     // Input from external world
     record Request(String field1, String field2) {}
 
     // Output to external world
     record Response(String result) {}
+
+    Promise<Response> execute(Request request);
 
     // Validated input (Valid prefix, not Validated)
     record ValidRequest(ValueObject1 vo1, ValueObject2 vo2) {
@@ -42,18 +45,21 @@ public interface UseCaseName extends UseCase.WithPromise<Response, Request> {
 ### 1. Interface Declaration
 
 ```java
-public interface RegisterUser extends UseCase.WithPromise<Response, Request> {
-    // UseCase.WithPromise<OUT, IN> for async use cases
-    // UseCase.WithResult<OUT, IN> for sync use cases
+@UseCase
+public interface RegisterUser {
+    Promise<Response> execute(Request request);    // async use case
+    // Result<Response> execute(Request request);  // sync use case
 }
 ```
+
+`@UseCase` anchors the use case in the package tree. There is no marker supertype to extend; the single abstract `execute` method is what the factory's lambda implements.
 
 ### 2. Request Record
 
 External input - uses primitive types or strings:
 
 ```java
-record Request(String email, String password, String userId) {}
+record Request(String email, String password, String referralCode) {}
 ```
 
 **Not** domain types - validation happens in ValidRequest factory.
@@ -63,7 +69,7 @@ record Request(String email, String password, String userId) {}
 External output - can use domain types or primitives:
 
 ```java
-record Response(UserId userId, String confirmationToken) {}
+record Response(UserId userId, ConfirmationToken token) {}
 ```
 
 ### 4. ValidRequest Record
@@ -71,12 +77,12 @@ record Response(UserId userId, String confirmationToken) {}
 Parsed, validated input with domain types:
 
 ```java
-record ValidRequest(Email email, Password password, UserId userId) {
+record ValidRequest(Email email, Password password, Option<ReferralCode> referralCode) {
     static Result<ValidRequest> validRequest(Request raw) {
         return Result.all(
             Email.email(raw.email()),
             Password.password(raw.password()),
-            UserId.userId(raw.userId())
+            ReferralCode.referralCode(raw.referralCode())
         ).map(ValidRequest::new);
     }
 }
@@ -89,12 +95,23 @@ record ValidRequest(Email email, Password password, UserId userId) {
 Single-method interfaces for each step:
 
 ```java
-interface CheckEmail { Promise<ValidRequest> apply(ValidRequest valid); }
-interface SaveUser { Promise<User> apply(ValidRequest valid); }
-interface SendEmail { Promise<Token> apply(User user); }
+interface CheckEmailUniqueness { Promise<ValidRequest> apply(ValidRequest valid); }
+interface CreateValidUser { Promise<ValidUser> apply(ValidRequest valid); }
+interface SaveUser { Promise<User> apply(ValidUser validUser); }
+interface GenerateToken { Promise<Response> apply(User user); }
 ```
 
-**Nested** inside use case interface.
+**Nested** inside use case interface, each with its own static factory. An I/O step's factory takes the infrastructure and implements the step with a lambda; library types appear only there:
+
+```java
+interface SaveUser {
+    Promise<User> apply(ValidUser validUser);
+
+    static SaveUser saveUser(DSLContext dsl) { ... }
+}
+```
+
+When a step outgrows the file, the same interface moves out unchanged (I/O steps to `<usecase>/io/`, business steps to the use case package). No new type is introduced for the move.
 
 ### 6. Factory Method
 
@@ -102,22 +119,22 @@ Returns lambda directly (NOT nested record):
 
 ```java
 // ✅ CORRECT - Returns lambda
-static RegisterUser registerUser(CheckEmail check, SaveUser save, SendEmail send) {
+static RegisterUser registerUser(CheckEmailUniqueness check, CreateValidUser create, SaveUser save, GenerateToken token) {
     return request -> ValidRequest.validRequest(request)
         .async()
         .flatMap(check::apply)
+        .flatMap(create::apply)
         .flatMap(save::apply)
-        .flatMap(send::apply)
-        .map(token -> new Response(user.id(), token));
+        .flatMap(token::apply);
 }
 
 // ❌ WRONG - Nested record implementation
-static RegisterUser registerUser(CheckEmail check, SaveUser save) {
-    record registerUser(CheckEmail check, SaveUser save) implements RegisterUser {
+static RegisterUser registerUser(CheckEmailUniqueness check, CreateValidUser create, SaveUser save, GenerateToken token) {
+    record registerUser(CheckEmailUniqueness check, CreateValidUser create, SaveUser save, GenerateToken token) implements RegisterUser {
         @Override
         public Promise<Response> execute(Request request) { ... }
     }
-    return new registerUser(check, save);
+    return new registerUser(check, create, save, token);
 }
 ```
 
@@ -126,50 +143,49 @@ static RegisterUser registerUser(CheckEmail check, SaveUser save) {
 ## Complete Example
 
 ```java
-public interface RegisterUser extends UseCase.WithPromise<Response, Request> {
-    record Request(String email, String password) {}
+@UseCase
+public interface RegisterUser {
+    record Request(String email, String password, String referralCode) {}
 
     record Response(UserId userId, ConfirmationToken token) {}
 
-    record ValidRequest(Email email, Password password) {
+    Promise<Response> execute(Request request);
+
+    record ValidRequest(Email email, Password password, Option<ReferralCode> referralCode) {
         static Result<ValidRequest> validRequest(Request raw) {
             return Result.all(Email.email(raw.email()),
-                             Password.password(raw.password()))
+                              Password.password(raw.password()),
+                              ReferralCode.referralCode(raw.referralCode()))
                          .map(ValidRequest::new);
         }
     }
 
-    interface CheckEmailAvailability {
+    interface CheckEmailUniqueness {
         Promise<ValidRequest> apply(ValidRequest valid);
     }
 
-    interface HashPassword {
-        Promise<HashedPassword> apply(ValidRequest valid);
+    interface CreateValidUser {
+        Promise<ValidUser> apply(ValidRequest valid);
     }
 
     interface SaveUser {
-        Promise<User> apply(ValidRequest valid, HashedPassword hashed);
+        Promise<User> apply(ValidUser validUser);
     }
 
-    interface SendConfirmation {
-        Promise<ConfirmationToken> apply(User user);
+    interface GenerateToken {
+        Promise<Response> apply(User user);
     }
 
-    static RegisterUser registerUser(
-        CheckEmailAvailability checkEmail,
-        HashPassword hashPassword,
-        SaveUser saveUser,
-        SendConfirmation sendConfirmation
-    ) {
+    static RegisterUser registerUser(CheckEmailUniqueness checkEmail,
+                                     CreateValidUser createValidUser,
+                                     SaveUser saveUser,
+                                     GenerateToken generateToken) {
         return request -> ValidRequest.validRequest(request)
-            .async()
-            .flatMap(checkEmail::apply)
-            .flatMap(valid ->
-                hashPassword.apply(valid)
-                    .flatMap(hashed -> saveUser.apply(valid, hashed))
-            )
-            .flatMap(sendConfirmation::apply)
-            .map(token -> new Response(user.id(), token));
+                                      .async()
+                                      .flatMap(checkEmail::apply)
+                                      .flatMap(createValidUser::apply)
+                                      .flatMap(saveUser::apply)
+                                      .flatMap(generateToken::apply);
     }
 }
 ```
@@ -197,9 +213,9 @@ Use `Valid` prefix:
 ### Step Interfaces
 
 Descriptive action names:
-- `CheckEmail`
+- `CheckEmailUniqueness`
 - `SaveUser`
-- `FetchProfile`
+- `LoadProfile`
 - `SendNotification`
 
 ## Variations
@@ -207,14 +223,19 @@ Descriptive action names:
 ### Sync Use Case
 
 ```java
-public interface ValidateOrder extends UseCase.WithResult<Response, Request> {
+@UseCase
+public interface ValidateOrder {
     record Request(String orderId) {}
     record Response(boolean isValid) {}
 
+    Result<Response> execute(Request request);
+
+    interface FindOrder { Result<Order> apply(OrderId orderId); }
+
     // Factory returns lambda with Result
-    static ValidateOrder validateOrder(OrderRepository repo) {
+    static ValidateOrder validateOrder(FindOrder findOrder) {
         return request -> OrderId.orderId(request.orderId())
-            .flatMap(repo::findOrder)
+            .flatMap(findOrder::apply)
             .map(order -> new Response(order.isValid()));
     }
 }
@@ -223,15 +244,18 @@ public interface ValidateOrder extends UseCase.WithResult<Response, Request> {
 ### No Validation Needed
 
 ```java
-public interface GetUserById extends UseCase.WithPromise<Response, Request> {
+@UseCase
+public interface GetUserById {
     record Request(String userId) {}
     record Response(User user) {}
 
+    Promise<Response> execute(Request request);
+
     // No ValidRequest - direct parsing
-    static GetUserById getUserById(FetchUser fetchUser) {
+    static GetUserById getUserById(LoadUser loadUser) {
         return request -> UserId.userId(request.userId())
             .async()
-            .flatMap(fetchUser::apply)
+            .flatMap(loadUser::apply)
             .map(Response::new);
     }
 }
@@ -240,6 +264,7 @@ public interface GetUserById extends UseCase.WithPromise<Response, Request> {
 ### Multiple Valid Records
 
 ```java
+@UseCase
 public interface TransferMoney {
     record Request(String fromAccount, String toAccount, String amount) {}
 
@@ -271,56 +296,20 @@ public interface TransferMoney {
 
 ## Assembly
 
-### At Application Startup
+Endpoints and assembly are generated by the runtime; there are no hand-written controllers or configuration classes.
+
+### Plain Java and Tests
+
+Assembly is a call at the root that passes each step's factory result - the only place I/O factories are called:
 
 ```java
-@Configuration
-public class UseCaseConfig {
-    @Bean
-    public RegisterUser registerUser(
-        UserRepository userRepo,
-        EmailService emailService,
-        PasswordHasher hasher
-    ) {
-        // Create adapters
-        var checkEmail = CheckEmailAdapter.checkEmail(userRepo);
-        var hashPassword = HashPasswordAdapter.hashPassword(hasher);
-        var saveUser = SaveUserAdapter.saveUser(userRepo);
-        var sendEmail = SendEmailAdapter.sendEmail(emailService);
-
-        // Assemble use case
-        return RegisterUser.registerUser(
-            checkEmail,
-            hashPassword,
-            saveUser,
-            sendEmail
-        );
-    }
-}
+var registerUser = RegisterUser.registerUser(CheckEmailUniqueness.checkEmailUniqueness(FindUser.findUser(dsl)),
+                                             CreateValidUser.createValidUser(HashPassword.hashPassword(encoder)),
+                                             SaveUser.saveUser(dsl),
+                                             GenerateToken.generateToken(httpClient));
 ```
 
-### Controller Usage
-
-```java
-@RestController
-@RequestMapping("/api/users")
-public class UserController {
-    private final RegisterUser registerUser;
-
-    public UserController(RegisterUser registerUser) {
-        this.registerUser = registerUser;
-    }
-
-    @PostMapping("/register")
-    public Promise<ResponseEntity<RegisterUser.Response>> register(
-        @RequestBody RegisterUser.Request request
-    ) {
-        return registerUser.execute(request)
-            .map(ResponseEntity::ok)
-            .recover(cause -> ResponseEntity.badRequest().build());
-    }
-}
-```
+A test passes lambdas instead: `RegisterUser.registerUser(valid -> Promise.success(valid), ...)`.
 
 ## Anti-Patterns
 
@@ -328,12 +317,12 @@ public class UserController {
 
 ```java
 // DON'T
-static RegisterUser registerUser(CheckEmail check, SaveUser save) {
-    record registerUser(CheckEmail check, SaveUser save) implements RegisterUser {
+static RegisterUser registerUser(CheckEmailUniqueness check, CreateValidUser create, SaveUser save, GenerateToken token) {
+    record registerUser(CheckEmailUniqueness check, CreateValidUser create, SaveUser save, GenerateToken token) implements RegisterUser {
         @Override
         public Promise<Response> execute(Request request) { ... }
     }
-    return new registerUser(check, save);
+    return new registerUser(check, create, save, token);
 }
 ```
 
@@ -341,7 +330,7 @@ static RegisterUser registerUser(CheckEmail check, SaveUser save) {
 
 ```java
 // DON'T
-record ValidRequest(Email email, Password password) {
+record ValidRequest(Email email, Password password, Option<ReferralCode> referralCode) {
     // Public constructor allows bypassing validation!
 }
 ```
@@ -352,7 +341,7 @@ record ValidRequest(Email email, Password password) {
 // DON'T
 public interface RegisterUser {
     @Autowired
-    private UserRepository userRepository;  // Framework coupling!
+    private DSLContext dsl;  // Framework coupling!
 }
 ```
 
@@ -360,7 +349,7 @@ public interface RegisterUser {
 
 ```java
 // DON'T
-static RegisterUser registerUser(UserRepository repo) {
+static RegisterUser registerUser(SaveUser saveUser) {
     return request -> {
         // Complex business logic here - extract to steps!
         if (request.email().contains("@")) {

@@ -116,13 +116,13 @@ Two nestings are allowed because each concern still appears once: `Result<Option
 |---|---|---|
 | **Zone 1** | the use case entry point, one per use case | the business goal |
 | **Zone 2** | step interfaces the composition chains | the **intent** — what the workflow needs to happen |
-| **Zone 3** | business and adapter leaves | the **mechanism** — how it is done |
+| **Zone 3** | business and I/O leaves | the **mechanism** — how it is done |
 
 A function calls its own zone or one level down. The verb tables in *Basic Patterns* are representative, never closed: a verb absent from them is unlisted, not wrong. The zone is the constraint.
 
 ### The patterns
 
-- **Leaf** — an atomic operation with no substeps. A *business leaf* is pure computation; an *adapter leaf* crosses a boundary. Everything else composes Leaves.
+- **Leaf** — an atomic operation with no substeps. A *business leaf* is pure computation; an *I/O leaf* (an I/O step) crosses a boundary. Everything else composes Leaves.
 - **Sequencer** — dependent steps chained with `map` and `flatMap`, each feeding the next, short-circuiting on the first failure. Two to five steps.
 - **Fork-Join** — independent steps run in parallel and joined.
 - **Condition** — a branch on a business fact, extracted to a named function rather than left as a ternary inside a lambda.
@@ -141,4 +141,4 @@ Which applies is a judgment across reversibility, the value of partial progress,
 
 ### What the stubs owe
 
-Every stub in a use case test is an assumption about a boundary: that the real adapter succeeds that way, fails that way, and translates a transport exception into that typed failure. No use case test checks any of it. **The adapter contract test is what makes the stub honest** — success, the not-found case, and the exception-to-`Cause` translation that is the adapter's entire job.
+Every stub in a use case test is an assumption about a boundary: that the real I/O step succeeds that way, fails that way, and translates a transport exception into that typed failure. No use case test checks any of it. **The I/O step's contract test is what makes the stub honest** — success, the not-found case, and the exception-to-`Cause` translation that is the I/O step's entire job.

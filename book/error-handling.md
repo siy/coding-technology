@@ -238,43 +238,41 @@ Users see all errors at once, not fix-and-retry repeatedly.
 
 **Rule:** Exceptions for programming errors only when there's no meaningful recovery and the application should terminate or restart.
 
-### Adapter Boundaries → Map to Domain Types
+### I/O Boundaries → Map to Domain Types
 
-**Adapter code** catches external exceptions and maps to domain types:
+**I/O steps** catch external exceptions and map to domain types:
 
 ```java
-// Adapter: map exception → wrapped Cause, null → Option
-record DatabaseFailure(Cause origin, String message) implements RepositoryError, Cause.Wrapped {
+// I/O step: map exception → wrapped Cause, null → Option
+record DatabaseFailure(Cause origin, String message) implements StorageError, Cause.Wrapped {
     static final Fn1<DatabaseFailure, Cause> FACTORY =
         Causes.forOneValue("Database failure", DatabaseFailure::new);
 }
 
-public Promise<Option<User>> findById(UserId id) {
-    return Promise.lift(
+static FindUser findUser(DSLContext dsl) {
+    return email -> Promise.lift(
         t -> DatabaseFailure.FACTORY.apply(Causes.fromThrowable(t)),
-        () -> Option.option(jdbcTemplate.queryForObject(...))  // null → Option
+        () -> Option.option(dsl.selectFrom(USERS).where(USERS.EMAIL.eq(email.value())).fetchOneInto(User.class))  // null → Option
     );
 }
 ```
 
-**Rule:** No external exception or null crosses adapter boundaries—map immediately.
+**Rule:** No external exception or null crosses an I/O step's boundary—map immediately, inside the step's factory.
 
 ---
 
-## Adapter Exceptions: The Boundary
+## I/O Exceptions: The Boundary
 
-Foreign code throws exceptions. **Adapters** catch and convert them:
+Foreign code throws exceptions. **I/O steps** catch and convert them, in the step's factory:
 
 ```java
-class JpaUserRepository implements UserRepository {
-    public Promise<Option<User>> findByEmail(Email email) {
-        return Promise.lift(
-            t -> DatabaseFailure.FACTORY.apply(Causes.fromThrowable(t)),
-            () -> {
-                // JDBC/JPA code that might throw
-                return Option.option(result);
-            });
-    }
+static FindUser findUser(DataSource dataSource) {
+    return email -> Promise.lift(
+        t -> DatabaseFailure.FACTORY.apply(Causes.fromThrowable(t)),
+        () -> {
+            // JDBC/JPA code that might throw
+            return Option.option(result);
+        });
 }
 ```
 
@@ -395,7 +393,7 @@ void execute_succeeds() {
 2. **Records with data, one enum for fixed text** - `message` is a trailing component, never a hand-written body
 3. **FACTORY constructs** - Template and data cannot disagree; direct `new` bypasses the guarantee
 4. **Result.all()** - Accumulates all failures, not just first
-5. **Adapters convert** - Exceptions → Cause at boundaries
+5. **I/O steps convert** - Exceptions → Cause at boundaries
 6. **Render at the boundary** - The exhaustive switch composes user text from components
 7. **Never nest** - `Promise<Result<T>>` is forbidden
 8. **Test identity, not prose** - Constant equality and components, never `message()` text

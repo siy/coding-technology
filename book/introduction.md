@@ -53,7 +53,7 @@ The benefits compound:
 
 **Deterministic code generation** becomes possible when the mapping from requirements to code is mechanical. Given a use case specification - inputs, outputs, validation rules, steps - there's essentially one correct structure. Different developers (or AI assistants) should produce nearly identical implementations.
 
-**The normalization boundary.** "Nearly identical" has a precise scope, and stating the scope is what makes the claim testable. JBCT derives the package hierarchy (the telescope rule), the Java types, the step contracts and return types, the pattern for each composition, the failure representation, the placement of shared code, the concurrency structure, and the testing obligations. JBCT does not normalize algorithms inside atomic leaves, framework-specific adapter internals, module promotion (content-invariant along derived boundaries — [Project Structure](project-structure.md) has the full treatment), the test-input supply vehicle, or test-data representation. Variation below this line is style; variation above it is a defect. A newly discovered variation receives an explicit ruling: closed by a rule, or placed below the line. The boundary comes from measurement rather than taste — inspecting independent implementations of one design found their skeletons identical, and what differed became the first rulings.
+**The normalization boundary.** "Nearly identical" has a precise scope, and stating the scope is what makes the claim testable. JBCT derives the package hierarchy (the telescope rule), the Java types, the step contracts and return types, the pattern for each composition, the failure representation, the placement of shared code, the concurrency structure, and the testing obligations. JBCT does not normalize algorithms inside atomic leaves, framework-specific internals of I/O steps, module promotion (content-invariant along derived boundaries — [Project Structure](project-structure.md) has the full treatment), the test-input supply vehicle, or test-data representation. Variation below this line is style; variation above it is a defect. A newly discovered variation receives an explicit ruling: closed by a rule, or placed below the line. The boundary comes from measurement rather than taste — inspecting independent implementations of one design found their skeletons identical, and what differed became the first rulings.
 
 **Construction that scales** is what these properties buy at team size. It is a different claim from runtime parallelism: whether steps *run* in parallel follows from their data dependencies, while whether they can be *built* in parallel follows from their contracts — and JBCT steps share only their typed input and output, so the pieces of even a strictly sequential chain can be built concurrently by builders who coordinate on nothing beyond the types. Uniformity supplies the rest: when every unit is shaped from the same six patterns and four return types, any builder, human or AI agent, picks up any unit already knowing its shape, so ramp-up cost falls toward zero and workers stay interchangeable across the codebase. The other half of the pair — cutting the system into units that change for different reasons, so builders rarely meet at all — is design-phase work, developed in the companion *Process-First Design*. The author's *Software's Second Free Lunch* carries the full argument.
 
@@ -148,7 +148,7 @@ Why care? **Pure functions are predictable**: same inputs always produce same ou
 
 **Impure functions are necessary** - your app must interact with the world - but they're **unpredictable**: network might fail, disk might be full, database might be down.
 
-JBCT's approach: **push side effects to the edges**. Keep business logic pure. Isolate impure operations in adapter leaves. This makes your core logic easy to test and reason about.
+JBCT's approach: **push side effects to the edges**. Keep business logic pure. Isolate impure operations in I/O leaves. This makes your core logic easy to test and reason about.
 
 ### What Is Composition?
 
@@ -293,7 +293,7 @@ All input data passed to operations must be treated as immutable and read-only. 
 
 **What CAN be mutable (thread-confined):**
 - Local state within single operation (accumulators, builders)
-- Working objects within adapter boundaries
+- Working objects within an I/O step's factory
 - State confined to sequential patterns
 
 **Key principle:** Mutability is safe when state is **thread-confined** (accessed by single thread). Parallel patterns require immutable inputs because no isolation exists.
@@ -321,7 +321,7 @@ All input data passed to operations must be treated as immutable and read-only. 
 
 1. **JBCT unifies code** - Making code predictable across teams and AI collaboration
 2. **Five criteria** guide all decisions - Mental overhead, business/technical ratio, design impact, reliability, complexity
-3. **Side effects at edges** - Keep business logic pure, isolate I/O in adapters
+3. **Side effects at edges** - Keep business logic pure, isolate I/O in I/O steps
 4. **Composition over imperative** - Chain operations, let structure handle errors
 5. **Monads invert control** - You describe transformations, the monad handles execution
 6. **Hide the machinery, keep the meaning** - Technical noise at the edges, business facts preserved in types; the code executes and testifies at once

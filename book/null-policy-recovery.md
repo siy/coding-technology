@@ -3,7 +3,7 @@
 ## What You'll Learn
 
 - When null is acceptable (and when it isn't)
-- How to handle null at adapter boundaries
+- How to handle null at I/O boundaries
 - Error recovery patterns with fallback values
 - Graceful degradation strategies
 - The recovery triple: backward recovery, forward recovery, and designing failure out
@@ -59,40 +59,44 @@ Now the type signature tells us exactly what's happening: the user might not be 
 
 ## When Null IS Acceptable
 
-Null appears only at **adapter boundaries** when interfacing with external code that uses null:
+Null appears only at **I/O boundaries**, inside I/O steps, when interfacing with external code that uses null:
 
 ### 1. Wrapping External APIs
 
-When calling external libraries that may return null, wrap immediately at the adapter boundary:
+When calling external libraries that may return null, wrap immediately inside the I/O step's factory:
 
 ```java
-// Adapter layer - wrap nullable external API
-public Option<User> findUser(UserId id) {
-    User user = repository.findById(id.value());  // External API may return null
-    return Option.option(user);  // Wrap immediately: null -> none(), value -> some(value)
+// I/O step factory - wrap nullable external API
+static LoadUser loadUser(UserDirectory directory) {
+    return id -> Promise.lift(t -> StorageError.DatabaseFailure.FACTORY.apply(Causes.fromThrowable(t)),
+                              () -> Option.option(directory.findById(id.value())))  // External API may return null: wrap immediately
+                        .flatMap(user -> user.async(UserError.NotFound.FACTORY.apply(id)));
 }
 ```
 
-**Spring Data JPA example:**
+**JPA example:**
 ```java
-public Option<User> findByEmail(Email email) {
-    return Option.option(userRepository.findByEmail(email.value()));  // JPA returns null if not found
+static LoadUser loadUser(EntityManager em) {
+    return id -> Promise.lift(t -> StorageError.DatabaseFailure.FACTORY.apply(Causes.fromThrowable(t)),
+                              () -> Option.option(em.find(User.class, id.value())))  // JPA returns null if not found
+                        .flatMap(user -> user.async(UserError.NotFound.FACTORY.apply(id)));
 }
 ```
 
 **JDBC ResultSet example:**
 ```java
-public Promise<Option<User>> loadUser(UserId id) {
-    return Promise.lift(RepositoryError.DatabaseFailure::new,
-                        () -> {
-                            ResultSet rs = executeQuery(id);
-                            User user = rs.next() ? mapUser(rs) : null;  // null if not found
-                            return Option.option(user);  // Wrap before returning
-                        });
+static LoadUser loadUser(DataSource dataSource) {
+    return id -> Promise.lift(t -> StorageError.DatabaseFailure.FACTORY.apply(Causes.fromThrowable(t)),
+                              () -> {
+                                  ResultSet rs = executeQuery(dataSource, id);
+                                  User user = rs.next() ? mapUser(rs) : null;  // null if not found
+                                  return Option.option(user);  // Wrap before returning
+                              })
+                        .flatMap(user -> user.async(UserError.NotFound.FACTORY.apply(id)));
 }
 ```
 
-**Pattern**: `Option.option(nullable)` immediately converts external null to `Option.none()`.
+**Pattern**: `Option.option(nullable)` immediately converts external null to `Option.none()`. `LoadUser` (`Promise<User> apply(UserId userId)`) then turns `none()` into its not-found `Cause`; a step that reports absence as a value instead is a `FindUser`, returning `Promise<Option<User>>`.
 
 **Wire records bound by a JSON or XML mapper.** A record that Jackson populates has no compile-time guarantee that a reference component is present: a field missing from the payload leaves the component `null`. A helper method on the record is where that bites - `items().stream()` on an absent list throws `NullPointerException` at runtime, far from the payload that caused it. Keep wire records free of helpers that dereference their components, and convert the record into a domain type at the boundary, where `Option.option(...)` turns each absent component into `none()`. If a helper has to stay on the wire record, guard every component it dereferences.
 
@@ -101,10 +105,10 @@ public Promise<Option<User>> loadUser(UserId id) {
 When persisting to databases with nullable columns, convert `Option<T>` to null for the column:
 
 ```java
-// Adapter layer - JOOQ insert with optional field
-public Promise<Unit> saveUser(User user) {
-    return Promise.lift(
-            RepositoryError.DatabaseFailure::new,
+// I/O step factory - JOOQ insert with optional field
+static SaveUser saveUser(DSLContext dsl) {
+    return user -> Promise.lift(
+            t -> StorageError.DatabaseFailure.FACTORY.apply(Causes.fromThrowable(t)),
             () -> {
                 dsl.insertInto(USERS)
                    .set(USERS.ID, user.id().value())
@@ -246,7 +250,7 @@ public Result<User> enrichUser(User user) {
 | Test inputs for validation | Allowed | Test null rejection |
 | "Unknown" or "absent" semantics | Never | Use `Option<T>` or `Result<T>` |
 
-**Core Principle**: Null exists only at system boundaries (adapters). Inside JBCT code, absence is represented by `Option.none()`, never null.
+**Core Principle**: Null exists only at system boundaries (I/O steps). Inside JBCT code, absence is represented by `Option.none()`, never null.
 
 **Why This Matters**:
 - **Mental Overhead**: No defensive null checks in business logic
@@ -304,9 +308,9 @@ Use `.orElse()` when you want to try an alternative operation that returns the s
 ```java
 // Try cache, then database, then in-memory
 public Promise<User> findUser(UserId id) {
-    return cacheRepository.find(id)      // Promise<User>
-                          .orElse(databaseRepository.find(id))  // Try DB if cache fails
-                          .orElse(Promise.success(User.GUEST)); // Final fallback
+    return loadCachedUser.apply(id)      // Promise<User>
+                         .orElse(loadStoredUser.apply(id))  // Try DB if cache fails
+                         .orElse(Promise.success(User.GUEST)); // Final fallback
 }
 
 // Result version
@@ -326,24 +330,24 @@ public Result<Config> loadConfig(String key) {
 Use `.recover()` when you want to transform failures into successes based on the error:
 
 ```java
-public Result<User> findUserOrGuest(UserId id) {
-    return userRepository.find(id)
+public Promise<User> findUserOrGuest(UserId id) {
+    return loadUser.apply(id)
         .recover(this::recoverUserErrors);  // FER: known user errors become fallback values
 }
 
 private User recoverUserErrors(Cause cause) {
     return switch (cause) {
         case UserError.NotFound ignored -> User.GUEST;
-        case UserError.DatabaseError ignored -> User.OFFLINE;
+        case StorageError.DatabaseFailure ignored -> User.OFFLINE;
         default -> throw new IllegalStateException("Unexpected error: " + cause);
     };
 }
 ```
 
-**Promise version — async recovery via `fold` (recover's mapper is synchronous):**
+**Async recovery via `fold` (recover's mapper is synchronous):**
 ```java
 public Promise<Order> processOrder(OrderRequest request) {
-    return paymentService.charge(request)
+    return chargePayment.apply(request)
         .fold(result -> result.fold(cause -> recoverPaymentErrors(request, cause),
                                     Promise::success));
 }
@@ -351,9 +355,9 @@ public Promise<Order> processOrder(OrderRequest request) {
 private Promise<Order> recoverPaymentErrors(OrderRequest request, Cause cause) {
     return switch (cause) {
         case PaymentError.InsufficientFunds ignored ->
-            splitPaymentService.process(request);  // Async alternative
+            splitPayment.apply(request);  // Async alternative
         case PaymentError.TemporaryFailure ignored ->
-            paymentService.charge(request);  // Retry once
+            chargePayment.apply(request);  // Retry once
         default -> cause.promise();  // Can't recover
     };
 }
@@ -445,7 +449,7 @@ Which applies is a judgment — reversibility, the value of partial progress, th
 
 ## Key Takeaways
 
-1. **Null only at boundaries** - Adapters wrap external nulls in `Option`
+1. **Null only at boundaries** - I/O steps wrap external nulls in `Option`
 2. **Option.option(nullable)** - Immediate conversion at entry point
 3. **Never return null** - Use `Option<T>` for optional values
 4. **.or() for defaults** - Provide fallback values

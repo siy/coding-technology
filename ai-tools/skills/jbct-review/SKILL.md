@@ -26,13 +26,13 @@ Comprehensive JBCT compliance review using parallel focused workers with aggrega
 | Short Name | Full Focus Area |
 |------------|-----------------|
 | `ValueObjects` | Value Objects (factories + immutability) |
-| `UseCases` | Use Cases (structure + composition) |
+| `UseCases` | Use Cases (structure + composition + package model: layer packages, `@UseCase`, `shared`/`io` placement, sideways imports, I/O types and `lift` outside I/O code, `io` composing steps, extraction types) |
 | `ReturnTypes` | Return Types (Result/Promise, Void→Unit, no exceptions) |
 | `Structural` | Structural Patterns (Leaf, Sequencer, Fork-Join) |
 | `Composition` | Composition Rules (fold() abuse, lambda complexity) |
 | `Null` | Null Policy (Option usage) |
 | `ThreadSafety` | Thread Safety (immutability, shared state) |
-| `Naming` | Naming Conventions (factories, zones, acronyms) |
+| `Naming` | Naming Conventions (factories, zones, acronyms, business names only: no `*Repository`/`*Controller`/`*Service`/`*Impl`/`Jooq*` types or packages) |
 | `Testing` | Testing Patterns (assertions, organization) |
 | `CrossCutting` | Cross-Cutting Concerns (security, performance, logging) |
 

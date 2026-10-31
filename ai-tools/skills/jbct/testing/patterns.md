@@ -89,9 +89,7 @@ Test with stubs, end-to-end style:
 class RegisterUserTest {
     @Test
     void execute_succeeds_withValidInput() {
-        var checkEmail = successStub();
-        var saveUser = userStub();
-        var useCase = RegisterUser.registerUser(checkEmail, saveUser);
+        var useCase = RegisterUser.registerUser(successStub(), validUserStub(), userStub(), responseStub());
 
         useCase.execute(validRequest())
                .await()
@@ -103,17 +101,17 @@ class RegisterUserTest {
 
     @Test
     void execute_fails_whenEmailInvalid() {
-        var useCase = RegisterUser.registerUser(successStub(), successStub());
+        var useCase = RegisterUser.registerUser(successStub(), validUserStub(), userStub(), responseStub());
 
-        useCase.execute(new Request("invalid", "ValidPass123"))
+        useCase.execute(new Request("invalid", "ValidPass123", null))
                .await()
                .onSuccess(Assertions::fail);
     }
 
     @Test
     void execute_fails_whenEmailExists() {
-        var checkEmail = failureStub(EmailError.AlreadyExists.INSTANCE);
-        var useCase = RegisterUser.registerUser(checkEmail, successStub());
+        var checkEmail = failureStub(RegistrationError.General.EMAIL_ALREADY_REGISTERED);
+        var useCase = RegisterUser.registerUser(checkEmail, validUserStub(), userStub(), responseStub());
 
         useCase.execute(validRequest())
                .await()
@@ -138,9 +136,9 @@ void calculateTax_appliesCorrectRate() {
 }
 ```
 
-### 4. Adapters (RECOMMENDED)
+### 4. I/O Steps (RECOMMENDED)
 
-Test adapters with mocked repositories:
+Test an I/O step through its factory, with the library object it takes stubbed:
 
 ```java
 @Test
@@ -148,26 +146,30 @@ void loadUser_succeeds_whenUserExists() {
     UserId id = UserId.random();
     User expected = testUser(id);
 
-    when(repository.findById(id.value())).thenReturn(expected);
+    when(jdbcTemplate.queryForObject(anyString(), any(RowMapper.class), eq(id.value()))).thenReturn(expected);
 
-    adapter.loadUser(id)
-           .await()
-           .onFailure(Assertions::fail)
-           .onSuccess(user -> assertEquals(expected, user));
+    LoadUser.loadUser(jdbcTemplate)
+            .apply(id)
+            .await()
+            .onFailure(Assertions::fail)
+            .onSuccess(user -> assertEquals(expected, user));
 }
 
 @Test
 void loadUser_fails_whenUserNotFound() {
     UserId id = UserId.random();
 
-    when(repository.findById(id.value()))
+    when(jdbcTemplate.queryForObject(anyString(), any(RowMapper.class), eq(id.value())))
         .thenThrow(new EmptyResultDataAccessException(1));
 
-    adapter.loadUser(id)
-           .await()
-           .onSuccess(Assertions::fail);
+    LoadUser.loadUser(jdbcTemplate)
+            .apply(id)
+            .await()
+            .onSuccess(Assertions::fail);
 }
 ```
+
+Test sources mirror the package tree: `registeruser/RegisterUserTest.java`, `shared/EmailTest.java`, `io/LoadUserTest.java`.
 
 ## Test Organization
 
@@ -217,12 +219,13 @@ class TestData {
     static RegisterUser.Request validRequest() {
         return new RegisterUser.Request(
             "test@example.com",
-            "ValidPass123"
+            "ValidPass123",
+            null
         );
     }
 
     static RegisterUser.Request requestWith(String email, String password) {
-        return new RegisterUser.Request(email, password);
+        return new RegisterUser.Request(email, password, null);
     }
 }
 ```
@@ -239,9 +242,9 @@ class Stubs {
         return ignored -> cause.promise();
     }
 
-    static RegisterUser.CheckEmail checkEmailStub(boolean exists) {
+    static RegisterUser.CheckEmailUniqueness checkEmailStub(boolean exists) {
         return exists
-            ? valid -> EmailError.AlreadyExists.INSTANCE.promise()
+            ? valid -> RegistrationError.General.EMAIL_ALREADY_REGISTERED.promise()
             : valid -> Promise.success(valid);
     }
 }
@@ -356,12 +359,12 @@ class RegisterUserIntegrationTest {
 
     @Test
     void registerUser_persistsToDatabase() {
-        // Real database, real adapters
+        // Real database, real I/O steps (each step's factory called with the real infrastructure)
         var useCase = RegisterUser.registerUser(
-            realCheckEmail,
-            realHashPassword,
+            realCheckEmailUniqueness,
+            realCreateValidUser,
             realSaveUser,
-            realSendEmail
+            realGenerateToken
         );
 
         var response = useCase.execute(validRequest())
@@ -370,8 +373,7 @@ class RegisterUserIntegrationTest {
                               .value();
 
         // Verify in database
-        User saved = repository.findById(UUID.fromString(response.userId()));
-        assertNotNull(saved);
+        assertTrue(dsl.fetchExists(USERS, USERS.ID.eq(response.userId().value())));
     }
 }
 ```

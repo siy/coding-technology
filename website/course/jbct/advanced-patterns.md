@@ -1,5 +1,5 @@
 ---
-reviewed-at: d478e1b880ed68b6f41ae50b875abead21072055
+reviewed-at: bb33878531a13aea854fe3e6787986a9f7eb7e75
 ---
 
 ## blurb
@@ -16,6 +16,6 @@ that need more.
 
 ## exercise
 ### Add Retry and Timeout | ~20 min
-Take an existing adapter call in your codebase. Wrap it with a timeout (fail after N seconds) and a
+Take an existing I/O step in your codebase. Wrap it with a timeout (fail after N seconds) and a
 retry (up to 3 attempts on transient failure), composing both as aspects around the original step
 interface. Solution discussion in the book's Appendix B (Exercise 3.4).

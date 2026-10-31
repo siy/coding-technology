@@ -4,10 +4,11 @@
 
 - Vertical slicing philosophy and package organization
 - The telescope rule: how the package tree grows as the design discovers altitudes
+- Where steps go, and how they move as they grow and shrink
+- The two role packages, `shared` and `io`, and the one import rule
 - Module promotion: when a package boundary becomes a compile-time boundary
 - File structure guidelines: import ordering, member ordering, utility interfaces
-- Framework integration with Spring Boot and JOOQ
-- Where types go (placement rules)
+- Integrating a database library: jOOQ in an `io` step
 
 **Prerequisites:** [More Examples](publisharticle-example.md)
 
@@ -27,35 +28,44 @@ This technology organizes code around **vertical slices** - each use case is sel
 
 ## Package Structure
 
+The package tree is the design's tree. Every package carries a business name — a use case, or a grouping of use cases the design discovered. There are no layer packages: no `usecase`, `domain`, `adapter`, or `config`. Two names are reserved, and both name a *role* a package plays at whatever node it sits:
+
+- **`shared`** — business code used by more than one of the node's descendants.
+- **`io`** — code that touches the outside world: database, network, files, clock. It holds **leaves only**.
+
 ```
 com.example.app/
-|-- usecase/
-|   |-- registeruser/              # Use case 1 (vertical slice)
-|   |   |-- RegisterUser.java      # Use case interface + factory
-|   |   |-- RegistrationError.java # Sealed error interface
-|   |   |-- [internal types]       # ValidRequest, intermediate records
-|   |
-|   |-- getuserprofile/            # Use case 2 (vertical slice)
-|       |-- GetUserProfile.java
-|       |-- ProfileError.java
-|       |-- [internal types]
+|-- registeruser/                  # use case (vertical slice)
+|   |-- RegisterUser.java          # @UseCase interface: request, response, steps, factory
+|   |-- RegistrationError.java     # sealed error interface
+|   |-- io/                        # I/O steps used only by this use case (when they outgrow the file)
+|       |-- SaveUser.java
 |
-|-- domain/
-|   |-- shared/                    # Reusable value objects only
-|       |-- Email.java
-|       |-- Password.java
-|       |-- UserId.java
+|-- getuserprofile/
+|   |-- GetUserProfile.java        # LoadUser nested: still fits the file
+|   |-- ProfileError.java
 |
-|-- adapter/
-|   |-- rest/                      # Inbound adapters (HTTP)
-|   |   |-- UserController.java
-|   |
-|   |-- persistence/               # Outbound adapters (DB)
-|       |-- JooqUserRepository.java
-|
-|-- config/                        # Framework configuration
-    |-- UseCaseConfig.java
+|-- shared/                        # used by both use cases
+    |-- Email.java
+    |-- UserId.java
 ```
+
+An `io` package appears at the root only when an I/O step gains a second user in another use case — for example, if `RegisterUser` and `GetUserProfile` both needed the same user lookup.
+
+Names say what the code does for the business, never which technology or pattern implements it. `LoadUser`, not `JooqUserRepository`; `SaveUser`, not `UserDao`; no `Impl`, `Service`, `Manager`, `util`, or `common`. A step's name is its contract, and the technology appears only where it is used — in the parameter types of an `io` step's factory (see [Basic Patterns](basic-patterns.md#naming-conventions)).
+
+### The Use Case Anchor
+
+The tree looks the same above a use case (groupings of use cases) and below it (steps that grew their own packages). The use case interface carries `@UseCase`, which marks where one ends and the other begins:
+
+```java
+@UseCase
+public interface RegisterUser {
+    ...
+}
+```
+
+On Aether, the slice interface's `@Slice` annotation serves as the same anchor.
 
 ---
 
@@ -63,40 +73,81 @@ com.example.app/
 
 ### Use Case Packages
 
-`com.example.app.usecase.<usecasename>`:
-- Use case interface and factory method
-- Error types specific to this use case (sealed interface)
-- Step interfaces (nested in use case interface)
+`com.example.app.<usecase>` (or deeper, once groupings appear — see the telescope rule below):
+- The use case interface with `@UseCase`, its Request/Response records, and its factory
+- Step interfaces, nested in the use case interface, each with its static factory
+- The use case's sealed error interface
 - Internal validation types (ValidRequest, intermediate records)
 
 **Rule**: If a type is used only by this use case, it stays here.
 
-### Domain Shared
+### `shared`
 
-`com.example.app.domain.shared`:
-- Value objects reused across multiple use cases
+`<node>.shared`:
+- Business code — value objects, a workflow's state machine, a step — used by more than one descendant of the node
 
-**Rule**: Move here immediately when a second use case needs the same value object.
+**Rule**: Move here when a second user appears, never before. The node is the lowest common ancestor of the users.
 
-**Anti-pattern**: Don't create this upfront - let reuse drive the move.
+### `io`
 
-### Adapter Packages
+`<node>.io`:
+- I/O steps: step interfaces whose static factories talk to a database, a remote service, the file system
+- Their helper types: row mappers, wire records, the step's own error type
 
-`com.example.app.adapter.*`:
-- `adapter.rest` - HTTP controllers, request/response DTOs
-- `adapter.persistence` - Database repositories, ORM entities
-- `adapter.messaging` - Message queue consumers/producers
-- `adapter.external` - HTTP clients for external services
+**Rule**: `io` holds leaves only. When an I/O operation grows into a composition (authorize, then capture, then record), the composition is business logic and moves out of `io`; its three sub-steps stay in `io` as leaves.
 
-**Rule**: Adapters implement step interfaces from use cases.
+### Endpoints and Assembly
 
-### Config Package
+Inbound endpoints and the wiring that assembles use cases from their steps are generated by the runtime. Hand-written assembly exists only in plain Java programs and in tests — a `main` that calls each use case's factory with its steps — and lives at the root.
 
-`com.example.app.config`:
-- Spring/framework configuration
-- Bean wiring, dependency injection setup
+---
 
-**Rule**: No business logic, only infrastructure configuration.
+## Where Steps Go
+
+A step starts as an interface nested in the use case, with a static factory that implements it. As long as the use case file holds it comfortably, that is where it stays:
+
+```java
+@UseCase
+public interface HoldSeat {
+    record Request(String seatId, String customerId) {}
+    record Response(HoldId holdId) {}
+
+    Promise<Response> execute(Request request);
+
+    interface LoadSeat {
+        Promise<Seat> apply(SeatId seatId);
+
+        static LoadSeat loadSeat(DSLContext dsl) {
+            return seatId -> ...;
+        }
+    }
+
+    interface LockSeat {
+        Promise<HoldId> apply(Seat seat, CustomerId customer);
+
+        static LockSeat lockSeat(DSLContext dsl) {
+            return (seat, customer) -> ...;
+        }
+    }
+
+    static HoldSeat holdSeat(LoadSeat loadSeat, LockSeat lockSeat) {
+        return request -> ...;
+    }
+}
+```
+
+When a step outgrows the file, **the step interface itself moves out, unchanged** — the same type, carrying its factory. Nothing is renamed and no new type appears; the use case's factory keeps the same parameter type and gains one import.
+
+| Placement | When |
+|-----------|------|
+| Nested in the use case interface | The default. The step is a leaf, or a short composition, and needs no types of its own. |
+| Own file — `io/` for an I/O step, the use case package for a business step | The step needs a type of its own (a row mapper, a wire record, an error type), or it has sub-steps of its own (it is a Sequencer or Fork-Join one level down). |
+| Own sub-package — `io/<intent>/`, or `<usecase>/<intent>/` | A group of files belongs to the step: its sub-steps, their types, their I/O. The sub-package is laid out like a use case package. |
+| `shared/` or `io/` at the lowest common ancestor | A second use case needs it. |
+
+Each move has a reverse, taken when its reason goes away: a sub-package down to one file folds back into a file; a step that lost its sub-steps folds back into the use case; a step with one user left moves back down to it. A move is a deliberate refactor in one commit, made when the change is confirmed, not on a hunch.
+
+Name a step's sub-package after its intent — `payment/`, `fraudcheck/` — never after a mechanism: no `impl/`, `steps/`, `internal/`, or `util/`. Two sub-packages inside one use case never import each other; they meet only through the use case.
 
 ---
 
@@ -106,30 +157,31 @@ The layout above is a snapshot, not a starting point. A new codebase has no work
 
 The rule is mechanical, which is the point: placement stops being a matter of taste.
 
-**A new app is flat.** Every use case is a package directly under `usecase`; the only shared package is the system-wide `domain.shared`. This is the structure shown above.
+**A new app is flat.** Every use case is a package directly under the application root, and the only shared package is the root's `shared`.
 
 ```
 com.example.app/
-|-- usecase/
-|   |-- holdseat/
+|-- holdseat/
+|-- confirmseat/
+|-- releaseexpiredholds/
+|-- searchevents/
+|-- shared/
+|-- io/
+```
+
+**A workflow appears, and the tree expands.** When several use cases cohere under one change driver - a reservation policy governing hold, confirm, and release - a workflow package appears and those use cases **move under it**. A level that did not exist now sits between the root and the slices it groups.
+
+```
+com.example.app/
+|-- reservation/                    # workflow package (appeared)
+|   |-- holdseat/                   # use cases moved under it
 |   |-- confirmseat/
 |   |-- releaseexpiredholds/
-|   |-- searchevents/
-|-- domain/shared/
-```
-
-**A workflow appears, and the tree expands.** When several use cases cohere under one change driver - a reservation policy governing hold, confirm, and release - a workflow package appears and those use cases **move under it**. A level that did not exist now sits between `usecase` and the slices it groups.
-
-```
-com.example.app/
-|-- usecase/
-|   |-- reservation/                # workflow package (appeared)
-|   |   |-- holdseat/               # use cases moved under it
-|   |   |-- confirmseat/
-|   |   |-- releaseexpiredholds/
-|   |   |-- shared/                 # shared *within* reservation
-|   |-- searchevents/               # still flat - in no workflow yet
-|-- domain/shared/                  # shared across everything
+|   |-- shared/                     # shared *within* reservation (its state machine)
+|   |-- io/                         # I/O shared within reservation (seat storage)
+|-- searchevents/                   # still flat - in no workflow yet
+|-- shared/                         # shared across everything
+|-- io/
 ```
 
 **A subsystem appears, and it expands again.** When workflows cluster under a domain concern - booking, pricing - a subsystem package appears and the workflows move under it.
@@ -141,15 +193,17 @@ com.example.app/
 |   |   |-- holdseat/
 |   |   |-- confirmseat/
 |   |   |-- releaseexpiredholds/
-|   |   |-- shared/                 # shared within reservation
+|   |   |-- shared/
+|   |   |-- io/
 |   |-- checkout/                   # another workflow in booking
 |   |   |-- ...
 |   |-- shared/                     # shared across the booking subsystem
 |-- pricing/                        # another subsystem
-|-- domain/shared/                  # shared across everything (system altitude)
+|-- shared/                         # shared across everything (system altitude)
+|-- io/
 ```
 
-The same move, one altitude up; a **system** boundary does it once more - when two products or bounded contexts must coexist, subsystems group under a system module and one more level telescopes open, with `domain.shared` as its root. Each level appears only when something earns it: one use case is not a workflow, one workflow is not a subsystem. Do not create empty levels in anticipation.
+The same move, one altitude up; a **system** boundary does it once more - when two products or bounded contexts must coexist, subsystems group under a system package and one more level telescopes open. Each level appears only when something earns it: one use case is not a workflow, one workflow is not a subsystem. Do not create empty levels in anticipation, and do not leave loose files in a grouping package — it holds its children, its `shared`, its `io`, and nothing else, with one exception below.
 
 ### Shared code lives at the lowest common ancestor
 
@@ -157,23 +211,27 @@ This generalizes a rule you already know - *move a reused element to the nearest
 
 - Used by two use cases in one workflow → that workflow's `shared`.
 - Used across two workflows in a subsystem → that subsystem's `shared`.
-- Used across subsystems → `domain.shared` at the root.
+- Used across subsystems → the root's `shared`.
 
-`domain.shared` is simply the top of this hierarchy - the system-altitude shared package - and the tiered placement (`domain/<module>/` then `domain/shared/`) is this same rule seen at two levels. Shared code **floats up, never down**: when a new user appears at a higher altitude, lift the element to the new lowest common ancestor; never push it down speculatively, and never park it in `domain.shared` "just in case." Promote on a shared *change driver*, never on resemblance: code that merely looks alike but answers to different drivers belongs apart, not in `shared` (see [From Process to Patterns](from-process-to-patterns.md)).
+I/O follows the same rule: a step that talks to the database for one use case lives in that use case's `io`; once the workflow's use cases share it, it moves to the workflow's `io`. The root's `shared` and `io` are simply the top of the hierarchy. Shared code **floats up, never down**: when a new user appears at a higher altitude, lift the element to the new lowest common ancestor; never push it down speculatively, and never park it at the root "just in case." Promote on a shared *change driver*, never on resemblance: code that merely looks alike but answers to different drivers belongs apart, not in `shared` (see [From Process to Patterns](from-process-to-patterns.md)).
 
-**The altitude of a shared element measures the blast radius of changing it.** Something that had to climb to `domain.shared` is reachable by the whole system; something in a workflow's `shared` is reachable by that workflow alone. Where shared code sits tells you how far a change to it can travel.
+**The altitude of a shared element measures the blast radius of changing it.** Something that had to climb to the root is reachable by the whole system; something in a workflow's `shared` is reachable by that workflow alone. Where shared code sits tells you how far a change to it can travel.
 
 **Worked example: a workflow's state machine.** When a workflow's use cases are transitions of a shared state machine (free -> held -> confirmed), the machine is shared logic - the state type and its legal transitions, used by every transition use case. Its users are those use cases, so its lowest common ancestor is the workflow package: the machine lives in that package's `shared`, and the use cases depend *up* on it, never sideways into one another.
 
 This is the case where sharing is not premature. The minimal-sharing rule guards against *accidental* sharing; a state machine is *essential* coupling - the transitions are bound by the domain itself (a seat cannot be confirmed before it is held), so representing that bond once, in one shared machine, is correct. Not sharing it would only duplicate the machine across the use cases, where the copies drift. This is the cohesion test of [From Process to Patterns](from-process-to-patterns.md) seen in the package tree: the transitions share one change driver - the machine's rules - so they belong together; here the rule is just where that shared logic goes.
 
-**A materialized workflow lives at its workflow package.** When a workflow earns a trigger of its own ([From Process to Patterns](from-process-to-patterns.md)) - a schedule, an event, an orchestration call - it becomes a slice at the workflow level (`reservation/settleholds/`, beside the use cases it composes), and its factory depends on those use cases as its steps. It is a Leaf to the subsystem above, exactly as a use case is a Leaf to its workflow. Composing its own use cases is ownership, not the sideways dependency the next rule forbids.
+**A materialized workflow lives in its workflow package.** When a workflow earns a trigger of its own ([From Process to Patterns](from-process-to-patterns.md)) - a schedule, an event, an orchestration call - it becomes a use case of the workflow itself: `reservation/SettleHolds.java`, annotated `@UseCase`, directly in the workflow package above the use cases it composes. Its factory depends on those use cases as its steps, so composing them is a dependency *down* its own subtree. It is the one anchored type a grouping package may hold, and it is a Leaf to the subsystem above, exactly as a use case is a Leaf to its workflow.
 
 ### Dependencies point up the telescope
 
-The existing dependency rules still hold (use cases depend on shared domain code; adapters depend on use cases; never the reverse). The telescope adds one:
+One rule covers every import between the application's own packages:
 
-**Dependencies point up the tree, never sideways.** A use case may depend on shared code at its own altitude or any ancestor's. It must **not** import from a sibling workflow's package. Two workflows that need each other interact through a use case or step interface at their common ancestor - not by reaching into one another's slices. An import that crosses sideways between workflow packages is a visible smell: the telescope makes the wrong dependency wrong on sight.
+**A package may import an ancestor, a `shared` or `io` package at itself or any ancestor, or anything inside its own subtree. Nothing else.** In particular it must **not** import from a sibling: not a sibling use case, not a sibling workflow, not a sibling step's sub-package. Two workflows that need each other interact through a use case or step interface at their common ancestor - not by reaching into one another's slices. An import that crosses sideways is a visible smell: the telescope makes the wrong dependency wrong on sight.
+
+Business code may refer to an `io` step as a *type* — the use case's factory takes it as a parameter — but never calls an `io` factory; that is assembly's job. I/O types themselves (`DSLContext`, an HTTP client, `java.nio`) appear only in `io` packages or inside a nested step's factory, and so does `lift`, which turns a foreign exception into a `Cause`.
+
+Every rule in this section can be checked from the package tree and the code alone; jbct-lint checks them in a module whose `jbct.mode` is `business`. Code that is not a business backend — a runtime, a library, the tooling itself — declares `jbct.mode = "infrastructure"`: the structure rules do not apply to it, and every other JBCT rule still does.
 
 ### The reorg is a deliberate refactor
 
@@ -190,18 +248,17 @@ Expanding a level moves files - imports change, git records the move, parallel b
 
 The package tree already carries every boundary the design produced. Gradle/Maven modules add no structure of their own: a module boundary *promotes* an existing boundary from convention, checked by lint, to enforcement, checked by the compiler. Two facts make the promotion safe and the choice free.
 
-**Module boundaries coincide with derived boundaries.** A legal cut lies on a telescope node (use case, workflow, subsystem) or on a stratum root (`usecase/`, `domain/`, `adapter/`, `config`). A module boundary anywhere else is a structure the design never produced.
+**Module boundaries coincide with derived boundaries.** A legal cut lies on a telescope node: a use case, a workflow, a subsystem. A module boundary anywhere else is a structure the design never produced.
 
-**Promotion is content-invariant.** Same packages, same files, same imports - only build wiring changes. No line of Java can observe the choice, which is why it sits below the normalization boundary ([Introduction](introduction.md)). Every vertical cut is also well-formed by construction: the lowest-common-ancestor rule already placed shared code at ancestor nodes, so dependencies point up the tree and no cut can sever one.
+**Promotion is content-invariant.** Same packages, same files, same imports - only build wiring changes. No line of Java can observe the choice, which is why it sits below the normalization boundary ([Introduction](introduction.md)). Every cut is also well-formed by construction: the lowest-common-ancestor rule already placed shared code and shared I/O at ancestor nodes, so dependencies point up the tree and no cut can sever one.
 
 ### When to Promote
 
-The default is no modules: package conventions plus lint enforce direction. Promote when a driver demands compile-time enforcement:
+The default is no modules: package conventions enforce direction, including keeping I/O types out of business code, and jbct-lint checks them in modules with `jbct.mode = "business"`. Promote when a driver demands a compile-time wall:
 
 - **Deployment topology (forced).** Multiple deployment units force cuts at the deployment boundaries. The architecture makes this decision, not the build.
 - **Ownership divergence (elective).** More than one team owning different subtrees on different change cadences. Headcount alone is not a driver - one team of eight still wants a single module.
 - **Independent publication (elective).** A library released on its own cycle is its own module.
-- **Dependency-direction enforcement (elective).** Compile-time proof that domain code cannot import adapters.
 
 ### Which Level to Cut
 
@@ -214,32 +271,7 @@ A module boundary taxes every change that crosses it: build configuration, API c
 | Workflow per module | Only when one subsystem hosts several teams |
 | Use case per module | Never - use cases are the unit of change, and this puts the compile-time wall where churn is highest |
 
-### The Layer Cut
-
-The cuts above follow the business hierarchy. A second, orthogonal cut follows the strata, which exist as top-level packages and are therefore also legal promotions:
-
-```
-:domain          # Pure Java - value objects
-:application     # Use cases and step interfaces
-:adapters        # Adapter implementations
-:bootstrap       # Main class, configuration
-```
-
-Its drivers are the last two above: dependency-direction enforcement and independent publication of domain types. The two cuts compose - a system with both drivers ends with subsystem-by-stratum modules.
-
-### Module Dependencies
-
-```
-domain         -> (no dependencies)
-  |
-application    -> domain
-  |
-adapters       -> application, domain
-  |
-bootstrap      -> adapters, application, domain
-```
-
-One sub-decision the vertical cut surfaces: adapters are organized by technical kind (`adapter.rest`, `adapter.persistence`), not by business subtree. A deployment-forced cut requires adapters to follow their subsystem - the adapter tree telescopes with it. An ownership-driven cut may keep one shared adapters module.
+A cut takes a node's whole subtree, its `io` included: I/O travels with the business code it serves.
 
 ---
 
@@ -247,7 +279,7 @@ One sub-decision the vertical cut surfaces: adapters are organized by technical 
 
 Beyond package organization, JBCT standardizes the internal structure of source files. This ensures consistency and enables automated linting.
 
-**Scope:** Use case interfaces, step implementations, value objects, error interfaces, and utility interfaces. Adapters are excluded—they are too framework-specific.
+**Scope:** Use case interfaces, step interfaces, value objects, error interfaces, and utility interfaces - in `io` packages as everywhere else.
 
 ### Import Ordering
 
@@ -281,11 +313,10 @@ Beyond package organization, JBCT standardizes the internal structure of source 
 1. Enum variants (fixed-message errors, grouped)
 2. Record variants (errors carrying data)
 
-**Step Implementation:**
-1. Dependencies (final fields)
-2. Constructor
-3. Interface method(s)
-4. Private helpers
+**Step Interface (moved to its own file):**
+1. The abstract method
+2. Static factory method(s)
+3. Private static helpers
 
 **Utility Interface:**
 1. Constants
@@ -337,11 +368,12 @@ Use blank lines to separate logical sections. Comments are optional—use only w
 
 ## Framework Integration
 
-### Complete Example: Spring REST -> Use Case -> JOOQ
+### Complete Example: Use Case -> jOOQ
 
-#### 1. Use Case (Functional Core)
+#### 1. The Use Case, with Its I/O Step Nested
 
 ```java
+@UseCase
 public interface GetUserProfile {
     record Request(String userId) {}
     record Response(String userId, String email, String displayName) {
@@ -354,110 +386,64 @@ public interface GetUserProfile {
 
     Promise<Response> execute(Request request);
 
-    interface FetchUser {
+    interface LoadUser {
         Promise<User> apply(UserId userId);
+
+        static LoadUser loadUser(DSLContext dsl) {
+            return userId -> Promise.lift(t -> ProfileError.DatabaseFailure.FACTORY.apply(Causes.fromThrowable(t)),
+                                          () -> findRow(dsl, userId))
+                                    .flatMap(found -> found.async(ProfileError.UserNotFound.FACTORY.apply(userId)));
+        }
+
+        private static Option<User> findRow(DSLContext dsl, UserId userId) {
+            return Option.from(dsl.selectFrom(USERS)
+                                  .where(USERS.ID.eq(userId.value()))
+                                  .fetchOptional())
+                         .map(LoadUser::toUser);
+        }
+
+        private static User toUser(Record record) {
+            return new User(new UserId(record.get(USERS.ID)),
+                            new Email(record.get(USERS.EMAIL)),
+                            record.get(USERS.DISPLAY_NAME));
+        }
     }
 
-    static GetUserProfile getUserProfile(FetchUser fetchUser) {
+    static GetUserProfile getUserProfile(LoadUser loadUser) {
         return request -> UserId.userId(request.userId())
                                 .async()
-                                .flatMap(fetchUser::apply)
+                                .flatMap(loadUser::apply)
                                 .map(Response::fromUser);
     }
 }
 ```
 
-Pure business logic. No framework dependencies.
+`ProfileError.DatabaseFailure` is a `Cause.Wrapped` record with a `FACTORY`, as in [Error Handling](error-handling.md). The business logic is `getUserProfile`'s chain, and it knows nothing about jOOQ: it depends on `LoadUser`, a step interface. jOOQ appears in one place — the body of `LoadUser`'s factory — where `Promise.lift` turns its exceptions into the use case's own `Cause`. The step's name is its contract; the technology shows only in the factory's parameter type.
 
-#### 2. REST Controller (Adapter In)
+#### 2. The Step Moves Out When It Grows
 
-```java
-@RestController
-@RequestMapping("/api/users")
-public class UserController {
-    private final GetUserProfile getUserProfile;
+When a second query appears, or the mapping grows a type of its own, `LoadUser` moves to `getuserprofile/io/LoadUser.java` — the same interface, factory and helpers, now a top-level type:
 
-    public UserController(GetUserProfile getUserProfile) {
-        this.getUserProfile = getUserProfile;
-    }
-
-    @GetMapping("/{userId}")
-    public ResponseEntity<?> getProfile(@PathVariable String userId) {
-        var request = new GetUserProfile.Request(userId);
-
-        return getUserProfile.execute(request)
-            .await()
-            .fold(this::toErrorResponse,
-                  response -> ResponseEntity.ok(response));
-    }
-
-    private ResponseEntity<?> toErrorResponse(Cause cause) {
-        return switch (cause) {
-            case ProfileError.UserNotFound _ ->
-                ResponseEntity.status(HttpStatus.NOT_FOUND)
-                              .body(Map.of("error", cause.message()));
-
-            case ProfileError.InvalidUserId _ ->
-                ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                              .body(Map.of("error", cause.message()));
-
-            default ->
-                ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                              .body(Map.of("error", "Internal server error"));
-        };
-    }
-}
+```
+getuserprofile/
+|-- GetUserProfile.java          # factory still takes LoadUser; one import added
+|-- ProfileError.java
+|-- io/
+    |-- LoadUser.java            # moved unchanged
+    |-- UserRow.java             # the mapping type that triggered the move
 ```
 
-Thin adapter: HTTP -> Request -> use case -> Response/Cause -> HTTP.
+When a second use case needs to load users, `LoadUser` moves again, to the `io` package at the lowest common ancestor of both.
 
-#### 3. JOOQ Repository (Adapter Out)
+#### 3. Assembly
 
-```java
-@Repository
-public class JooqUserRepository implements GetUserProfile.FetchUser {
-    private final DSLContext dsl;
-
-    public JooqUserRepository(DSLContext dsl) {
-        this.dsl = dsl;
-    }
-
-    public Promise<User> apply(UserId userId) {
-        return Promise.lift(ProfileError.DatabaseFailure::cause, () -> findRow(userId))
-                      .flatMap(found -> found.async(ProfileError.UserNotFound.FACTORY.apply(userId)));
-    }
-
-    private Option<User> findRow(UserId userId) {
-        return Option.from(dsl.selectFrom(USERS)
-                              .where(USERS.ID.eq(userId.value()))
-                              .fetchOptional())
-                     .map(this::toDomain);
-    }
-
-    private User toDomain(Record record) {
-        return new User(
-            new UserId(record.get(USERS.ID)),
-            new Email(record.get(USERS.EMAIL)),
-            record.get(USERS.DISPLAY_NAME)
-        );
-    }
-}
-```
-
-Wraps JOOQ exceptions in domain Causes.
-
-#### 4. Wiring (Spring Config)
+Endpoints and assembly are generated by the runtime. In a plain Java program or a test, assembly is one line at the root, the only place that calls an `io` factory:
 
 ```java
-@Configuration
-public class UseCaseConfig {
-
-    @Bean
-    public GetUserProfile getUserProfile(JooqUserRepository repository) {
-        return GetUserProfile.getUserProfile(repository);
-    }
-}
+var getUserProfile = GetUserProfile.getUserProfile(LoadUser.loadUser(dsl));
 ```
+
+A test passes a lambda instead: `GetUserProfile.getUserProfile(userId -> Promise.success(testUser))`.
 
 ---
 
@@ -465,26 +451,23 @@ public class UseCaseConfig {
 
 ### 1. Vertical Slicing
 
-Each use case package is a vertical slice containing everything needed for that feature.
+Each use case package is a vertical slice containing everything needed for that feature, its I/O included.
 
 ### 2. Minimal Sharing
 
-Only share value objects when truly reusable. Premature sharing creates coupling.
+Share only when a second user appears, and only as high as the lowest common ancestor of the users. Premature sharing creates coupling.
 
-### 3. Framework at Edges
+### 3. I/O Lives in `io`, as Leaves
 
-Business logic (use cases, domain) has zero framework dependencies. Adapters handle framework integration.
+Business logic has zero I/O and framework types. They appear only in `io` packages and inside a nested step's factory, and they never compose steps.
 
-### 4. Clear Dependencies
+### 4. Dependencies Point Up the Tree
 
-- Use cases depend on: domain.shared
-- Adapters depend on: use cases (implement step interfaces)
-- Config depends on: use cases + adapters (wires them together)
-- **Never**: use case depending on adapter
+A package imports its ancestors, the `shared` and `io` packages on its path, and its own subtree - never a sibling. Business code takes `io` steps as parameters and never calls their factories.
 
-### 5. Adapter Isolation
+### 5. Business Names Only
 
-All I/O operations live in adapters. Framework swapping (Spring -> Micronaut) affects only adapters.
+Packages and types are named for what they do for the business. No layer packages, no technology or pattern names.
 
 ---
 
@@ -492,27 +475,28 @@ All I/O operations live in adapters. Framework swapping (Spring -> Micronaut) af
 
 | Type | Location | Rationale |
 |------|----------|-----------|
-| Use case interface | `usecase.<name>` | Entry point for feature |
-| Step interfaces | Inside use case | Part of use case contract |
-| Errors (sealed) | `usecase.<name>` | Feature-specific |
-| ValidRequest | `usecase.<name>` | Internal validation |
-| Shared value objects | `domain.shared` | Reused across features |
-| Controllers | `adapter.rest` | HTTP handling |
-| Repositories | `adapter.persistence` | Database access |
-| Config | `config` | Bean wiring |
+| Use case interface (`@UseCase`) | `<usecase>` | Entry point for the feature |
+| Step interfaces | Nested in the use case; moved out as they grow | Part of the use case contract |
+| Errors (sealed) | `<usecase>` | Feature-specific |
+| ValidRequest | `<usecase>` | Internal validation |
+| Shared value objects, state machines | `shared` at the lowest common ancestor of the users | Reused across features |
+| I/O steps and their helper types | Nested step factory, then `io` at the lowest common ancestor of the users | Leaves that touch the outside world |
+| Materialized workflow (`@UseCase`) | Directly in the workflow package | Composes its own use cases, downward |
+| Endpoints, assembly | Generated by the runtime; a root `main` in plain Java and tests | Wiring, not business logic |
 
-This table is the flat base case. As the design discovers workflows and subsystems, use case packages nest under them and shared code settles at the lowest common ancestor of its users - see *The Telescope Rule* above.
+The table holds at every altitude. As the design discovers workflows and subsystems, use case packages nest under them and `shared` and `io` settle at the lowest common ancestor of their users - see *The Telescope Rule* above.
 
 ---
 
 ## Key Takeaways
 
-1. **Vertical slices** - Each use case is self-contained
-2. **Move to shared on reuse** - Not upfront
-3. **Framework at edges** - Pure business logic in use cases
-4. **Adapters implement step interfaces** - Clear contracts
-5. **Modules when needed** - Don't prematurely modularize
-6. **The telescope rule** - Structure grows as the design discovers altitudes; use cases nest under workflows/subsystems, shared code lives at the lowest common ancestor, dependencies point up the tree
+1. **Vertical slices** - Each use case is self-contained, its I/O included
+2. **Business names only** - No layer packages, no technology or pattern names; two reserved roles, `shared` and `io`
+3. **Move to shared on reuse** - Not upfront, and only to the lowest common ancestor
+4. **Steps move, unchanged** - Nested first, out to a file or package as they grow, back as they shrink
+5. **I/O stays in leaves** - In `io` and in nested step factories, never composing
+6. **Modules when needed** - Don't prematurely modularize
+7. **The telescope rule** - Structure grows as the design discovers altitudes; use cases nest under workflows and subsystems, dependencies point up the tree, never sideways
 
 ---
 

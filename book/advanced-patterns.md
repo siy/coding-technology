@@ -45,6 +45,7 @@ A Sequencer should have 2 to 5 steps. Fewer than 2, and it's probably just a Lea
 ### Sync Example
 
 ```java
+@UseCase
 public interface ProcessOrder {
     record Request(String orderId, String paymentToken) {}
     record Response(OrderConfirmation confirmation) {}
@@ -78,9 +79,9 @@ public interface ProcessOrder {
 
 Four steps, each a single-method interface. The `execute()` body reads top-to-bottom: validate -> reserve -> process payment -> confirm. Each step returns `Result<T>`, so we chain with `flatMap`. If any step fails, the chain short-circuits and returns the failure.
 
-**Why interface + factory?** Every component — use case, step, adapter — is defined as an interface with a static factory method. This is not arbitrary convention:
+**Why interface + factory?** Every component — use case, business step, I/O step — is defined as an interface with a static factory method. This is not arbitrary convention:
 
-- **Substitutability**: Anyone can implement the interface. Testing, stubbing incomplete implementations, swapping adapters — all work without framework magic or inheritance hierarchies.
+- **Substitutability**: Anyone can implement the interface. Testing, stubbing incomplete implementations, swapping I/O steps — all work without framework magic or inheritance hierarchies.
 - **Implementation isolation**: Each implementation is self-contained. No shared base classes, no abstract methods to override, no coupling between implementations. Each intersection between implementations is unnecessary coupling with corresponding maintenance overhead — up to needing deep understanding of two projects instead of one, with zero benefit.
 - **Disposable implementation**: A local record or lambda returned by the factory can't be referenced externally. The implementation is replaceable by definition. The interface is the design artifact; the implementation is incidental.
 
@@ -102,38 +103,48 @@ Validation is synchronous (returns `Result`), so we lift it to `Promise` using `
 
 ### When to Extract Sub-Sequencers
 
-If a step grows complex internally, extract it to its own interface with a nested structure. Suppose `processPayment` actually needs to: authorize card -> capture funds -> record transaction. That's three dependent steps - a Sequencer. Extract:
+If a step grows complex internally, it gains a nested structure of its own. Suppose `processPayment` actually needs to: authorize card -> capture funds -> record transaction. That's three dependent steps - a Sequencer. The step interface `ProcessPayment` moves out of `ProcessOrder` into its own file, unchanged, and carries its composing factory and its sub-steps with it:
 
 ```java
-// Original step interface
-interface ProcessPayment {
+// processorder/ProcessPayment.java - the same step interface, moved out of ProcessOrder
+public interface ProcessPayment {
     Promise<Payment> apply(Reservation reservation);
-}
 
-// Implementation delegates to a sub-sequencer
-interface CreditCardPaymentProcessor extends ProcessPayment {
     interface AuthorizeCard {
         Promise<Reservation> apply(Reservation reservation);
+
+        static AuthorizeCard authorizeCard(HttpClient http) {
+            return reservation -> ...;
+        }
     }
     interface CaptureFunds {
         Promise<Reservation> apply(Reservation reservation);
+
+        static CaptureFunds captureFunds(HttpClient http) {
+            return reservation -> ...;
+        }
     }
     interface RecordTransaction {
         Promise<Payment> apply(Reservation reservation);
+
+        static RecordTransaction recordTransaction(DSLContext dsl) {
+            return reservation -> ...;
+        }
     }
 
-    static CreditCardPaymentProcessor creditCardPaymentProcessor(
-            AuthorizeCard authorizeCard,
-            CaptureFunds captureFunds,
-            RecordTransaction recordTransaction) {
-        return (reservation) -> authorizeCard.apply(reservation)
-                                             .flatMap(captureFunds::apply)
-                                             .flatMap(recordTransaction::apply);
+    static ProcessPayment processPayment(AuthorizeCard authorizeCard,
+                                         CaptureFunds captureFunds,
+                                         RecordTransaction recordTransaction) {
+        return reservation -> authorizeCard.apply(reservation)
+                                           .flatMap(captureFunds::apply)
+                                           .flatMap(recordTransaction::apply);
     }
 }
 ```
 
-Now `CreditCardPaymentProcessor` is itself a Sequencer with three steps. The top-level use case remains a clean 4-step chain.
+Now `ProcessPayment` is itself a Sequencer with three steps. No new type appeared: `ProcessOrder`'s factory keeps the same parameter type, `ProcessPayment`, and gains one import. The top-level use case remains a clean 4-step chain.
+
+The composition is business logic, so `ProcessPayment` sits in the use case package, not in `io`. Its three sub-steps are I/O leaves: their factories take the infrastructure, and the HTTP and database types appear nowhere else. When the sub-steps outgrow this file in turn, `ProcessPayment` gets a sub-package of its own, `processorder/payment/`, laid out like a use case package: the composition at its top, the three leaves in its `io/` (see [Project Structure](project-structure.md#where-steps-go)).
 
 ### Thread Safety
 
@@ -232,9 +243,9 @@ If all succeed, you get a tuple of values to pass to the combiner. If any fail, 
 ```java
 // Running independent I/O operations in parallel
 Promise<Dashboard> buildDashboard(UserId userId) {
-    return Promise.all(userService.fetchProfile(userId),
-                       orderService.fetchRecentOrders(userId),
-                       notificationService.fetchUnread(userId))
+    return Promise.all(loadProfile.apply(userId),
+                       loadRecentOrders.apply(userId),
+                       loadUnreadNotifications.apply(userId))
                   .map(this::createDashboard);
 }
 
@@ -257,7 +268,7 @@ All three fetches run concurrently. The Promise resolves once every input has re
 // Fetching data from dynamic number of sources
 Promise<Report> generateSystemReport(List<ServiceId> services) {
     var healthChecks = services.stream()
-                               .map(healthCheckService::check)
+                               .map(checkHealth::apply)
                                .toList();
 
     return Promise.allOf(healthChecks)
@@ -266,12 +277,10 @@ Promise<Report> generateSystemReport(List<ServiceId> services) {
 
 private Report createReport(List<Result<HealthStatus>> results) {
     var successes = results.stream()
-                           .filter(Result::isSuccess)
-                           .map(Result::value)
+                           .flatMap(r -> r.fold(_ -> Stream.<HealthStatus>empty(), Stream::of))
                            .toList();
     var failures = results.stream()
-                          .filter(Result::isFailure)
-                          .map(Result::cause)
+                          .flatMap(r -> r.fold(Stream::of, _ -> Stream.<Cause>empty()))
                           .toList();
     return new Report(successes, failures);
 }
@@ -392,34 +401,30 @@ Model the "best-effort" case explicitly with proper types.
 ### Example: Retry Aspect on a Step
 
 ```java
-public interface FetchUserProfile {
+interface LoadUserProfile {
     Promise<Profile> apply(UserId userId);
-}
 
-// Step implementation
-class UserServiceClient implements FetchUserProfile {
-    public Promise<Profile> apply(UserId userId) {
-        return httpClient.get("/users/" + userId.value())
-                         .map(this::parseProfile);
+    // The step's I/O factory: the HTTP call lives here
+    static LoadUserProfile loadUserProfile(HttpClient http) {
+        return userId -> ...;
     }
 }
 
-// Applying a retry aspect at construction:
-static ProcessUserData processUserData(..., UserServiceClient userServiceClient, ...) {
-    var retryPolicy = RetryPolicy.builder()
-                                 .maxAttempts(3)
-                                 .backoff(exponential(100, 2.0))
-                                 .build();
+// Applying a retry aspect at construction (assembly):
+var retryPolicy = RetryPolicy.builder()
+                             .maxAttempts(3)
+                             .backoff(exponential(100, 2.0))
+                             .build();
 
-    return new processUserData(validateInput,
-                               withRetry(retryPolicy, userServiceClient),  // Decorated
-                               processData);
-}
+var processUserData = ProcessUserData.processUserData(validateInput,
+                                                      withRetry(retryPolicy, loadUserProfile),  // Decorated
+                                                      processData);
 ```
 
 ### Example: Metrics Aspect on Use Case
 
 ```java
+@UseCase
 public interface LoginUser {
     Promise<LoginResponse> execute(LoginRequest request);
 
@@ -553,24 +558,23 @@ static <I, O> Fn1<I, Promise<O>> withRetry(RetryPolicy policy, Fn1<I, Promise<O>
 **Implementation:** Wrap leaf implementations in a logging aspect at construction. The aspect owns its logger - it creates it from the name it is given - so no logger is ever passed as a parameter:
 
 ```java
-public interface UserRepository {
-    Promise<User> findById(UserId id);
+interface LoadUser {
+    Promise<User> apply(UserId id);
 
-    static UserRepository create(DataSource ds) {
-        var impl = new UserRepositoryImpl(ds);
-        return withLogging("UserRepository", impl);
+    static LoadUser loadUser(DSLContext dsl) {
+        return withLogging("LoadUser", id -> ...);
     }
 }
 
-public static UserRepository withLogging(String name, UserRepository impl) {
+static LoadUser withLogging(String name, LoadUser step) {
     var log = LoggerFactory.getLogger(name);
     return id -> {
         var correlationId = CorrelationContext.current();
-        log.debug("[{}] {}.findById input: {}", correlationId, name, id);
+        log.debug("[{}] {}.apply input: {}", correlationId, name, id);
 
-        return impl.findById(id)
-                   .onSuccess(user -> log.debug("[{}] {}.findById success", correlationId, name))
-                   .onFailure(cause -> log.warn("[{}] {}.findById failure: {}", correlationId, name, cause.message()));
+        return step.apply(id)
+                   .onSuccess(user -> log.debug("[{}] {}.apply success", correlationId, name))
+                   .onFailure(cause -> log.warn("[{}] {}.apply failure: {}", correlationId, name, cause.message()));
     };
 }
 ```
@@ -589,10 +593,10 @@ return validateInput(request)
     .onSuccess(u -> log.info("Fetched user"))  // Noise
     .flatMap(this::processOrder);
 
-// DO: Wrap leaves at construction
-static ProcessOrder processOrder(UserRepository users) {
-    return new ProcessOrderImpl(withLogging("users", users));
-}
+// DO: Leaves are wrapped at construction; composition stays silent
+return validateInput(request)
+    .flatMap(this::fetchUser)
+    .flatMap(this::processOrder);
 ```
 
 ### Instrumentation Completeness

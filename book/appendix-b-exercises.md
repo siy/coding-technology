@@ -471,7 +471,7 @@ return Promise.lift(t -> DatabaseError.FACTORY.apply(Causes.fromThrowable(t)),
 - **A: Sequencer** - Linear chain of dependent steps
 - **B: Fork-Join** - Parallel independent operations combined
 - **C: Condition** - Routing based on discriminator
-- **D: Leaf** - Adapter wrapping external I/O
+- **D: Leaf** - I/O step wrapping external I/O
 
 </details>
 
@@ -485,6 +485,7 @@ Implement a dashboard loader that fetches three pieces of data in parallel:
 - Recommendations (optional - use empty list on failure)
 
 ```java
+@UseCase
 public interface LoadDashboard {
     Promise<Dashboard> load(UserId userId);
 
@@ -496,6 +497,7 @@ public interface LoadDashboard {
 <summary>Solution</summary>
 
 ```java
+@UseCase
 public interface LoadDashboard {
     Promise<Dashboard> load(UserId userId);
 
@@ -534,6 +536,7 @@ public interface LoadDashboard {
 Implement a notification sender that routes based on user preference:
 
 ```java
+@UseCase
 public interface SendNotification {
     Promise<Unit> send(UserId userId, Message message);
 }
@@ -547,6 +550,7 @@ public enum NotificationPreference {
 <summary>Solution</summary>
 
 ```java
+@UseCase
 public interface SendNotification {
     Promise<Unit> send(UserId userId, Message message);
 
@@ -806,6 +810,7 @@ class AgeTest {
 Create test stubs for this use case:
 
 ```java
+@UseCase
 public interface TransferFunds {
     Promise<TransferResult> execute(TransferRequest request);
 
@@ -882,13 +887,13 @@ class TransferFundsTest {
 
 ### Exercise 4.3 [Intermediate] - Testing Async Behavior
 
-Test that this use case properly times out:
+Test that this step properly times out:
 
 ```java
-public interface SlowService {
+public interface LoadData {
     Promise<Data> fetch(DataId id);
 
-    static SlowService withTimeout(SlowService base, TimeSpan timeout) {
+    static LoadData withTimeout(LoadData base, TimeSpan timeout) {
         return id -> base.fetch(id).timeout(timeout);
     }
 }
@@ -898,18 +903,18 @@ public interface SlowService {
 <summary>Solution</summary>
 
 ```java
-class SlowServiceTest {
+class LoadDataTest {
 
     @Test
-    void fetch_timesOut_whenServiceTooSlow() {
+    void fetch_timesOut_whenTooSlow() {
         // Stub that never resolves
-        SlowService neverResolves = id -> {
+        LoadData neverResolves = id -> {
             Promise<Data> promise = Promise.promise();
             // Never call promise.succeed() or promise.fail()
             return promise;
         };
 
-        var withTimeout = SlowService.withTimeout(
+        var withTimeout = LoadData.withTimeout(
             neverResolves,
             TimeSpan.timeSpan(100).millis()
         );
@@ -922,10 +927,10 @@ class SlowServiceTest {
     }
 
     @Test
-    void fetch_succeeds_whenServiceFastEnough() {
-        SlowService fast = id -> Promise.success(new Data("result"));
+    void fetch_succeeds_whenFastEnough() {
+        LoadData fast = id -> Promise.success(new Data("result"));
 
-        var withTimeout = SlowService.withTimeout(
+        var withTimeout = LoadData.withTimeout(
             fast,
             TimeSpan.timeSpan(1).seconds()
         );
@@ -957,6 +962,7 @@ Design a use case interface for "Cancel Order" with these requirements:
 <summary>Solution</summary>
 
 ```java
+@UseCase
 public interface CancelOrder {
     Promise<CancellationResult> execute(CancelRequest request);
 
@@ -1024,6 +1030,7 @@ Implement a booking system where if any step fails, previous steps are rolled ba
 <summary>Solution</summary>
 
 ```java
+@UseCase
 public interface BookSeat {
     Promise<Booking> execute(BookingRequest request);
 
@@ -1093,7 +1100,7 @@ public interface BookSeat {
 
 ### Exercise 5.3 [Intermediate] - Project Structure
 
-Given these classes, organize them into the correct package structure:
+Given these classes from a layered codebase, organize them into the JBCT package structure. Rename or remove whatever the model does not allow:
 
 ```java
 RegisterUser (use case interface)
@@ -1107,37 +1114,68 @@ UserController (REST controller)
 UserDto (API DTO)
 ```
 
+Then: (a) `SaveUser` grows a row-mapping type of its own; (b) a second use case, `GetUserProfile`, needs `Email` and a step that loads a user. Where does each piece go?
+
 <details>
 <summary>Solution</summary>
 
 ```
-src/main/java/com/example/user/
-├── domain/
-│   ├── Email.java              # Value object
-│   ├── Password.java           # Value object
-│   ├── Username.java           # Value object
-│   └── RegistrationError.java  # Domain errors
-├── usecase/
-│   └── RegisterUser.java       # Use case with:
-│                               #   - Request record
-│                               #   - ValidRegistration record
-│                               #   - Response record
-│                               #   - Step interfaces (SaveUser, CheckEmailUnique, etc.)
-│                               #   - Factory method
-├── adapter/
-│   ├── persistence/
-│   │   └── JpaUserRepository.java  # Implements step interface
-│   └── web/
-│       ├── UserController.java     # REST controller
-│       └── UserDto.java            # API DTO
-└── config/
-    └── UserConfiguration.java      # Spring wiring
+src/main/java/com/example/app/
+└── registeruser/
+    ├── RegisterUser.java       # @UseCase interface with:
+    │                           #   - Request record (the wire contract)
+    │                           #   - ValidRequest record (was ValidRegistration)
+    │                           #   - Response record
+    │                           #   - Step interfaces, each with its static factory:
+    │                           #       CheckEmailUniqueness (with its FindUser leaf),
+    │                           #       SaveUser (I/O step)
+    │                           #   - Factory method
+    ├── RegistrationError.java  # Sealed error interface
+    ├── Email.java              # Value objects: one user so far,
+    ├── Password.java           #   so they stay in the use case
+    └── Username.java
 ```
 
 **Notes:**
-- `RegisterUserImpl` is not needed - factory method in interface creates implementation
-- `ValidRegistration` is nested in `RegisterUser` as `ValidRequest` record
-- `UserRepository` doesn't exist separately - it's a step interface inside use case
+- `RegisterUserImpl` is not needed - the factory method in the interface creates the implementation
+- `ValidRegistration` is nested in `RegisterUser` as the `ValidRequest` record
+- `UserRepository` dissolves into steps named for intent - `CheckEmailUniqueness` (whose lookup is its nested `FindUser` leaf), `SaveUser` - nested in `RegisterUser`
+- `JpaUserRepository` disappears: its code becomes the bodies of those steps' factories, e.g. `static SaveUser saveUser(EntityManager em)`. The persistence types appear only there
+- `UserController` and `UserDto` disappear: endpoints are generated by the runtime from the use case, and `Request`/`Response` are the wire contract
+- No `config` package: assembly is generated too. In a plain Java program or a test it is one line at the root: `RegisterUser.registerUser(CheckEmailUniqueness.checkEmailUniqueness(CheckEmailUniqueness.FindUser.findUser(em)), SaveUser.saveUser(em))`
+
+**(a) `SaveUser` outgrows the file.** The same interface moves out unchanged, factory and helpers included; `RegisterUser`'s factory keeps its parameter type and gains one import:
+
+```
+registeruser/
+├── RegisterUser.java
+├── RegistrationError.java
+├── ...
+└── io/
+    ├── SaveUser.java           # moved unchanged
+    └── UserRow.java            # the mapping type that triggered the move
+```
+
+**(b) A second user appears.** Each shared element moves to the lowest common ancestor of its users - here the application root:
+
+```
+com/example/app/
+├── registeruser/
+│   ├── RegisterUser.java
+│   ├── RegistrationError.java
+│   ├── Password.java           # still one user
+│   ├── Username.java
+│   └── io/
+│       ├── SaveUser.java
+│       └── UserRow.java
+├── getuserprofile/
+│   ├── GetUserProfile.java     # LoadUser nested here: one user, so it stays
+│   └── ProfileError.java
+└── shared/
+    └── Email.java              # used by both use cases
+```
+
+Only `Email` has two users, so only `Email` moves. `LoadUser` is used by `GetUserProfile` alone - `RegisterUser` looks users up by email through its own `FindUser` - so it stays nested in `GetUserProfile`; it would move to a root `io/` only when a second use case needs it. Neither use case imports the other; both import up, from the root's `shared`.
 
 </details>
 
@@ -1188,6 +1226,7 @@ public class UserService {
 **Refactored:**
 
 ```java
+@UseCase
 public interface CreateUser {
     Promise<UserId> execute(CreateUserRequest request);
 
@@ -1255,7 +1294,7 @@ public class OrderService {
 - Move business logic to factory method
 - Service becomes thin wrapper calling use case
 
-**Stage 4: Adapter Isolation (Week 5)**
+**Stage 4: I/O Isolation (Week 5)**
 - Wrap inventory check in `Promise.lift()`
 - Wrap payment gateway in `Promise.lift()`
 - Wrap repository in `Promise.lift()`
@@ -1266,7 +1305,7 @@ public class OrderService {
 2. Add ValidOrderRequest
 3. Add OrderError types
 4. Extract PlaceOrder interface
-5. Implement step interfaces as adapters
+5. Implement I/O steps in their static factories
 6. Convert service to use case wrapper
 7. Remove legacy method
 

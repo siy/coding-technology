@@ -82,7 +82,6 @@ com.example.app/
 |-- releaseexpiredholds/
 |-- searchevents/
 |-- shared/
-|-- io/
 ```
 
 **A workflow appears, and the tree expands.** When several use cases cohere under one change driver - a reservation policy governing hold, confirm, and release - a workflow package appears and those use cases **move under it**. A level that did not exist now sits between the root and the slices it groups.
@@ -97,7 +96,6 @@ com.example.app/
 |   |-- io/                         # I/O shared within reservation (seat storage)
 |-- searchevents/                   # still flat - in no workflow yet
 |-- shared/                         # shared across everything
-|-- io/
 ```
 
 **A subsystem appears, and it expands again.** When workflows cluster under a domain concern - booking, pricing - a subsystem package appears and the workflows move under it.
@@ -116,7 +114,6 @@ com.example.app/
 |   |-- shared/                     # shared across the booking subsystem
 |-- pricing/                        # another subsystem
 |-- shared/                         # shared across everything (system altitude)
-|-- io/
 ```
 
 The same move, one altitude up; a **system** boundary does it once more - when two products or bounded contexts must coexist, subsystems group under a system package and one more level telescopes open. Each level appears only when something earns it: one use case is not a workflow, one workflow is not a subsystem. Do not create empty levels in anticipation, and do not leave loose files in a grouping package — it holds its children, its `shared`, its `io`, and nothing else, with one exception below.

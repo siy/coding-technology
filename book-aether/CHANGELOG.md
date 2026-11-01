@@ -108,6 +108,8 @@ will mark the first edition released to readers.
   `InventoryService` -> `Inventory`, `PaymentService` -> `Payments`, `ShippingService` -> `Shipping`,
   `NotificationService` -> `Notifications`, with factories and generated names (`OrderingRoutes`,
   `slices/Ordering.toml`) to match (*Parts I-IV*). The strangled legacy class keeps `LegacyOrderService`.
+  Part I's `@Shipping` qualifier becomes `@ShippingQuotes`, so it no longer shares a name with the
+  `Shipping` slice.
 
 ### Fixed
 - Portability claim (*Part II*, "Ember, Forge, and Aether" and the opening commitments; *Part IV*, why

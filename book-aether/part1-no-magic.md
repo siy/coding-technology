@@ -278,7 +278,7 @@ to name a runtime type. It can name yours.
 ```java
 @ResourceQualifier(type = ShippingQuote.class, config = "shipping")
 @Retention(RUNTIME) @Target(PARAMETER)
-public @interface Shipping {}
+public @interface ShippingQuotes {}
 ```
 
 `ShippingQuote` is an ordinary interface of your own, shaped to what the use case needs and

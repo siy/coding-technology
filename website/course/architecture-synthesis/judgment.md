@@ -1,3 +1,7 @@
+---
+reviewed-at: d4d6a8949ead8c2937e7296db35a4e04069885de
+---
+
 ## blurb
 The inventory of decisions the method hands back to humans — and the MTTR/MTBF debate dissolved as a worked example of where mechanization stops.
 

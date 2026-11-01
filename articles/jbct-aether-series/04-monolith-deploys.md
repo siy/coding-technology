@@ -20,9 +20,9 @@ For middle-sized businesses, this isn't a technology problem. It's a survival pr
 
 What if half your servers could fail and users wouldn't notice?
 
-[Aether](https://pragmaticalabs.io/aether.html), the runtime behind the slice architecture, provides exactly this guarantee. When your code runs across a cluster, failure of less than half the nodes affects only performance, not functionality. Requests automatically route to surviving nodes. No manual intervention, no pager alerts at 3 AM.
+[Aether](https://pragmaticalabs.io/aether.html), the runtime behind the slice architecture, is built for exactly this case, and the guarantee is worth stating precisely. A cluster of at least three nodes agrees on its shared state by majority consensus, and requests are routed to the nodes that are alive. Lose fewer than half the nodes and a majority still exists, so the cluster keeps serving and keeps agreeing; what you lose is capacity, not the service. Lose half or more and shared state stops advancing, by design, because a minority must never keep deciding on its own.
 
-This isn't eventual consistency or graceful degradation. It's actual redundancy. The same request, processed by any available node, producing the same result. Your business keeps running while you fix the failed hardware.
+That is a narrower claim than "any node gives the same answer". A read that goes through the consensus path returns the agreed state whichever node serves it; a read that bypasses it is as fresh as that node's copy. Failover inside the majority is automatic, with no manual intervention, and the failures the majority absorbs are the ones that no longer need a 3 AM pager. Your business keeps running while you replace the hardware.
 
 For a C-level executive, this translates simply: business continuity without enterprise budget. The system that runs your operations becomes the system that survives failures.
 

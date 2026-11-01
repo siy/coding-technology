@@ -98,16 +98,19 @@ Leader failover is consensus-based and near-instant. Node replacement happens au
 
 When a node fails, the recovery is automatic. Requests to slices on the failed node are immediately retried on healthy nodes. A replacement node is provisioned. It connects to peers, restores consensus state from a cluster snapshot, re-resolves artifacts from the DHT, and re-activates assigned slices. Dead nodes are automatically removed from routing tables. The new leader reconciles stale state. No human intervention required.
 
-Rolling updates leverage this fault tolerance for zero-downtime deployments with weighted traffic routing:
+Canary deployment leverages this fault tolerance to bring a new version in gradually, with an operator-settable traffic split:
 
 ```bash
-aether update start org.example:order-processor 2.0.0 -n 3
-aether update routing <id> -r 1:3    # 25% to v2, 75% to v1
-aether update routing <id> -r 1:1    # 50/50
-aether update complete <id>          # 100% to v2, drain v1
+aether deploy org.example:order-processor 2.0.0 --canary --traffic 25 -n 3
+aether deploy promote <id> --traffic 50
+aether deploy complete <id>          # 100% to v2, drain v1
 ```
 
-Deploy during business hours. Shift traffic gradually — 10% canary, then 25%, 50%, 75%, 100%. Monitor health metrics at each step. If health degrades — error rate exceeds thresholds, latency spikes — instant rollback with one command: `aether update rollback <id>`. Traffic immediately shifts back to the old version. The 3 AM pager alert becomes an audit log entry.
+Deploy during business hours. The first slice of traffic is 5% unless `--traffic` says otherwise; widen it with `promote` and watch it with `aether deploy status <id>`. If health degrades, `aether deploy rollback <id>` re-weights toward the previous version; requests already dispatched are unaffected.
+
+The split is worth stating precisely, because "shift 25% of traffic" sounds more exact than what any cluster can do. It is per-node weighted selection over the endpoints that node currently knows, so a traffic change takes effect on each node as it observes the change. It is not atomic across the cluster and not instantaneous. Whether traffic then divides in the requested proportion is unverified: the mechanism is in the source, and no end-to-end test demonstrates the proportion. `--blue-green` and `--rolling` are the other two strategies, and the rolling one is a flag ahead of its server: the rolling-update API does not exist server-side ([#291](https://github.com/pragmaticalabs/pragmatica/issues/291)). Canary is the path this section describes.
+
+*Corrected 2026-09-05. This section was written against `aether update`, a real command at publication that the CLI later consolidated into `aether deploy --canary`; the guarantee sentence above replaces "instant rollback" and "traffic immediately shifts back", which claimed more than the mechanism provides. Mechanism verified at source by the Aether maintainer.*
 
 ## For Every Project: Legacy, Greenfield, And Everything Between
 

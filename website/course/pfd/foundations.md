@@ -1,3 +1,7 @@
+---
+reviewed-at: 3ee239db1305a6b9877b987ee1360e953f801d92
+---
+
 ## blurb
 The vocabulary chapter: six process properties, four value shapes, six composition patterns, and the telescope that carries them across every altitude.
 

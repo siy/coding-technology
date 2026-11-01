@@ -1,3 +1,7 @@
+---
+reviewed-at: 46b56452e3fd44074646092f7c8e7c7e2adc78d2
+---
+
 ## blurb
 The last altitude - subsystems compose into one running system, assembly separates from provisioning, and the same six patterns close the fractal.
 

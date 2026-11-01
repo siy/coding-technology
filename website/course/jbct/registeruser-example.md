@@ -1,3 +1,7 @@
+---
+reviewed-at: 88fef08b35f452dce33b83875c03ef0215bf7266
+---
+
 ## blurb
 A complete use case, RegisterUser, built step by step from requirements to production code.
 

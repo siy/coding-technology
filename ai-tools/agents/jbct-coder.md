@@ -2,7 +2,7 @@
 name: jbct-coder
 model: opus
 title: Java Backend Coding Technology Agent
-description: Specialized agent for generating business logic code using Java Backend Coding Technology (last modified: 2026-06-12) with Pragmatica Core 1.0.0-rc1. Produces deterministic, AI-friendly code that matches human-written code structurally and stylistically. Includes evolutionary testing strategy guidance.
+description: Specialized agent for generating business logic code using Java Backend Coding Technology (last modified: 2026-09-06) with Pragmatica Core 1.0.0-rc1. Produces deterministic, AI-friendly code that matches human-written code structurally and stylistically. Includes evolutionary testing strategy guidance.
 tools: Read, Write, Edit, MultiEdit, Grep, Glob, LS, Bash, TodoWrite, Task, WebSearch, WebFetch
 ---
 
@@ -96,6 +96,15 @@ These are **strictly prohibited**. Stop and rewrite if you catch yourself writin
 
 ### The Four Return Kinds
 
+<!-- book:four-return-shapes -->
+Every function in JBCT returns one of four semantic shapes: `T`, `Option<T>`, `Result<T>`, or `Promise<T>`. Not "usually" or "preferably"—one of the four, always. Two qualifications keep the rule exact rather than merely emphatic. The shapes compose in one permitted way, `Result<Option<T>>` and its asynchronous form `Promise<Option<T>>`, where fallibility and optionality are genuinely independent concerns; every deeper nesting is a smell this chapter names later. And `void` remains available at the edges as a deliberate signal that failure is irrelevant to the caller, distinct from `Result<Unit>`, where it is not. This isn't an arbitrary restriction; it's intentional compression of complexity into type signatures.
+
+**Why by criteria:**
+- **Mental Overhead**: Hidden error channels (exceptions), hidden optionality (null), hidden asynchrony (blocking I/O) force remembering behavior not in signatures. Explicit types eliminate this (+3).
+- **Reliability**: Compiler verifies error handling, null safety, and async boundaries when encoded in types (+3).
+- **Complexity**: Four types cover all scenarios - no guessing about combinations (+2).
+<!-- /book:four-return-shapes -->
+
 ```
 Can this operation fail?
 ├── NO: Can the value be absent?
@@ -106,8 +115,38 @@ Can this operation fail?
     └── YES → return Promise<T>
 ```
 
-**Allowed:** `Result<Option<T>>` (optional value with validation)
-**Forbidden:** `Promise<Result<T>>` (double error channel)
+<!-- book:return-type-matrix -->
+### Allowed Return Types
+
+| Type | Use Case |
+|------|----------|
+| `T` | Synchronous, cannot fail, always present |
+| `Option<T>` | Synchronous, cannot fail, might be absent |
+| `Result<T>` | Synchronous, can fail |
+| `Promise<T>` | Asynchronous, can fail |
+| `Result<Option<T>>` | Optional value that can fail validation |
+| `Promise<Option<T>>` | Async lookup that might not find anything |
+
+### Discouraged
+
+| Type | Why Discouraged |
+|------|-----------------|
+| `Optional<T>` | Use `Option<T>` for consistency |
+| `CompletableFuture<T>` | Use `Promise<T>` for consistent error handling |
+| Framework-specific types (`Mono<T>`, `ResponseEntity<T>`) | Keep business logic framework-agnostic |
+
+### Forbidden (Double-Monad Nesting)
+
+| Type | Why Forbidden |
+|------|---------------|
+| `Promise<Result<T>>` | `Promise` already carries failures - double error channel |
+| `Result<Result<T>>` | Nested failures create unwrapping ceremony |
+| `Option<Option<T>>` | Nested optionality is meaningless |
+| `Promise<Option<Result<T>>>` | Triple nesting - architectural smell |
+| `Option<List<T>>` | A collection already carries emptiness as a value - a second absence channel says it twice |
+
+**Rule:** Each concern (optionality, failure, asynchrony) appears at most once in a return type; emptiness is the collection's own concern, already carried as a value.
+<!-- /book:return-type-matrix -->
 
 ### Parse, Don't Validate
 
@@ -134,25 +173,75 @@ Use `Valid` prefix for post-validation types: `ValidRequest`, `ValidUser`.
 
 ### No Business Exceptions
 
-All failures as sealed `Cause` types. Group fixed-message errors into enum:
+All failures as sealed `Cause` types.
+
+<!-- book:typed-errors -->
+Every failure is a `Cause`, and `Cause` has exactly one abstract member: `message()`. The construction idiom satisfies it structurally, so no error type ever hand-writes prose in a method body.
+
+A use case's failures form a sealed interface with two kinds of members. A **data-carrying failure** is a record: its components are the error's data, in declaration order, with a trailing `String message` component whose generated accessor *is* the `message()` implementation. Its `FACTORY`, built from a message template and the canonical constructor reference, is the construction path. **Fixed-text failures** share one enum in a prescribed shape - a single `message` field, a constructor, a field-returning accessor - with each failure declared as one constant carrying its text.
 
 ```java
-public sealed interface RegistrationError extends Cause {
-    enum General implements RegistrationError {
-        EMAIL_ALREADY_REGISTERED("Email already registered"),
-        TOKEN_GENERATION_FAILED("Token generation failed");
+public sealed interface LoginError extends Cause {
 
-        private final String message;
-        General(String message) { this.message = message; }
-        @Override public String message() { return message; }
+    record AccountLocked(UserId userId, String message) implements LoginError {
+        static final Fn1<AccountLocked, UserId> FACTORY =
+            Causes.forOneValue("Account is locked: %s", AccountLocked::new);
     }
 
-    record PasswordHashingFailed(Cause origin, String message) implements RegistrationError, Cause.Wrapped {
-        static final Fn1<PasswordHashingFailed, Cause> FACTORY =
-            Causes.forOneValue("Password hashing failed: %s", PasswordHashingFailed::new);
+    enum General implements LoginError {
+        INVALID_CREDENTIALS("Invalid email or password");
+
+        private final String message;
+
+        General(String message) { this.message = message; }
+
+        @Override
+        public String message() { return message; }
     }
 }
 ```
+
+Construction sites:
+
+```java
+LoginError.AccountLocked.FACTORY.apply(user.id()).result();   // data-carrying
+LoginError.General.INVALID_CREDENTIALS.result();              // fixed text
+```
+
+Three rules govern the shape:
+
+- **Every value the template formats is a component.** The factory's parameters are exactly the non-message components, so the data an error mentions stays typed - renderable at the boundary, countable in telemetry, never trapped in prose. The `message` component comes last, which is what lets the constructor reference serve as the factory argument. Zero data is a property, not an omission: `INVALID_CREDENTIALS` deliberately says nothing about which credential failed.
+- **One discriminable case per failure** - its own record type or its own enum constant. Qualified enum constant case labels (`case General.INVALID_CREDENTIALS ->`) discriminate constants in a switch over the sealed interface, and listing every constant preserves exhaustiveness: adding a constant breaks every switch, exactly as adding a record does.
+- **The `FACTORY` is the only constructor call site.** `new AccountLocked(id, "hand-typed prose")` compiles and silently decouples the stored message from the declared template; routed through the factory, template and data cannot disagree.
+<!-- /book:typed-errors -->
+
+<!-- book:wrapped-terminal-causes -->
+Two mixins nested in `Cause` remove the remaining overrides. A failure wrapping an underlying cause implements `Cause.Wrapped` with an `origin` component; the mixin derives `source()` from it. The component cannot be named `source` - the record accessor's return type would clash with `Cause.source()`, and `origin` is the name that avoids the trap. A failure no retry can change implements `Cause.Terminal`, which retry facilities consult to stop immediately.
+
+```java
+record PaymentFailed(Cause origin, String message) implements TransferError, Cause.Wrapped {
+    static final Fn1<PaymentFailed, Cause> FACTORY =
+        Causes.forOneValue("Payment step failed", PaymentFailed::new);
+}
+
+// translation at a composition boundary:
+paymentStep.execute(order).mapError(PaymentFailed.FACTORY);
+```
+
+Composition sites accept the fully-typed factory directly. Where only some constants of an enum are terminal, a constant body overrides `isTerminal()` per constant.
+
+**A translated failure carries the failure it translates.** Every failure translator uses its argument: the mapper passed to `mapError`, and the exception mapper passed to `lift`. A cause becomes the `origin` of a `Cause.Wrapped` record, or the source of a bare cause (`Causes.cause("Invalid money format", Option.some(cause))`); a `Throwable` becomes one through `Causes.fromThrowable(t)` first. Branching on the input is fine (a timeout and a decline may deserve different failures), as long as every branch carries it. A translator that ignores its argument (`_ -> INVALID_ID`, or a method returning a constant) discards the cause, and so does one that keeps only its text (`e -> Failure.FACTORY.apply(e.message())`, `t.getMessage()`): the type and the chain are gone, and the diagnosis goes with them. The rule has no exceptions. A technical failure translated into a domain one is exactly where the original is most valuable, because it is the only record of what the infrastructure actually reported. Where the failure is decided before any cause exists, supply it at the source instead of translating afterwards: `Verify.ensure(value, predicate, cause)` and `filter(cause, predicate)` fail with the intended cause directly, leaving nothing to discard.
+
+**Carry the origin; do not print it.** The wrapper's message template does not format `origin`. The message of the top failure is what a boundary is most likely to show a client (Aether's HTTP layer renders it as the problem `detail`), and an origin formatted into it carries store and network internals along. The origin travels as a component and is read where the chain is logged, through `source()` or `iterate`.
+
+At Pragmatica 1.0.0-rc4 the linter's `JBCT-CAUSE-04` still counts `origin` among the values a template must format, so it flags a wrapper written this way. Until the linter exempts a `Cause.Wrapped` origin, suppress that one rule on the wrapper record: `@SuppressWarnings("JBCT-CAUSE-04")`.
+
+Carrying the cause does not carry its retry classification. At Pragmatica 1.0.0-rc4 `Cause.Wrapped` does not hand the origin's classification to the wrapper: a wrapper around a terminal failure is not itself terminal, and a wrapper around a transient one is not itself transient. Where a retry facility consults the wrapper, a wrapper that should be classified exactly as its origin overrides `isTerminal()` to return `origin().isTerminal()` and `isTransient()` to return `origin().isTransient()`. A bare cause cannot override anything, so a failure whose classification matters is a `Wrapped` record, not `Causes.cause(text, source)`.
+<!-- /book:wrapped-terminal-causes -->
+
+<!-- book:bare-cause -->
+`Causes.cause("Age must be 0-150")` remains the sanctioned form where no caller can act on the distinction - value-object validation whose failures all land in the same composite. The line is behavioral: when a caller would branch on the failure, render it separately, or count it, it is worth a type. The single-argument template overloads (`Causes.forOneValue(String)` and friends) belong to this same ad-hoc tier; in domain code a parameterized failure is worth naming, because the template form bakes its data into prose and discards it.
+<!-- /book:bare-cause -->
 
 At `lift` boundaries, apply the factory to the converted throwable: `t -> RepositoryError.DatabaseFailure.FACTORY.apply(Causes.fromThrowable(t))`
 
@@ -286,8 +375,8 @@ Option.some(value) / Option.none() / Option.option(nullable)
 ```java
 Result.all(a, b, c).map(Ctor::new)       // Parallel validation (collects failures)
 Result.allOf(list)                         // Collection → Result<List<T>>
-Promise.all(a, b, c).map(this::combine)   // Parallel async (fail-fast, 1-15 params)
-Promise.allOrCancel(a, b, c).map(combine) // Like all(), cancels remaining on failure
+Promise.all(a, b, c).map(this::combine)   // Parallel async (accumulates failures, 1-15 params)
+Promise.allOrCancel(a, b, c).map(combine) // Fail-fast: first failure, cancels the rest (prefer all())
 Promise.allOf(list)                        // Collect all results
 Promise.allOfOrCancel(list)                // Like allOf(), cancels remaining on failure
 Promise.any(a, b, c)                      // First success wins

@@ -1,3 +1,7 @@
+---
+reviewed-at: 0ad13223b0b3d1573eb6210468305ade29d446fa
+---
+
 ## blurb
 Installing Pragmatica Core and its shared vocabulary: map, flatMap, filter, and recover across all four types.
 
@@ -5,10 +9,10 @@ Installing Pragmatica Core and its shared vocabulary: map, flatMap, filter, and 
 - Why Optional, CompletableFuture, and null fall short
 - One consistent API across types: map, flatMap, filter, recover
 - Lifting up is safe; lowering loses information
-- Result.all() accumulates failures; Promise.all() fails fast
+- Result.all() and Promise.all() accumulate failures; Promise.allOrCancel() fails fast
 
 ## note
-Install the library (`org.pragmatica-lite:core`, 1.0.0-rc1) before continuing - every later lesson
+Install the library (`org.pragmatica-lite:core`, 1.0.0-rc4) before continuing - every later lesson
 assumes it's on your classpath.
 
 ## exercise

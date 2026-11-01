@@ -110,6 +110,12 @@ will mark the first edition released to readers.
   `slices/Ordering.toml`) to match (*Parts I-IV*). The strangled legacy class keeps `LegacyOrderService`.
 
 ### Fixed
+- Portability claim (*Part II*, "Ember, Forge, and Aether" and the opening commitments; *Part IV*, why
+  Forge is the first gate): the slice's code moves between environments unchanged, but timing,
+  concurrency, failure behaviour and the resources a runtime provides can differ. Forge reproduces
+  failure classes (a lost node, a lost leader) against the same code and recovery path, not the exact
+  failure production produces. Replaces "runs that slice identically", "a configuration change rather
+  than a code change" and "the same failure you would get in Aether".
 - **Config inheritance overstated live updates** (*Part I*). The text said an operator's
   configuration change propagates through consensus "so slices pick it up without a
   redeploy." Verified false: `SpiResourceProvider` mutates its promise cache only on first

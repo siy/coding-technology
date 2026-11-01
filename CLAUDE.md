@@ -15,9 +15,9 @@ Java sources and no `pom.xml` — the only build here is the website.
 
 | Book | Source | Version | Tag prefix |
 |------|--------|---------|------------|
-| Java Backend Coding Technology | `book/` | 5.0.0 | `jbct-v` |
-| Process-First Design | `book-pfd/` | 3.0.0 | `pfd-v` |
-| Architecture Synthesis | `book-arch/` | 1.1.2 | `arch-v` |
+| Java Backend Coding Technology | `book/` | 5.2.1 | `jbct-v` |
+| Process-First Design | `book-pfd/` | 3.0.1 | `pfd-v` |
+| Architecture Synthesis | `book-arch/` | 1.1.3 | `arch-v` |
 | Aether | `book-aether/` | 0.1.0 (draft) | `aether-v` |
 
 Each book's own `CHANGELOG.md` is the **single source of truth** for its version: the
@@ -34,6 +34,13 @@ are tracked; they were untracked until 2026-07-29.
 installed by copying to `~/.claude/`, so a copy on this machine can diverge from the
 repo in both directions. `check-drift.sh` reports that.
 
+**`ai-tools/` is shipped to users.** `jbct init` and `jbct update` copy all of it into the
+user's project `.claude/` (pragmatica `AiToolsInstaller`), so only JBCT tools belong there.
+This repository's own skills (`release`, `fix-all`, `read-point-planning`) and the generic
+`code-reviewer` live privately in `oss/internal/ai-tools-internal/` (owner ruling
+2026-10-21). Pinned installs fetch at tag `ai-tools-v<jbct version>` (pragmatica #2363);
+cut it per Core release, on command, after the tools describe that release.
+
 ---
 
 ## Build and check
@@ -41,13 +48,39 @@ repo in both directions. `check-drift.sh` reports that.
 ```bash
 cd website && npm run build          # the site; also the only link/orphan check
 node --test website/next-step/*.test.js   # the next_step derivation engine
+node --test website/lib/*.test.js    # the heading-slug mechanism (needs pandoc)
 ./ai-tools/check-drift.sh            # tooling staleness + AS chapter citations
 python3 ai-tools/sync-book-blocks.py --check   # book-owned blocks still in sync
 ```
 
-The first three plus the block check run in CI (`.github/workflows/checks.yml`).
-`deploy.yml` publishes the site to Netlify on merge to `main`; `dist/` is gitignored and
-built at deploy time.
+All five run in CI on push and pull request to `main`, but not from one workflow: the
+drift, block, next-step and slug checks are in `.github/workflows/checks.yml` (three
+jobs — `ai-tools-drift`, `next-step-engine`, `site-render`), while
+`npm run build` — the only link/orphan check — runs inside `deploy.yml`'s
+build-and-deploy job, so it is coupled to the deploy path rather than sitting with the
+others. `deploy.yml` publishes the site to Netlify on merge to `main`; `dist/` is
+gitignored and built at deploy time.
+
+**The link check cannot see heading anchors move.** It reads `id=` out of the HTML it
+just emitted and resolves hrefs against that same set, so a changed slug moves the id and
+its header-anchor href together and `All internal links resolve (89 pages checked)` stays
+green — verified by mutation, twice. Anchors are URLs, so that silence is a dead inbound
+link. `website/lib/slug.test.js` is the gate that does see it; it pins the mechanism
+rather than the 1,414-anchor corpus, so it reddens on an algorithm change and not on an
+edited heading. It runs the real pandoc against the real `website/lib/site.lua` and
+**fails rather than skips** when pandoc is absent.
+
+**A PR based on anything but `main` gets ZERO CI.** Both PR workflows filter
+`pull_request: branches: [main]`, which matches the *base*, so a stacked PR runs no checks at
+all and shows an empty check list rather than a failure — indistinguishable from CI simply not
+having started yet. Measured 2026-09-09: PR #73 based on a feature branch had 0 check-runs while
+#72 based on `main` had 6. Retarget to `main` before reading anything into a stacked PR's checks.
+
+A third workflow runs on a schedule rather than on a PR: `.github/workflows/upstream-pin.yml`
+compares the declared Pragmatica pin against Maven Central daily. It is deliberately outside
+PR CI — it is the one check that needs the network, and an unreachable Central inside a
+blocking check could only print `axis NOT checked` and pass. On the schedule it fails instead,
+because a scheduled job blocks no merge.
 
 Books build to PDF/EPUB via `book/build-pdf.sh`, `book/build-epub.sh`, and
 `<book>-meta/build-pdf.sh` for the others. **PDF and EPUB outputs are never committed** —
@@ -87,11 +120,20 @@ meaningful tasks over many trivial ones.
   context. Bare "the document" historically meant the JBCT book (`book/`); the retired
   `CODING_GUIDE.md` and learning series were folded into it.
 - **Tag versions** only after an explicit command. Several changes may precede a tag.
-- **Releases**: branch → PR → `gh pr merge --admin` (branch protection) → per-book tag →
-  rebuild books → Leanpub. `./publish-leanpub.sh <slug> <pdf> [epub] [--sample]
-  [--publish]`, key in `../.env-pub`. The publish call prints a harmless "Unexpected
-  Server Error" even on success — always verify `last_published_at` moved. The `/release`
-  skill carries the full workflow.
+- **Releases**: branch → PR → `gh pr merge --merge` → per-book tag → rebuild books →
+  Leanpub. `./publish-leanpub.sh <slug> <pdf> [epub] [--sample] [--publish]`, key in
+  `../.env-pub`. The publish call prints a harmless "Unexpected Server Error" even on
+  success — always verify `last_published_at` moved. The `/release` skill carries the
+  full workflow, with the caveat below.
+- **`--admin` is not needed, and has not been since 2026-09-12.** Ruleset 9648960 is
+  scoped to `refs/heads/main` with `required_approving_review_count: 0`; its only rules
+  are `deletion`, `non_fast_forward` and `pull_request`. A 1-approval rule on a solo repo
+  was what forced every merge through `--admin` — never a tooling limitation. Verified by
+  three plain `--merge` merges on 2026-09-13 (#75, #81, #82); #78-#80 merged after the
+  ruleset change too, but by another session, so their invocation was not observed. **The installed `/release` skill
+  still says "Branch protection requires admin", and it is not tracked in `ai-tools/`**,
+  so `check-drift.sh` cannot see it: five of the ten installed skills are outside the
+  drift net.
 - **Publishing is not notifying.** `--publish` makes a new version live and emails
   nobody: Leanpub's `publish[email_readers]` defaults to `false` for books, and the
   script sends no parameters. Notifying readers is a separate, irreversible call that
@@ -103,5 +145,21 @@ meaningful tasks over many trivial ones.
 - **PR merged** → check the current branch; if it is not `main`, switch and pull.
 - **`jbct-coder.md` header**: preserve during edits. Update the description if needed;
   ask before changing other fields.
-- **Voice documents** live in the private `(private path)` repo — a shared
+- **Voice documents** live in a private repo — a shared
   `book-voice.md` plus per-book overlays. Never copy them into this public repo.
+- **Draft status decides the repo, not sensitivity.** Capture and unshipped drafts go to
+  the project's private repositories; `articles/` here is for work committed to shipping. (Ruled
+  2026-08-10. It does not by itself settle whether `articles/` is inside any given
+  check's space — that question is still open for the pin check.)
+- **Published work is history.** It stays as written, whatever the current rules say.
+- **Private material stays private, including in working records** — path references
+  only, never content, and check the headings as well as the prose.
+- **Shell gotchas (zsh).** `echo ===` fails with `=== not found`; quote it or use
+  `printf`. A `cd` inside a compound command persists into later calls — prefer absolute
+  paths. Both cost time in July 2026 and again on 2026-09-13.
+- **Handover retention.** The repository root keeps the current handover and its
+  immediate predecessor; older ones move to the project's private record at the next
+  handover. Each handover
+  names the one it continues, so the chain stays walkable across the move. A rule that
+  belongs in a durable document goes there *when it is made* — a handover is a record of
+  state, never the only home of a rule.

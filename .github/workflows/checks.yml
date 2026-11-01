@@ -40,3 +40,30 @@ jobs:
 
       - name: Test the next_step entry gate
         run: node --test website/next-step/*.test.js
+
+  # The heading-slug gate needs pandoc, so it cannot ride along in next-step-engine
+  # without slowing that job down and blurring what a red there means. It gets its own
+  # job instead: a failure here says "the site's anchor URLs moved", nothing else.
+  #
+  # It deliberately does NOT skip when pandoc is missing. The install step below fails
+  # the job, and the test itself fails rather than skipping, because a gate that reports
+  # success while examining nothing is worse than a gate that is absent.
+  site-render:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install pandoc (pinned, checksum-verified)
+        uses: ./.github/actions/setup-pandoc
+
+      - name: Pin the heading-slug mechanism
+        run: node --test website/lib/*.test.js

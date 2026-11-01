@@ -34,7 +34,7 @@ The architectural layer holding adapters, converting between external representa
 *Defined in: JBCT*
 
 **Aggregation** {#aggregation}
-Combining multiple Result or Promise values into one. `Result.all()` accumulates every failure; `Promise.all()` fails fast on the first.
+Combining multiple Result or Promise values into one. `Result.all()` and `Promise.all()` accumulate every failure; `Promise.allOrCancel()` fails fast on the first.
 *Defined in: JBCT*
 
 **Altitude** {#altitude}
@@ -84,10 +84,6 @@ A reason code changes — a force that, moving, forces the code to move with it.
 **Change-Driver Cohesion** {#change-driver-cohesion}
 The grouping criterion: units cohere when one change driver governs all of them, tested on two axes — [completeness](#completeness) and [purity](#purity).
 *Defined in: PFD*
-
-**Clean Architecture** {#clean-architecture}
-Uncle Bob's concentric-layers style with the dependency rule. JBCT can be implemented inside it; the two are compatible, not identical.
-*Defined in: JBCT*
 
 **Completeness** {#completeness}
 One axis of the cohesion test: does a grouping contain everything a driver governs, or is some of it scattered elsewhere, forcing one change to chase pieces across modules (shotgun surgery)?
@@ -208,7 +204,7 @@ A static method creating a value object or use case instance; value-object facto
 *Defined in: JBCT*
 
 **Fail-Fast** {#fail-fast}
-Stopping at the first failure. `flatMap()` chains and `Promise.all()` are fail-fast; contrast [Result.all](#result-all).
+Stopping at the first failure. `flatMap()` chains and `Promise.allOrCancel()` are fail-fast; `Promise.all()` is not - contrast [Result.all](#result-all).
 *Defined in: JBCT*
 
 **Failure Budget** {#failure-budget}
@@ -245,10 +241,6 @@ An early return on invalid input. JBCT replaces this with [parse, don't validate
 
 **Happy Path** {#happy-path}
 The execution path when every operation succeeds. In JBCT it's the default read of the code; failures are the explicit branch, not the other way around.
-*Defined in: JBCT*
-
-**Hexagonal Architecture** {#hexagonal-architecture}
-Ports-and-adapters: domain at the center, adapters at the edges. JBCT's step interfaces play a role similar to ports.
 *Defined in: JBCT*
 
 **Hide the Machinery, Keep the Meaning** {#hide-the-machinery-keep-the-meaning}
@@ -361,10 +353,6 @@ One of the [six axes](#six-axes): single shared store, distributed shared, shard
 AS's three phases of architecture work, cutting across [altitude](#altitude) rather than naming one: **Phase 4** elicits what the system must satisfy (the [nine questions](#nine-questions)); **Phase 5** selects the axis vector that satisfies it; **Phase 6** picks the concrete technology. See the [crosswalk](#crosswalk) for the unrelated JBCT term sharing the word "Phase."
 *Defined in: AS*
 
-**Port** {#port}
-In Hexagonal Architecture, an interface defining how the domain talks to the outside world — similar in role to JBCT's step interfaces.
-*Defined in: JBCT*
-
 **Pragmatica Core** {#pragmatica-core}
 The minimal Java library providing Option, Result, Promise, and Cause — the foundation JBCT's patterns are built on.
 *Defined in: JBCT*
@@ -418,6 +406,10 @@ Handling a failure and potentially converting it to success: a function `Cause -
 **Recovery Triple** {#recovery-triple}
 The three responses to an invalidated step, where most discourse names only the first: [BER](#ber) (compensate by inverse), [FER](#fer) (continue degraded), [design-out](#design-out) (make the invalidation impossible). AS carries the same three classes under long names — see the [crosswalk](#crosswalk).
 *Defined in: PFD, AS*
+
+**Residual** {#residual}
+An effect that has escaped the system and that no inverse can undo, such as a confirmation email already read. A workflow answers each one at design time by forward correction, by naming it as acknowledged, or by restructuring so it never arises. Not to be confused with [data as residue](#data-as-residue): a residue is the state a process leaves inside the system; a residual is what a reversal cannot reach outside it.
+*Defined in: PFD*
 
 **Result** {#result}
 A type for a synchronous operation that may fail, holding either a success value or a Cause.

@@ -14,8 +14,6 @@ public interface UseCaseName extends UseCase.WithPromise<Response, Request> {
 
     // Validated input (Valid prefix, not Validated)
     record ValidRequest(ValueObject1 vo1, ValueObject2 vo2) {
-        private ValidRequest {}  // Private constructor
-
         static Result<ValidRequest> validRequest(Request raw) {
             return Result.all(
                 ValueObject1.valueObject1(raw.field1()),
@@ -74,8 +72,6 @@ Parsed, validated input with domain types:
 
 ```java
 record ValidRequest(Email email, Password password, UserId userId) {
-    private ValidRequest {}  // Private constructor
-
     static Result<ValidRequest> validRequest(Request raw) {
         return Result.all(
             Email.email(raw.email()),
@@ -136,8 +132,6 @@ public interface RegisterUser extends UseCase.WithPromise<Response, Request> {
     record Response(UserId userId, ConfirmationToken token) {}
 
     record ValidRequest(Email email, Password password) {
-        private ValidRequest {}
-
         static Result<ValidRequest> validRequest(Request raw) {
             return Result.all(Email.email(raw.email()),
                              Password.password(raw.password()))

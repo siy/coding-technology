@@ -1,3 +1,7 @@
+---
+reviewed-at: e491417a3e679d0ba449fec1c70b80c300fe9b32
+---
+
 ## blurb
 `next_step` run against a living system, not a blank page: the audit that flags unforced positions, incremental recomputation, and merge as a first-class output.
 

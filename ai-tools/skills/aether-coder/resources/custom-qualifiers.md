@@ -70,9 +70,10 @@ Supply a `ResourceFactory<T, C>`, registered in the slice jar under
 `T` itself is unconstrained — no interface to implement, no constructor shape. The factory
 carries the whole contract.
 
-**Config is read once.** A resource is built from the values current at provisioning and is
-not rebuilt when configuration changes; a slice sees new config when it is next reloaded. This
-holds for `ConfigurationSection` too — see the delivery-semantics note in `configuration.md`.
+**Config is read once, in the form available today.** A resource is built from the values
+current at provisioning and is not rebuilt when configuration changes; a slice sees new config
+when it is next reloaded. This holds for `ConfigurationSection` too — see the delivery-semantics
+note in `configuration.md`.
 
 **When to use it:** a setting that selects which of several behaviors runs becomes a
 provisioned step. A setting that parameterizes one behavior that runs regardless stays a value.

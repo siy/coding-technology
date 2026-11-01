@@ -17,5 +17,6 @@ Process-First Design and Architecture Synthesis derive a process structure and a
 ## Links
 
 - [JBCT](/java/jbct/)
+- [JBCT tools and rules](/java/jbct/tools/)
 - [Pragmatica](/java/pragmatica/)
 - [Aether](/java/aether/)

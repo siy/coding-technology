@@ -1,3 +1,7 @@
+---
+reviewed-at: d478e1b880ed68b6f41ae50b875abead21072055
+---
+
 ## blurb
 Sequencer, Fork-Join, and Aspects - composing basic patterns into real workflows.
 

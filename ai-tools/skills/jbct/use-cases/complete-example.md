@@ -42,9 +42,7 @@ public record Email(String value) {
         Pattern.compile("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$");
 
     private static final Fn1<Cause, String> INVALID_EMAIL =
-        Causes.forValue("Invalid email: {}");
-
-    private Email {}
+        Causes.forOneValue("Invalid email: %s");
 
     public static Result<Email> email(String raw) {
         return Verify.ensure(raw, Verify.Is::present)
@@ -65,14 +63,12 @@ public record Password(String value) {
     private static final Pattern HAS_DIGIT = Pattern.compile(".*\\d.*");
     private static final Pattern HAS_UPPER = Pattern.compile(".*[A-Z].*");
 
-    private static final Fn1<Cause, String> TOO_SHORT =
-        Causes.forValue("Password too short (min " + MIN_LENGTH + ")");
-    private static final Fn1<Cause, String> NO_DIGIT =
-        Causes.forValue("Password must contain digit");
-    private static final Fn1<Cause, String> NO_UPPER =
-        Causes.forValue("Password must contain uppercase letter");
-
-    private Password {}
+    private static final Cause TOO_SHORT =
+        Causes.cause("Password too short (min " + MIN_LENGTH + ")");
+    private static final Cause NO_DIGIT =
+        Causes.cause("Password must contain digit");
+    private static final Cause NO_UPPER =
+        Causes.cause("Password must contain uppercase letter");
 
     public static Result<Password> password(String raw) {
         return Verify.ensure(raw, Verify.Is::present)
@@ -93,8 +89,6 @@ package com.example.domain.shared;
 import org.pragmatica.lang.parse.Network;
 
 public record UserId(UUID value) {
-    private UserId {}
-
     public static Result<UserId> userId(String raw) {
         return Network.parseUUID(raw)
             .map(UserId::new);
@@ -113,8 +107,6 @@ public interface RegisterUser extends UseCase.WithPromise<Response, Request> {
     // ... Request, Response ...
 
     record ValidRequest(Email email, Password password) {
-        private ValidRequest {}
-
         static Result<ValidRequest> validRequest(Request raw) {
             return Result.all(Email.email(raw.email()),
                              Password.password(raw.password()))

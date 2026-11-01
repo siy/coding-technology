@@ -1,3 +1,7 @@
+---
+reviewed-at: 5f0cbe76d76cd82b2025fb2a13a4637c58c8c103
+---
+
 ## blurb
 The methodology run against adversarial scenarios - the feature that seems to span two boundaries, the aggregate that seems to demand a rewrite.
 

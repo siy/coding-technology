@@ -3,15 +3,27 @@
 # staleness. Skills are installed away from this repo (~/.claude/skills), so a stale
 # reference here becomes an invisible wrong answer there. Checks: retired-document
 # mentions, unresolvable links, links that cannot survive installation, version pins
-# that disagree with the declared canonical, and divergence from an installed copy.
+# that disagree with the field that governs them, and divergence from an installed copy.
 # Exit 0 = all green; non-zero = findings printed.
 set -u
 cd "$(dirname "$0")" || exit 2
 FAIL=0
 
-# Canonical Pragmatica Core version. Bump HERE when the library releases; the checker
-# then names every file still carrying the old pin.
-PRAGMATICA_VERSION='1.0.0-rc1'
+# Pragmatica Core versions: derived, not declared here. ai-tools/pragmatica-version.json is
+# the single source (issue #60) and pragmatica-pins.py compares every surface in the
+# repository against it. It carries TWO fields since 2026-09-11, because one could answer
+# only one question at a time: `depends_on` is the coordinate a reader's build should use
+# and tracks Maven Central mechanically, while `verified_against` is what a human actually
+# re-read the API at and is per documentation scope. The hard-coded constant they replace
+# was compared against nothing external, over three paths, with a pattern that matched only
+# `-rcN` — it could not fail in any of the directions that mattered.
+#
+# What this script no longer runs is the declaration-VS-UPSTREAM axis. It is the only one
+# that needs the network, and inside a blocking check an unreachable Maven Central left it
+# printing `axis NOT checked` while the run went green — a gate reporting success while
+# examining nothing. It moved to .github/workflows/upstream-pin.yml, on a schedule, where
+# unreachable FAILS because a scheduled job blocks no merge. Everything invoked here is
+# hermetic and decidable from the checkout, which is what makes it fit to gate a PR.
 
 # Book version is derived, not declared: BOOK-VERSIONING.md makes each book's
 # CHANGELOG.md the single source of truth.
@@ -88,13 +100,16 @@ if escaping:
 sys.exit(1 if (denied or dead or escaping) else 0)
 EOF
 
-# --- 4. Pragmatica Core pin agrees with the declared canonical ---
-stale_pin=$(grep -rn -E '1\.0\.0-rc[0-9]+' skills agents ../book/*.md 2>/dev/null \
-            | grep -v -F "$PRAGMATICA_VERSION")
-if [ -n "$stale_pin" ]; then
-  fail "Pragmatica Core pin disagrees with declared $PRAGMATICA_VERSION:"
-  printf '%s\n' "$stale_pin"
-fi
+# --- 4. Pragmatica Core versions agree with the field that governs them ---
+# pragmatica-pins.py carries the mechanism, the space it searches, the four blindnesses of
+# the grep it replaces, and what a green result does NOT mean. It prints its own counts;
+# never add -q, and read the occurrence, field and exception counts rather than the exit
+# status. The `fields:` line is the one to read after a bump: it says how many occurrences
+# each of depends_on and verified_against governs, so a stamp that has quietly been
+# reclassified as a coordinate shows up as a moved count rather than as silence.
+# --check is hermetic and says so on its `upstream:` line, which also names the scheduled
+# workflow that owns that axis and FAILS here if that workflow has gone missing.
+python3 pragmatica-pins.py --check || FAIL=1
 
 # --- 5. Book version headers agree with the book's own CHANGELOG ---
 stale_hdr=$(grep -rn -E '\*\*Based on:\*\* JBCT v[0-9.]+' ../book/*.md 2>/dev/null \
@@ -148,7 +163,16 @@ if [ -d ../book-arch ]; then
   fi
 fi
 
-# --- 7. Installed copy matches this repo (local only; absent in CI) ---
+# --- 7. Course lesson blurbs still assert against their book chapters ---
+# Each website/course/<course>/<slug>.md shadows <book>/<slug>.md and nothing related the
+# two, so #70 took book/comparison.md from 470 lines to 218 while its blurb went on
+# describing three deleted sections and every check here stayed green. A blurb is prose:
+# it cannot be generated from its chapter or compared to it by meaning. What is checkable
+# is whether anyone has looked since the chapter last moved. blurb-stamps.py carries the
+# mechanism and, more importantly, what a green result does NOT claim.
+python3 blurb-stamps.py --check || FAIL=1
+
+# --- 8. Installed copy matches this repo (local only; absent in CI) ---
 INSTALLED="${CLAUDE_HOME:-$HOME/.claude}"
 if [ -d "$INSTALLED/skills" ]; then
   for src in skills/*/; do
@@ -170,6 +194,28 @@ if [ -d "$INSTALLED/skills" ]; then
   done
 else
   note "note: no installed copy at $INSTALLED — skipping install-drift check"
+fi
+
+# --- 9. Installed skills this repo does NOT track ---
+# Section 8 walks repo -> installed, so anything installed WITHOUT a counterpart here is
+# invisible to it BY CONSTRUCTION -- the check cannot report on what it never enumerates.
+# That blind spot shipped a false instruction: /release told every reader "Branch protection
+# requires admin" for days after the ruleset changed, and no check could see it because the
+# skill lived only in ~/.claude. Being untracked is not automatically wrong -- general-purpose
+# skills legitimately live outside this repo -- so this NAMES them instead of failing, and the
+# naming is the whole point: an uncovered set you can read is not the same as one you cannot.
+if [ -d "$INSTALLED/skills" ]; then
+  uncovered=""
+  for dst in "$INSTALLED"/skills/*/; do
+    [ -d "$dst" ] || continue
+    name=$(basename "$dst")
+    [ -d "skills/$name" ] || uncovered="$uncovered $name"
+  done
+  if [ -n "$uncovered" ]; then
+    note "note: installed skills outside the drift net (not tracked here):$uncovered"
+  else
+    note "every installed skill is tracked here"
+  fi
 fi
 
 [ "$FAIL" -eq 0 ] && note "ai-tools drift checks: all green" || note "ai-tools drift checks: FINDINGS ABOVE"

@@ -46,15 +46,13 @@ public <T> Promise<T> withTimeout(
     TimeSpan timeout,
     Promise<T> operation
 ) {
-    Promise<T> timeoutPromise = Promise.promise(timeout)
-        .flatMap(u -> TimeoutError.INSTANCE.promise());
-
-    return Promise.any(operation, timeoutPromise);
+    // Fails with CoreError.Timeout; the underlying operation may still finish
+    return operation.timeout(timeout);
 }
 
 // Usage
 return withTimeout(
-    TimeSpan.seconds(5),
+    TimeSpan.timeSpan(5).seconds(),
     loadUser.apply(userId)
 );
 ```
@@ -162,7 +160,7 @@ public Promise<User> loadUserWithAspects(UserId id) {
     return withMetrics("user.load",
         withLogging("LoadUser",
             withRetry(RetryPolicy.fixed(3, Duration.ofSeconds(1)),
-                withTimeout(TimeSpan.seconds(5),
+                withTimeout(TimeSpan.timeSpan(5).seconds(),
                     withCircuitBreaker(userCircuitBreaker,
                         loadUser.apply(id)
                     )
@@ -191,7 +189,7 @@ public interface PromiseAspect<T> {
 // Usage
 PromiseAspect<User> userAspects =
     retry(retryPolicy)
-        .andThen(timeout(TimeSpan.seconds(5)))
+        .andThen(timeout(TimeSpan.timeSpan(5).seconds()))
         .andThen(logging("LoadUser"))
         .andThen(metrics("user.load"));
 

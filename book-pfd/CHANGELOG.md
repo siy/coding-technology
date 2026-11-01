@@ -7,6 +7,43 @@ All notable changes to the PFD book, newest first. Format:
 `0.x` versions were preview editions; `1.0.0` marked the first edition released to
 readers, and `1.x` are its maintenance and expansion releases.
 
+## [Unreleased]
+
+### Fixed
+- *Spiral 1*: `Promise.allOrCancel` was said to accumulate failures like `Result.all`; it stops at the first failure
+  and cancels the rest. Only `Promise.all` accumulates. The Fork-Join walkthrough now says failures arrive collected in
+  a composite cause, even when only one check fails.
+- *Spiral 2*: "failure-fast or all-or-cancel variants" named one variant that does not exist; `allOf` collects every
+  outcome and never fails, `allOfOrCancel` is the fail-fast form.
+
+## [3.0.1] - 2026-10-08
+
+### Fixed
+- **The glossary separates *residual* from *data as residue*** (*Glossary*). The workflow chapter names
+  effects no inverse can undo as **residuals** and answers them three ways; the book's central data claim
+  calls stored state the **residue** a process leaves behind. Two near-identical words for opposite
+  things, and only the second had an entry. *Residual* now has its own, which states the difference: a
+  residue is owned state inside the system, a residual is what a reversal cannot reach outside it.
+- **The Architecture Synthesis module no longer contradicts its own successor** (*Architecture Synthesis*).
+  The module argued that getting from nine answers to six axis values "is deliberately not a procedure that
+  hands back an answer", having considered and rejected a per-axis decision tree and an axis-by-axis
+  compatibility matrix. *Architecture Synthesis: The Next Correct Step* then derived that step mechanically
+  using neither instrument: null vector, pressure against a ledger, movement only under citation, a stated
+  conflict rule, and a halt on contradiction. The section now records that both objections were right about
+  those two instruments and wrong about the conclusion, states that the book is authoritative where the two
+  differ, and keeps the three profiles and the named considerations as the preview and intuition they are.
+  Reported by a review of the site handed to this session, 2026-09-05.
+- **Semantic independence distinguished from physical contention** (*Glossary*, *The Data Question*). The
+  shared-primitive entry said two processes writing different fields of one row "are not coupled by
+  co-location", and the conflict table answered write-write on different fields with "no conflict to
+  resolve". Both are true of the ownership split and false of the storage engine, where row-level locking
+  and whole-row versioning make co-located writers contend. Keeping them independent at runtime is now
+  named as a storage-layout obligation rather than a consequence of the split. Same review.
+- **The quasi-linear claim on the reference card matches the glossary** (*Reference Cards*). The card said
+  driver attribution turns a quadratic similarity search into a quasi-linear partition; the glossary already
+  scoped the property to the cost of *keeping a decomposition cohesive*, attribution itself being human
+  elicitation. The card now carries the same scope. Same review.
+
 ## [3.0.0] - 2026-08-28
 
 The third edition. Published editions jump from 2.5.0 directly to 3.0.0: the 2.6.0

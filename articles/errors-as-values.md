@@ -1,6 +1,6 @@
 ---
 tags: [java, errorhandling, functionalprogramming, bestpractices]
-canonical_url: https://pragmatica.dev/errors-as-values
+canonical_url: https://pragmatica.dev/articles/errors-as-values
 description: Why your business logic shouldn't throw exceptions and how typed errors improve code quality
 published: true
 ---

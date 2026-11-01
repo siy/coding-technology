@@ -14,7 +14,7 @@ Neither book asks you to adopt a library or a runtime. Both are procedures: a fi
 
 ## Free here, or as a book
 
-A free course edition is planned for both methods on this site. Until each one is built, read the sample and the full argument on Leanpub — continuous prose, not a manual.
+Both methods have a free course edition on this site: [Process-First Design](/method/pfd/course/) and [Architecture Synthesis](/method/architecture-synthesis/course/), each walking the book chapter by chapter with an exercise you run on a system you own. The books carry the full argument as continuous prose, on Leanpub.
 
 ## Links
 

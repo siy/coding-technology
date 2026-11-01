@@ -1,3 +1,7 @@
+---
+reviewed-at: f1243e4e66c1a64856ea68c9b6a74ccc40079020
+---
+
 ## blurb
 Two teams built the same ticketing product with architectures that share nothing — and neither was wrong, because both derived correctly from different answers.
 

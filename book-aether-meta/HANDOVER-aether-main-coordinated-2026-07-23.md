@@ -5,7 +5,7 @@ status of `HANDOVER-aether-main-coordinated.md` (2026-07-21)**; that file's "PEN
 agent" is resolved — its report is `VERIFICATION-rc3-bfd00615d-P1facts.md` (7/7 confirmed), and the
 P1 prose fixes it gated are now APPLIED. Read order to resume: this file →
 `VERIFICATION-rc3-bfd00615d-P1facts.md` → `PROBE-2026-07-09.md` (remaining P2/P3) →
-`aether-book-voice.md`.
+the Aether voice overlay (private).
 
 All changes below are IN THE WORKING TREE, uncommitted, no push. pragmatica read-only baseline
 `release-1.0.0-rc3` HEAD ~`bfd00615d`.

@@ -104,6 +104,8 @@ The methodology's vocabulary, defined once. These terms are the shared spine the
 
 **Recovery triple.** The three responses to an invalidated step — BER (compensate), FER (continue degraded), and design-out (make the invalidation impossible) — where most discourse names only the first. (The recovery triple.)
 
+**Residual.** An effect that has escaped the system and that no inverse can undo — a confirmation email already read, the time a customer spent acting on a ticket. A workflow answers each one at design time by forward correction, by naming it as acknowledged, or by restructuring so it never arises. Not to be confused with *data as residue*: a residue is the state a process leaves inside the system, deliberately and owned; a residual is what a reversal cannot reach outside it. (Residuals.)
+
 ## S
 
 **Severance.** The withdrawal of an identity from an accretion that survives it: the facts stay, correct and owned as before, and the link between them and a person is destroyed. Not a motion of ownership — no field changes owner — but a motion of the seed, and the only one in the model whose driver is a regulation rather than the business. (Severance.)
@@ -112,7 +114,7 @@ The methodology's vocabulary, defined once. These terms are the shared spine the
 
 **Sequencer.** The pattern for steps in order, each feeding the next, short-circuiting on the first failure. (The patterns.)
 
-**Shared primitive.** What actually couples two processes — an id, a state enum, the value type of a field they both touch — each of which is a word the business actually says. Two processes writing different fields of one row are not coupled by co-location. (Where data comes from.)
+**Shared primitive.** What actually couples two processes — an id, a state enum, the value type of a field they both touch — each of which is a word the business actually says. Two processes writing different fields of one row are not coupled *in the design* by co-location. They may still contend in the store, since row-level locking and whole-row versioning are properties of the storage engine rather than of the ownership split; keeping them independent at runtime is a storage-layout obligation, not a consequence of the split. (Where data comes from.)
 
 **The patterns.** The sufficient set of composition primitives, the same six at every altitude: Leaf, Sequencer, Fork-Join, Condition, Iteration, Aspects. (Foundations.)
 

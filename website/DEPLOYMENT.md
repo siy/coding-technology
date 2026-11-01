@@ -8,6 +8,11 @@ This document provides step-by-step instructions for deploying the Pragmatica we
 - Netlify account (free tier is sufficient)
 - Cloudflare account with `pragmatica.dev` domain configured
 - Node.js 18+ installed for local testing
+- pandoc 3.8.3 installed for local testing — the site build renders markdown
+  with it (`website/lib/render.js`). CI installs the same pinned version.
+
+The site build has no third-party npm dependencies: `website/package.json`
+declares none, and `website/node_modules` does not exist after `npm install`.
 
 ## Part 1: Netlify Setup
 
@@ -21,6 +26,8 @@ This document provides step-by-step instructions for deploying the Pragmatica we
 6. Configure build settings:
    - **Base directory**: `website`
    - **Build command**: `npm install && npm run build`
+     (mirrored in the repo's `netlify.toml`, which is the authoritative copy —
+     note that a build run by Netlify itself would also need pandoc installed)
    - **Publish directory**: `website/dist`
 7. Click **"Deploy site"**
 
@@ -140,18 +147,28 @@ Visit these URLs to verify everything works:
 
 ## Part 4: Local Development
 
-### 4.1 Install Dependencies
+### 4.1 Install Prerequisites
+
+There are no npm dependencies to install. The build needs Node.js and pandoc:
 
 ```bash
-cd website
-npm install
+node --version     # 18+
+pandoc --version   # 3.8.3 is what CI pins
 ```
+
+If pandoc is missing, `brew install pandoc` on macOS; on Debian/Ubuntu use the
+pinned, checksum-verified download in `.github/workflows/deploy.yml`.
 
 ### 4.2 Build Website
 
 ```bash
+cd website
 npm run build
 ```
+
+`npm run build` runs the `prebuild` clean and then `node build.js`. Running
+`node build.js` directly also works and creates `dist/` if it is absent — it
+just skips the clean, so stale files from an earlier build are left in place.
 
 ### 4.3 Preview Locally
 
@@ -186,7 +203,8 @@ npm run build
 **Solution**:
 1. Check the Actions tab for error logs
 2. Verify `NETLIFY_AUTH_TOKEN` and `NETLIFY_SITE_ID` secrets are set correctly
-3. Test the build locally with `npm run build`
+3. Test the build locally with `npm run build` (check that pandoc is on PATH —
+   the build fails with a named error if it is not)
 
 ### Issue: CSS/styling not loading
 

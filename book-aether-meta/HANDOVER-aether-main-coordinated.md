@@ -8,7 +8,7 @@ Checkpoint written because the session is terminating; work below is IN THE WORK
 not reverted, not committed.
 
 Read order to resume: this file → `PROBE-2026-07-09.md` (P1 punch list) →
-`PROBE-2026-07-17.md` (ticks 2-4) → `aether-book-voice.md`.
+`PROBE-2026-07-17.md` (ticks 2-4) → the Aether voice overlay (private).
 
 ---
 

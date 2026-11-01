@@ -1,3 +1,7 @@
+---
+reviewed-at: 4c389ee8d7ece94819cb33af4ff1336c1f09039d
+---
+
 ## blurb
 `next_step`: the procedure that turns a priced answer sheet and a ledger into a vector — null vector, prune, press, resolve, verify.
 

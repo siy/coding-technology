@@ -7,6 +7,167 @@ All notable changes to the JBCT book, newest first. Format:
 Earlier history (1.x–2.x) predates per-book changelogs and lives in the
 repository root `CHANGELOG.md`.
 
+## [Unreleased]
+
+### Changed
+- Dependency coordinates move to Pragmatica Core **1.0.0-rc4** (*Pragmatica Core Essentials*, *Appendix A*), the
+  release Maven Central last published. The API verification baseline is unchanged.
+- *Error Handling*, "Carry the origin; do not print it": both version-stamped statements re-read against Core source
+  at tag `v1.0.0-rc4` and re-dated. `JBCT-CAUSE-04` still counts `origin` (the rule is byte-identical to rc3), so the
+  suppression advice stands. `Cause.Wrapped` still delegates no classification, and rc4 adds `isTransient()`
+  alongside `isTerminal()`: a wrapper around a transient failure is not itself transient, so the sentence now names
+  both and the override returns `origin().isTransient()` as well as `origin().isTerminal()`.
+
+### Fixed
+- `Promise.all()` was described as fail-fast in six places (*Advanced Patterns* twice, *Pragmatica Core Essentials*,
+  *Appendix A*, *Appendix C* glossary twice, *Chapter Summaries*). It waits for every input and, if any fail,
+  accumulates all failures into a `CompositeCause`, as `Result.all()` does; `Promise.allOrCancel()` and
+  `Promise.allOfOrCancel()` are the fail-fast forms (first failure, the rest cancelled). Measured against core
+  1.0.0-rc3 and rc4: with two inputs failing at 50 ms and one succeeding at 800 ms, `all` resolved at ~827 ms with
+  both causes and `allOrCancel` at ~52 ms with the first.
+- *Advanced Patterns*, Fork-Join: `any()` is one special case in two forms - `Promise.any` is a race (parallel, first
+  success, rest cancelled); `Result.any` and `Option.any` are an ordered fallback (synchronous, tried in order, with
+  lazy `Supplier` overloads). The section states what each returns when nothing succeeds, and the
+  `Promise.any(failureResult, ...)` overload.
+- *Appendix A*: `Result.all`/`Promise.all` go up to `Mapper15`, not `Mapper9`; adds `allOrCancel`, `allOfOrCancel` and
+  the lazy and `failureResult` overloads of `any`; `Result.any` takes `(Result<T>, Result<T>...)`.
+- *Diagrams*, Fork-Join: the failure edge led to "First Error"; it now reads "All Failures".
+- *Advanced Patterns* and *Testing in Practice*: `TimeSpan.seconds(5)` and `TimeSpan.millis(100)` do not exist in core;
+  now `TimeSpan.timeSpan(5).seconds()` and `TimeSpan.timeSpan(100).millis()` (compiled against 1.0.0-rc3). The timeout
+  fails with `CoreError.Timeout`, not `TimeoutError`.
+- *Diagrams*, Pattern Selection Decision Tree: the "first wins" leaf now names Fork-Join instead of `Promise.any()`
+  alone, so the tree agrees with the chapter that files `any()` under Fork-Join.
+
+### Added
+- *Advanced Patterns*, Fork-Join: rule - prefer `all()`, which reports every failure at once; `allOrCancel()` only when
+  the caller must hear about a failure before the slowest input could finish and the first failure alone decides the
+  outcome. It saves waiting, not work: `cancel()` resolves a promise as `CoreError.Cancelled` and does not stop
+  operations already running (measured: a 300 ms input ran to completion after `allOrCancel` returned). Echoed in the
+  *Appendix C* aggregation entry.
+
+## [5.2.1] - 2026-10-11
+
+### Fixed
+- *Parse, Don't Validate*: the paragraph after the `Email` example said the constructor is private (or
+  package-private), contradicting the note beneath it — a record's canonical constructor must be at least as
+  accessible as the record, so `private Email {}` does not compile. It now says the factory is the only
+  *intended* way in.
+
+## [5.2.0] - 2026-10-09
+
+### Added
+- **A translated failure carries the failure it translates** (*Error Handling*, "Wrapped and Terminal Causes";
+  *Systematic Application Guide*, checkpoint row M7). Every failure translator, meaning the mapper passed to
+  `mapError` and the exception mapper passed to `lift`, must use its argument: as the `origin` of a
+  `Cause.Wrapped` record or as the source of a bare cause (`Causes.cause(text, Option.some(cause))`); a
+  `Throwable` goes through `Causes.fromThrowable(t)` first. Ignoring the argument (`_ -> FAILURE`, a method
+  returning a constant) and keeping only its text (`e.message()`, `t.getMessage()`) both count as discarding
+  it. No exceptions. A failure decided before any cause exists is supplied at the source
+  (`Verify.ensure(value, predicate, cause)`, `filter(cause, predicate)`) instead of mapped afterwards.
+- **A wrapper's message template does not format its origin.** Aether renders the top failure's `message()` as
+  the problem `detail` sent to the client, so an origin printed into it exposes store and network text. The origin
+  travels as a component.
+- **Retry classification of a wrapper at Pragmatica 1.0.0-rc3:** `Cause.Wrapped` does not inherit `isTerminal()`
+  from its origin; a wrapper that should be terminal exactly when its origin is overrides it. A bare cause
+  cannot be classified at all.
+- **`JBCT-CAUSE-04` at rc3 flags a wrapper whose template does not format `origin`.** Until the linter exempts a
+  `Cause.Wrapped` origin, the book says to suppress that one rule on the wrapper record.
+
+### Changed
+- Examples brought in line with M7: *PlaceOrder* (`ProductId`, `Quantity`, `Money`, `Address`; the
+  `PAYMENT_DECLINED`, `PAYMENT_TIMEOUT` and `DATABASE_ERROR` constants replaced by the `PaymentDeclined`,
+  `PaymentTimedOut` and `OrderNotSaved` wrapper records, which `mapPaymentError` and `JooqOrderRepository` now
+  build from the exception), *TransferFunds* (`validateRequestId`, `validateInitiator`; `TRANSFER_FAILED`
+  replaced by the `TransferFailed` wrapper in `IdempotencyChecker` and `TransferExecutor`), *RegisterUser*
+  (`TOKEN_GENERATION_FAILED` replaced by the `TokenGenerationFailed` wrapper record; `mapTokenError` removed),
+  *Migration Strategies* (`mapPaymentException` and `mapLegacyError` carry the exception instead of
+  `getMessage()` or a constant).
+- Wrapper templates no longer format the origin: `PaymentFailed` (*Error Handling*, *PlaceOrder*),
+  `DatabaseFailure` (*Error Handling*), `PasswordHashingFailed` (*RegisterUser*). Three of them wrapped
+  `Causes.fromThrowable(t)`, whose message is a full stack trace.
+
+### Fixed
+- `Verify` imported from `org.pragmatica.lang.utils` in *PlaceOrder* (2 snippets) and *Pragmatica Core Essentials*
+  (1); it lives in `org.pragmatica.lang`. *PlaceOrder*'s `Money` snippet used `Number.parseBigDecimal` without
+  importing `org.pragmatica.lang.parse.Number`.
+- *Appendix A* listed `.trace(Fn1<Cause, Cause>)` as an alias of `mapError`; at rc3 `trace()` takes no argument and
+  wraps a failure with the call-site location. Both are now listed separately.
+
+## [5.1.0] - 2026-09-27
+
+### Added
+- **Every rule the JBCT linter checks is now stated in the book.** Of the 72 rules the `jbct` linter enforces
+  at Pragmatica 1.0.0-rc3, ten had no statement anywhere in the book and four more were only implied by a related
+  section. (The rules page had also listed an eleventh, side effects in `map`/`filter`, as not covered; the
+  book already stated it as Checkpoint 5's M3, so only the page's link changed.) *Systematic Application Guide*: checkpoint rows R6 (no `Optional`, `CompletableFuture`,
+  `CompletionStage`, `Mono`, `Flux` or `ResponseEntity` in business code), D6 (imports point inward only, and
+  no framework in the domain), D7 (`lift(...)` only at the adapter boundary), M6 (mappers are total, including
+  method references), D5 (step and use-case
+  implementations take dependencies through the factory, with no non-final field or setter), M5 (no
+  `orElseThrow()` to leave an `Optional`; convert with `Option.from(...)` and stay in the chain) and G5 (no log-level guard around a log call); four review-checklist items (Pragmatica
+  factories statically imported, with a note that the book's examples qualify them so each snippet reads on
+  its own; no parameter reassignment; no variable that exists only to be returned; no `if`/`else` whose
+  branches each hold a single `return`); and the lowercase naming of a factory's local record. *Null Policy &
+  Error Recovery*: wire records bound by a JSON or XML mapper, whose reference components may be `null`; and
+  recording the chosen response in a comment wherever `.recover(...)` absorbs a failure. The recovery-triple
+  addition reaches the `jbct` skill through its synced block.
+
+### Removed
+- **The co-existence framing with other architectures** (*Comparison with Other Approaches*,
+  *Chapter Summaries*, *Appendix C*). The chapter carried three sections positioning JBCT relative to
+  Layered, Hexagonal and Clean Architecture, each ending in a verdict that JBCT sits inside them:
+  "refines layered architecture rather than replacing it", "Use Hexagonal for high-level architecture,
+  JBCT for implementation patterns within that architecture", and "JBCT can be implemented within Clean
+  Architecture". That framing contradicts the current *Project Structure* and *Process-First Design*
+  material, in which the telescope rule, lowest-common-ancestor sharing and change-driver decomposition
+  determine the primary decomposition rather than living inside someone else's. The three sections, the
+  architectural-style tier of the "Where JBCT Fits" diagram, the "works within any architectural style"
+  claim, the first exercise, two rows of the closing attribution table, and the Clean Architecture,
+  Hexagonal Architecture and Port glossary entries are removed. **No comparison replaces them**; the
+  chapter now covers railway-oriented programming and the functional libraries only. Chapter length
+  470 to 219 lines.
+
+### Fixed
+- **Glossary: the Leaf Pattern entry described only adapter leaves** (*Appendix C*). It read "atomic
+  operations with no dependencies. Typically adapters wrapping external I/O", which omits the business
+  leaf entirely and defines the pattern by what it wraps rather than by what makes it a leaf. It now
+  names the deciding property, an operation no other pattern can split further, and both kinds.
+- **Coverage prescriptions removed** (*Testing Philosophy*, *Testing in Practice*). The philosophy chapter
+  stated that "100% coverage" is the wrong target and, twenty-two lines earlier, headed its first testing
+  layer "Value Objects: Unit Tests (100% coverage)"; the practice chapter still prescribed 100% for value
+  objects and complex leaves and 90%+ for use cases, in its section headings, its two rationale paragraphs
+  and its key takeaways. Both chapters now name the obligation instead of a percentage: the decision space
+  for value objects, the deciding branches for complex leaves, and the four composition obligations for use
+  cases, which the practice chapter already carried in its own table. Reported by a review of the site handed to
+  this session, 2026-09-05; both chapters render as course lessons, so the contradiction was live on pragmatica.dev.
+- **"Exactly one of four types" restated as four semantic shapes** (*The Four Return Types*). The chapter
+  opened with "exactly one of four types. Not 'usually' or 'preferably'—exactly one, always" and later
+  permitted `Result<Option<T>>` and `Promise<Option<T>>` and gave `void` a defined role at the edges. The
+  opening now names the four shapes, the single permitted composition where fallibility and optionality are
+  independent, and `void` as distinct from `Result<Unit>`. Same review.
+- **The five criteria no longer claim measurement** (*Introduction*). The section called them "objective"
+  and "measurable", said "we prove it", and summed per-criterion marks to a total of +6. No scale,
+  procedure, calibration or unit was ever defined, so the arithmetic was ordinal notation presented as
+  measurement. The criteria are now named dimensions with stated directions, the marks are stated as
+  ordinal, the total is gone, and a comparison that is close on every dimension is allowed to say so. The
+  per-pattern marks elsewhere in the book are unchanged and are governed by this definition. Same review.
+- **The logging aspect example passed a logger as a parameter** (*Advanced Patterns*, Logging Philosophy),
+  which the book's own Checkpoint 6 (G2) forbids; the linter flagged `create(DataSource ds, Logger log)` and
+  `withLogging(Logger log, ...)`. The aspect now creates its logger from the name it is given, and the
+  `processOrder` factory no longer takes one.
+- **The jOOQ adapter example used `orElseThrow`** (*Project Structure & Framework Integration*) to turn an
+  absent row into an exception inside `Promise.lift`. It now converts the row with `Option.from(...)` and
+  fails with `ProfileError.UserNotFound` through `.async(cause)`, the query extracted into a named method.
+- **Two examples lifted exceptions in business code**, which the new D7 row forbids. *Complete Example -
+  RegisterUser* labelled `HashPassword` a business leaf while its implementation lifted
+  `BCryptPasswordEncoder`'s exceptions; by the book's own definition, mapping a foreign error to a `Cause`
+  makes it an adapter leaf, so the implementation is now an adapter class behind the unchanged step interface.
+  *Complete Example - PlaceOrder*: `Money.money(String)` used `Result.lift(() -> new BigDecimal(raw))`
+  and now uses `Number.parseBigDecimal(raw)`, as *Pragmatica Core Essentials* prescribes.
+- **Seven `.recover(...)` examples absorbed failures without naming the response** (*Null Policy & Error
+  Recovery*, *Pragmatica Core Essentials*, *Appendix B*), which the new recovery paragraph requires. Each now
+  carries a `// FER: ...` comment.
+
 ## [5.0.0] - 2026-08-28
 
 The fifth edition. Published editions jump from 4.8.0 directly to 5.0.0: the 4.9.0

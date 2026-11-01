@@ -1,0 +1,46 @@
+# Upstream pin — the declaration-vs-upstream axis of ai-tools/pragmatica-pins.py, moved
+# out of PR CI and run on a schedule instead.
+#
+# WHY IT IS NOT IN checks.yml. Every other axis in that script is hermetic: it asks whether
+# this repository's own surfaces agree with this repository's own declaration, and it can be
+# decided from the checkout alone. This one axis reaches the network — it asks Maven Central
+# what <release> it last published. Inside a blocking PR check a network axis has only two
+# available behaviours when Central is unreachable, and both are bad. Failing turns an
+# outage at repo1.maven.org into a merge block on work that has nothing to do with pins.
+# Not failing — what the script did before — is a gate reporting SUCCESS while examining
+# NOTHING, and it printed the words "axis NOT checked" into an otherwise-green run, where
+# nobody reads them.
+#
+# WHY UNREACHABLE FAILS HERE. A scheduled job blocks no pull request, so its failure costs a
+# notification rather than a merge. That is what buys the strictness: --upstream treats
+# unreachable and malformed as FAILURES, not skips, so "nothing has compared this repository
+# against Central since <date>" becomes visible instead of being absorbed by a green PR.
+#
+# WHAT STILL PASSES. An upstream value covered by upstream.known_behind in
+# ai-tools/pragmatica-version.json — the owner's recorded deferral, anchored to one exact
+# upstream value. The day Central publishes anything else, that anchor stops matching and
+# this job goes red, which is how the deferral is kept from rotting green.
+
+name: Upstream pin
+
+on:
+  schedule:
+    # 06:17 UTC daily. Deliberately not :00 or :30: those are the busiest minutes on
+    # GitHub's shared scheduler and the ones whose runs are most often delayed or dropped.
+    - cron: '17 6 * * *'
+  workflow_dispatch:
+
+jobs:
+  upstream-pin:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Never add -q and never `|| true`. The printed <release> is the evidence; the exit
+      # code is the notification. Read the upstream line, not the status badge.
+      - name: Compare the declared pin against Maven Central
+        run: python3 ./ai-tools/pragmatica-pins.py --upstream

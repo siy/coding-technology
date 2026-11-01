@@ -242,8 +242,8 @@ to production changes node config and touches nothing else. Operators can also c
 configuration on a running cluster through the management API, and the update propagates
 through the cluster's consensus store. What that changes is the stored configuration, not
 a running slice: every resource a slice holds was built from the values current when it
-was provisioned, and nothing rebuilds it when those values change. A slice sees new
-configuration when it is next reloaded, and not before.
+was provisioned, and in the form described here nothing rebuilds it when those values
+change. A slice sees new configuration when it is next reloaded, and not before.
 
 Through all of this, the slice reads nothing. It declares a qualifier, the runtime reads
 the merged configuration, builds the resource, and hands it over. Configuration is the
@@ -324,6 +324,11 @@ section stated: neither refreshes. A resource is built once, from the configurat
 at that moment. For a section this is easy to forget, because a thing called configuration
 sounds live. For a provisioned step the name carries the truth, since it was assembled once
 and it is what it was assembled into.
+
+That is the form to learn first, and build-once belongs to the form rather than to the
+runtime: the mechanism will gain a form that does refresh. Saying so now costs nothing,
+because what makes a provisioned step safe was never that it holds still. It is the type,
+and the type does not care how often the step behind it is rebuilt.
 
 The line to hold is about which settings earn this. If a setting selects which of several
 behaviors runs, provision the behavior; if it parameterizes one behavior that runs

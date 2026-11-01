@@ -1,0 +1,70 @@
+title: "[Audit] "
+labels: ["audit"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Two kinds of report belong here.
+
+        **An audit of one of our claims** — you read something on this site or in one of the books, and it
+        contradicts something else we say, or contradicts what the code does. This takes minutes and it is the
+        most useful thing you can send us.
+
+        **An audit of your own system** — you ran a worksheet on a system you actually have, and the method's
+        answer and reality parted ways. This takes longer and it is what the books ask for at the end.
+
+        A derivation graded against the Architecture Synthesis protocol goes to the
+        [replication kit](https://github.com/siy/derivation-artifacts) instead, where the rubric lives.
+
+  - type: dropdown
+    id: kind
+    attributes:
+      label: What are you auditing?
+      options:
+        - One of our claims
+        - Your own system
+    validations:
+      required: true
+
+  - type: textarea
+    id: subject
+    attributes:
+      label: The claim, or the system
+      description: >
+        One claim, stated in your words — or, for a system audit, what it is and roughly what it does.
+      placeholder: "The testing chapter says value objects need 100% coverage."
+    validations:
+      required: true
+
+  - type: textarea
+    id: where
+    attributes:
+      label: Where it is stated
+      description: >
+        For one of our claims: the page URL, or the file and line if you are reading the source. A claim without
+        a location costs us more time to find than to fix, and we would rather spend it on the fix.
+        For your own system: what you are pinning the audit to, with a date — architectures drift, and an undated
+        audit cannot be checked against anything.
+      placeholder: "https://pragmatica.dev/java/jbct/course/testing-practice/ — the 'Test Obligations' section"
+    validations:
+      required: true
+
+  - type: textarea
+    id: contradiction
+    attributes:
+      label: What contradicts it
+      description: >
+        The other thing we say, the code that behaves differently, or — for a system audit — what your system
+        actually does where the method said something else.
+    validations:
+      required: true
+
+  - type: textarea
+    id: rest
+    attributes:
+      label: Anything else
+      description: >
+        Optional. For a system audit: the filled worksheet, the derivation's output, the answer sheet. For a claim
+        audit: versions, what you expected instead, or how you hit it.
+    validations:
+      required: false

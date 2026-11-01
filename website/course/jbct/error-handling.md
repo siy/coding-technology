@@ -1,3 +1,7 @@
+---
+reviewed-at: 7b78eefef236b29fd2979c8c4e58fe6f88411a9e
+---
+
 ## blurb
 Errors as typed Cause values instead of exceptions, with exhaustive switches and clean composition.
 
@@ -5,6 +9,7 @@ Errors as typed Cause values instead of exceptions, with exhaustive switches and
 - Why business logic never throws exceptions
 - Typed error hierarchies with Cause and sealed interfaces
 - The construction idiom: data components, a trailing message, and the FACTORY
+- Translating a failure without losing it: mapError carries the original cause
 - Rendering user text at the boundary with an exhaustive switch
 - Error accumulation vs fail-fast semantics
 - Monadic composition rules

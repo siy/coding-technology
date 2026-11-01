@@ -269,7 +269,7 @@ Result.all(
 
 ### Behavior:
 - All Results evaluated
-- If any fails → returns first failure
+- If any fail → returns ALL failures (CompositeCause)
 - If all succeed → map receives all values
 
 ### vs. flatMap Chain:
@@ -286,13 +286,13 @@ validateA(input)
 
 **SPEAKER NOTES:**
 
-> Two patterns for combining validations. `Result.all()` runs all in parallel - useful when validations are independent.
+> Two patterns for combining validations. `Result.all()` combines independent results - useful when validations are independent.
 >
 > flatMap chain runs sequential - second only runs if first succeeds. Use when later validations depend on earlier results.
 >
 > For AdPlacement, validations are independent. Site ID validity doesn't depend on slot ID. So we use `all()`.
 >
-> Both return first failure. For collecting all errors, there's `Result.allErrors()` - but usually first error is enough.
+> The difference is in failures: `all()` returns every failure at once as a `CompositeCause`, the flatMap chain only the first. Prefer `all()` for independent validations - the caller sees everything that is wrong in one round trip.
 
 ---
 

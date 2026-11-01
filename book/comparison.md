@@ -1,247 +1,6 @@
 # Comparison with Other Approaches
 
-JBCT doesn't exist in isolation. This chapter compares it to other architectural approaches you may encounter, helping you understand where JBCT fits and what it borrows from or rejects in other methodologies.
-
----
-
-## Traditional Layered Architecture
-
-The most common Java backend architecture.
-
-### Structure
-
-```
-Controller Layer     → Receives HTTP requests, validates DTOs
-    ↓
-Service Layer        → Business logic, transactions, orchestration
-    ↓
-Repository Layer     → Database access, queries
-    ↓
-Entity Layer         → JPA entities, data structures
-```
-
-### Example
-
-```java
-@RestController
-public class UserController {
-    @Autowired private UserService userService;
-
-    @PostMapping("/users")
-    public ResponseEntity<UserDto> createUser(@Valid @RequestBody CreateUserDto dto) {
-        User user = userService.createUser(dto);
-        return ResponseEntity.ok(toDto(user));
-    }
-}
-
-@Service
-public class UserService {
-    @Autowired private UserRepository userRepository;
-    @Autowired private PasswordEncoder passwordEncoder;
-
-    @Transactional
-    public User createUser(CreateUserDto dto) {
-        if (userRepository.existsByEmail(dto.getEmail())) {
-            throw new EmailExistsException();
-        }
-        User user = new User();
-        user.setEmail(dto.getEmail());
-        user.setPassword(passwordEncoder.encode(dto.getPassword()));
-        return userRepository.save(user);
-    }
-}
-
-@Repository
-public interface UserRepository extends JpaRepository<User, Long> {
-    boolean existsByEmail(String email);
-}
-```
-
-### What JBCT Changes
-
-| Aspect | Layered | JBCT |
-|--------|---------|------|
-| Error handling | Exceptions | Result/Promise with Cause |
-| Validation | @Valid + manual checks | Parse-don't-validate |
-| Business logic location | Service layer | Use case interface |
-| Data flow | Mutable entities | Immutable value objects |
-| Dependencies | Field injection | Constructor injection via factory |
-
-### What JBCT Keeps
-
-- Separation of concerns (each layer changes for different reasons)
-- Controllers at the boundary
-- Repository pattern for data access
-
-### Verdict
-
-JBCT refines layered architecture rather than replacing it. The layers still exist, but with explicit error handling and immutable data flow.
-
----
-
-## Hexagonal Architecture (Ports and Adapters)
-
-Popularized by Alistair Cockburn. Core idea: business logic at the center, adapters at the edges.
-
-### Structure
-
-```
-                    ┌─────────────────────┐
-   HTTP Adapter ───→│                     │←─── Database Adapter
-                    │   Domain / Core     │
-  Queue Adapter ───→│   (Business Logic)  │←─── External API Adapter
-                    │                     │
-                    └─────────────────────┘
-                           ↑   ↑
-                        Ports (Interfaces)
-```
-
-### Example
-
-```java
-// Port (interface defined by domain)
-public interface UserRepository {
-    Optional<User> findByEmail(Email email);
-    void save(User user);
-}
-
-// Domain service (pure business logic)
-public class UserRegistrationService {
-    private final UserRepository userRepository;
-    private final PasswordHasher passwordHasher;
-
-    public User register(Email email, Password password) {
-        if (userRepository.findByEmail(email).isPresent()) {
-            throw new EmailAlreadyExistsException(email);
-        }
-        HashedPassword hashed = passwordHasher.hash(password);
-        User user = new User(email, hashed);
-        userRepository.save(user);
-        return user;
-    }
-}
-
-// Adapter (implements port)
-public class JpaUserRepository implements UserRepository {
-    private final JpaUserEntityRepository jpaRepo;
-
-    @Override
-    public Optional<User> findByEmail(Email email) {
-        return jpaRepo.findByEmail(email.value())
-            .map(this::toDomain);
-    }
-}
-```
-
-### What JBCT Borrows
-
-- **Ports concept** → Step interfaces
-- **Adapters concept** → Adapter leaves
-- **Domain at center** → Use cases with pure business logic
-- **Dependencies point at abstractions** → Steps injected into use case factory
-
-### What JBCT Adds
-
-- **Explicit error handling** - Hexagonal doesn't prescribe how to handle errors
-- **Functional composition** - Hexagonal uses imperative style
-- **Typed failures** - Cause types instead of exceptions
-- **Structural patterns** - Leaf, Sequencer, Fork-Join provide composition vocabulary
-
-### Key Difference
-
-Hexagonal focuses on **where** code lives (inside vs outside the hexagon). JBCT focuses on **how** code composes (patterns, error handling, data flow).
-
-### Verdict
-
-JBCT and Hexagonal are complementary. Use Hexagonal for high-level architecture, JBCT for implementation patterns within that architecture.
-
----
-
-## Clean Architecture
-
-Uncle Bob's architecture with explicit dependency rules.
-
-### Structure
-
-```
-┌───────────────────────────────────────────────┐
-│              Frameworks & Drivers              │
-│  ┌───────────────────────────────────────┐    │
-│  │           Interface Adapters           │    │
-│  │  ┌───────────────────────────────┐    │    │
-│  │  │        Application Layer       │    │    │
-│  │  │  ┌───────────────────────┐    │    │    │
-│  │  │  │     Domain Layer      │    │    │    │
-│  │  │  │     (Entities)        │    │    │    │
-│  │  │  └───────────────────────┘    │    │    │
-│  │  └───────────────────────────────┘    │    │
-│  └───────────────────────────────────────┘    │
-└───────────────────────────────────────────────┘
-```
-
-Dependencies point inward. Inner layers don't know about outer layers.
-
-### Example
-
-```java
-// Entity (innermost)
-public class User {
-    private UserId id;
-    private Email email;
-    private HashedPassword password;
-
-    public boolean canLogin(Password attempt, PasswordHasher hasher) {
-        return hasher.verify(attempt, this.password);
-    }
-}
-
-// Use Case (application layer)
-public class RegisterUserUseCase {
-    private final UserGateway userGateway;
-    private final PasswordHasher passwordHasher;
-
-    public RegisterUserResponse execute(RegisterUserRequest request) {
-        Email email = new Email(request.email);
-        if (userGateway.existsByEmail(email)) {
-            return RegisterUserResponse.failure("Email exists");
-        }
-        // ... rest of use case
-    }
-}
-
-// Gateway interface (application layer, implemented by adapter)
-public interface UserGateway {
-    boolean existsByEmail(Email email);
-    void save(User user);
-}
-```
-
-### What JBCT Borrows
-
-- **Use case as first-class concept** → UseCase interface
-- **Dependency rule** → Use cases don't depend on adapters
-- **Request/Response models** → Request/ValidRequest/Response records
-
-### What JBCT Changes
-
-| Aspect | Clean Architecture | JBCT |
-|--------|-------------------|------|
-| Use case return | Response objects | Result/Promise |
-| Error handling | Response codes or exceptions | Typed Cause |
-| Entity behavior | Rich domain model | Value objects + pure functions |
-| Composition | Imperative orchestration | Monadic chains |
-
-### Key Difference
-
-Clean Architecture prescribes **dependency direction** but not **composition style**. JBCT prescribes both.
-
-### Verdict
-
-JBCT can be implemented within Clean Architecture. The layers map naturally:
-- Entities → Value objects
-- Use Cases → Use case interfaces
-- Interface Adapters → Adapter leaves
-- Frameworks → Spring configuration
+JBCT doesn't exist in isolation. This chapter places it beside the functional techniques and libraries you are most likely to be choosing between on the JVM: railway-oriented error handling, and the established functional libraries.
 
 ---
 
@@ -403,14 +162,6 @@ If you're on Kotlin, Arrow-kt provides similar capabilities to JBCT. The concept
 ## Summary: Where JBCT Fits
 
 ```
-                    Architectural Style
-                           │
-        ┌──────────────────┼──────────────────┐
-        │                  │                  │
-    Layered           Hexagonal           Clean
-        │                  │                  │
-        └──────────────────┼──────────────────┘
-                           │
                     Implementation Style
                            │
         ┌──────────────────┼──────────────────┐
@@ -429,7 +180,6 @@ If you're on Kotlin, Arrow-kt provides similar capabilities to JBCT. The concept
 ```
 
 JBCT:
-- Works within any architectural style (Layered, Hexagonal, Clean)
 - Uses railway-oriented error handling
 - Is simpler than full FP libraries
 - Provides structural patterns other approaches lack
@@ -439,7 +189,7 @@ JBCT:
 
 ## Exercises
 
-1. **Map your architecture:** Does your current project use Layered, Hexagonal, or Clean Architecture? Where would JBCT patterns fit?
+1. **Find your composition style:** Take one method in your codebase that orchestrates several steps. Count the distinct ways it signals failure - return codes, exceptions, nulls, logged-and-swallowed. How many are there?
 
 2. **Compare error handling:** Take one exception-based method in your codebase. Rewrite it using ROP style with Result. What errors were implicit?
 
@@ -455,8 +205,6 @@ JBCT is not revolutionary - it combines proven ideas:
 
 | Idea | Source |
 |------|--------|
-| Ports and Adapters | Hexagonal Architecture |
-| Use Cases as first-class | Clean Architecture |
 | Errors as values | Railway-Oriented Programming |
 | Functional types | vavr, Arrow-kt, Haskell |
 | Parse don't validate | Type-driven design |

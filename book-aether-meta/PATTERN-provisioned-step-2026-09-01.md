@@ -129,13 +129,13 @@ disappears rather than being managed. `enable-premium` in the current docs is th
 example, already in Aether's own material.
 
 **A second payoff, discovered while checking the first: the pattern is more honest than the
-mechanism it replaces.** Resource-injected config never refreshes (§7), and that is true of
-`ConfigurationSection` today. But a thing called *a config section* sounds like a live view of
-configuration, so its semantics are invisible and a reader can reasonably expect updates to
-arrive. A step *assembled at provisioning* obviously reflects one moment in time — the name
-carries the semantics. The pattern does not change the refresh behaviour at all; it stops the
-behaviour from being surprising, which for a property nobody had written down anywhere is worth
-more than it sounds.
+mechanism it replaces.** Resource-injected config never refreshes in its plain form (§7), and
+that is true of `ConfigurationSection` today. But a thing called *a config section* sounds like
+a live view of configuration, so its semantics are invisible and a reader can reasonably expect
+updates to arrive. A step *assembled at provisioning* obviously reflects one moment in time —
+the name carries the semantics. The pattern does not change the refresh behaviour at all; it
+stops the behaviour from being surprising, which for a property nobody had written down
+anywhere is worth more than it sounds.
 
 ## 6. Rules that came out of the discussion
 
@@ -159,19 +159,25 @@ more than it sounds.
 
 Both are cheap now and expensive after someone ships against them.
 
-- **Config is read once, at provision time — and this is now a verified guarantee, not a
+- **Config is read once, at provision time — a verified guarantee of the plain form, not a
   caveat.** Established by the CTO 2026-09-01: `SpiResourceProvider` mutates `promiseCache` at
   exactly two points, `:119` `computeIfAbsent` on first provision and `:153` `remove` inside
   `releaseAll` when the last consumer releases. **No invalidation path on config change exists,
   and there is no hook from the config layer into the resource provider at all.** Corroborated
   from the other direction by **#381** — `ConfigNotificationManager.notifyChange` has no caller,
   so runtime config-change push is dead code.
-  The sentence for the book: ***a config value delivered through a provisioned resource is read
-  once, at provision time, and does not refresh on a consensus config update; a restart or slice
-  reload is what applies it.***
+  The sentence for the book: ***a config value delivered through a provisioned resource in its
+  plain form is read once, at provision time, and does not refresh on a consensus config update;
+  a restart or slice reload is what applies it.***
   **The scope is wider than this pattern.** It holds for `ConfigurationSection` today, not only
   for user-defined types since `8d36f0c1c`. So `aether-overview.md:386` — *"no restart required
   for changes"* — is imprecise for resource-injected config generally.
+  **Scoped 2026-09-07 by owner ruling (`4607e86d0`, pragmatica).** A refreshing provisioning form
+  is ruled into rc4, so everything above is a statement about the plain form: it stays true of
+  that form and stops being a property of the mechanism as a whole. The book teaches the plain
+  form first with a forward-declared caveat (teaching order C), which is what keeps this an edit
+  rather than a reversal — the earlier text stays true and gains a scope, so no reader is left
+  holding a contradicted sentence.
   **Two tickets, not interchangeable:** #381 owns the missing mechanism, #496 owns the claim.
   Fixing #381 makes the overview bullet true; until then it is a headline capability that one of
   its two delivery paths does not provide. Do not cite #496 as tracking the dead-code fix.
@@ -202,9 +208,10 @@ recording:
   the Provisioned Step stop being two patterns compared across sections and become **two assembly
   levels of one mechanism** — one hands the slice a section to interpret, the other hands it an
   assembled step — which the reader meets together rather than by cross-reference.
-- **It absorbs the refresh finding cleanly.** Neither refreshes (§7). Under this framing that is
-  one property of one mechanism, stated once where both live, instead of a caveat repeated in two
-  places and drifting between them.
+- **It absorbs the refresh finding cleanly.** Neither refreshes in its plain form (§7). Under
+  this framing that is one property of one mechanism, stated once where both live, instead of a
+  caveat repeated in two places and drifting between them — and the same holds for the caveat
+  that a refreshing form is coming, which is likewise stated once, where both levels live.
 - **§5's nominative payoff becomes a distinction *within* the section** — the name carrying the
   semantics is what separates the two levels — rather than an argument for having a separate one.
 

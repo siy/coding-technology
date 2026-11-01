@@ -46,7 +46,7 @@ Can fail? → NO  → Optional? → NO  → T
 - Consistent API across types: `map()`, `flatMap()`, `filter()`, `recover()`
 - Prefer `cause.result()` and `cause.promise()` over factory methods
 - Lift to higher types (safe), lower sparingly (loses information)
-- `Result.all()` accumulates failures, `Promise.all()` fails fast
+- `Result.all()` and `Promise.all()` accumulate failures; `Promise.allOrCancel()` fails fast
 
 **Remember:**
 > "Same vocabulary, different containers. Learn once, apply everywhere."
@@ -295,7 +295,6 @@ feature/
 ### Comparison with Other Approaches
 
 **Key Takeaways:**
-- JBCT works within any architecture (Layered, Hexagonal, Clean)
 - Railway-oriented programming for error handling
 - Simpler than full FP libraries (vavr, Arrow-kt)
 - Adds structural patterns other approaches lack

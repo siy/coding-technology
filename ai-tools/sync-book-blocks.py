@@ -21,9 +21,17 @@ import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 
-# id -> where the canonical text lives, and which tooling file mirrors it.
-# Destinations must contain matching <!-- book:<id> --> / <!-- /book:<id> --> markers.
+# id -> where the canonical text lives, and which tooling file(s) mirror it.
+# `dest` is one path or a list; every destination must contain matching
+# <!-- book:<id> --> / <!-- /book:<id> --> markers. A block that both the skill and an
+# agent carry is listed once with both destinations, so the two cannot disagree.
 BLOCKS = [
+    {
+        'id': 'telescope-rule',
+        'source': '../book/project-structure.md',
+        'heading': '## The Telescope Rule: How Structure Grows',
+        'dest': 'skills/jbct/project-structure/organization.md',
+    },
     {
         'id': 'import-ordering',
         'source': '../book/project-structure.md',
@@ -60,7 +68,96 @@ BLOCKS = [
         'heading': '### Test Naming',
         'dest': 'skills/jbct/testing/patterns.md',
     },
+    # Added 2026-09-06 after the typed-error section of the skill was found carrying the
+    # pre-4.9.0 idiom (hand-written message(), Throwable component) while the book and the
+    # agent carried the record-plus-FACTORY idiom: the skill and the agent disagreed with
+    # each other, and no check could see it.
+    {
+        'id': 'four-return-shapes',
+        'source': '../book/four-return-types.md',
+        'heading': '## Overview',
+        'dest': ['skills/jbct/SKILL.md',
+                 'skills/jbct/fundamentals/four-return-kinds.md',
+                 'agents/jbct-coder.md'],
+    },
+    {
+        'id': 'return-type-matrix',
+        'source': '../book/four-return-types.md',
+        'heading': '## Return Type Matrix',
+        'dest': ['skills/jbct/SKILL.md',
+                 'skills/jbct/fundamentals/four-return-kinds.md',
+                 'agents/jbct-coder.md'],
+    },
+    {
+        'id': 'promise-boundary',
+        'source': '../book/four-return-types.md',
+        'heading': '## `Promise<T>` - Asynchronous, Can Fail',
+        'dest': 'skills/jbct/fundamentals/four-return-kinds.md',
+    },
+    {
+        'id': 'jbct-approach',
+        'source': '../book/introduction.md',
+        'heading': '## The JBCT Approach',
+        'dest': 'skills/jbct/SKILL.md',
+    },
+    {
+        'id': 'typed-errors',
+        'source': '../book/error-handling.md',
+        'heading': '## Defining Typed Errors',
+        'dest': ['skills/jbct/SKILL.md', 'agents/jbct-coder.md'],
+    },
+    {
+        'id': 'wrapped-terminal-causes',
+        'source': '../book/error-handling.md',
+        'heading': '## Wrapped and Terminal Causes',
+        'dest': ['skills/jbct/SKILL.md', 'agents/jbct-coder.md'],
+    },
+    {
+        'id': 'bare-cause',
+        'source': '../book/error-handling.md',
+        'heading': '## When a Bare Cause Is Enough',
+        'dest': ['skills/jbct/SKILL.md', 'agents/jbct-coder.md'],
+    },
+    {
+        'id': 'pdv-approach',
+        'source': '../book/parse-dont-validate.md',
+        'heading': "## The Parse-Don't-Validate Approach",
+        'dest': 'skills/jbct/fundamentals/parse-dont-validate.md',
+    },
+    {
+        'id': 'optional-fields',
+        'source': '../book/parse-dont-validate.md',
+        'heading': '## Optional Fields with Validation',
+        'dest': 'skills/jbct/fundamentals/parse-dont-validate.md',
+    },
+    {
+        'id': 'module-promotion',
+        'source': '../book/project-structure.md',
+        'heading': '## Module Promotion',
+        'dest': 'skills/jbct/project-structure/organization.md',
+    },
 ]
+
+
+# A skill is installed to ~/.claude/skills/<name>/, where no relative path reaches the
+# book. Book-relative chapter links inside a synced block must therefore become web URLs;
+# check-drift.sh enforces the same rule on hand-written skill text.
+WEB_FOR_BOOK = {
+    'book': 'https://pragmatica.dev/java/jbct/course/',
+    'book-pfd': 'https://pragmatica.dev/method/pfd/course/',
+    'book-arch': 'https://pragmatica.dev/method/architecture-synthesis/course/',
+}
+
+
+def rewrite_book_links(body, source_path):
+    """Turn `](chapter.md)` / `](chapter.md#anchor)` into the chapter's published URL."""
+    book_dir = os.path.basename(os.path.dirname(os.path.normpath(source_path)))
+    base = WEB_FOR_BOOK.get(book_dir)
+    if base is None:
+        return body
+    return re.sub(r'\]\(([A-Za-z0-9._-]+)\.md(#[^)]*)?\)',
+                  lambda m: ']({}{}/{})'.format(base, m.group(1), m.group(2) or ''),
+                  body)
 
 
 def extract(source_path, heading):
@@ -91,7 +188,7 @@ def extract(source_path, heading):
         body.pop()
     while body and not body[0].strip():
         body.pop(0)
-    return '\n'.join(body)
+    return rewrite_book_links('\n'.join(body), source_path)
 
 
 def apply_block(dest_path, block_id, body, write):
@@ -127,18 +224,23 @@ def main():
     stale, errors = [], []
     for block in BLOCKS:
         source = os.path.join(HERE, block['source'])
-        dest = os.path.join(HERE, block['dest'])
+        dests = block['dest'] if isinstance(block['dest'], list) else [block['dest']]
         try:
             body = extract(source, block['heading'])
             if not body.strip():
                 raise LookupError('section %r in %s is empty'
                                   % (block['heading'], block['source']))
-            current = apply_block(dest, block['id'], body, args.write)
         except (LookupError, OSError) as exc:
             errors.append('%s: %s' % (block['id'], exc))
             continue
-        if not current:
-            stale.append('%s -> %s' % (block['id'], block['dest']))
+        for rel in dests:
+            try:
+                current = apply_block(os.path.join(HERE, rel), block['id'], body, args.write)
+            except (LookupError, OSError) as exc:
+                errors.append('%s: %s' % (block['id'], exc))
+                continue
+            if not current:
+                stale.append('%s -> %s' % (block['id'], rel))
 
     for err in errors:
         print('ERROR: %s' % err)

@@ -1,3 +1,7 @@
+---
+reviewed-at: cf50febb4c18cd3a159101f60cab411620e470fd
+---
+
 ## blurb
 Fork-Join for parallel inventory checks, Sequencer for the payment flow, and compensation on failure.
 

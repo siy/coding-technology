@@ -1,3 +1,7 @@
+---
+reviewed-at: ed8712d0a3715cee7e58111b110fd11275101537
+---
+
 ## blurb
 Why immutability makes JBCT code thread-safe by default, pattern by pattern.
 

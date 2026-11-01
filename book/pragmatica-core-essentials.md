@@ -36,13 +36,13 @@ Pragmatica Core provides exactly this.
 <dependency>
    <groupId>org.pragmatica-lite</groupId>
    <artifactId>core</artifactId>
-   <version>1.0.0-rc1</version>
+   <version>1.0.0-rc4</version>
 </dependency>
 ```
 
 **Gradle:**
 ```gradle
-implementation 'org.pragmatica-lite:core:1.0.0-rc1'
+implementation 'org.pragmatica-lite:core:1.0.0-rc4'
 ```
 
 ---
@@ -246,7 +246,7 @@ Result<Integer> adult = age.filter(
 
 ```java
 Promise<Config> config = loadFromDatabase()
-    .recover(cause -> Config.defaults());  // any failure -> built-in defaults
+    .recover(cause -> Config.defaults());  // FER: any failure -> built-in defaults
 ```
 
 `recover`'s mapper is synchronous — it turns a failure into a plain value. When the
@@ -289,7 +289,7 @@ Promise<Dashboard> dashboard = Promise.all(
 ).map(Dashboard::new);
 ```
 
-**Behavior:** Executes in parallel, fails fast on first failure.
+**Behavior:** Executes in parallel and waits for every input. If any fail, accumulates ALL failures into CompositeCause, like `Result.all`. `Promise.allOrCancel` is the fail-fast form: first failure, remaining inputs cancelled.
 
 ### Result.allOf / Promise.allOf - Collection Aggregation
 
@@ -367,7 +367,7 @@ Promise<User> user = Promise.lift(
 ### Verify.Is Predicates
 
 ```java
-import org.pragmatica.lang.utils.Verify;
+import org.pragmatica.lang.Verify;
 
 // String checks
 Verify.ensure(value, Verify.Is::notNull)

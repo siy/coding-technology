@@ -39,6 +39,8 @@ Run these searches and report ALL hits:
 | Missing intent annotation | `void` method without `@Contract`; `return null` without `@NullReturn` in production code | Annotate or refactor (Unit return / Option) |
 | Abandoned values | Statement-style calls to methods returning `Result`/`Promise` without using return value | Every Result/Promise must be returned or chained |
 | FQCN in method body | Fully-qualified class names inline | Add the import |
+| Discarded cause | Fixed-string search (`grep -F` / `rg -F`) for `mapError(_ ->`; then read EVERY `mapError(` and every exception mapper passed to `lift`: a lambda whose parameter is unused or read only via `.message()`/`getMessage()`, and a method reference (`this::mapX`) whose body returns a constant, both discard | Carry the cause: a `Cause.Wrapped` record's `FACTORY`, or `Causes.cause(text, Option.some(cause))`; a failure known before any cause exists goes to the source, `Verify.ensure(value, predicate, cause)` (book M7) |
+| Fail-fast join without reason | `allOrCancel(`, `allOfOrCancel(` | Prefer `all()`/`allOf()`, which report every failure; `allOrCancel` only when the caller must hear about a failure before the slowest input finishes and the first failure decides the outcome (it saves waiting, not work) - ask for that reason |
 | Hand-rolled Verify duplicate | Predicate lambdas re-implementing `Verify.Is` catalog entries (null/blank/length/range/regex) | `Verify.ensure` + `Is::` predicate — catalog in `Verify.java` header |
 | Hand-rolled built-in VO | Custom `Email`/`Url`/`Uuid`/`NonBlankString`/`IsoDateTime` | Use `org.pragmatica.lang.vo` — catalog in `vo/package-info.java` |
 
@@ -51,6 +53,9 @@ For each method:
 - Method ≤10 lines or justified?
 - Growing context in Sequencers (named intermediate records)?
 - Lambda format compliant (method ref > single expression > extract)?
+
+For each `Cause.Wrapped` record:
+- Message template does not format `origin`? The top message can reach a client (Aether renders it as the problem `detail`); the origin travels as a component, never as text.
 
 For each Fork-Join:
 - All inputs immutable? No shared mutable state?
@@ -182,7 +187,7 @@ Run all searches from the Violation Hunting table. Report counts.
 - Zone-appropriate verbs
 
 ### Step 5: Build Configuration
-- Dependency: `org.pragmatica-lite:core:1.0.0-rc1`
+- Dependency: `org.pragmatica-lite:core:1.0.0-rc4`
 
 ### Step 6: Testing
 - Value objects: all rules tested (success + failure)

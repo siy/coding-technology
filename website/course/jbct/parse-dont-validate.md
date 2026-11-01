@@ -1,3 +1,7 @@
+---
+reviewed-at: a8e2027e8d0060e533385f175b098bc23bae8dcd
+---
+
 ## blurb
 Make invalid states unrepresentable: validation becomes construction, not a separate step.
 

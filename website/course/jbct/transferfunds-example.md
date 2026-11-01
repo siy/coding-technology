@@ -1,3 +1,7 @@
+---
+reviewed-at: fcb72a5463ac8c1eeee894fafdd82597d09d8a46
+---
+
 ## blurb
 Aspects in a real workflow: retry, timeout, and audit logging composed around a funds transfer.
 

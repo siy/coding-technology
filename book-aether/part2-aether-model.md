@@ -3,8 +3,8 @@
 Part 0 made the case that infrastructure and business logic are different kinds of code, and
 Part I, for those who took the detour, showed the machinery that keeps them apart. This part is
 where you start building. The working model is three commitments. A slice is plain Java with an
-explicit contract. The three environments you will meet run that slice identically, differing
-only in the network underneath. And the runtime's guarantees are bought with one design habit,
+explicit contract. The three environments you will meet run the same slice code; what differs
+is what lies underneath it, the network and with it timing and the ways a call can fail. And the runtime's guarantees are bought with one design habit,
 idempotency. Everything in the playbook that follows assumes these three, and nothing in them
 requires a cluster on your desk.
 
@@ -175,8 +175,8 @@ already exercisable, in full, before any runtime enters the picture.
 
 ## Ember, Forge, and Aether
 
-Your slice runs unchanged from your laptop to production. Three names cover how you meet
-it along the way.
+Your slice's code runs unchanged from your laptop to production. Three names cover how you
+meet it along the way.
 
 **Ember** is the single-process runtime: it runs the whole cluster inside one JVM, with
 the nodes reaching each other over localhost. Startup is immediate and you can put a
@@ -201,12 +201,15 @@ the blueprint and its configuration name the environment-specific parts, which i
 defers only the endpoints, credentials, and sizes that legitimately differ per
 environment. Part V takes the deployment story from there.
 
-A cross-slice call works the same way in all three. The runtime routes it through its
-invocation fabric and handles serialization, retry, and failover for you; the only
-difference between the environments is the network underneath, localhost in Ember and
-Forge, a real network in Aether. That is why moving a slice from your laptop to
-production is a configuration change rather than a code change, and why a failure you
-reproduce in Forge is the same failure you would get in Aether.
+A cross-slice call is written the same way in all three. The runtime routes it through
+its invocation fabric and handles serialization, retry, and failover for you, and nothing
+in the slice names the environment. That is why moving a slice from your laptop to
+production needs no code change. What the code cannot make identical is what lies
+underneath it: localhost inside one process in Ember and Forge, a real network in Aether.
+Timing, concurrency, and the ways a call can fail differ with it, and the resources a
+runtime provides can differ too. Forge lets you rehearse the classes of failure, a lost
+node or a lost leader, against the same code and the same recovery path; it does not
+replay the exact failure production will produce.
 
 That uniformity is a commitment with consequences in both directions, and it is worth
 naming them. Because a cross-slice call is remote in every environment, you never write

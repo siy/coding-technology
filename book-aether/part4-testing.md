@@ -95,10 +95,11 @@ the fsync, is a property of a real cluster, not of a single JVM that cannot un-f
 homes its data under `$AETHER_HOME/forge-data` precisely so the stream log is crash-durable
 across a graceful restart during development; the torn-write case waits for separate machines.
 
-Why keep a tool with that boundary at the center of your workflow: because a failure you
-reproduce in Forge is the same failure you get in Aether — same fabric, same code, same recovery
-path — Forge is the first and cheapest gate for a distributed behavior, cheap enough to run on
-every change. The shared failure domain is exactly why it is the first gate and not the last: the
+Why keep a tool with that boundary at the center of your workflow: Forge runs the same fabric,
+the same code, and the same recovery path as Aether, so the failure classes it reproduces — a lost
+node, a lost leader, a rolling restart — exercise the logic production would run. It cannot
+reproduce production's timing or a real network's failures, but it is the first and cheapest gate
+for a distributed behavior, cheap enough to run on every change. The shared failure domain is exactly why it is the first gate and not the last: the
 cloud sweep is where the torn-write and real-partition cases get their vote. Order your hardening
 that way, Forge first and cloud last, and you spend real infrastructure only on what only real
 infrastructure can show.

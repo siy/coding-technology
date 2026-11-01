@@ -72,13 +72,13 @@ These are **integration questions**, not unit questions.
 
 **Test assembled use cases, not isolated components.**
 
-Your use case is a composition of steps. Test the composition. Stub only at adapter boundaries (database, HTTP, external services). Test all business logic together.
+Your use case is a composition of steps. Test the composition. Stub only at I/O step boundaries (database, HTTP, external services). Test all business logic together.
 
 **Why by criteria:**
 - **Mental Overhead**: One test suite per use case, not per component (+2). Test names directly map to scenarios.
 - **Business/Technical Ratio**: Tests read like behavior specifications, not technical assertions (+3).
 - **Reliability**: Tests verify actual end-to-end behavior, not isolated fragments (+3).
-- **Complexity**: Fewer test contexts, clearer boundaries (business vs adapters) (+2).
+- **Complexity**: Fewer test contexts, clearer boundaries (business vs I/O steps) (+2).
 
 ### The Three Testing Layers
 
@@ -156,7 +156,7 @@ The obligation is derivable before the body exists: the space is determined by t
 
 **3. Use Cases: Integration Tests (Test Vectors)**
 
-The heart of your testing: test complete use case behavior with all steps assembled, only adapters stubbed.
+The heart of your testing: test complete use case behavior with all steps assembled, only I/O steps stubbed.
 
 ```java
 class UserLoginTest {
@@ -316,6 +316,7 @@ At each phase, **all tests remain green**. You're not breaking and fixing - you'
 **Step 1:** Create use case interface with factory returning stub implementation:
 
 ```java
+@UseCase
 public interface UserLogin {
     record Request(String email, String password, String referral) {}
     record Response(String token) {}
@@ -462,7 +463,7 @@ Any of the three discharges the obligation: which tests exist and what they asse
 ## Key Takeaways
 
 1. **Test composition, not components** - Use case is what matters
-2. **Stub only adapters** - Database, HTTP, external services
+2. **Stub only I/O steps** - Database, HTTP, external services
 3. **Evolve tests with implementation** - Always green, never break-and-fix
 4. **Three layers** - Value objects (unit), complex leaves (unit), use cases (integration)
 5. **Use test data utilities** - Builders, vectors, factories reduce boilerplate

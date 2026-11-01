@@ -257,12 +257,12 @@ public record AspectConfig(
 @Test
 void loadUser_succeeds_whenUserExists() {
     // Test core logic without retry/timeout
-    var adapter = new UserAdapter(jdbcTemplate);
+    var loadUser = LoadUser.loadUser(jdbcTemplate);
 
-    adapter.loadUser(userId)
-           .await()
-           .onFailure(Assertions::fail)
-           .onSuccess(user -> assertEquals(expectedEmail, user.email()));
+    loadUser.apply(userId)
+            .await()
+            .onFailure(Assertions::fail)
+            .onSuccess(user -> assertEquals(expectedEmail, user.email()));
 }
 ```
 
@@ -297,9 +297,7 @@ void useCase_works_withAspects() {
     // Use no-op aspects for faster tests
     PromiseAspect<User> noRetry = operation -> operation;
 
-    var useCase = UseCase.create(
-        noRetry.apply(loadUser.apply(userId))
-    );
+    var useCase = GetUser.getUser(id -> noRetry.apply(loadUser.apply(id)));
 
     useCase.execute(request).await();
 }
@@ -315,15 +313,15 @@ public Promise<User> loadUser(UserId id) {
     log.info("Loading user {}", id);  // Aspect concern!
     return Promise.lift(() -> {
         metrics.increment("user.load");  // Aspect concern!
-        return repository.findById(id);
+        return jdbcTemplate.queryForObject(FIND_USER, USER_ROW, id.value());
     });
 }
 
 // DO - Separate aspects
 public Promise<User> loadUser(UserId id) {
     return Promise.lift(
-        DatabaseError::cause,
-        () -> repository.findById(id)
+        t -> StorageError.DatabaseFailure.FACTORY.apply(Causes.fromThrowable(t)),
+        () -> jdbcTemplate.queryForObject(FIND_USER, USER_ROW, id.value())
     );
 }
 
@@ -349,14 +347,9 @@ public Promise<User> loadUser(UserId id) {
 public interface LoadUser {
     Promise<User> apply(UserId id);
 
-    static LoadUser loadUser(UserRepository repo, AspectConfig config) {
-        return id -> {
-            Promise<User> operation = Promise.lift(
-                DatabaseError::cause,
-                () -> repo.findById(id)
-            );
-            return config.apply(operation);
-        };
+    static LoadUser loadUser(JdbcTemplate jdbcTemplate, AspectConfig config) {
+        return id -> config.apply(Promise.lift(t -> StorageError.DatabaseFailure.FACTORY.apply(Causes.fromThrowable(t)),
+                                               () -> jdbcTemplate.queryForObject(FIND_USER, USER_ROW, id.value())));
     }
 }
 ```
@@ -399,27 +392,27 @@ return withRetry(retryPolicy, loadUser.apply(id));
 
 ### Implementation
 
-Wrap leaf implementations in logging aspects at construction:
+Wrap leaf steps in logging aspects at construction:
 
 ```java
-public interface UserRepository {
-    Promise<User> findById(UserId id);
+public interface LoadUser {
+    Promise<User> apply(UserId id);
 
-    static UserRepository create(DataSource ds, Logger log) {
-        var impl = new UserRepositoryImpl(ds);
-        return withLogging(log, "UserRepository", impl);
+    static LoadUser loadUser(DataSource ds, Logger log) {
+        return withLogging(log, "LoadUser", id -> Promise.lift(t -> StorageError.DatabaseFailure.FACTORY.apply(Causes.fromThrowable(t)),
+                                                                    () -> fetchUser(ds, id)));
     }
-}
 
-public static UserRepository withLogging(Logger log, String name, UserRepository impl) {
-    return id -> {
-        var correlationId = CorrelationContext.current();
-        log.debug("[{}] {}.findById input: {}", correlationId, name, id);
+    static LoadUser withLogging(Logger log, String name, LoadUser step) {
+        return id -> {
+            var correlationId = CorrelationContext.current();
+            log.debug("[{}] {} input: {}", correlationId, name, id);
 
-        return impl.findById(id)
-                   .onSuccess(user -> log.debug("[{}] {}.findById success", correlationId, name))
-                   .onFailure(cause -> log.warn("[{}] {}.findById failure: {}", correlationId, name, cause.message()));
-    };
+            return step.apply(id)
+                       .onSuccess(user -> log.debug("[{}] {} success", correlationId, name))
+                       .onFailure(cause -> log.warn("[{}] {} failure: {}", correlationId, name, cause.message()));
+        };
+    }
 }
 ```
 
@@ -454,8 +447,8 @@ return validateInput(request)
     .flatMap(this::processOrder);
 
 // DO: Wrap leaves at construction
-static ProcessOrder processOrder(UserRepository users, Logger log) {
-    return new ProcessOrderImpl(withLogging(log, "users", users));
+static ProcessOrder processOrder(LoadUser loadUser, Logger log) {
+    return processOrder(LoadUser.withLogging(log, "LoadUser", loadUser));
 }
 ```
 

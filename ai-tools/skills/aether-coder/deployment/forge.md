@@ -55,7 +55,7 @@ curl -s -X POST http://localhost:8070/api/v1/orders/ \
 ```java
 @Test
 void processPayment_succeeds_forValidCard() {
-    var service = PaymentService.paymentService(mockDb, mockInventory);
+    var service = Payments.payments(mockDb, mockInventory);
     service.processPayment(validRequest)
            .await()
            .onFailure(Assertions::fail)

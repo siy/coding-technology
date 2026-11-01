@@ -36,7 +36,7 @@ public int calculateTotal(List<Integer> prices) {
 
 ```java
 public Option<Theme> findTheme(UserId id) {
-    return Option.option(themeRepository.findById(id.value()));
+    return Option.option(themes.get(id));
 }
 
 public Option<String> extractMiddleName(String fullName) {
@@ -102,8 +102,8 @@ result.async()
 Use this for any operation that leaves the process: I/O, external service calls, inter-process communication. `Promise<T>` is semantically equivalent to `Result<T>` but asynchronous - failures are carried in the Promise itself, not nested inside it.
 
 ```java
-public interface AccountRepository {
-    Promise<Account> findById(AccountId id);  // async lookup, can fail
+interface LoadAccount {
+    Promise<Account> apply(AccountId id);  // async lookup, can fail
 }
 ```
 
@@ -186,7 +186,7 @@ Promise already handles failures. Nesting Result is redundant:
 // ❌ WRONG
 public Promise<Result<User>> loadUser(UserId id) {
     return Promise.lift(() -> {
-        Result<User> result = userRepository.findById(id);
+        Result<User> result = fetchUser(id);
         return result;
     });
 }
@@ -194,8 +194,8 @@ public Promise<Result<User>> loadUser(UserId id) {
 // ✅ CORRECT
 public Promise<User> loadUser(UserId id) {
     return Promise.lift(
-        DatabaseError::cause,
-        () -> userRepository.findById(id)
+        t -> StorageError.DatabaseFailure.FACTORY.apply(Causes.fromThrowable(t)),
+        () -> jdbcTemplate.queryForObject(FIND_USER, USER_ROW, id.value())
     );
 }
 ```
@@ -217,7 +217,7 @@ public Result<Unit> deleteUser(UserId id) {
 // ✅ CORRECT (Promise)
 public Promise<Unit> sendEmail(Email to, String subject) {
     return Promise.lift(() -> {
-        emailService.send(to, subject);
+        mailer.send(to, subject);
         return Unit.unit();
     });
 }
@@ -293,7 +293,7 @@ Option.all(findTheme(userId),
 ```java
 // ❌ WRONG
 public User findUser(UserId id) {
-    User user = repository.findById(id);
+    User user = directory.findById(id);
     if (user == null) {
         throw new UserNotFoundException(id);  // Don't throw for business logic
     }
@@ -302,23 +302,23 @@ public User findUser(UserId id) {
 
 // ✅ CORRECT
 public Option<User> findUser(UserId id) {
-    return Option.option(repository.findById(id));
+    return Option.option(directory.findById(id));
 }
 
 // Or if absence is an error:
 public Result<User> getUser(UserId id) {
-    return Option.option(repository.findById(id))
+    return Option.option(directory.findById(id))
                  .toResult(UserError.NotFound.INSTANCE);
 }
 ```
 
-### Lift exceptions at adapter boundaries:
+### Lift exceptions in I/O step factories:
 
 ```java
-// Wrap throwing code in adapters
+// Wrap throwing code in the I/O step's factory
 public Promise<User> loadUser(UserId id) {
     return Promise.lift(
-        DatabaseError::cause,  // Map exception to Cause
+        t -> StorageError.DatabaseFailure.FACTORY.apply(Causes.fromThrowable(t)),  // Map exception to Cause
         () -> jdbcTemplate.queryForObject(...)
     );
 }
@@ -333,33 +333,33 @@ public Promise<User> loadUser(UserId id) {
 ```java
 // ❌ WRONG - Returning null
 public User findUser(UserId id) {
-    return repository.findById(id.value());  // May return null
+    return directory.findById(id.value());  // May return null
 }
 
 // ✅ CORRECT - Using Option
 public Option<User> findUser(UserId id) {
-    return Option.option(repository.findById(id.value()));
+    return Option.option(directory.findById(id.value()));
 }
 ```
 
 ### When Null IS Acceptable
 
-Null appears only at **adapter boundaries** when interfacing with external code:
+Null appears only in **I/O code** (I/O step factories, `io` packages) when interfacing with external code:
 
 #### 1. Wrapping External APIs
 
 ```java
-// Adapter layer - wrap nullable external API
+// I/O code - wrap nullable external API
 public Option<User> findUser(UserId id) {
-    User user = repository.findById(id.value());  // External API may return null
+    User user = directory.findById(id.value());  // External API may return null
     return Option.option(user);  // Wrap immediately
 }
 
-// Spring Data JPA example
+// jOOQ example
 public Option<User> findByEmail(Email email) {
     return Option.option(
-        userRepository.findByEmail(email.value())  // JPA returns null if not found
-    );
+        dsl.selectFrom(USERS).where(USERS.EMAIL.eq(email.value())).fetchOne()  // jOOQ returns null if not found
+    ).map(FindUserByEmail::toUser);
 }
 ```
 
@@ -368,10 +368,10 @@ public Option<User> findByEmail(Email email) {
 #### 2. Writing to Nullable Database Columns
 
 ```java
-// Adapter layer - JOOQ insert with optional field
+// I/O code - jOOQ insert with optional field
 public Promise<Unit> saveUser(User user) {
     return Promise.lift(
-        DatabaseError::cause,
+        t -> StorageError.DatabaseFailure.FACTORY.apply(Causes.fromThrowable(t)),
         () -> {
             dsl.insertInto(USERS)
                 .set(USERS.ID, user.id().value())

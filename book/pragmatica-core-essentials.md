@@ -327,7 +327,7 @@ Result<Integer> parsed = Result.lift(() -> Integer.parseInt(raw));
 
 // With custom error mapping
 Result<Integer> parsed = Result.lift(
-    ParseError::new,
+    t -> ParseError.FACTORY.apply(Causes.fromThrowable(t)),
     () -> Integer.parseInt(raw)
 );
 ```
@@ -337,15 +337,15 @@ Result<Integer> parsed = Result.lift(
 ```java
 // Single parameter
 Result<Hash> hashed = Result.lift1(
-    HashError::new,
+    t -> HashError.FACTORY.apply(Causes.fromThrowable(t)),
     encoder::encode,
     password.value()
 );
 
 // Two parameters
 Result<Token> token = Result.lift2(
-    TokenError::new,
-    tokenService::generate,
+    t -> TokenError.FACTORY.apply(Causes.fromThrowable(t)),
+    tokenIssuer::generate,
     userId,
     expiry
 );
@@ -355,7 +355,7 @@ Result<Token> token = Result.lift2(
 
 ```java
 Promise<User> user = Promise.lift(
-    DatabaseError::new,
+    t -> DatabaseError.FACTORY.apply(Causes.fromThrowable(t)),
     () -> jdbcTemplate.queryForObject(sql, mapper, id)
 );
 ```

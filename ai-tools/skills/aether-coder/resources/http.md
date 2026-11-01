@@ -10,9 +10,9 @@ static MySlice mySlice(@Http HttpClient client) {
 
 For multiple HTTP clients, define custom qualifiers:
 ```java
-@ResourceQualifier(type = HttpClient.class, config = "http.payment-gateway")
+@ResourceQualifier(type = HttpClient.class, config = "http.payment-provider")
 @Retention(RUNTIME) @Target(PARAMETER)
-public @interface PaymentGateway {}
+public @interface PaymentProvider {}
 ```
 
 Config:
@@ -20,7 +20,7 @@ Config:
 [http]
 base_url = "https://api.example.com"
 
-[http.payment-gateway]
+[http.payment-provider]
 base_url = "https://payments.example.com"
 timeout_ms = 5000
 ```

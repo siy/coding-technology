@@ -146,24 +146,24 @@ public record Config(DbUrl url, DbPassword pass) {
 
 | Rule | Check | Fix |
 |------|-------|-----|
-| D1 | What zone does this belong to? | Place in correct package |
-| D2 | Does it mix I/O with domain logic? | Split into separate types |
+| D1 | Where does this belong in the package tree? | Its use case package; `shared` or `io` at the lowest common ancestor of its users |
+| D2 | Does it mix I/O with business logic? | Split into separate types |
 | D3 | Are primitives used for domain concepts? | Extract value objects |
 | D4 | Does naming match the zone? | Adjust naming style |
 | D5 | Step or use-case implementation with a non-final field or a `setX(...)` method? | Pass dependencies to the factory; keep every field final |
-| D6 | Does an import point outward - domain importing a use case, adapter or config; a use case importing an adapter or config; an adapter importing config; or domain importing a framework (e.g. Spring, Jackson, jOOQ, JPA)? | Depend only inward: config -> adapter -> use case -> domain |
-| D7 | `lift(...)` called outside an adapter? | Convert foreign exceptions at the adapter boundary; business code receives typed causes |
+| D6 | Does an import point sideways - into a sibling use case, workflow or step sub-package - or does business code call an `io` factory or use an I/O type (e.g. Jackson, jOOQ, JPA) outside an `io` package or a nested step's factory? | Import only ancestors, the `shared` and `io` packages on the path, and the own subtree; take I/O steps as factory parameters |
+| D7 | `lift(...)` called outside an I/O step's factory? | Convert foreign exceptions inside the I/O step; business code receives typed causes |
 
 ### Zone Placement
 
 ```
-Zone A (Entry): Controllers, handlers, main
+Entry: generated endpoints; in plain Java and tests, a root main
   -> Business action verbs: handleRegistration(), processOrder()
 
-Zone B (Domain): Use cases, value objects, domain services
+Business code: use cases, steps, value objects, shared
   -> Domain vocabulary: Email.email(), ValidRequest.validRequest()
 
-Zone C (Infrastructure): DB, external APIs, config loading
+I/O steps (nested factories, io packages): DB, external APIs, config loading
   -> Technical names: loadAllGenerations(), saveUser(), readFile()
 ```
 
@@ -312,7 +312,7 @@ static Step validate(Validator validator) {
 | Multi-statement lambda | `{ }` with multiple lines | Extract to method |
 | Nested monadic ops | `.flatMap(x -> y.map(...))` | Extract inner to method |
 | Always-succeeding Result | `Result.success(new X())` | Return X directly |
-| Mixed I/O and domain | File/DB ops in domain class | Split to adapter |
+| Mixed I/O and business logic | File/DB ops in a business type | Split out an I/O step |
 | Primitive obsession | `String url`, `int poolSize` | Create value object |
 | Conditional logging | `if (x) log.debug()` | Remove condition |
 | Logger as parameter | `method(Logger log)` | Move logging to owner |

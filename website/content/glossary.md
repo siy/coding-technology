@@ -26,11 +26,7 @@ How an entity comes to be: fields attach to an id one at a time as processes lea
 *Defined in: PFD*
 
 **Adapter** {#adapter}
-A component bridging an external system and the domain — a repository, an HTTP client, a queue producer — implementing a step interface and wrapping external I/O in a Promise.
-*Defined in: JBCT*
-
-**Adapter Zone** {#adapter-zone}
-The architectural layer holding adapters, converting between external representations (JSON, SQL) and domain types. The only zone where `Promise.lift()` should appear. Part of the [Three Zones](#three-zones).
+Not a JBCT construct: there is no adapter layer, class, or package. Code that touches the outside world is an [I/O step](#io-step).
 *Defined in: JBCT*
 
 **Aggregation** {#aggregation}
@@ -136,7 +132,7 @@ The taxonomy that decides which mechanism family contains a load, answered by on
 *Defined in: AS*
 
 **Dependency Direction** {#dependency-direction}
-Dependencies point at abstractions, not implementations. In JBCT, use cases depend on step interfaces; adapters implement them.
+Imports between the application's packages point up the package tree: a package may import an ancestor, a `shared` or `io` package at itself or any ancestor, or its own subtree — never a sibling. Business code depends on step interfaces and takes [I/O steps](#io-step) as parameters; only assembly calls an I/O step's factory.
 *Defined in: JBCT*
 
 **Deployment Topology** {#deployment-topology}
@@ -154,10 +150,6 @@ The third member of the [recovery triple](#recovery-triple): reshape the model s
 **Direct Step Composition** {#direct-step-composition}
 Wiring steps by calling the next one on the value the previous returned — the chain written out, output feeding input. Contrast [event-based step composition](#event-based-step-composition); both are Promise-based and non-blocking.
 *Defined in: PFD*
-
-**Domain Zone** {#domain-zone}
-The architectural layer holding pure business logic — use cases, value objects, step interfaces — with no framework dependencies. Part of the [Three Zones](#three-zones).
-*Defined in: JBCT*
 
 **Driver Modes** {#driver-modes}
 The five ways an answer to one of the [nine questions](#nine-questions) can act on the derivation. **Prune**: strikes values outright, binary, no hardware buys it back (consistency contract, loss budget, external constraints, multi-X). **Select**: narrows among surviving values (time budget). **Isolate**: sets blast-radius boundaries (failure budget). **Split**: presses structure only on divergence, not magnitude (load). **Bound**: sets the envelope everything else optimizes inside (release structure, cost & capacity envelope).
@@ -186,16 +178,12 @@ Wiring steps by having one publish a typed fact that triggers the next, instead 
 *Defined in: PFD, AS*
 
 **Exception Wrapping** {#exception-wrapping}
-Converting a thrown exception to a Cause at an adapter boundary, via `Promise.lift()` or `Result.lift()`.
+Converting a thrown exception to a Cause inside an I/O step's factory, via `Promise.lift()` or `Result.lift()`.
 *Defined in: JBCT*
 
 **Exit Gate** {#exit-gate}
 Verification of a derived vector before it's built: every guarantee must name its mechanism (the [consistency lens](#consistency-lens)), and every budget must survive arithmetic — latency composing down the critical path, tails composing through the distribution, envelopes composing upward by correlation, availability multiplying in series.
 *Defined in: AS*
-
-**External Zone** {#external-zone}
-Everything outside the application: databases, external APIs, message queues, file systems.
-*Defined in: JBCT*
 
 ## F
 
@@ -244,7 +232,7 @@ The execution path when every operation succeeds. In JBCT it's the default read 
 *Defined in: JBCT*
 
 **Hide the Machinery, Keep the Meaning** {#hide-the-machinery-keep-the-meaning}
-JBCT's twin property, and the undersold half of "code reads like the process": technical detail is hidden in adapters and [Aspects](#aspects), while the business facts survive in types and combinators — [the shapes](#the-shapes) state fallibility and absence, `Option` parameters state domain optionality, `flatMap` states dependency, `all()` states independence, sealed [`Cause`](#cause) hierarchies state the failure catalog, [`*State`](#state-machine) sums state the lifecycle. The code reads twice: once by the compiler as Java, once by the reader as the business process — [semantic potential](#semantic-potential), spent and kept.
+JBCT's twin property, and the undersold half of "code reads like the process": technical detail is hidden in [I/O steps](#io-step) and [Aspects](#aspects), while the business facts survive in types and combinators — [the shapes](#the-shapes) state fallibility and absence, `Option` parameters state domain optionality, `flatMap` states dependency, `all()` states independence, sealed [`Cause`](#cause) hierarchies state the failure catalog, [`*State`](#state-machine) sums state the lifecycle. The code reads twice: once by the compiler as Java, once by the reader as the business process — [semantic potential](#semantic-potential), spent and kept.
 *Defined in: JBCT*
 
 **Honest Limit** {#honest-limit}
@@ -272,6 +260,14 @@ An answer whose demand the current position already contains: it presses on noth
 **Information Hiding** {#information-hiding}
 Parnas's criterion: decompose by hiding the design decisions most likely to change, so the module boundary follows the change list, not the flowchart.
 *Defined in: PFD*
+
+**I/O Step** {#io-step}
+A step whose static factory talks to the outside world (database, network, files, clock). The factory takes the infrastructure as a parameter (`static LoadUser loadUser(DSLContext dsl)`) and implements the step with a lambda; infrastructure types appear only there. I/O steps are leaves, named for intent, never for technology. Nested in the use case at first, moved unchanged to an [`io` package](#io-package) when it outgrows the file.
+*Defined in: JBCT*
+
+**`io` Package** {#io-package}
+A reserved package name for [I/O steps](#io-step) and their helper types. Holds leaves only; sits at any node of the package tree, at the lowest common ancestor of its users.
+*Defined in: JBCT*
 
 **Iteration** {#iteration}
 The pattern for a step applied across a collection — `Promise.allOf()` for parallel processing, stream operations for sequential.
@@ -453,6 +449,10 @@ The four type-honest shapes a value can carry: `T` (exists unconditionally), `Op
 What actually couples two processes — an id, a state enum, a field's value type they both touch, each a word the business actually says. Two processes writing different fields of one row are not coupled merely by sharing a table.
 *Defined in: PFD*
 
+**`shared` Package** {#shared-package}
+A reserved package name for business code used by more than one descendant of its node, placed at the lowest common ancestor of the users when the second user appears.
+*Defined in: JBCT*
+
 **Short-Circuit** {#short-circuit}
 Stopping at the first failure. `flatMap()` chains short-circuit; `Result.all()` deliberately does not.
 *Defined in: JBCT*
@@ -470,7 +470,7 @@ One of the [six axes](#six-axes): current-state or event-sourced. Current-state,
 *Defined in: AS*
 
 **Step Interface** {#step-interface}
-A functional interface defining one operation in a use case, declared inside the use-case interface and implemented by adapters.
+A functional interface defining one operation in a use case, declared inside the use-case interface, with a static factory that implements it; moved out unchanged when it outgrows the use case file.
 *Defined in: JBCT*
 
 **Stub** {#stub}
@@ -495,12 +495,8 @@ The response when Phase 4 surfaces a use case nobody had written down: fold that
 The methodology's organizing structure: the same vocabulary at successive scales (use case, workflow, subsystem, system), where a unit's internal composition at one [altitude](#altitude) is a Leaf at the altitude above.
 *Defined in: PFD*
 
-**Three Zones** {#three-zones}
-JBCT's architectural model: [External](#external-zone) (outside systems), [Adapter](#adapter-zone) (boundary translation), [Domain](#domain-zone) (pure business logic). Distinct from the [Three-Zone Framework](#three-zone-framework), which numbers levels of abstraction rather than layers of architecture — the two share a name and answer different questions.
-*Defined in: JBCT*
-
 **Three-Zone Framework** {#three-zone-framework}
-JBCT's abstraction-level model, used to keep a function at one level: **Zone 1** is the use case entry point, **Zone 2** is orchestration (step interfaces), **Zone 3** is implementation (leaves). A function may call its own zone or one level down. Zone 2 names the *intent* of an operation, Zone 3 names the *mechanism* — which is why a step interface called `FetchUserData` is a defect and `LoadUserData` is not. Not the same as the [Three Zones](#three-zones) architectural model.
+JBCT's abstraction-level model, used to keep a function at one level: **Zone 1** is the use case entry point, **Zone 2** is orchestration (step interfaces), **Zone 3** is implementation (leaves). A function may call its own zone or one level down. Zone 2 names the *intent* of an operation, Zone 3 names the *mechanism* — which is why a step interface called `FetchUserData` is a defect and `LoadUserData` is not.
 *Defined in: JBCT*
 
 **TimeSpan** {#timespan}
@@ -531,6 +527,10 @@ A demand combination with exactly one containing value on the ledger — e.g., s
 
 **Unit** {#unit}
 A type with a single value, meaning "no meaningful result" — used instead of `Void` for an operation that succeeds but returns nothing.
+*Defined in: JBCT*
+
+**Use Case Anchor** {#use-case-anchor}
+The `@UseCase` annotation on a use case interface. It marks where the package tree's groupings of use cases end and a use case's own steps begin; a materialized workflow carries it too. On Aether, `@Slice` serves as the same anchor.
 *Defined in: JBCT*
 
 **Use Case** {#use-case}

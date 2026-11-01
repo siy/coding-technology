@@ -45,7 +45,7 @@ public interface OrderPersistence {
 }
 ```
 
-Wire into slice: `static OrderService orderService(@PgSql OrderPersistence orders) { ... }`
+Wire into slice: `static Ordering ordering(@PgSql OrderPersistence orders) { ... }`
 
 ## jOOQ Integration
 

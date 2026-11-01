@@ -45,7 +45,7 @@ Local `@Slice` depends on external slice JAR on classpath:
 ```java
 @Slice
 public interface OrderProcessor {
-    static OrderProcessor orderProcessor(InventoryManager inventory, @Sql SqlConnector db) {
+    static OrderProcessor orderProcessor(Inventory inventory, @Sql SqlConnector db) {
         return request -> inventory.checkStock(request.itemId())
                                    .flatMap(stock -> persistOrder(db, request, stock));
     }

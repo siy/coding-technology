@@ -51,8 +51,8 @@ The signature `String initials()` tells you: this always succeeds, always return
 Use this when absence is a valid outcome but failure isn't possible. Lookups that might not find anything, optional configuration, nullable database columns when null is semantically meaningful. The key: missing data is normal business behavior, not an error.
 
 ```java
-public interface PreferenceRepository {
-    Option<Theme> findThemePreference(UserId id);  // might not be set
+interface LoadThemePreference {
+    Option<Theme> apply(UserId id);  // might not be set
 }
 ```
 
@@ -116,8 +116,8 @@ The signature `Result<Email>` tells you: this might fail (invalid format), compl
 Use this for any operation that leaves the process: I/O, external service calls, inter-process communication. `Promise<T>` is semantically equivalent to `Result<T>` but asynchronous - failures are carried in the Promise itself, not nested inside it.
 
 ```java
-public interface AccountRepository {
-    Promise<Account> findById(AccountId id);  // async lookup, can fail
+interface LoadAccount {
+    Promise<Account> apply(AccountId id);  // async lookup, can fail
 }
 ```
 

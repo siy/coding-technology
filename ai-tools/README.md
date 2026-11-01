@@ -154,7 +154,7 @@ Claude: [Uses jbct skill to show Promise.all/Result.all examples]
 
 - **Complete use case implementations** with all components
 - **Value objects** with validation and error types
-- **Adapters** with proper exception handling
+- **I/O steps** with exception lifting in their factories
 - **Test suites** following JBCT patterns
 - **Deterministic code generation** following all JBCT rules
 
@@ -178,7 +178,7 @@ User: "Use jbct-coder to implement a RegisterUser use case"
 Claude: [Generates complete implementation]
 - RegisterUser interface with Request/Response
 - ValidRequest with email/password validation
-- CheckEmail, HashPassword, SaveUser steps
+- CheckEmailUniqueness, CreateValidUser, SaveUser, GenerateToken steps
 - RegistrationError sealed interface
 - registerUser() factory returning lambda
 - RegisterUserTest with all test cases

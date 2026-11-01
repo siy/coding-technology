@@ -174,26 +174,30 @@ A workflow composes use cases for one business outcome, but composition is not t
 
 Make the state machine **explicit**. A logical workflow almost always has one, and leaving it implicit — the legal transitions scattered as ad-hoc checks inside each use case — is exactly how illegal transitions slip through. Lift it into one place: a state type and its legal transitions, the workflow's spine, shared by the use cases that move it. Name that state type with a **`*State`** suffix — `HoldState`, `BookingState`, `SeatState` — and keep its variants bare (`Free`, `Held`, `Confirmed`, `Cancelled`, never `HeldState`): the suffix marks the sealed sum of lifecycle states a guarded transition advances, distinct from the entity, its value-object representation, and its use-case policy, so a reader who meets `…State` knows it is the workflow's spine and not a DTO. It joins JBCT's suffix-by-role family (`*Request`, `*Response`, `Cause`); reserve it for the lifecycle sum that transitions guard — a config snapshot or a UI holder is not a `*State`, and using the suffix there only dilutes the signal. (Where that shared machine sits in the package tree — the workflow's `shared` — is the telescope rule's job; see [Project Structure & Framework Integration](project-structure.md).)
 
-A workflow **materializes** into a code entity only when it gains a **trigger of its own** — an entry point distinct from any single use case's: a schedule ("each night, settle the day's holds"), an event ("on `payment.captured`, run fulfilment"), or an explicit orchestration call. Then it takes the *same shape as a use case*, one altitude up — a functional interface plus a factory — except that its **steps are the use cases it composes** (a use case is a Leaf to the workflow, per the telescope):
+A workflow **materializes** into a code entity only when it gains a **trigger of its own** — an entry point distinct from any single use case's: a schedule ("each night, settle the day's holds"), an event ("on `payment.captured`, run fulfilment"), or an explicit orchestration call. Then it takes the *same shape as a use case*, one altitude up — a functional interface plus a factory — except that its **steps are the use cases it composes** (a use case is a Leaf to the workflow, per the telescope). It is a `@UseCase` in its own right, and it lives directly in its workflow package — `reservation/SettleHolds.java` — above the use cases it composes:
 
 ```java
+@UseCase
 public interface SettleHolds {                    // materialized: its own nightly trigger
     record Request(BusinessDay day) {}
     record Settled(int confirmed, int released) {}
 
     Promise<Settled> execute(Request request);
 
-    // Its steps are use cases - one altitude up from a use case's adapter steps.
+    // Its steps are use cases - one altitude up from a use case's I/O steps.
     static SettleHolds settleHolds(ListExpiredHolds listExpired,
                                    ConfirmSeat confirm,
                                    ReleaseHold release) {
-        return request -> listExpired.apply(request.day())
-                                     .flatMap(holds -> settle(holds, confirm, release));
+        return request -> listExpired.execute(new ListExpiredHolds.Request(request.day()))
+                                     .flatMap(expired -> settle(expired, confirm, release));
     }
+
+    // settle(...) sends each expired hold to confirm.execute(...) or release.execute(...)
+    // and counts the outcomes: the steps are called through their entry method, like any use case.
 }
 ```
 
-The shape is deliberately identical to a use case's — interface + factory depending on its steps — and only the altitude differs: here the steps are use cases, not adapters. No trigger of its own, no materialized workflow: leave it logical and let the state machine carry the coupling.
+The shape is deliberately identical to a use case's — interface + factory depending on its steps — and only the altitude differs: here the steps are use cases, not I/O steps. No trigger of its own, no materialized workflow: leave it logical and let the state machine carry the coupling.
 
 ### An Entity Earns Code at a Persistence Edge or a Cross-Field Invariant
 
@@ -246,7 +250,7 @@ The statements are not comments and not documentation. They live in types and co
 
 Read the table as a whole and the consequence appears: **JBCT code reads twice.** The compiler reads it as Java. A person — or an AI assistant — reads it as the business process: which steps depend on which, what can fail and why, what is optional, what runs independently, what is merely observed. Hand a JBCT codebase to a newcomer with no documentation and the process is recoverable — not the vague flow, the *annotated* process: failure catalog, fallback policies, lifecycles, trust boundaries. Documentation drifts; types compile.
 
-The claim has a boundary, and it sits exactly where the first half operates. The types carry the *process* semantics; the purely technical detail — which store, which client, which retry budget — is hidden in adapters and Aspects, where it belongs. Technical failures do travel the same `Result`/`Promise` channels as business failures; keeping the two distinguishable is the `Cause` hierarchy's job.
+The claim has a boundary, and it sits exactly where the first half operates. The types carry the *process* semantics; the purely technical detail — which store, which client, which retry budget — is hidden in I/O step factories and Aspects, where it belongs. Technical failures do travel the same `Result`/`Promise` channels as business failures; keeping the two distinguishable is the `Cause` hierarchy's job.
 
 This is also the half of "AI-friendly" that determinism alone does not deliver. Deterministic structure means an assistant *generates* the right shape; preserved meaning means an assistant *reading* the code recovers the intent instead of guessing it. Generation and comprehension, both directions.
 

@@ -244,7 +244,7 @@ Mutable test fixtures are acceptable - tests execute sequentially:
 void execute_succeeds_forValidInput() {
     List<String> callLog = new ArrayList<>();  // Mutable, but test-scoped
 
-    CheckEmail checkEmail = req -> {
+    CheckEmailUniqueness checkEmail = req -> {
         callLog.add("email");  // Sequential execution
         return Promise.success(req);
     };

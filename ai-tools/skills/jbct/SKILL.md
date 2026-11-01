@@ -116,7 +116,7 @@ The benefits compound:
 
 **Deterministic code generation** becomes possible when the mapping from requirements to code is mechanical. Given a use case specification - inputs, outputs, validation rules, steps - there's essentially one correct structure. Different developers (or AI assistants) should produce nearly identical implementations.
 
-**The normalization boundary.** "Nearly identical" has a precise scope, and stating the scope is what makes the claim testable. JBCT derives the package hierarchy (the telescope rule), the Java types, the step contracts and return types, the pattern for each composition, the failure representation, the placement of shared code, the concurrency structure, and the testing obligations. JBCT does not normalize algorithms inside atomic leaves, framework-specific adapter internals, module promotion (content-invariant along derived boundaries — [Project Structure](https://pragmatica.dev/java/jbct/course/project-structure/) has the full treatment), the test-input supply vehicle, or test-data representation. Variation below this line is style; variation above it is a defect. A newly discovered variation receives an explicit ruling: closed by a rule, or placed below the line. The boundary comes from measurement rather than taste — inspecting independent implementations of one design found their skeletons identical, and what differed became the first rulings.
+**The normalization boundary.** "Nearly identical" has a precise scope, and stating the scope is what makes the claim testable. JBCT derives the package hierarchy (the telescope rule), the Java types, the step contracts and return types, the pattern for each composition, the failure representation, the placement of shared code, the concurrency structure, and the testing obligations. JBCT does not normalize algorithms inside atomic leaves, framework-specific internals of I/O steps, module promotion (content-invariant along derived boundaries — [Project Structure](https://pragmatica.dev/java/jbct/course/project-structure/) has the full treatment), the test-input supply vehicle, or test-data representation. Variation below this line is style; variation above it is a defect. A newly discovered variation receives an explicit ruling: closed by a rule, or placed below the line. The boundary comes from measurement rather than taste — inspecting independent implementations of one design found their skeletons identical, and what differed became the first rulings.
 
 **Construction that scales** is what these properties buy at team size. It is a different claim from runtime parallelism: whether steps *run* in parallel follows from their data dependencies, while whether they can be *built* in parallel follows from their contracts — and JBCT steps share only their typed input and output, so the pieces of even a strictly sequential chain can be built concurrently by builders who coordinate on nothing beyond the types. Uniformity supplies the rest: when every unit is shaped from the same six patterns and four return types, any builder, human or AI agent, picks up any unit already knowing its shape, so ramp-up cost falls toward zero and workers stay interchangeable across the codebase. The other half of the pair — cutting the system into units that change for different reasons, so builders rarely meet at all — is design-phase work, developed in the companion *Process-First Design*. The author's *Software's Second Free Lunch* carries the full argument.
 
@@ -134,12 +134,12 @@ These patterns are **never acceptable** in JBCT code. Hunt for them aggressively
 | `*Impl` classes | `grep -r "class.*Impl"` | Use lambdas for behavior, records for data |
 | Null checks in business logic | `if (x == null)` or `!= null` | Use `Option<T>` instead |
 | Throwing exceptions | `throw new` in business code | Use `Result<T>` or `Promise<T>` |
-| Catching exceptions | `catch` in business code | Lift at adapter boundaries only |
+| Catching exceptions | `catch` in business code | Lift in I/O step factories and `io` packages only |
 | `Void` type parameter | `Result<Void>`, `Promise<Void>` | Use `Unit`. `void` return OK with `@Contract` (external API) or fire-and-forget |
 | `Result.failure(cause)` | Direct call | Use `cause.result()` fluent style |
 | `Promise.failure(cause)` | Direct call | Use `cause.promise()` fluent style |
 | Multi-statement lambdas | `x -> { stmt1; stmt2; }` | Extract to named method |
-| `Promise.await()` in business logic | `.await()` in domain/usecase | Blocks thread. Stay in chain. OK in tests; use `@TerminalOperation` for CLI/fire-and-forget |
+| `Promise.await()` in business logic | `.await()` in business code | Blocks thread. Stay in chain. OK in tests; use `@TerminalOperation` for CLI/fire-and-forget |
 | `@SuppressWarnings` misuse | Used instead of `@Contract`/`@TerminalOperation` | Use `@Contract` for void return (external API), `@TerminalOperation` for legitimate `await()` |
 | Abandoned `Result`/`Promise` | Statement discarding return value | Every Result/Promise must be returned or handled |
 
@@ -157,12 +157,13 @@ These patterns are **never acceptable** in JBCT code. Hunt for them aggressively
 ### Examples
 
 ```java
-// ❌ FORBIDDEN: Impl class
-public class UserServiceImpl implements UserService { ... }
+// ❌ FORBIDDEN: Impl class, technical names
+public class JooqUserRepositoryImpl implements LoadUser { ... }
 
-// ✅ CORRECT: Lambda factory
-static UserService userService(UserRepository repo) {
-    return userId -> repo.findById(userId);
+// ✅ CORRECT: Lambda factory on the step, named for its intent
+static LoadUser loadUser(DSLContext dsl) {
+    return userId -> Promise.lift(t -> UserError.DatabaseFailure.FACTORY.apply(Causes.fromThrowable(t)),
+                                  () -> fetchUser(dsl, userId));
 }
 
 // ❌ FORBIDDEN: Null check
@@ -317,29 +318,40 @@ public record Age(int value) {
 ### Use Case Structure
 
 ```java
-public interface RegisterUser extends UseCase.WithPromise<Response, Request> {
-    record Request(String email, String password) {}
+@UseCase
+public interface RegisterUser {
+    record Request(String email, String password, String referralCode) {}
     record Response(UserId userId, ConfirmationToken token) {}
 
+    Promise<Response> execute(Request request);
+
     // Nested API: steps as single-method interfaces
-    interface CheckEmail { Promise<ValidRequest> apply(ValidRequest valid); }
-    interface SaveUser { Promise<User> apply(ValidRequest valid); }
+    interface CheckEmailUniqueness { Promise<ValidRequest> apply(ValidRequest valid); }
+    interface CreateValidUser { Promise<ValidUser> apply(ValidRequest valid); }
+    interface SaveUser { Promise<User> apply(ValidUser validUser); }
+    interface GenerateToken { Promise<Response> apply(User user); }
 
     // Validated input with Valid prefix (not Validated)
-    record ValidRequest(Email email, Password password) {
+    record ValidRequest(Email email, Password password, Option<ReferralCode> referralCode) {
         static Result<ValidRequest> validRequest(Request raw) {
             return Result.all(Email.email(raw.email()),
-                              Password.password(raw.password()))
+                              Password.password(raw.password()),
+                              ReferralCode.referralCode(raw.referralCode()))
                          .map(ValidRequest::new);
         }
     }
 
     // ✅ CORRECT: Factory returns lambda directly
-    static RegisterUser registerUser(CheckEmail checkEmail, SaveUser saveUser) {
+    static RegisterUser registerUser(CheckEmailUniqueness checkEmail,
+                                     CreateValidUser createValidUser,
+                                     SaveUser saveUser,
+                                     GenerateToken generateToken) {
         return request -> ValidRequest.validRequest(request)
                                       .async()
                                       .flatMap(checkEmail::apply)
-                                      .flatMap(saveUser::apply);
+                                      .flatMap(createValidUser::apply)
+                                      .flatMap(saveUser::apply)
+                                      .flatMap(generateToken::apply);
     }
 }
 ```
@@ -350,12 +362,12 @@ NEVER create factories with nested record implementations:
 
 ```java
 // ❌ WRONG - Verbose, no benefit
-static RegisterUser registerUser(CheckEmail check, SaveUser save) {
-    record registerUser(CheckEmail check, SaveUser save) implements RegisterUser {
+static RegisterUser registerUser(CheckEmailUniqueness check, CreateValidUser create, SaveUser save, GenerateToken token) {
+    record registerUser(CheckEmailUniqueness check, CreateValidUser create, SaveUser save, GenerateToken token) implements RegisterUser {
         @Override
         public Promise<Response> execute(Request request) { ... }
     }
-    return new registerUser(check, save);
+    return new registerUser(check, create, save, token);
 }
 ```
 
@@ -396,7 +408,7 @@ Promise.all(applyBogo(cart, context),     // mutates context
 **Allowed:**
 - Method references: `Email::new`, `this::processUser`, `User::id`
 - Parameter forwarding: `user -> validate(requiredRole, user)`
-- Constructor references for error mapping: `RepositoryError.DatabaseFailure::new`
+- Error factories for wrapping a Cause: `.mapError(UserError.DatabaseFailure.FACTORY)`
 
 **Forbidden:**
 - Conditionals (`if`, ternary, `switch`)
@@ -479,13 +491,13 @@ Every method must have clear data flow:
 - **Dependencies**: What external services/steps does it call?
 
 ```java
-// Input: ValidRequest (email, password)
-// Output: User (id, email, hashedPassword)
-// Dependencies: hashPassword, userRepository
-private Promise<User> createUser(ValidRequest valid) {
-    return hashPassword.apply(valid.password())
-        .flatMap(hashed -> userRepository.save(
-            new User(UserId.generate(), valid.email(), hashed)));
+// Input: ValidRequest (email, password, referralCode)
+// Output: ValidUser (email, hashed, refCode)
+// Dependencies: hashPassword
+static CreateValidUser createValidUser(HashPassword hashPassword) {
+    return valid -> hashPassword.apply(valid.password())
+                                .map(hashed -> new ValidUser(valid.email(), hashed, valid.referralCode()))
+                                .async();
 }
 ```
 
@@ -546,9 +558,9 @@ JBCT's six patterns come from the process side — the data dependency graph's o
 ### 1. Leaf Pattern
 Atomic unit - one operation, no composition:
 ```java
-public Promise<User> findUser(UserId id) {
+public Promise<User> loadUser(UserId id) {
     return Promise.lift(
-        RepositoryError.DatabaseFailure::new,
+        t -> UserError.DatabaseFailure.FACTORY.apply(Causes.fromThrowable(t)),
         () -> jdbcTemplate.queryForObject(...)
     );
 }
@@ -560,9 +572,9 @@ Linear dependent steps (most common use case pattern):
 return ValidRequest.validRequest(request)
                    .async()
                    .flatMap(checkEmail::apply)
-                   .flatMap(hashPassword::apply)
+                   .flatMap(createValidUser::apply)
                    .flatMap(saveUser::apply)
-                   .flatMap(sendEmail::apply);
+                   .flatMap(generateToken::apply);
 ```
 
 ### 3. Fork-Join Pattern
@@ -662,15 +674,15 @@ promise.allOrCancel(fn1, fn2, fn3).map(combine);     // Parallel, fail-fast + ca
 ## Exception Handling
 
 ```java
-// Lift exceptions in adapters
+// Lift exceptions in I/O step factories
 Promise.lift(
-    RepositoryError.DatabaseFailure::new,
+    t -> UserError.DatabaseFailure.FACTORY.apply(Causes.fromThrowable(t)),
     () -> jdbcTemplate.queryForObject(...)
 );
 
-// With custom exception mapper (constructor reference preferred)
+// Synchronous: the same mapper shape, the wrapped error's FACTORY applied to the converted throwable
 Result.lift(
-    CustomError.ProcessingFailed::new,
+    t -> CustomError.ProcessingFailed.FACTORY.apply(Causes.fromThrowable(t)),
     () -> riskyOperation()
 );
 ```
@@ -800,28 +812,30 @@ the zone tables: `checkExpiry()` returning `boolean` should be `isExpired()`.
 
 ```
 com.example.app/
-├── usecase/
-│   ├── registeruser/         # Self-contained vertical slice
-│   │   ├── RegisterUser.java # Use case interface + factory
-│   │   └── [internal types]  # ValidRequest, etc.
-│   └── loginuser/
-│       └── LoginUser.java
-├── domain/
-│   └── shared/               # Reusable value objects ONLY
-│       ├── Email.java
-│       ├── Password.java
-│       └── UserId.java
-└── adapter/
-    ├── rest/                 # Inbound (HTTP)
-    ├── persistence/          # Outbound (DB)
-    └── messaging/            # Outbound (queues)
+├── registeruser/             # Self-contained vertical slice
+│   ├── RegisterUser.java     # @UseCase interface + steps + factory
+│   ├── [internal types]      # ValidRequest, etc.
+│   └── io/                   # I/O steps of this use case, once they outgrow the file
+├── loginuser/
+│   └── LoginUser.java
+├── shared/                   # Business code used by 2+ use cases
+│   ├── Email.java
+│   ├── Password.java
+│   └── UserId.java
+└── io/                       # I/O steps used by 2+ use cases
+    └── LoadUser.java
 ```
+
+Packages carry business names only: no `usecase`, `domain`, `adapter`, `config` packages, and no `*Repository`, `*Controller`, `*Service`, `*Impl`, `Jooq*`-style type names. Two names are reserved roles: `shared` (business code) and `io` (I/O leaves). Endpoints and assembly are generated by the runtime; plain Java and tests assemble at the root by calling the factories.
 
 **Placement Rules:**
 - Value objects used by single use case → inside use case package
-- Value objects used by 2+ use cases → `domain/shared/`
-- Steps (interfaces) → always inside use case
+- Value objects used by 2+ use cases → `shared/` at the lowest common ancestor of the users
+- Steps (interfaces) → nested in the use case, each with its own static factory; an I/O step's factory takes the infrastructure (`static LoadUser loadUser(DSLContext dsl)`)
+- A step that outgrows the file moves out unchanged: I/O steps to `io/`, business steps to the use case package, then a sub-package; to `shared/` or `io/` at the lowest common ancestor when a second use case needs it
 - Errors → sealed interface inside use case
+- Imports point up the tree, never sideways; business code takes `io` steps as parameters but never calls their factories
+- As workflows and subsystems appear, use cases move under them (telescope rule — see [project-structure/organization.md](project-structure/organization.md))
 
 ### Typed Errors
 
@@ -969,7 +983,7 @@ Static imports reduce code verbosity:
 import static org.pragmatica.lang.Result.all;
 import static org.pragmatica.lang.Result.success;
 import static org.pragmatica.lang.vo.Email.email;      // built-in VO
-import static com.example.domain.Password.password;    // domain-specific VO
+import static com.example.app.shared.Password.password; // business VO in the shared package
 
 // Concise code
 return all(email(raw), password(raw)).flatMap(ValidRequest::validRequest);
@@ -996,7 +1010,7 @@ This skill provides quick reference and learning resources. For complex implemen
 ### Use jbct-coder Subagent When:
 - **Generating complete use case implementations** with all components
 - **Creating value objects** with validation and error types
-- **Implementing adapters** with proper exception handling
+- **Implementing I/O steps** with proper exception handling
 - **Writing tests** following JBCT patterns
 - **Need deterministic code generation** following all JBCT rules
 
@@ -1064,6 +1078,7 @@ Before considering JBCT code complete, verify ALL of these:
 
 ### Zero Tolerance (must pass)
 - [ ] No `*Impl` classes
+- [ ] No technical names (`*Repository`, `*Controller`, `*Service`, `Jooq*`...) and no layer packages (`usecase`, `domain`, `adapter`, `config`)
 - [ ] No `null` checks in business logic
 - [ ] No `throw`/`catch` in business logic
 - [ ] No `Void` type parameter (use `Unit`; `void` return OK for fire-and-forget)
@@ -1119,7 +1134,7 @@ This skill contains comprehensive guidance organized by topic:
 
 ### Specialized Subagents
 - **../../jbct-coder.md** - Autonomous code generation agent (invoke with Task tool)
-  - Generates complete use cases with validation, tests, and adapters
+  - Generates complete use cases with validation, tests, and I/O steps
   - Follows deterministic algorithms for consistent output
   - Includes evolutionary testing strategy
 - **../../jbct-reviewer.md** - Autonomous code review agent (invoke with Task tool)

@@ -6,7 +6,7 @@ Every slice is a Java interface annotated with `@Slice`:
 
 ```java
 @Slice
-public interface PaymentService {
+public interface Payments {
     record ProcessRequest(String orderId, Money amount, PaymentMethod method) {}
     record ProcessResponse(String transactionId, PaymentStatus status) {}
 
@@ -27,8 +27,8 @@ public interface PaymentService {
     Promise<ProcessResponse> processPayment(ProcessRequest request);
     Promise<ProcessResponse> processRefund(RefundRequest request);
 
-    static PaymentService paymentService(@Sql SqlConnector db,
-                                          InventoryService inventory) {
+    static Payments payments(@Sql SqlConnector db,
+                             Inventory inventory) {
         return request -> ValidPayment.validPayment(request)
                                        .async()
                                        .flatMap(valid -> chargeCard(db, valid))
@@ -40,6 +40,7 @@ public interface PaymentService {
 ## Rules
 
 - Interface name = PascalCase, factory method = camelCase of same name
+- Business names only: the slice is named for what it does for the business (`Payments`, `Inventory`), never with a technical word (`*Service`, `*Repository`, `*Controller`, `*Gateway`, `*Client`, `*Impl`)
 - All methods return `Promise<T>` (never `Result<T>` or plain `T`)
 - Factory parameters: resources (annotated), slice dependencies (interfaces), plain interfaces
 - Request/Response/Error types nested inside the interface
@@ -48,7 +49,7 @@ public interface PaymentService {
 ## Single-Method Slice (Lambda)
 
 ```java
-static PaymentService paymentService(@Sql SqlConnector db) {
+static Payments payments(@Sql SqlConnector db) {
     return request -> processPayment(db, request);
 }
 ```
@@ -56,14 +57,14 @@ static PaymentService paymentService(@Sql SqlConnector db) {
 ## Multi-Method Slice (Inline Record)
 
 ```java
-static PaymentService paymentService(@Sql SqlConnector db, InventoryService inventory) {
-    record paymentService(SqlConnector db, InventoryService inventory) implements PaymentService {
+static Payments payments(@Sql SqlConnector db, Inventory inventory) {
+    record payments(SqlConnector db, Inventory inventory) implements Payments {
         @Override
         public Promise<ProcessResponse> processPayment(ProcessRequest request) { ... }
         @Override
         public Promise<ProcessResponse> processRefund(RefundRequest request) { ... }
     }
-    return new paymentService(db, inventory);
+    return new payments(db, inventory);
 }
 ```
 

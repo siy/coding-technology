@@ -1,7 +1,7 @@
 # Appendix A — API quick reference
 
 The author-facing surface this book teaches, in one place. Every signature below was read from
-Pragmatica source at `release-1.0.0-rc3` head `e123caafb` (2026-08-26); the shapes are stable,
+Pragmatica source at `release-1.0.0-rc3` head `c67664bd9a1` (2026-09-02); the shapes are stable,
 but this is the fastest-moving appendix in the book, so verify against the source of your
 runtime version before you lean on a detail. The core types — `Result`, `Option`, `Promise`,
 their combinators, and the JBCT patterns built on them — are the JBCT book's territory and its
@@ -140,9 +140,15 @@ public interface Publisher<T> {
 
 Publishing is a parameter (qualifier over `Publisher.class`, section `messaging.<topic>`).
 Receiving is a method: declare a method-level qualifier over `Subscriber.class` with the same
-section, on a method taking exactly the message type and returning `Promise<Unit>`. Delivery is
-at-most-once to the subscribers present at publish time; the returned `Promise` completes when
-every present subscriber's `Promise` settles.
+section, on a method taking exactly the message type and returning `Promise<Unit>`. The section's
+`durability` key selects the tier: `"ephemeral"` (default) delivers at-most-once to the
+subscribers present at publish time, with the returned `Promise` completing when every present
+subscriber's `Promise` settles; `"durable"` backs the topic with a replicated stream and delivers
+at-least-once per consumer group with a group-attributed dead-letter queue, at the cost of
+`partitions`, `replicas`, `min_sync_replicas`, and `retention` keys. A durable subscriber may add
+a second parameter, `MessageContext context`, carrying a publisher-minted `messageId` stable
+across retries and dead-letter hops. Module B covers the full guarantee, including what remains
+unverified for the multi-node path.
 
 ## Streams
 
@@ -212,7 +218,8 @@ Declare one qualifier per keyspace over `DurableEntity.class`, section `entities
 The section requires all of `keyspace` (non-blank, no `/`), `partition_count` (≥ 1), and
 `replication_factor` (≥ 1); the write barrier is derived as `min(2, replication_factor)`.
 Failures are the sealed `EntityError` — eleven variants, listed in Module D. Timers are durably
-recorded but not yet fired on a deployed node (#351) at this pin.
+recorded and fire on a deployed node as of 2026-08-27 (#351); the check interval is a documented
+1-second constant, not a config knob.
 
 ## Scheduled work
 

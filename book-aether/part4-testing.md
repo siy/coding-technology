@@ -27,7 +27,7 @@ void placeOrder_returnsOutOfStock_whenInventoryRejects() {
     Inventory inventory = items -> new OrderError.OutOfStock(items.getFirst().sku()).promise();
     Payments  payments  = (customer, reservation) -> Promise.success(new Charge("CH-1"));
 
-    OrderService.orderService(inventory, payments)
+    Ordering.ordering(inventory, payments)
                 .placeOrder(sampleOrder)
                 .await()
                 .onSuccess(placed -> fail("expected OutOfStock, got " + placed))
@@ -95,6 +95,22 @@ the fsync, is a property of a real cluster, not of a single JVM that cannot un-f
 homes its data under `$AETHER_HOME/forge-data` precisely so the stream log is crash-durable
 across a graceful restart during development; the torn-write case waits for separate machines.
 
+That gap is not entirely open, though — the WAL's own test suite closes part of it a different
+way, by construction instead of by crashing anything. A live JVM cannot be killed in the middle
+of a `truncate`, so instead of causing a crash, the WAL's compaction tests build the exact
+on-disk artifacts a SIGKILL would leave at each point of the temp-file-and-rename dance a
+compaction performs, and assert that recovery reads correctly from every one of those states
+(`#634` item 7, four tests, `PartitionWalTest.java:478-559`, `CrashMidCompaction`). A neighboring
+suite in the same class checks a related but distinct question at the append path: what the WAL
+does when the fsync call itself reports failure. Before this landed, a failed fsync was retried,
+which is unsafe, because the operating system can drop the dirty pages while clearing the error,
+so a later retry can report success over a hole that was never actually written. The WAL now
+fail-stops instead — refusing every later append and truncate with a typed `WalError.FailStopped`
+until the node restarts — and the state is operator-visible as `wal.failStopped` (`#634` item 7,
+seven tests, `PartitionWalTest.java:308-473`, `FsyncFailure`). Neither suite is a substitute for
+the real crash-kill Forge cannot reproduce; both prove the WAL's own recovery logic is correct at
+the disk-state level, which is the part a single JVM can test honestly without one.
+
 Why keep a tool with that boundary at the center of your workflow: Forge runs the same fabric,
 the same code, and the same recovery path as Aether, so the failure classes it reproduces — a lost
 node, a lost leader, a rolling restart — exercise the logic production would run. It cannot
@@ -157,7 +173,7 @@ runs a throwing, blocking supplier, turning a thrown exception into a `Cause` an
 a `Promise`:
 
 ```java
-static OrderService orderService(LegacyOrderService legacy) {
+static Ordering ordering(LegacyOrderService legacy) {
     return request -> Promise.lift(() -> legacy.place(toLegacy(request)))
                              .map(OrderPlaced::from);
 }
@@ -176,7 +192,7 @@ boundary that already exists — the slice boundary you would have drawn anyway.
 Why migrate this way rather than rewrite: because `Promise.lift` makes a legacy call an ordinary
 value in the same pipeline as a native step, every move is mechanical and reviewable on its own,
 and you never hold two architectures in your head at once. The "before" is a monolithic
-`OrderService`; the "after" is the sliced app this book built; the migration is the sequence of
+`LegacyOrderService`; the "after" is the sliced app this book built; the migration is the sequence of
 small, safe steps between them. The repo's migration guide
 (`aether/docs/slice-developers/migration-guide.md`) carries the framework-by-framework mapping
 and the peeling checklist.

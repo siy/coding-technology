@@ -156,7 +156,7 @@ provisions a `PgSqlConnector` from the `database` section to back it. You wire i
 ceremony:
 
 ```java
-static OrderService orderService(OrderPersistence orders) {
+static Ordering ordering(OrderPersistence orders) {
     return request -> orders.save(toRow(request))
                             .map(OrderPlaced::from);
 }
@@ -396,7 +396,7 @@ version the code expects.
 Wiring both into the order slice is two parameters where there was one:
 
 ```java
-static OrderService orderService(OrderPersistence orders, OrderAnalytics analytics) {
+static Ordering ordering(OrderPersistence orders, OrderAnalytics analytics) {
     return request -> orders.save(toRow(request))
                             .flatMap(saved -> analytics.record(OrderEventRow.from(saved))
                                                        .map(() -> OrderPlaced.from(saved)));
@@ -452,7 +452,7 @@ public @interface OrderEvents {}
 ```
 
 ```java
-static OrderService orderService(OrderPersistence orders, @OrderEvents Publisher<OrderPlaced> events) {
+static Ordering ordering(OrderPersistence orders, @OrderEvents Publisher<OrderPlaced> events) {
     return request -> orders.save(toRow(request))
                             .map(OrderPlaced::from)
                             .flatMap(placed -> events.publish(placed).map(() -> placed));
@@ -523,7 +523,7 @@ What pub-sub promises, and what it does not, follows from being live. `publish` 
 `Promise<Unit>` that completes once every subscriber present at that moment has been invoked and
 its own `Promise` has settled, each within a delivery timeout of about twenty seconds; it does not
 persist the message, and it does not retry a subscriber that is down. Because the returned `Promise`
-waits on those subscribers, a caller that chains work onto it, as `orderService` does above with
+waits on those subscribers, a caller that chains work onto it, as `ordering` does above with
 `events.publish(placed).map(() -> placed)`, pays the subscribers' latency in its own response time,
 so keep subscriber work short or move the slow part to a stream. That the publisher waits on present
 subscribers, and that a missing one is simply missed, is a property of the ephemeral tier, the
@@ -568,7 +568,7 @@ public @interface OrderEventStream {}
 ```
 
 ```java
-static OrderService orderService(OrderPersistence orders, @OrderEventStream StreamPublisher<OrderEvent> stream) {
+static Ordering ordering(OrderPersistence orders, @OrderEventStream StreamPublisher<OrderEvent> stream) {
     return request -> orders.save(toRow(request))
                             .flatMap(saved -> stream.publish(OrderEvent.placed(saved))
                                                     .map(() -> OrderPlaced.from(saved)));
@@ -1120,7 +1120,7 @@ Then you put it on the method it should wrap, alongside any others:
 
 ```java
 @Slice
-public interface OrderService {
+public interface Ordering {
     @LogCalls
     @BreakOnPaymentOutage
     @RetryPayment
@@ -1258,10 +1258,10 @@ public interface PlaceOrder {
     @Route("/orders")
     Promise<OrderConfirmation> place(OrderRequest request);
 
-    static PlaceOrder placeOrder(InventoryService inventory,
-                                 PaymentService payment,
-                                 ShippingService shipping,
-                                 NotificationService notify) {
+    static PlaceOrder placeOrder(Inventory inventory,
+                                 Payments payment,
+                                 Shipping shipping,
+                                 Notifications notify) {
         return request -> ValidOrder.validOrder(request)
             .async()
             .flatMap(order    -> reserve(inventory, order))
@@ -1302,19 +1302,19 @@ The compensation lives on each step's failure channel. When `charge` fails, the 
 reverse:
 
 ```java
-static Promise<Reserved> reserve(InventoryService inventory, ValidOrder order) {
+static Promise<Reserved> reserve(Inventory inventory, ValidOrder order) {
     return inventory.reserve(order.orderId(), order.items())
                     .map(id -> new Reserved(order, id));
 }
 
-static Promise<Charged> charge(PaymentService payment, InventoryService inventory, Reserved r) {
+static Promise<Charged> charge(Payments payment, Inventory inventory, Reserved r) {
     return payment.charge(r.order().customerId(), r.order().total())
                   .map(id -> new Charged(r, id))
                   .onFailure(_ -> inventory.release(r.reservationId()).recover(_ -> Unit.unit()));
 }
 
-static Promise<Shipped> arrange(ShippingService shipping, PaymentService payment,
-                                InventoryService inventory, Charged c) {
+static Promise<Shipped> arrange(Shipping shipping, Payments payment,
+                                Inventory inventory, Charged c) {
     return shipping.arrange(c.reserved().order().orderId())
                    .map(id -> new Shipped(c, id))
                    .onFailure(_ -> {
@@ -1330,7 +1330,7 @@ allowed to mask the failure that triggered it. The confirmation is fire-and-forg
 reason, a side effect that must never fail the order:
 
 ```java
-static Unit confirm(NotificationService notify, Shipped shipped) {
+static Unit confirm(Notifications notify, Shipped shipped) {
     notify.orderPlaced(shipped.charged().reserved().order().orderId())
           .recover(_ -> Unit.unit());
     return Unit.unit();

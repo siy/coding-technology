@@ -19,7 +19,7 @@ they speak in, names its failures, and ends with a factory that lists what it ne
 
 ```java
 @Slice
-public interface OrderService {
+public interface Ordering {
     Promise<OrderPlaced> placeOrder(PlaceOrder request);
 
     record PlaceOrder(CustomerId customer, List<LineItem> items) {}
@@ -34,7 +34,7 @@ public interface OrderService {
         }
     }
 
-    static OrderService orderService(Inventory inventory, Payments payments) {
+    static Ordering ordering(Inventory inventory, Payments payments) {
         return request -> inventory.reserve(request.items())
                                    .flatMap(reserved -> payments.charge(request.customer(), reserved))
                                    .map(OrderPlaced::from);
@@ -45,7 +45,7 @@ public interface OrderService {
 Read it from the bottom. The factory's parameters, `Inventory` and `Payments`, are the
 slice's declared dependencies: everything it needs from the outside world appears in one
 place, checked by the compiler. Because the interface has a single method, the factory
-returns a lambda that implements it, so there is no `OrderServiceImpl` to write or keep
+returns a lambda that implements it, so there is no `OrderingImpl` to write or keep
 in sync. The body is the pipeline from Part 0, unchanged. `Inventory` and `Payments` are
 other slices, and you call them as ordinary method calls; reaching them, routing, retry,
 and failover are the runtime's job, and the call behaves the same wherever they run.
@@ -137,7 +137,7 @@ void placeOrder_succeeds_whenStockIsAvailable() {
     Inventory inventory = items -> Promise.success(new Reservation(items));
     Payments  payments  = (customer, reservation) -> Promise.success(new Charge("CH-1"));
 
-    OrderService.orderService(inventory, payments)
+    Ordering.ordering(inventory, payments)
                 .placeOrder(sampleOrder)
                 .await()
                 .onFailure(Assertions::fail)
@@ -160,7 +160,7 @@ void placeOrder_reportsDecline_whenPaymentRefuses() {
     Payments  payments  = (customer, reservation) ->
             new OrderError.PaymentDeclined("insufficient funds").promise();
 
-    OrderService.orderService(inventory, payments)
+    Ordering.ordering(inventory, payments)
                 .placeOrder(sampleOrder)
                 .await()
                 .onSuccess(placed -> fail("expected a decline"))

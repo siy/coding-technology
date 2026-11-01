@@ -27,7 +27,7 @@ void placeOrder_returnsOutOfStock_whenInventoryRejects() {
     Inventory inventory = items -> new OrderError.OutOfStock(items.getFirst().sku()).promise();
     Payments  payments  = (customer, reservation) -> Promise.success(new Charge("CH-1"));
 
-    OrderService.orderService(inventory, payments)
+    Ordering.ordering(inventory, payments)
                 .placeOrder(sampleOrder)
                 .await()
                 .onSuccess(placed -> fail("expected OutOfStock, got " + placed))
@@ -172,7 +172,7 @@ runs a throwing, blocking supplier, turning a thrown exception into a `Cause` an
 a `Promise`:
 
 ```java
-static OrderService orderService(LegacyOrderService legacy) {
+static Ordering ordering(LegacyOrderService legacy) {
     return request -> Promise.lift(() -> legacy.place(toLegacy(request)))
                              .map(OrderPlaced::from);
 }
@@ -191,7 +191,7 @@ boundary that already exists — the slice boundary you would have drawn anyway.
 Why migrate this way rather than rewrite: because `Promise.lift` makes a legacy call an ordinary
 value in the same pipeline as a native step, every move is mechanical and reviewable on its own,
 and you never hold two architectures in your head at once. The "before" is a monolithic
-`OrderService`; the "after" is the sliced app this book built; the migration is the sequence of
+`LegacyOrderService`; the "after" is the sliced app this book built; the migration is the sequence of
 small, safe steps between them. The repo's migration guide
 (`aether/docs/slice-developers/migration-guide.md`) carries the framework-by-framework mapping
 and the peeling checklist.

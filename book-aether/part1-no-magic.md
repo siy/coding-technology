@@ -170,11 +170,11 @@ publisher or reader. You declare it as a factory parameter with a resource quali
 the generated bridge resolves it before your factory runs:
 
 ```java
-public static Promise<OrderService> orderService(SliceCreationContext ctx) {
+public static Promise<Ordering> ordering(SliceCreationContext ctx) {
     return Promise.all(
         ctx.resources().provide(SqlConnector.class, "database"),
         ctx.resources().provide(Publisher.class, "messaging.order-events", provisioningContext())
-    ).map((db, events) -> OrderService.orderService(db, events));
+    ).map((db, events) -> Ordering.ordering(db, events));
 }
 ```
 
@@ -228,7 +228,7 @@ wins.
   hosts, endpoints, credentials: the facts that differ between a laptop, staging, and
   production.
 - **Slice** is a per-slice override, named in the manifest as `config.file` (for example
-  `slices/OrderService.toml`), for the rare case where one slice needs to depart from the
+  `slices/Ordering.toml`), for the rare case where one slice needs to depart from the
   shared settings.
 
 The runtime merges them in that order, with slice over node over global, so a value set
@@ -365,7 +365,7 @@ type name, which is why a case that needs its own status is its own type, `OutOf
 `PaymentDeclined`, rather than one constant of a shared enum: every constant of an enum is
 the same type, so they cannot map to different statuses.
 
-The processor compiles this into the manifest and a generated `OrderServiceRoutes` class.
+The processor compiles this into the manifest and a generated `OrderingRoutes` class.
 In the manifest each route is fully resolved:
 
 ```

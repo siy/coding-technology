@@ -103,6 +103,12 @@ will mark the first edition released to readers.
     own — not as a substitute for a real crash-kill, which the same section already says waits for
     separate machines.
 
+### Changed
+- Slice names follow the business-names rule (`aether-coder`, pragmatica #2523): `OrderService` -> `Ordering`,
+  `InventoryService` -> `Inventory`, `PaymentService` -> `Payments`, `ShippingService` -> `Shipping`,
+  `NotificationService` -> `Notifications`, with factories and generated names (`OrderingRoutes`,
+  `slices/Ordering.toml`) to match (*Parts I-IV*). The strangled legacy class keeps `LegacyOrderService`.
+
 ### Fixed
 - **Config inheritance overstated live updates** (*Part I*). The text said an operator's
   configuration change propagates through consensus "so slices pick it up without a

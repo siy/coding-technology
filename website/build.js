@@ -178,6 +178,7 @@ function courseNavLinks(navKey) {
     a('method', '/method/', 'The Method'),
     a('java', '/java/', 'The Java Realization'),
     a('glossary', '/method/glossary/', 'Glossary'),
+    a('articles', '/articles/', 'Articles'),
     '<a href="https://github.com/pragmaticalabs/pragmatica" target="_blank" rel="noopener">GitHub</a>'
   ].join('\n      ');
 }
@@ -540,7 +541,8 @@ function buildLandingPage(cfg) {
     .replace(/{{NAV_START}}/g, navAttr(cfg.nav, 'start'))
     .replace(/{{NAV_METHOD}}/g, navAttr(cfg.nav, 'method'))
     .replace(/{{NAV_JAVA}}/g, navAttr(cfg.nav, 'java'))
-    .replace(/{{NAV_GLOSSARY}}/g, navAttr(cfg.nav, 'glossary'));
+    .replace(/{{NAV_GLOSSARY}}/g, navAttr(cfg.nav, 'glossary'))
+    .replace(/{{NAV_ARTICLES}}/g, navAttr(cfg.nav, 'articles'));
 
   writePage(outPath, html, canonicalUrl);
 }
@@ -697,7 +699,7 @@ const LANDING_PAGES = [
   },
   {
     src: 'website/content/articles.md', out: 'articles/index.html', fallbackTitle: 'Articles',
-    crumb: crumbTop('Articles'), nav: '',
+    crumb: crumbTop('Articles'), nav: 'articles',
     description: 'Shorter pieces from Pragmatica Labs: each takes a single argument from the books and works it out at article length. The canonical copies live here.',
     related: [
       { href: '/method/', label: 'The Method', note: 'the books behind the arguments' },
@@ -707,85 +709,85 @@ const LANDING_PAGES = [
   {
     src: 'articles/engineering-is-the-checkable-fraction.md', out: 'articles/engineering-is-the-checkable-fraction/index.html',
     fallbackTitle: 'Engineering Is the Checkable Fraction of Your Practice',
-    crumb: crumbSub('/articles/', 'Articles', 'The Checkable Fraction'), nav: '',
+    crumb: crumbSub('/articles/', 'Articles', 'The Checkable Fraction'), nav: 'articles',
     related: [{ href: '/articles/', label: 'All articles', note: 'back to the list' }]
   },
   {
     src: 'articles/keep-the-context-map.md', out: 'articles/keep-the-context-map/index.html',
     fallbackTitle: 'Keep the Context Map. Replace the Aggregates.',
-    crumb: crumbSub('/articles/', 'Articles', 'Keep the Context Map'), nav: '',
+    crumb: crumbSub('/articles/', 'Articles', 'Keep the Context Map'), nav: 'articles',
     related: [{ href: '/articles/', label: 'All articles', note: 'back to the list' }]
   },
   {
     src: 'articles/every-test-can-name-why-it-exists.md', out: 'articles/every-test-can-name-why-it-exists/index.html',
     fallbackTitle: 'Every Test Can Name Why It Exists',
-    crumb: crumbSub('/articles/', 'Articles', 'Every Test Can Name Why It Exists'), nav: '',
+    crumb: crumbSub('/articles/', 'Articles', 'Every Test Can Name Why It Exists'), nav: 'articles',
     related: [{ href: '/articles/', label: 'All articles', note: 'back to the list' }]
   },
   {
     src: 'articles/pattern-based-code-review-article-v2.md', out: 'articles/pattern-based-code-review/index.html',
     fallbackTitle: 'From Subjective Opinions to Systematic Analysis: Pattern-Based Code Review',
-    crumb: crumbSub('/articles/', 'Articles', 'Pattern-Based Code Review'), nav: '',
+    crumb: crumbSub('/articles/', 'Articles', 'Pattern-Based Code Review'), nav: 'articles',
     related: [{ href: '/articles/', label: 'All articles', note: 'back to the list' }]
   },
   {
     src: 'articles/jbdt-process-first-methodology.md', out: 'articles/jbdt-process-first-methodology/index.html',
     fallbackTitle: 'Java Backend Design Technology: A Process-First Methodology',
-    crumb: crumbSub('/articles/', 'Articles', 'Java Backend Design Technology'), nav: '',
+    crumb: crumbSub('/articles/', 'Articles', 'Java Backend Design Technology'), nav: 'articles',
     related: [{ href: '/articles/', label: 'All articles', note: 'back to the list' }]
   },
   {
     src: 'articles/no-framework-no-pain.md', out: 'articles/no-framework-no-pain/index.html',
     fallbackTitle: 'No Framework, No Pain: Writing Aether Slices',
-    crumb: crumbSub('/articles/', 'Articles', 'No Framework, No Pain'), nav: '',
+    crumb: crumbSub('/articles/', 'Articles', 'No Framework, No Pain'), nav: 'articles',
     related: [{ href: '/articles/', label: 'All articles', note: 'back to the list' }]
   },
   {
     src: 'articles/aether-let-java-be-java.md', out: 'articles/aether-let-java-be-java/index.html',
     fallbackTitle: 'Pragmatica Aether: Let Java Be Java',
-    crumb: crumbSub('/articles/', 'Articles', 'Let Java Be Java'), nav: '',
+    crumb: crumbSub('/articles/', 'Articles', 'Let Java Be Java'), nav: 'articles',
     related: [{ href: '/articles/', label: 'All articles', note: 'back to the list' }]
   },
   {
     src: 'articles/interface-factory-pattern.md', out: 'articles/interface-factory-pattern/index.html',
     fallbackTitle: 'Why Interface + Factory? The Java Pattern That Makes Everything Replaceable',
-    crumb: crumbSub('/articles/', 'Articles', 'Interface + Factory'), nav: '',
+    crumb: crumbSub('/articles/', 'Articles', 'Interface + Factory'), nav: 'articles',
     related: [{ href: '/articles/', label: 'All articles', note: 'back to the list' }]
   },
   {
     src: 'articles/fail-safe-legacy.md', out: 'articles/fail-safe-legacy/index.html',
     fallbackTitle: 'Fail-Safe Your Legacy Java in One Sprint',
-    crumb: crumbSub('/articles/', 'Articles', 'Fail-Safe Your Legacy Java'), nav: '',
+    crumb: crumbSub('/articles/', 'Articles', 'Fail-Safe Your Legacy Java'), nav: 'articles',
     related: [{ href: '/articles/', label: 'All articles', note: 'back to the list' }]
   },
   {
     src: 'articles/slices.md', out: 'articles/slices/index.html',
     fallbackTitle: 'Slices: The Right Size for Microservices',
-    crumb: crumbSub('/articles/', 'Articles', 'Slices'), nav: '',
+    crumb: crumbSub('/articles/', 'Articles', 'Slices'), nav: 'articles',
     related: [{ href: '/articles/', label: 'All articles', note: 'back to the list' }]
   },
   {
     src: 'articles/six-patterns-that-cover-everything.md', out: 'articles/six-patterns-that-cover-everything/index.html',
     fallbackTitle: 'The Six Patterns That Cover Everything',
-    crumb: crumbSub('/articles/', 'Articles', 'The Six Patterns'), nav: '',
+    crumb: crumbSub('/articles/', 'Articles', 'The Six Patterns'), nav: 'articles',
     related: [{ href: '/articles/', label: 'All articles', note: 'back to the list' }]
   },
   {
     src: 'articles/underlying-process.md', out: 'articles/underlying-process/index.html',
     fallbackTitle: 'The Underlying Process of Request Processing',
-    crumb: crumbSub('/articles/', 'Articles', 'The Underlying Process'), nav: '',
+    crumb: crumbSub('/articles/', 'Articles', 'The Underlying Process'), nav: 'articles',
     related: [{ href: '/articles/', label: 'All articles', note: 'back to the list' }]
   },
   {
     src: 'articles/softwares-second-free-lunch.md', out: 'articles/softwares-second-free-lunch/index.html',
     fallbackTitle: "Software's Second Free Lunch",
-    crumb: crumbSub('/articles/', 'Articles', 'The Second Free Lunch'), nav: '',
+    crumb: crumbSub('/articles/', 'Articles', 'The Second Free Lunch'), nav: 'articles',
     related: [{ href: '/articles/', label: 'All articles', note: 'back to the list' }]
   },
   {
     src: 'articles/your-backlog-is-a-cache-of-beliefs.md', out: 'articles/your-backlog-is-a-cache-of-beliefs/index.html',
     fallbackTitle: 'Read-Point Planning: Your Backlog Is a Cache of Beliefs',
-    crumb: crumbSub('/articles/', 'Articles', 'Read-Point Planning'), nav: '',
+    crumb: crumbSub('/articles/', 'Articles', 'Read-Point Planning'), nav: 'articles',
     related: [{ href: '/articles/', label: 'All articles', note: 'back to the list' }]
   }
 ];
@@ -1212,6 +1214,7 @@ function verifyLinks() {
 
   let broken = 0;
   const linked = new Set();
+  const edges = new Map(); // dist-relative page -> pages it links to
   const hrefRe = /(?:href|src)="([^"]+)"/g;
 
   files.forEach(file => {
@@ -1263,20 +1266,37 @@ function verifyLinks() {
         }
       }
 
-      if (candidate !== rel) linked.add(candidate);
+      if (candidate !== rel) {
+        linked.add(candidate);
+        if (!edges.has(rel)) edges.set(rel, new Set());
+        edges.get(rel).add(candidate);
+      }
     }
   });
 
-  // A page nothing links to is unreachable in practice, however well it renders.
-  // Resolving links cannot catch that, so check reachability separately.
-  const orphans = files
+  // A page a reader cannot reach from the front door is unreachable in practice, however
+  // well it renders. Having an inbound link is not enough: a cluster of pages linking only
+  // to each other (the articles section, until it got a nav link) has no orphan in it and
+  // is still unreachable. So walk the link graph from index.html.
+  const reachable = new Set(['index.html']);
+  const queue = ['index.html'];
+  while (queue.length) {
+    (edges.get(queue.shift()) || []).forEach(next => {
+      if (!reachable.has(next)) { reachable.add(next); queue.push(next); }
+    });
+  }
+  const unreachable = files
     .map(f => path.relative(DIST_DIR, f).split(path.sep).join('/'))
-    .filter(rel => rel !== 'index.html' && !linked.has(rel) && !ORPHAN_ALLOWED.has(rel));
+    .filter(rel => !reachable.has(rel) && !ORPHAN_ALLOWED.has(rel));
 
-  if (orphans.length) {
-    orphans.forEach(rel => console.error(`  ORPHAN: ${rel} (no page links to it)`));
-    console.error(`\n✗ ${orphans.length} unreachable page(s).`);
+  if (unreachable.length) {
+    unreachable.forEach(rel => console.error(linked.has(rel)
+      ? `  UNREACHABLE: ${rel} (linked only from pages not reachable from index.html)`
+      : `  ORPHAN: ${rel} (no page links to it)`));
+    console.error(`\n✗ ${unreachable.length} unreachable page(s).`);
     process.exitCode = 1;
+  } else {
+    console.log(`✓ All ${reachable.size} pages reachable from index.html.`);
   }
 
   if (broken > 0) {

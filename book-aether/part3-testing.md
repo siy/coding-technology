@@ -1,4 +1,4 @@
-# Part IV — Testing & evolving
+# Part III — Testing & evolving
 
 The order app is built. Parts II and III turned a plain use case into a sliced application
 that reserves inventory, charges the customer, records events, and recovers a half-finished
@@ -12,13 +12,13 @@ proof, in the order you reach for them.
 A distributed system has a reputation for being hard to test, and the reputation is earned by
 systems that couple their logic to their infrastructure: to test one method you boot a broker,
 start a database, wire a web of mocks, and chase timing flakes. An Aether slice does not carry
-that coupling. From Part II: a slice is plain Java, its dependencies are the interfaces named in
+that coupling. From Part I: a slice is plain Java, its dependencies are the interfaces named in
 its factory, and assembling those dependencies is environment-independent and checked at compile
 time. That last fact is what makes the test honest — the wiring you exercise in a test is the
 wiring that ships, not a mock standing in for it.
 
 So you test a use case by handing its factory the dependencies it names, as lambdas, and
-asserting on what comes back. Part II showed the happy path; this is its mirror, the failure
+asserting on what comes back. Part I showed the happy path; this is its mirror, the failure
 path:
 
 ```java
@@ -84,7 +84,7 @@ Within that boundary, the chaos controls are real levers. From the `/api/chaos`
 endpoints you kill a node, kill the leader — Forge reports which node was leader and which took
 over — start a rolling restart, or add a node, while the load generator (`/api/load`) drives
 steady traffic through the app. This is where you confirm that your design's idempotency claim
-(Part II) actually holds: kill the leader mid-`placeOrder`, and because the operation is safe to
+(Part I) actually holds: kill the leader mid-`placeOrder`, and because the operation is safe to
 repeat, the retry lands on a surviving instance and the customer sees one order and one charge.
 
 Read the honest limit into your test as well. Forge injects node loss as a graceful stop — the
@@ -186,7 +186,7 @@ code.
 Then you peel. The legacy `place` calls inventory and payment internally; the sliced app has an
 `Inventory` slice and a `Payments` slice already. Replace the internal inventory call with a call
 to the `Inventory` slice, test, deploy; replace payment next; continue until `place` is the
-pipeline from Part II and the legacy shell is empty. Each step is a single call moved behind a
+pipeline from Part I and the legacy shell is empty. Each step is a single call moved behind a
 boundary that already exists — the slice boundary you would have drawn anyway.
 
 Why migrate this way rather than rewrite: because `Promise.lift` makes a legacy call an ordinary
@@ -198,6 +198,6 @@ small, safe steps between them. The repo's migration guide
 and the peeling checklist.
 
 With the app built, verified as logic, exercised as a cluster, measured under load, and reachable
-from the code you are replacing, what is left is running it. Part V is deployment and operation —
+from the code you are replacing, what is left is running it. Part IV is deployment and operation —
 assembling blueprints, scaling the slices independently, shipping a new version without a window,
 and reading what the running cluster is telling you.

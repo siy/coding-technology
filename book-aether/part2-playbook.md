@@ -69,7 +69,7 @@ succeed. (Values read back from your own store were validated on the way in, so 
 builds them directly; untrusted input is still parsed at the edge, as always.)
 
 The second is the upsert. `save` is written with `ON CONFLICT (id) DO UPDATE`, so running it
-twice produces one row, not two. That is Part II's idempotency made concrete: a retried
+twice produces one row, not two. That is Part I's idempotency made concrete: a retried
 `save` after a dropped connection is safe. Module D returns to idempotency keys for the
 cases an upsert cannot cover.
 
@@ -309,7 +309,7 @@ the default answer. This chapter is about what to do when one is genuinely not e
 
 The honest first question is whether the second store belongs in this slice at all. A separate
 concern with its own data, a reporting warehouse, a catalog owned by another team, is usually
-better as its own slice, called across the cluster like any other (Part II): a second slice
+better as its own slice, called across the cluster like any other (Part I): a second slice
 deploys and scales on its own and draws a clean ownership line. Reach for a second datasource
 inside one slice only when a single use case must touch both stores and you want them to share
 this slice's deployment and lifecycle. Workload isolation is the usual reason. The orders table
@@ -426,7 +426,7 @@ leaves storage for movement, the messages slices send each other, by pub-sub and
 
 Persistence let a slice remember. Messaging lets slices tell each other what happened. Module A
 reached its stores as parameters, the slice initiating every call. Messaging uses both wiring
-mechanisms from Part I: a parameter to send and an annotated method the runtime drives to
+mechanisms from Part VI: a parameter to send and an annotated method the runtime drives to
 receive. Two kinds of messaging share that shape and differ in what they promise. Pub-sub is a
 live announcement that whoever is listening hears. A stream is a durable log that nothing falls
 out of. This module builds each on the orders spine and ends with how to choose.
@@ -653,7 +653,7 @@ reserves for a log that must read as one total order, makes partition 0 the whol
 multi-partition stream needs a loop per partition.
 
 Delivery is at-least-once: a batch read but not committed is read again after a failure, so the same
-event can arrive twice, and the handler must be idempotent in the sense of Part II. The ledger's
+event can arrive twice, and the handler must be idempotent in the sense of Part I. The ledger's
 `ON CONFLICT (event_id) DO NOTHING` makes a redelivery a no-op, which is why it is an insert keyed on
 the event id rather than a blind append.
 
@@ -944,7 +944,7 @@ commit the order and record an event reliably, the event written to a durable st
 record, and the rest of the system is built by reading that stream. Making that second write
 reliable when neither the commit nor the emit may be lost is the dual-write problem, and Module D
 solves it with an idempotency key rather than a separate outbox to operate. The
-model to carry forward is unchanged from Part I: a parameter to send, an annotated method to
+model to carry forward is unchanged from Part VI: a parameter to send, an annotated method to
 receive, and the runtime reading the manifest to wire both. Messaging added two resource types —
 a durable declaration on the first is configuration, not a third — and reused the model intact.
 The next module collects the smaller resources a slice reaches for, HTTP, notifications,
@@ -952,7 +952,7 @@ scheduled work, and the interceptors that wrap them.
 
 # Module C — Other resources
 
-Part I named three seams a slice meets the world through: a resource taken as a parameter, where
+Part VI names three seams a slice meets the world through: a resource taken as a parameter, where
 the slice calls out; a method the runtime calls in; and the interceptors woven around the slice's
 own methods.
 Modules A and B used the first two for stores and messaging. This module collects the smaller
@@ -965,7 +965,7 @@ A slice rarely lives alone. To price an order the order service may need a curre
 external API; once an order is placed, the customer should get a confirmation. Both reach outside
 the cluster, one to a third-party HTTP service and the other to an email provider, and both are
 resources requested as parameters, the slice initiating the call. (A call to another slice inside
-the cluster is the remote-proxy parameter from Part I; this chapter is about reaching services
+the cluster is the remote-proxy parameter from Part VI; this chapter is about reaching services
 that are not slices.)
 
 The HTTP client comes from the built-in `@Http` qualifier, which binds an `HttpClient` to the
@@ -1054,7 +1054,7 @@ located by config. The next chapter turns to work that no caller triggers.
 
 Not all work starts with a request. Abandoned carts need sweeping every few minutes, a nightly
 report needs building at two in the morning, a stuck payment needs a periodic nudge. No caller
-initiates these; they run on a clock. This is the other wiring mechanism from Part I: the runtime
+initiates these; they run on a clock. This is the other wiring mechanism from Part VI: the runtime
 calls into an annotated method, this time on a schedule.
 
 You declare a scheduled task with a method qualifier whose type is the built-in `Scheduled`
@@ -1109,7 +1109,7 @@ reactive.0.method=sweep
 ```
 
 Because a scheduled task can run after a missed tick, or during a leader change land close to
-another run, write it to be safe to repeat, the idempotency habit from Part II: the sweep's
+another run, write it to be safe to repeat, the idempotency habit from Part I: the sweep's
 `DELETE` is naturally repeatable, and a task that is not should guard itself. Moving from every
 five minutes to every minute, or from per-node to leader-only, is a config change; the method
 does not know the difference.
@@ -1182,10 +1182,10 @@ is fire-and-forget inside Postgres: one delivered while no node is connected is 
 payload is a short string, not the row. So it fits a low-latency nudge, "something changed, go
 look", and a change you cannot afford to miss belongs in a table or a stream from Module B, with
 the notification as an optimization on top. Because a reconnection can drop or repeat around the
-edges, keep the handler cheap and idempotent, the same habit Part II asks of every method the
+edges, keep the handler cheap and idempotent, the same habit Part I asks of every method the
 runtime drives.
 
-Scheduled ticks and database notifications are both the runtime calling in. Part I named one more
+Scheduled ticks and database notifications are both the runtime calling in. Part VI names one more
 seam, different from either: behavior wrapped around the slice's own methods. Which behaviors apply,
 and in what order, is fixed when the slice is compiled; how each behaves is what a deployment tunes.
 
@@ -1254,7 +1254,7 @@ log_duration = true
 ```
 
 The generated factory builds each interceptor from its config section and wraps the method in them,
-composing them as nested `intercept(...)` calls inside the generated bridge from Part I 1.1, so the
+composing them as nested `intercept(...)` calls inside the generated bridge from the anatomy section of Part VI, so the
 method runs inside the chain with nothing in `placeOrder` changing. The seven that ship are retry,
 circuit breaker, rate limit, metrics, logging, cache, and idempotency, each a `MethodInterceptor`
 (`RetryMethodInterceptor`, `CircuitBreakerMethodInterceptor`, and so on) with its own config record.

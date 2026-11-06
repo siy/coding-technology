@@ -32,11 +32,11 @@ surfaces in it on its own. The order system is the spine of the book; a few
 introductory passages step into other domains, such as logistics or device telemetry,
 only to show that a pattern reaches past commerce.
 
-Read the parts in order, with one exception. Part I, "Aether Slice: No Magic," is a
-deep dive into what the runtime generates for you and how a slice actually assembles,
-starts, and routes a request. It is written for the reader who will not trust what
-they cannot see. If you would rather build first and open the hood later, skip it and
-begin at Part II; the chapters that follow link back to it wherever the machinery
+Read the parts in order, with one exception. Part VI, "Under the hood," is a
+deep dive into what the runtime generates for you and how a slice actually assembles
+and starts. It is written for the reader who will not trust what
+they cannot see. It comes last because nothing before it depends on it; read it
+whenever you want to open the hood. The chapters before it point forward to it wherever the machinery
 matters.
 
 One rule runs through the whole book: every rule it hands you carries its reason. A

@@ -1,6 +1,6 @@
 # Part IV — Deploy & operate like a senior
 
-Part IV proved the app four ways: as logic, as a cluster under chaos, as a load curve, and
+Part III proved the app four ways: as logic, as a cluster under chaos, as a load curve, and
 as the destination of a migration. Running it in production is the last skill this book teaches,
 and the senior version of it is not the deploy command. It is knowing what the runtime guarantees,
 what it does not, and shaping both your operations and your design around the difference. This
@@ -65,7 +65,7 @@ to relieve one slice wastes nodes and keeps the two coupled — the thing slicin
 Aether scales on two independent axes instead.
 
 A slice runs a number of instances across nodes, set per slice, so payment can run at fifty while
-catalog idles at one, because each slice is its own deployable (Part II). Underneath, the cluster
+catalog idles at one, because each slice is its own deployable (Part I). Underneath, the cluster
 scales its node count. Both are direct commands:
 
 ```bash
@@ -217,11 +217,11 @@ And it is a design force, not only an ops fact. Because availability is conditio
 majority-core liveness, you size the core for the failures you must survive — three to tolerate
 one, five to tolerate two — and let cheaper workers carry load without carrying votes. Because a
 minority partition pauses rather than lies, your slices never have to defend against split-brain
-writes; the runtime refuses them. Idempotency from Part II and this rule are the two facts your
+writes; the runtime refuses them. Idempotency from Part I and this rule are the two facts your
 design leans on: repeat-safe operations plus a consensus that never diverges mean that a retry
 after a failover is always safe — which is the guarantee the whole book has been building toward.
 
 With the app deployed, scaled, updated, observed, and understood at its failure boundary, the
-mechanics are complete. Part VI steps back from them to the way of thinking that produced them:
+mechanics are complete. Part V steps back from them to the way of thinking that produced them:
 deriving an idiom when the runtime offers none, designing for idempotency and failure from the
 first line, and the techniques this book had to invent along the way.

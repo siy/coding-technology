@@ -275,7 +275,7 @@ Most-specific wins: blueprint `resources.toml` (global) < `aether.toml` (node) <
 
 ## CLI and management API
 
-The operational commands Part V teaches, at this pin:
+The operational commands Part IV teaches, at this pin:
 
 ```bash
 aether cluster bootstrap <config>.toml --wait

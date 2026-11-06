@@ -91,7 +91,7 @@ call reaches it are the runtime's business, not yours.
 The model asks one thing of your code in return: slice methods should be idempotent,
 so the same request handled by any instance produces the same result. That single
 requirement is what makes transparent retry, scaling, and failover possible, and it is
-why the cluster keeps serving as long as a majority of its nodes are alive. Part II
+why the cluster keeps serving as long as a majority of its nodes are alive. Part I
 returns to idempotency as a design discipline; for now it is enough to know it is the
 price of admission, and a low one.
 
@@ -150,6 +150,6 @@ parameter is assembling; the same parameter carrying a resource qualifier like `
 fixing them now: assembling wires your parts together, provisioning hands your parts the
 outside world.
 
-The next part opens the hood and shows exactly what the runtime generates and does on your
-behalf, assembling and provisioning included. If you would rather start building and trust
-the machinery for now, skip to Part II.
+The next part starts building with Aether. What the runtime generates and does on your
+behalf, assembling and provisioning included, is shown in Part VI, for when you want to
+open the hood.

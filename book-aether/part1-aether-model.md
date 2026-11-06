@@ -1,7 +1,7 @@
 # Part I — The Aether model
 
 Part 0 made the case that infrastructure and business logic are different kinds of code, and
-Part I, for those who took the detour, showed the machinery that keeps them apart. This part is
+Part VI, for those who want to open the hood, shows the machinery that keeps them apart. This part is
 where you start building. The working model is three commitments. A slice is plain Java with an
 explicit contract. The three environments you will meet run the same slice code; what differs
 is what lies underneath it, the network and with it timing and the ways a call can fail. And the runtime's guarantees are bought with one design habit,
@@ -122,7 +122,7 @@ One more thing happened when you wrote `@Slice`, and it happened at compile time
 slice-processor read the interface and generated the companion class that lets a node
 host it: the wiring that resolves the factory's parameters, the dispatch table for its
 methods, the codecs for every nested type. None of it needs your attention while
-building, all of it is inspectable Java when you are curious, and Part I walks through
+building, all of it is inspectable Java when you are curious, and Part VI walks through
 every generated line. What matters here is the direction of authority: the contract you
 wrote is the whole input. There is no configuration class, no serialization annotation
 on the request types, no registration step to forget — a slice that compiles is a slice
@@ -169,7 +169,7 @@ void placeOrder_reportsDecline_whenPaymentRefuses() {
 ```
 
 Two lambdas, one of them refusing, and the whole failure route of the pipeline is under
-test without a network, a container, or a mock of anything. Part IV builds a testing
+test without a network, a container, or a mock of anything. Part III builds a testing
 practice on this foundation; for now the point is that the contract you just wrote is
 already exercisable, in full, before any runtime enters the picture.
 
@@ -216,18 +216,18 @@ route.0.security=public
 
 When a request arrives, the router matches its method and path to a route, decodes the
 path parameters and body into the request type with the generated codec, and calls the
-slice method through the dispatch table described in the anatomy section above. A success is
+slice method through the dispatch table described in the anatomy section of Part VI. A success is
 serialized to the route's response media type, JSON by default, and an empty result becomes
 a 204. A returned `Cause` is mapped to its HTTP status and rendered as an RFC 9457 `ProblemDetail`
 body (served as `application/json`); a request that matches no route becomes a 404 `ProblemDetail`
 body, served by the ingress as `application/problem+json`.
 
-That closes the machine. You write an interface, a factory, and a `routes.toml`. The
+That closes the request path. You write an interface, a factory, and a `routes.toml`. The
 processor writes the factory bridge, the `Slice` wrapper with its dispatch table and
 codecs, the manifest, and the routes class. The runtime reads that manifest as data and,
 for every request, decodes, dispatches, and encodes, while your method does the one thing
-it was written to do: return a `Promise`. Part II builds slices in earnest, and Part III
-puts them to work on the problems that fill a real system.
+it was written to do: return a `Promise`. The rest of this part configures a slice and places it
+in its environments, and Part II puts slices to work on the problems that fill a real system.
 
 ## Config inheritance
 
@@ -387,7 +387,7 @@ is the artifact that already answered both questions. Nothing is rebuilt for pro
 the blueprint and its configuration name the environment-specific parts, which is Part
 0's split doing its job — assembling decided the wiring at compile time, and provisioning
 defers only the endpoints, credentials, and sizes that legitimately differ per
-environment. Part V takes the deployment story from there.
+environment. Part IV takes the deployment story from there.
 
 A cross-slice call is written the same way in all three. The runtime routes it through
 its invocation fabric and handles serialization, retry, and failover for you, and nothing
@@ -408,7 +408,7 @@ deployment. And because the fabric is the same on your laptop, what Forge shows 
 you kill the payment node under load is the same class of incident production will bring,
 not the exact one, brought forward to the point in the schedule where it costs a coffee
 break instead of a war room. The environments differ in scale, stakes, and network timing;
-the code path a call takes does not, and the testing strategy of Part IV stands on that.
+the code path a call takes does not, and the testing strategy of Part III stands on that.
 
 ## Idempotency, the price of admission
 
@@ -436,7 +436,7 @@ Be precise about what is being promised, because "the same result" is about the 
 not just the return value. Running the method twice must leave the same external effects
 as running it once: one row, one charge, one email — and a repeat the caller can
 recognize as already done. Reads clear the bar by construction. Writes take design, and the two working
-techniques are the ones Part III develops: an idempotency key, some stable identity the
+techniques are the ones Part II develops: an idempotency key, some stable identity the
 second attempt carries so the first attempt's work is recognized rather than repeated,
 and the conditional write, an operation phrased so applying it twice converges on the
 same state, the way the persistence module's `ON CONFLICT` upsert converges on the same row, and the durable

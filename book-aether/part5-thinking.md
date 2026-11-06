@@ -68,7 +68,7 @@ The second habit is refusing the schedule most projects keep, where failure hand
 repetition safety arrive after the features, as hardening. In a distributed system they
 are not hardening; they are half the specification, and the half that shapes the design.
 
-The reason is structural, and Part II named it: a caller that times out cannot know
+The reason is structural, and Part I named it: a caller that times out cannot know
 whether the work happened. The only available move is asking again, so every layer of
 the runtime asks again — retries, failovers, at-least-once delivery — and a method that
 was not designed for repetition is not incomplete, it is wrong, in a way no later

@@ -104,6 +104,15 @@ will mark the first edition released to readers.
     separate machines.
 
 ### Changed
+- Parts I-IV and Part V's blueprint section re-verified against pragmatica `release-1.0.0-rc5`
+  `d113279af9` (previously rc3). Corrected: config precedence (node `aether.toml` and operator
+  changes override the slice's `META-INF/resources.toml`; `slices/<Name>.toml` is build-time only);
+  config-update methods refresh a running slice; route errors served as `application/json`;
+  `ResourceFactory` example gains `resourceType()`; notification config tables; interceptor config
+  keys; stream keys `retention_value`, `replication_factor`, `confirmation_factor`; entity-chapter
+  failure facts; Forge has no dashboard (REST API on `:8888`), data under `.aether/forge-data`; WAL
+  test citations moved to `AppendLogTest`; bootstrap runs eight phases; cluster deploys refuse
+  SNAPSHOT versions. Streams delivery, cursor and publish wording unchanged (on hold).
 - Title: *Building Applications with Aether* -> *From Terra to Aether*, subtitle *Building Java
   Applications in Slices* (owner, 2026-11-06). The subtitle replaces *Less art, more engineering*.
 - Slice names follow the business-names rule (`aether-coder`, pragmatica #2523): `OrderService` -> `Ordering`,

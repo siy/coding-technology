@@ -238,14 +238,16 @@ every layer the loader would consult for that slice. The generated bridge's `pro
 do the provisioning; the manifest entries are what let the cluster check, once and for the whole
 blueprint, that those calls will find their sections. The check is narrow on purpose. It covers
 resource dependencies only, leaving topics and streams to their own validation, and it reads the
-leader's node configuration, so a section present on the leader and missing from another node's
-file passes it. The same parse records the `publish.topic.*` entries as the slice's publishes,
+node composite of the one node that runs the check (the source calls it the leader's), so a section
+missing from any other node's file passes it. The same parse records the `publish.topic.*` entries as the slice's publishes,
 which the blueprint's pub/sub pre-flight reads.
 
-Activation reads a different set. When a slice activates, `SliceLegBuilders` reads the
-`reactive.*` and `stream.*` entries and turns them into the commands that
-register the slice's legs in the cluster's store: topic subscriptions, stream registrations,
-scheduled tasks, stream references. On unload the same builders produce the matching removes. A
+Activation reads a different set. When a slice activates, the node's deployment state
+(`NodeDeploymentState`) reads the `reactive.*` and `stream.*` entries and publishes the slice's
+legs to the cluster's store: topic subscriptions, stream registrations, scheduled tasks, stream
+references. On unload it runs the matching unpublish steps. (`SliceLegBuilders` is the equivalent
+in the replacement deployment engine, which at rc5 is a test and development switch and off by
+default.) A
 slice carries one manifest per interface under `META-INF/slice/`, and one that cannot be read is
 logged and skipped, so the slice activates without the legs that manifest declared. The
 `reactive.*` entries of category `config-update` have one more reader, the configuration path at
@@ -273,7 +275,7 @@ framework's. The innermost stamps the slice's identity onto the context. Below t
 either a slice-scoped overlay or the node's provider.
 
 The overlay exists for the provisioned step. The node's provider discovers factories once, at
-boot, with a `ServiceLoader` scan of the node's own classloader, indexes them by resource type and
+boot, with a `ServiceLoader` scan through the thread-context classloader, indexes them by resource type and
 sorts each list by `priority()`, highest first. A factory that ships inside your slice jar is
 defined later, by the slice's classloader, so that scan cannot see it. `SliceScopedResourceProvider`
 reads the slice jar's `META-INF/services` with the slice's loader, keeps only the factories that
@@ -353,23 +355,24 @@ operator writes is what the slice reads.
 
 An operator change takes this path. The management API hands the key and value to
 `DynamicConfigManager`, which proposes a put to the cluster's consensus store, cluster-wide or
-scoped to one node. When the put commits, each node's `onConfigPut` applies it if it is
-cluster-wide or names that node, writes it into the overlay, and then calls its applied-listeners
+scoped to one node. When the put commits, each node's `onConfigPut` applies it (a worker's too, under the default
+deployment engine) if it is cluster-wide or names that node, writes it into the overlay, and then calls its applied-listeners
 in registration order with the dotted key. The overlay write comes first, so a listener that reads
-sees the new value. Two listeners are registered.
+sees the new value. Two listeners are registered, the `Watched` feed first and the update-method
+dispatch second.
 
-The first is the update method Part I mentioned. At activation, `ConfigUpdateSections` collects
+One is the update method Part I mentioned. At activation, `ConfigUpdateSections` collects
 the sections a slice registers for: the section of each `config-update` reactive entry, and `json`
 for a slice with routes. `ConfigNotificationManager` finds the factory's generated static
 `notifyConfigUpdate` by reflection and calls it once per section straight away, so the method sees
 the current values before any change. A committed change is then dispatched on a single
-`config-notification` thread: for each registered slice and each section that is a prefix of the
-changed key, it builds a facade over that slice's composite and invokes the method. The generated
+`config-notification` thread: for each registered slice and each section that, followed by a dot,
+is a prefix of the changed key, it builds a facade over that slice's composite and invokes the method. The generated
 body re-parses the section into your record and calls your method; a parse failure is logged and
 your method is not called. The generated code does not compare the record with the previous one,
 so a change to a key whose value parses identically still reaches your method.
 
-The second listener feeds `Watched`, reached through `ctx.config().watched(section, binder)`, with
+The other feeds `Watched`, reached through `ctx.config().watched(section, binder)`, with
 `Live` over it for pull access. Its subscriptions do compare: each delivers serially on its own
 virtual thread, binds against one consistent state of the overlay, collapses a burst of changes to
 the latest, and skips a record equal to the last one delivered. A callback runs under a timeout,
@@ -428,8 +431,9 @@ the cluster's replicated key-value store. When a slice becomes active on a node,
 one row naming itself, the artifact and the list of method names taken from the slice's
 `methods()`. Every node's registry turns those rows into endpoints. Selection takes the endpoints
 for the exact artifact and method, sorts them by node id, removes any node that cluster membership
-no longer considers reachable, and picks the next one round-robin, with one counter per artifact
-and method. The local node is one candidate among the others, with no preference. While a
+no longer considers reachable, and picks the next one round-robin, with a counter per artifact
+and method. The local node is one candidate among the others, with no preference; the invoker has a
+cache-affinity hook that could bias the pick, and nothing registers it at rc5. While a
 deployment is shifting traffic between two versions the pick is weighted instead; that belongs to
 rolling updates. If nothing is left after filtering, the call fails at once with
 `No endpoint found for slice/method`.
@@ -465,11 +469,14 @@ shows up to the caller as a timeout, not as a send error.
 `InvocationHandler.onInvokeRequest`, which restores the request id, depth and sampling flag as
 the ambient context and looks up the local bridge for the exact artifact. The bridge was built
 when the slice was registered: `DefaultSliceBridge` wraps the generated `Slice`, keeps a map from
-method name to the `SliceMethod` entries of `methods()`, and holds the slice's codec. Every call
-first passes an admission gate; a node that is draining refuses new work there. Admitted, the
+method name to the `SliceMethod` entries of `methods()`, and holds the slice's codec. An
+`AdmittedSliceBridge` wraps that in turn, and every call first passes its admission gate; a node
+that is draining refuses new work there. Admitted, the
 bridge looks up `quote` in the map, decodes the payload with the slice's own codec, calls the
 `SliceMethod`, which is `delegate::quote` from the generated wrapper, and encodes the result. The
-reply is bounded on this side too, by `timeouts.invocation.timeout` (15 seconds by default).
+reply is bounded on this side too: the `AdmittedSliceBridge` timer, `timeouts.invocation.timeout`
+(15 seconds by default), fails the reply when the method runs longer. It bounds the reply, not the
+execution, so the method keeps running.
 Failures the bridge itself produces are tagged as slice defects, separately from failures your
 method returns: a method name not in the map, a codec that throws, a method that throws instead of
 returning a failed `Promise`. That split is what lets the leader tell a broken version from a
@@ -487,9 +494,10 @@ worth knowing exactly:
 | What happened | What the caller's `Promise` fails with |
 |---|---|
 | No reachable endpoint at selection | `No endpoint found for slice/method` |
-| No response within the caller's wait | `CoreError.Timeout`, "Promise timed out after N ms" |
+| No response within the caller's wait (at the defaults this needs a lost frame or an unresponsive node, because the callee's own limit is shorter) | `CoreError.Timeout`, "Promise timed out after N ms" |
 | Target node removed or decommissioned by membership | "Target node … departed", at once, without waiting for the timer |
 | The callee's method failed | `RemoteInvocationError`, "Remote invocation failed: " plus the client message |
+| The callee's method runs past the callee-side limit (15 s by default, shorter than the caller's 20 s) | `RemoteInvocationError`, "Remote invocation failed: Promise timed out after 15000ms"; the method keeps running |
 | The slice is not on the target (moved between pick and arrival) | `RemoteInvocationError`, "Slice not found: …" |
 | The target is draining | `RemoteInvocationError` with the draining message |
 | The response does not decode | the codec's failure |
@@ -521,6 +529,8 @@ holding one `TypeCodec` per type the slice transmits. Each entry is four things:
 wire tag, a writer and a reader. For a record the writer writes each component in turn through
 the same registry, so nested records, lists and options recurse through it.
 
+An abridged entry; the generated code spells the types fully qualified and writes out the reader:
+
 ```java
 new SliceCodec.TypeCodec<QuoteRequest>(QuoteRequest.class,
     SliceCodec.deterministicTag("com.shop.orders.OrderQuote.QuoteRequest"),
@@ -531,7 +541,7 @@ new SliceCodec.TypeCodec<QuoteRequest>(QuoteRequest.class,
     /* reader: the components back, in the same order */)
 ```
 
-"Types the slice transmits" is wider than its own method signatures. The list also covers the
+"Types the slice transmits" is wider than its own method signatures. The list also covers, among others, the
 request and response types of every slice it depends on, which is why `Ordering`'s codec can
 encode a `QuoteRequest` even though `QuoteRequest` belongs to `OrderQuote`.
 
@@ -589,5 +599,5 @@ membership that filters it are the next layer down.
   what only the core decides.
 - **From blueprint to running instance.** The deployment state machine that turns a deployed
   blueprint into instances on nodes.
-- **Where a stream's events live.** The storage beneath a stream partition, below what Part II's
-  streams sections show.
+- **Where a stream's events live.** The storage beneath a stream partition, below what Module B's
+  stream material in Part II shows.

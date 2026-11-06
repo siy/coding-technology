@@ -184,9 +184,9 @@ necessary half of recoverability, not the sufficient half; a clean verdict means
 too late, not that every record in between is actually present. The three sources are read one
 after another rather than as one atomic snapshot, which is the genuine reason the periodic watch
 requires two consecutive bad reads, not one, before it pages a `CRITICAL` `retention-invariant`
-alert (`#634` items 3+4, `RetentionRoutes.java`) — and that periodic half runs only while a
-dashboard client is connected, so an unwatched cluster gets the invariant checked when you call the
-endpoint yourself, not as a standing background guarantee. The same response carries
+alert (`#634` items 3+4, `RetentionRoutes.java`) — and that periodic half runs on a fixed
+interval (`RETENTION_INVARIANT_CHECK_INTERVAL`), whether or not anyone is watching. The same
+response carries
 `wal.failStopped`: a WAL that has stopped accepting writes after a failed fsync shows up here
 before it shows up as a missing event.
 

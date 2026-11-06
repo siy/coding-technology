@@ -3,6 +3,7 @@
 > You do not need any of this to build with Aether; every earlier part stands without it. This
 > part opens the machinery those parts relied on, for when you want to know what runs beneath
 > your slice.
+
 ## Anatomy of a slice: what you write versus what is generated
 
 Take the smallest slice that still does something: a quote calculator. Given a SKU and a

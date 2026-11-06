@@ -1,6 +1,6 @@
 # The Engineering Scalability Crisis: Why Standard Code Structures Matter More Than Ever
 
-**Version:** 2.0.1 | **For:** CTOs, VPs of Engineering, CEOs | **By:** [Pragmatica Labs](https://pragmaticalabs.io)
+**Version:** 2.0.2 | **For:** CTOs, VPs of Engineering, CEOs | **By:** [Pragmatica Labs](https://pragmaticalabs.io)
 
 ## The $3 Million Question
 
@@ -313,7 +313,7 @@ An interface annotated with `@Slice`, plus business logic. No HTTP clients, no s
 Promise.lift(() -> legacyService.generate(request));
 ```
 
-The adoption path is designed to be low-risk: start in Aether Ember -- a single-process runtime that runs alongside your existing application in the same JVM. No risk added. From there, the strangler fig pattern: extract a hot path, deploy as a slice, route traffic, repeat. The target: one sprint to first slice in production.
+The adoption path is incremental, by the strangler fig pattern: extract a hot path, deploy it as a slice, route traffic to it, repeat. The target: one sprint to first slice in production.
 
 **The economic impact compounds what JBCT delivers**:
 
@@ -374,7 +374,7 @@ This fails because:
 3. **Major refactors**: When touching >50% of a module anyway, migrate to new patterns
 4. **Leave legacy alone**: Existing code stays as-is unless you're already rewriting it
 
-For teams considering Aether: legacy code can be wrapped behind a `@Slice` interface with `Promise.lift()` and deployed to Aether Ember without any rewrite. The legacy code gains fault tolerance immediately. Refactoring to clean JBCT patterns happens gradually, at your own pace.
+For teams considering Aether: legacy code can be wrapped behind a `@Slice` interface with `Promise.lift()` and deployed as a slice without any rewrite. Its exceptions become typed failures at the boundary, and calls to it go through the runtime's retry and failover, which is safe for operations that tolerate being repeated. Refactoring to clean JBCT patterns happens gradually, at your own pace.
 
 **The economic logic**: Legacy code is working. It's expensive to maintain, but rewriting it is **pure cost**. New code is where you get leverage - faster development, easier onboarding, better AI collaboration.
 

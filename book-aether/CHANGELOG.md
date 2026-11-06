@@ -115,6 +115,13 @@ will mark the first edition released to readers.
     separate machines.
 
 ### Changed
+- Structure: old Part I "Aether Slice: No Magic" is split. "Request routing", "Config inheritance"
+  and "Configuring behavior: the provisioned step" move into Part I (old Part II), after "Your first
+  slice". Anatomy, lifecycle and assembly become Part VI "Under the hood" at the end of the book.
+  Parts renumber: old II-VI become I-V. Files renamed to match (`part1-aether-model.md` ...
+  `part6-under-the-hood.md`); cross-references, `root.md` and `build-pdf.sh` follow. No text
+  otherwise changed beyond the Part VI opening, the introduction's reading note, and the routing
+  section's closing paragraph.
 - Parts I-IV and Part V's blueprint section re-verified against pragmatica `release-1.0.0-rc5`
   `d113279af9` (previously rc3). Corrected: config precedence (node `aether.toml` and operator
   changes override the slice's `META-INF/resources.toml`; `slices/<Name>.toml` is build-time only);

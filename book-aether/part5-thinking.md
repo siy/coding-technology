@@ -69,8 +69,10 @@ repetition safety arrive after the features, as hardening. In a distributed syst
 are not hardening; they are half the specification, and the half that shapes the design.
 
 The reason is structural, and Part I named it: a caller that times out cannot know
-whether the work happened. The only available move is asking again, so every layer of
-the runtime asks again — retries, failovers, at-least-once delivery — and a method that
+whether the work happened. The only available move is asking again, and somebody always
+makes it: the HTTP entry node for a request that is safe to re-send, stream and topic
+delivery for a failed event, a retry declared on the method, or the caller, which is
+the only one that asks again on a slice-to-slice call. A method that
 was not designed for repetition is not incomplete, it is wrong, in a way no later
 hardening pass reliably fixes. Retrofitting an idempotency key into a write that has
 been double-charging quietly is an incident review; designing it in is a line of code.

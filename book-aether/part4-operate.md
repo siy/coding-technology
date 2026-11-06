@@ -218,8 +218,12 @@ majority-core liveness, you size the core for the failures you must survive — 
 one, five to tolerate two — and let cheaper workers carry load without carrying votes. Because a
 minority partition pauses rather than lies, your slices never have to defend against split-brain
 writes; the runtime refuses them. Idempotency from Part I and this rule are the two facts your
-design leans on: repeat-safe operations plus a consensus that never diverges mean that a retry
-after a failover is always safe — which is the guarantee the whole book has been building toward.
+design leans on: an operation that is safe to repeat, running on a consensus that never diverges,
+can be asked again after a failover without harm. The condition sits on the operation: a write
+that is neither idempotent nor keyed by an identity the repeat carries is unsafe to repeat, however
+the repeat is made. Who asks again is named per path: the HTTP entry node re-sending a
+request that is safe to re-send, a stream redelivering an event, a retry declared on the method,
+or your own client. That conditional guarantee is the one the whole book has been building toward.
 
 With the app deployed, scaled, updated, observed, and understood at its failure boundary, the
 mechanics are complete. Part V steps back from them to the way of thinking that produced them:

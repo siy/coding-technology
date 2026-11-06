@@ -146,6 +146,20 @@ will mark the first edition released to readers.
   `Shipping` slice.
 
 ### Fixed
+- Retry and failover claims (verified at pragmatica `release-1.0.0-rc5` `c44325600c`, source only): the
+  runtime sends each slice-to-slice call once, to an instance on a node membership still counts alive;
+  it re-sends only at the HTTP entry node (a request provably not applied, or an RFC 9110 idempotent
+  method; up to 3 re-sends by default, fewer when fewer nodes are connected or the request budget runs out; three delivery attempts for a stream consumer, five for a durable topic) and in stream and durable-topic delivery. Every other retry is
+  declared on the method or made by the caller. Passages changed: *Part 0* (what the runtime provides;
+  the idempotency paragraph, which also drops the majority-of-nodes clause, a consensus property
+  covered in Part IV); *Part I* (the slice contract, the cross-slice call across environments,
+  "Idempotency, the price of admission": "fault-tolerant and scalable for free" removed, each source
+  of repetition named, the 503 answer to a possibly-applied `POST`); *Part II, Module A* (`save`
+  upsert after a failover); *Part II, Module D* (`StaleOwnerEpoch`: the default `TRANSIENT` retry
+  does not re-run it, the caller re-issues); *Part III*, Forge chaos controls (the client, not the runtime,
+  repeats a killed `placeOrder`); *Part IV* (retry after failover is safe on the condition of an
+  idempotent operation, no longer "always"); *Part V* (who asks again, per path); *Part VI* (the
+  no-retry statement scoped to the slice-to-slice path, the HTTP entry re-send named).
 - Portability claim (*Part II*, "Ember, Forge, and Aether" and the opening commitments; *Part IV*, why
   Forge is the first gate): the slice's code moves between environments unchanged, but timing,
   concurrency, failure behaviour and the resources a runtime provides can differ. Forge reproduces

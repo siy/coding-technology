@@ -149,7 +149,7 @@ will mark the first edition released to readers.
 - Retry and failover claims (verified at pragmatica `release-1.0.0-rc5` `c44325600c`, source only): the
   runtime sends each slice-to-slice call once, to an instance on a node membership still counts alive;
   it re-sends only at the HTTP entry node (a request provably not applied, or an RFC 9110 idempotent
-  method; up to 3 re-sends by default) and in stream and durable-topic delivery. Every other retry is
+  method; up to 3 re-sends by default, fewer when fewer nodes are connected or the request budget runs out; three delivery attempts for a stream consumer, five for a durable topic) and in stream and durable-topic delivery. Every other retry is
   declared on the method or made by the caller. Passages changed: *Part 0* (what the runtime provides;
   the idempotency paragraph, which also drops the majority-of-nodes clause, a consensus property
   covered in Part IV); *Part I* (the slice contract, the cross-slice call across environments,

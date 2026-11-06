@@ -421,8 +421,8 @@ method should be idempotent. Given the same request, it should produce the same 
 even if it runs more than once.
 
 This requirement is what the runtime's guarantees are built on, because requests get
-repeated, and each repeat has a named source. The node that receives an HTTP request
-re-sends it to another node when the first attempt provably applied nothing, or when the
+repeated, and each repeat has a named source. The node that receives an HTTP request and
+forwards it to a node serving the route re-sends it to another node when the first attempt provably applied nothing, or when the
 HTTP method is idempotent by its definition in RFC 9110 (`GET`, `HEAD`, `OPTIONS`,
 `TRACE`, `PUT`, `DELETE`). A stream redelivers an event its handler failed. A method with
 a declared retry runs again. A client that saw a timeout sends the request again. Scaling
@@ -439,9 +439,10 @@ engineering removes. When a call times out, the caller cannot know which side of
 work the loss happened on: the request may never have arrived, or the work may have
 completed and the acknowledgment died on the way back. Waiting does not resolve the
 ambiguity, and asking again is the only move available. The runtime asks again in two
-places: at the HTTP entry node, which re-sends a request that is safe to re-send, up to
-three times by default, and in stream and durable-topic delivery, which redelivers a
-failed event a bounded number of times before dead-lettering it. A method with a
+places: at the HTTP entry node, which re-sends a forwarded request that is safe to re-send,
+up to three times by default, fewer when fewer nodes are connected or the request's time
+budget runs out; and in event delivery, which redelivers a failed event (three attempts
+for a stream consumer by default, five for a durable topic) before dead-lettering it. A method with a
 declared retry asks again by its own policy. Everywhere else, every slice-to-slice call
 included, the caller asks again. Repetition is not
 an edge case in a distributed system; it is the ordinary mechanics of one. A slice

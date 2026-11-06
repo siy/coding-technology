@@ -92,8 +92,8 @@ call reaches it are the runtime's business, not yours.
 
 The model asks one thing of your code in return: slice methods should be idempotent,
 so the same request handled twice, by any instance, leaves the same result as handling
-it once. Requests do get repeated. The node that receives an HTTP request re-sends it to
-another node when that is known to be safe, a stream redelivers an event its handler
+it once. Requests do get repeated. The node that receives an HTTP request and forwards it
+re-sends it to another node when that is known to be safe, a stream redelivers an event its handler
 failed, a declared retry runs a method again, and a client that saw a timeout asks
 again. Idempotency is what makes each of those repeats harmless, and scaling relies on
 it too, because any instance may serve the repeat. Part I returns to idempotency as a

@@ -10,6 +10,17 @@ will mark the first edition released to readers.
 ## [Unreleased]
 
 ### Added
+- **Streams: consumer groups, reading the log, storage tiers, retention** (*Part III, Module B,
+  before "Pub-sub, durable pub-sub, or stream?"*): four sections, "Who reads which partition",
+  "Reading the log yourself", "Where an event lives", "How long the log keeps an event". The
+  `fetch` sentence and the retention-keys paragraph are rewritten to point at them. Publish API,
+  cursor semantics and delivery guarantees are unchanged (on hold).
+- **Module E, Performance and scale** (*Part III*, replaces the scaffold): caching, cache
+  invalidation, rate limits, circuit breakers, and how the interceptors combine. Backpressure
+  and batching are on hold.
+- **Module F, Architecture in the large** (*Part III*, replaces the scaffold): versioned-message
+  evolution (`routes.toml` versions, codec shape rules), multi-tenancy, and audit-as-data, as
+  patterns with no delivery-guarantee claims. Event sourcing and CQRS are on hold.
 - **Configuring behavior: the provisioned step** (*Part I, after Config inheritance*) —
   a resource qualifier may name a type of your own, so the varying part of an application
   is provisioned rather than selected by a flag the slice reads. Covers the factory

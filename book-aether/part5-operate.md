@@ -12,22 +12,23 @@ nodes rule as a force on your design rather than a footnote in your runbook.
 
 You have slices; production needs them assembled into a deployable unit, placed on a cluster, and
 made live — without hand-wiring and without a maintenance window for the first cut. A blueprint is
-that assembly: the declarative deployable that names the slices and the config sections each one
-resolves, the same assembling from Part 0 raised to deployment scale. The runtime reads the
-blueprint's manifest before it loads a class.
+that assembly: the declarative deployable that names the slices, the same assembling from Part 0
+raised to deployment scale. Before anything loads, the cluster checks the config sections those
+slices resolve, read from the slice manifests and the blueprint's `resources.toml`.
 
 Operating it is three moves: stand the cluster up once, then push and deploy on each release.
 
 ```bash
-# once — stand up the cluster (seven phases; config per bootstrap-config.md)
+# once — stand up the cluster (eight phases; config per bootstrap-config.md)
 aether cluster bootstrap orders-cluster.toml --wait
 
 # each release
-aether -c <node-ip>:8080 artifacts push   org.example:orders:1.0.0-SNAPSHOT
-aether -c <node-ip>:8080 blueprints deploy org.example:orders:1.0.0-SNAPSHOT --wait
+aether -c <node-ip>:8080 artifacts push   org.example:orders:1.0.0
+aether -c <node-ip>:8080 blueprints deploy org.example:orders:1.0.0 --wait
 ```
 
-Coordinates are `group:artifact:version`; `blueprints deploy` appends `:blueprint` for you, and
+Coordinates are `group:artifact:version`, and the version is a release: the cluster's artifact
+repository is write-once and refuses a SNAPSHOT. `blueprints deploy` appends `:blueprint` for you, and
 `--wait` blocks until the deploy settles. The `deploy-prod.sh` that `jbct init` scaffolds emits
 exactly these two commands, taking the cluster address from `-c` or `AETHER_ENDPOINT`. The
 getting-started tutorial walks the whole path end to end, including a real cloud bootstrap; this

@@ -60,7 +60,7 @@ runtime, and to build confidence in them you need to watch the cluster misbehave
 you do that.
 
 Forge runs a full cluster topology — five nodes by default — inside a single JVM, on the Ember
-runtime, and adds a dashboard, a load generator, and chaos controls on top. A cross-slice call in
+runtime, and adds a REST API for load generation and chaos controls on top. A cross-slice call in
 Forge goes through the same invocation fabric it would in production; the only thing that changes
 is the network beneath it, localhost instead of real links. The project `jbct init` scaffolds
 already knows how to start it:
@@ -69,18 +69,18 @@ already knows how to start it:
 ./run-forge.sh   # → aether-forge --config forge.toml --blueprint org.example:orders:1.0.0-SNAPSHOT:blueprint
 ```
 
-with the dashboard on `http://localhost:8888`, the app's HTTP on `:8070`, and the management API
+with Forge's REST API on `http://localhost:8888`, the app's HTTP on `:8070`, and the management API
 on `:5150`. The getting-started tutorial in the repo (`aether/docs/getting-started.md`) walks the
 first run end to end — install, scaffold, `run-forge.sh`, first request — and this chapter builds
 on top of it rather than repeating it.
 
 One sentence governs how to read everything Forge shows you. Forge is a simulation of
 distribution, not a distributed deployment: every one of those five nodes shares the same
-process, the same memory, and the same failure domain, so a "5 nodes" reading on the dashboard is
+process, the same memory, and the same failure domain, so a "5 nodes" reading from Forge is
 five topology positions, not five machines. That framing is the exact boundary of what a Forge
 result proves, and it is worth holding onto rather than reading past.
 
-Within that boundary, the chaos controls are real levers. From the dashboard or the `/api/chaos`
+Within that boundary, the chaos controls are real levers. From the `/api/chaos`
 endpoints you kill a node, kill the leader — Forge reports which node was leader and which took
 over — start a rolling restart, or add a node, while the load generator (`/api/load`) drives
 steady traffic through the app. This is where you confirm that your design's idempotency claim
@@ -89,10 +89,10 @@ repeat, the retry lands on a surviving instance and the customer sees one order 
 
 Read the honest limit into your test as well. Forge injects node loss as a graceful stop — the
 node flushes its write-ahead log on the way down — so what it proves is recovery from a clean
-departure, and from a blackholed node whose traffic is dropped, rather than recovery from a
+departure rather than recovery from a
 process torn apart mid-write. A true crash-kill, where a node loses power between the write and
 the fsync, is a property of a real cluster, not of a single JVM that cannot un-flush a log. Forge
-homes its data under `$AETHER_HOME/forge-data` precisely so the stream log is crash-durable
+homes its data under `.aether/forge-data`, next to the project's `forge.toml`, precisely so the stream log is crash-durable
 across a graceful restart during development; the torn-write case waits for separate machines.
 
 That gap is not entirely open, though — the WAL's own test suite closes part of it a different
@@ -100,14 +100,14 @@ way, by construction instead of by crashing anything. A live JVM cannot be kille
 of a `truncate`, so instead of causing a crash, the WAL's compaction tests build the exact
 on-disk artifacts a SIGKILL would leave at each point of the temp-file-and-rename dance a
 compaction performs, and assert that recovery reads correctly from every one of those states
-(`#634` item 7, four tests, `PartitionWalTest.java:478-559`, `CrashMidCompaction`). A neighboring
+(`#634` item 7, four tests, `AppendLogTest.java:879-963`, `CrashMidCompaction`). A neighboring
 suite in the same class checks a related but distinct question at the append path: what the WAL
 does when the fsync call itself reports failure. Before this landed, a failed fsync was retried,
 which is unsafe, because the operating system can drop the dirty pages while clearing the error,
 so a later retry can report success over a hole that was never actually written. The WAL now
 fail-stops instead — refusing every later append and truncate with a typed `WalError.FailStopped`
 until the node restarts — and the state is operator-visible as `wal.failStopped` (`#634` item 7,
-seven tests, `PartitionWalTest.java:308-473`, `FsyncFailure`). Neither suite is a substitute for
+seven tests, `AppendLogTest.java:706-874`, `FsyncFailure`). Neither suite is a substitute for
 the real crash-kill Forge cannot reproduce; both prove the WAL's own recovery logic is correct at
 the disk-state level, which is the part a single JVM can test honestly without one.
 
@@ -125,8 +125,8 @@ infrastructure can show.
 The orders app holds its latency budget at rest; the question load testing answers is what it
 does under sustained traffic and under a burst, and which slice gives first. Because Forge serves
 the app over ordinary HTTP on `:8070`, any HTTP load tool drives it, and the repo standardizes on
-k6: each example under `examples/*/k6/` ships steady-state, ramp-up, and spike scripts with a
-runner for each.
+k6: the ecommerce, pricing-engine and url-shortener examples ship steady-state, ramp-up and spike
+scripts under `k6/`, with a runner for each.
 
 A k6 script is scenarios plus thresholds. The scenarios describe the traffic shape; the
 thresholds are the pass/fail line:
@@ -148,8 +148,8 @@ export const options = {
 
 Ramp to find the knee, hold at the target to read steady-state latency, and keep a hard
 error-rate ceiling so a run that "passes" on latency but drops one request in fifty still fails.
-A separate spike profile jumps the rate in one step to see how the app sheds load and recovers.
-The scripts are env-driven — node count, target rate, duration — so the same file runs against a
+A separate spike profile jumps the rate within seconds to see how the app sheds load and recovers.
+The scripts are env-driven — node URLs or count, target rate, duration — so the same file runs against a
 five-node Forge and, later, a real cluster.
 
 Read the numbers for their shape, not their ceiling. A single JVM's throughput is not the

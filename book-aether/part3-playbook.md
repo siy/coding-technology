@@ -207,8 +207,8 @@ database under management.
 The runtime applies them when the blueprint deploys. The schema manager runs the pending
 migrations against each datasource, records every one in an `aether_schema_history` table with
 its checksum and timestamp, and a slice does not begin serving until its migrations have
-succeeded. That gate is on by default; a blueprint can set `schema_required = false` to opt
-out. So a deploy is migrate-then-serve: the orders table is at the version the code expects
+succeeded. That gate is on by default; a blueprint can set `schema_required = false` under `[deployment]` to
+opt out. So a deploy is migrate-then-serve: the orders table is at the version the code expects
 before the first request reaches it. The engine manages tables, not databases, so the
 datasource's database must already exist; creating it is an environment step, not a migration.
 
@@ -226,8 +226,10 @@ schema/                 -> [database]            (@Sql, @PgSql)
 schema/analytics/       -> [database.analytics]  (@AnalyticsDb)
 ```
 
-Resolution is strict: every schema directory must have a matching config section, and a
-missing one fails the deploy with a clear message rather than guessing.
+Resolution is strict by name: `schema/analytics/` is migrated against `[database.analytics]`,
+never against a guess. A datasource that a slice uses but that has no migrations fails the
+blueprint build (unless the schema is declared external), and a slice whose config section is
+missing is refused at deploy.
 
 Locally, you run an external Postgres (the example projects' `start-postgres.sh` starts one and
 creates the database); the migrations then manage its tables. Production points the same
@@ -388,8 +390,9 @@ src/main/resources/schema/
 
 The schema manager runs each datasource's migrations against that datasource and records them in
 an `aether_schema_history` table inside that datasource's own database, so the two histories
-never mix. Resolution is strict: a schema subdirectory with no matching config section fails the
-deploy rather than running against the wrong place. The migrate-then-serve gate from chapter 3
+never mix. A datasource is migrated by one blueprint only: a second blueprint that migrates the
+same datasource is refused at publish. Resolution is strict: a migration directory whose section is not configured cannot be
+migrated, so the slice is held rather than run against the wrong place. The migrate-then-serve gate from chapter 3
 covers every datasource, so the slice does not begin serving until both schemas are at the
 version the code expects.
 
@@ -659,7 +662,7 @@ The stream's configuration section carries one structural setting and a few tuni
 [streams.order-events]
 partitions = 4            # structural: ordering and parallelism unit
 retention = "time"        # tuning
-retention-value = "30d"   # tuning
+retention_value = "30d"   # tuning
 ```
 
 `partitions` is structural: ordering is guaranteed within a partition, and partitions are the
@@ -685,7 +688,13 @@ within a partition: a stream that must read as one total order across all keys s
 `partitions = 1`. `partitions` defaults to four.
 
 The retention keys tune how long the log is kept and how large an
-event may be. Treat those tuning keys as the part of streaming most likely to grow or change as
+event may be. `retention` picks the kind of bound: `count` (the default), `time`, `size` or
+`compound`; `retention_value` carries its value (`"30d"` above). A `compound` stream names its bounds
+with `max_age`, `max_count` and `max_bytes`, and `retention_mode` (`any`, the default, or `all`) says
+whether eviction happens at the first bound reached or only when all are. `max_event_size` caps a single
+event. A bound a section does not declare takes the runtime default. Keys are snake_case, and a
+key the runtime does not know, a dashed spelling included, is refused when the section is read
+rather than ignored. Treat these tuning keys as the part of streaming most likely to grow or change as
 the runtime evolves; the shape this chapter relies on, a durable ordered log read by committed
 offset, is the stable part. Verify the current keys against the resource reference when you
 configure a stream.
@@ -693,42 +702,45 @@ configure a stream.
 ### What "durable" depends on
 
 Calling the log durable has glossed one dimension the configuration controls: how many nodes hold
-each partition. Two keys set it, both structural, and their defaults are modest on purpose:
+each partition. Two keys set it, both structural:
 
 ```toml
 [streams.order-events]
-partitions = 4              # ordering and parallelism unit
-replicas = 3                # copies of each partition, including the owner
-min-sync-replicas = 2       # a write resolves only once this many copies, including the owner, confirm it
+partitions = 4                # ordering and parallelism unit
+replication_factor = 3        # copies of each partition, including the owner
+confirmation_factor = 2       # a write resolves only once this many copies, including the owner, hold it
 retention = "time"
-retention-value = "30d"
+retention_value = "30d"
 ```
 
-`replicas` is the number of copies of each partition, counting the owner; `min-sync-replicas` is how
-many of those copies, again counting the owner, must acknowledge a write before the publishing
-`Promise` resolves. Left unset, `replicas` is `1` and `min-sync-replicas` is `0`: the log lives on a
-single owner, and a write resolves the moment that one node has it on disk. That is durable in a
-narrow sense, crash-safe through a per-partition write-ahead log, so a node that dies and restarts
-recovers its log, but not safe against losing the node's disk and not safe against losing the owner.
-Lose that node and its single copy goes with it: a consumer reads empty until the node returns. For a
-stream whose whole point is that no event is lost, one disk is not enough.
+`replication_factor` is the number of copies of each partition, counting the owner;
+`confirmation_factor` is how many of those copies, again counting the owner, must hold a write before
+the publishing `Promise` resolves. Left unset, the stream takes the cluster's replication defaults,
+`replication_factor = 3` and `confirmation_factor = 2` unless the cluster configuration says otherwise.
+Declaring `replication_factor = 1` is allowed but warned: the log then lives on a single owner, and a
+write resolves the moment that one node has it on disk. That is durable in a narrow sense, crash-safe
+through a per-partition write-ahead log, so a node that dies and restarts recovers its log, but not safe
+against losing the node's disk and not safe against losing the owner. With one copy, lose that node and
+its single copy goes with it: a consumer reads empty until the node returns. For a stream whose whole
+point is that no event is lost, one disk is not enough.
 
 One failure sits earlier than any of this: the node's WAL directory itself. A node that finds it
 cannot write there refuses to start, rather than come up and stream non-durably behind a single
 warning buried in the log — the same fail-stop-at-boot idiom the cluster-name and TLS checks use
-(`#634` item 2, `AetherNode.java:875-987`, `verifyWalBootable`/`decideWalAvailability`, wired
+(`#634` item 2, `AetherNode.verifyWalBootable`/`decideWalAvailability`, wired
 through `Main`'s boot sequence). A deployment that genuinely wants best-effort streaming over no
 streaming at all opts in explicitly with `-Daether.allowNonDurableStreams=true` (or
 `AETHER_ALLOW_NON_DURABLE_STREAMS=true`); a node constructed directly rather than through `Main` —
 Forge, a test, an embedded runtime — bypasses this check and keeps the old warn-and-degrade
 behavior, since it is not the deployment the guard protects.
 
-Durability across the loss of a node is what `min-sync-replicas` buys. Set it to `2` or more and
+Durability across the loss of a node is what `confirmation_factor` buys. Set it to `2` or more and
 every write waits for at least one copy beyond the owner, so a caught-up replica always exists —
 and that copy is fsynced on the replica before its ack counts, the same bar the owner clears, so a
 power loss on owner and replica together inside an unsynced window cannot silently erase a write
-the caller was told reached the configured replication factor (`#634` item 1,
-`ReplicationReceiveHandler.java:92-93,255-257`). Then losing the owner is survivable for reads:
+the caller was told reached the configured confirmation factor (`#634` item 1,
+`ReplicationReceiveHandler`: the replica acks only after the batch is fsynced there, and a failed
+sync withholds the ack). Then losing the owner is survivable for reads:
 after the owner is killed, a reader still gets the complete
 prior history and the ordered tail, nothing dropped and nothing reordered. That is proven end to
 end, an owner killed mid-stream and every earlier event still served in offset order alongside the
@@ -758,8 +770,8 @@ Java at all. Only the configuration section grows:
 topic_name = "order-events"
 durability = "durable"        # "ephemeral" (default) | "durable"
 partitions = 1                 # durable only; default 1
-replicas = 2                   # durable only; default 2
-min_sync_replicas = 2          # durable only; default = replicas
+replication_factor = 3         # durable only; default: the cluster's [replication] default (3)
+confirmation_factor = 2        # durable only; default: min(cluster default (2), replication_factor)
 retention = "7d"               # durable only; default 7d
 ```
 
@@ -770,11 +782,12 @@ internally by a replicated stream plus its own dead-letter stream, both provisio
 the topic is provisioned, not lazily on first publish, and a publish resolves once the write
 reaches the replication floor below, not merely once it lands on the owner.
 
-The `replicas >= 2` and `min_sync_replicas == replicas` pairing above is not an arbitrary
-default, it is exactly the stream configuration the previous section proved survives an owner
-kill with every prior event intact. Declare anything outside it, `replicas = 1`, say, or
-`min_sync_replicas` short of `replicas`, and the build rejects the declaration at parse rather
-than silently accepting a weaker guarantee than the one advertised.
+The defaults, `replication_factor = 3` with `confirmation_factor = 2`, are the stream
+configuration the previous section describes as surviving an owner kill with every prior event
+intact. The build refuses a `confirmation_factor` above `replication_factor` or a factor below 1, and
+warns on a declared `replication_factor` below 3, on a `confirmation_factor` equal to
+`replication_factor`, and on `confirmation_factor = 1`, rather than silently accepting a weaker
+guarantee than the one advertised.
 
 What the tier buys, and no more:
 
@@ -935,16 +948,19 @@ build; what delivers it is config:
 [notification]
 backend = "smtp"
 
-[smtp]
+[notification.smtp_config]
 host = "smtp.example.com"
 port = 587
 tls_mode = "STARTTLS"
+
+[notification.smtp_config.auth]
 username = "orders@shop.example"
 password = "${secrets:smtp/password}"
 ```
 
-`backend = "smtp"` sends through an SMTP server; `backend = "http"` with an `[http-email]` section
-sends through a provider API such as SendGrid or Mailgun instead. The slice builds the same
+`backend = "smtp"` sends through an SMTP server; `backend = "http"` with a
+`[notification.http_config]` section (`provider_hint`, `api_key`) sends through a provider API
+instead; SendGrid, Mailgun, Postmark and Resend have a mapping today. The slice builds the same
 `Notification` either way, and switching providers is a config change. The set of providers behind
 the HTTP backend is the part of this resource most likely to grow, so check the resource
 reference for the current list; the `Notification` model and the `send` call are the stable shape.
@@ -1021,10 +1037,12 @@ from the database itself.
 
 ## Database notifications (PG LISTEN/NOTIFY)
 
-> _Intended design, not yet wired (source as of 2026-06-27): the `PgNotificationSubscriber`
-> resource, the `PgNotification` payload, and the callback machinery exist, but the method-level
-> listener annotation shown here is not yet generated by the processor. Written to the intended
-> shape; verify against source before GA._
+> _Partly wired (source at rc5, `d113279af`): the `PgNotificationSubscriber` resource, the
+> `PgNotification` payload and the callback machinery exist, and the processor now recognizes the
+> method-level listener annotation and writes the `pg-notification` manifest binding shown below.
+> No code that invokes the slice method for that binding was found in the deployment, invoke, slice
+> or node modules at this SHA, so the runtime half is not confirmed. Written to the intended shape;
+> verify against source before GA._
 
 Some events originate in the database. A trigger fires on an `INSERT`, a row's status flips, or
 another service writes through the same Postgres, and the slice wants to react the moment it
@@ -1072,7 +1090,7 @@ a `PgNotification("order_status", "42", pid)`. In the manifest it is a reactive 
 others, with its own category:
 
 ```
-reactive.0.category=pg-notify
+reactive.0.category=pg-notification
 reactive.0.config=pg-notifications.order-changes
 reactive.0.method=onChange
 ```
@@ -1091,12 +1109,12 @@ and in what order, is fixed when the slice is compiled; how each behaves is what
 
 ## Cross-cutting behavior: interceptors
 
-> _Confirmed from source at rc3 (`bfd00615d`). Interceptors are woven into the generated factory at
+> _Confirmed from source at rc5 (`d113279af`). Interceptors are woven into the generated factory at
 > compile time as nested `intercept(...)` calls, and their order is deterministic: the first
 > annotation on a method is the outermost wrapper. Pragmatica #277 removed the older runtime-applied
 > `Aspect` seam, so the interceptor chain is not reconfigured per deployment without a rebuild; what
 > a deployment tunes is each interceptor's config section, not the chain. Seven `MethodInterceptor`
-> types ship. Verify config-section keys against the resource reference before GA._
+> types ship. The config keys shown were checked against the config records at rc5; verify them against the resource reference before GA._
 
 `placeOrder` calls payment over the network. That call fails transiently and should be retried;
 if payment is down, retrying harder makes it worse, so calls should trip a circuit breaker; the
@@ -1134,7 +1152,10 @@ that section exactly as a datasource's did:
 ```toml
 [retry.payment]
 max_attempts = 3
-backoff = "EXPONENTIAL"
+retry_on = "TRANSIENT"    # or NON_TERMINAL
+
+[retry.payment.backoff_strategy]
+type = "fixed"
 interval = "200ms"
 
 [circuit-breaker.payment]
@@ -1143,8 +1164,10 @@ reset_timeout = "30s"
 test_attempts = 3
 
 [logging.orders]
+name = "orders"
 level = "INFO"
 log_args = false
+log_result = false
 log_duration = true
 ```
 
@@ -1175,20 +1198,23 @@ public interface OrderQuote {
 
 ```toml
 [cache.quotes]
+cache_name = "quotes"
 ttl_seconds = 60
 max_entries = 10000
-mode = "LOCAL"            # or DISTRIBUTED, shared across the cluster
+mode = "LOCAL"            # or DISTRIBUTED (shared across the cluster), or TIERED (local in front of distributed)
 strategy = "CACHE_ASIDE"
 ```
 
 A cache earns its keep on reads and is a hazard on writes, so it goes on the methods that read;
-its hard part is invalidation, which Module E takes up alongside the pub-sub from Module B that
-carries the invalidation signal.
+its hard part is invalidation. The cache interceptor has no pub-sub hook of its own: a write method
+using the `WRITE_AROUND` strategy removes the key on its own node, and other nodes' copies age out
+by TTL unless a slice subscribes to a change event and calls such a method. Module E takes that up
+alongside the pub-sub from Module B.
 
 When more than one interceptor wraps a method, the order they nest in matters: logging outermost so
 it records the whole attempt, rate limit before any real work so a rejected call costs nothing, and
-the circuit breaker around retry so a retried call re-enters the breaker and a tripped breaker stops
-the retries. That order is not left to chance. The first annotation on the method is the outermost
+the retry inside the circuit breaker, so the breaker counts one failure per exhausted retry sequence
+rather than one per attempt. That order is not left to chance. The first annotation on the method is the outermost
 wrapper, the next is inside it, and so on down to the method itself, fixed when the slice is
 compiled. It is why the example above lists `@LogCalls` first and `@RetryPayment` last: logging ends
 up outermost, recording the whole attempt, and the retry innermost, closest to the call. Read the
@@ -1416,8 +1442,9 @@ Writes route themselves. A `create`, `update`, or `delete` arriving at a node th
 the key is forwarded to the committed owner rather than refused, and the owner re-runs its
 admission under the fence, so forwarding weakens nothing. A failure crosses back typed: the
 caller pattern-matches `EntityAlreadyExists` or `EntityNotFound` the same way whether the write
-ran locally or three nodes away. Timer operations are the exception; they do not forward, and a
-non-owner answers them with `NotCurrentOwner`.
+ran locally or three nodes away. Timer operations route the same way: a
+`scheduleTimer` or `cancelTimer` at a non-owner is forwarded to the committed owner, and the owner
+stamps the fire instant on its own clock.
 
 Provisioning follows the same four moves as every resource in Part 0: a qualifier annotation, a
 config section, a manifest entry, an injected parameter. Entities come in keyspaces, one per
@@ -1435,16 +1462,20 @@ public @interface OrderEntity {}
 [entities.orders]
 keyspace           = "orders"
 partition_count    = 8     # fence granularity: each partition has one fenced owner
-replication_factor = 3     # copies of each partition's log, including the owner
+replication_factor = 3     # optional: copies of each partition's log, including the owner
+confirmation_factor = 2    # optional: copies that must hold a write before it acknowledges
 ```
 
-All three keys are required and validated when the slice loads, so a rejected value fails loading
-with a named cause rather than surfacing at first write. `replication_factor` is where durability
-is bought, and the write barrier is derived from it: at `3`, a write acknowledges only once the
-owner and at least one peer hold the record, which is what makes state survive the owner's death
-rather than merely its restart. At `1` the entity is still durable across a restart of its own
-node, but the disk it sits on is the only copy; that weaker guarantee is legal and has to be
-chosen on purpose.
+`keyspace` and `partition_count` name the family and its fence granularity. `replication_factor` and
+`confirmation_factor` are optional and default to the cluster's replication defaults, 3 and 2. Values
+are validated when the slice loads, so a rejected value fails loading with a named cause rather than
+surfacing at first write. Durability is bought with the two factors together:
+`replication_factor` is the number of copies of each partition's log, including the owner, and
+`confirmation_factor` is how many of them must hold a write before it acknowledges. At the defaults,
+3 and 2, a write acknowledges only once the owner and at least one peer hold the record, which is what
+makes state survive the owner's death rather than merely its restart. At `replication_factor = 1` the
+entity is still durable across a restart of its own node, but the disk it sits on is the only copy;
+that weaker guarantee is legal and warned, and has to be declared on purpose.
 
 ```java
 @Route("/orders/{id}/cancel")
@@ -1473,25 +1504,29 @@ public sealed interface EntityError extends Cause {
     record EntityAlreadyExists(String key) implements EntityError {}
     record EntityNotFound(String key) implements EntityError {}
     record TimerNotFound(String key, DurableEntity.TimerToken token) implements EntityError {}
-    record TimerNotSupported(String key) implements EntityError {}
+    record TimerTokenMismatch(String key, DurableEntity.TimerToken token, String appliedToken) implements EntityError {}
+    record TimerDelayInvalid(String key, long delayMillis) implements EntityError {}
     record TimerFireFailed(String key, DurableEntity.TimerToken token, Cause cause) implements EntityError {}
     record StaleOwnerEpoch(String key, String presentedEpoch) implements EntityError {}
     record StorageFailed(String key, Cause cause) implements EntityError {}
+    record StorageUnavailable(String key, Cause cause) implements EntityError, Cause.Transient {}
     record NotCurrentOwner(String key, String committedOwner) implements EntityError {}
-    record OwnershipNotYetCommitted(String key, String keyspace, int partition) implements EntityError {}
+    record OwnershipNotYetCommitted(String key, String keyspace, int partition) implements EntityError, Cause.Transient {}
+    record OwnerTransitioning(String key, String reason) implements EntityError, Cause.Transient {}
     record StaleEpochRead(String key, String presentedEpoch, String highWaterEpoch) implements EntityError {}
-    record LinearizableUnavailable(String key) implements EntityError {}
+    record LinearizableUnavailable(String key) implements EntityError, Cause.Transient {}
 }
 ```
 
-`StaleOwnerEpoch` is the one to recognize: it is the fence speaking, and it is transient. It means a
-handover was in flight, the runtime retries against the new owner, and the author rarely sees it.
+`StaleOwnerEpoch` is the one to recognize: it is the fence speaking. This node was deposed as owner
+while the operation was in flight, and the write committed nowhere. It is not marked transient, and the
+caller re-resolves the current owner and retries there.
 
 > _Not yet available: there is no terminal-state predicate on the entity, and so no typed failure
 > for operating on a finished entity or for collecting one that is not finished. Earlier drafts of
 > this listing carried `EntityTerminated` and `EntityNotTerminal`; neither is implemented, and
 > neither is shown above because a sealed interface's variants are exhaustive — a `switch` over
-> `EntityError` must match the eleven above and nothing else._
+> `EntityError` must match the fourteen above and nothing else._
 
 Reads carry their consistency in the call. Plain `get(key)` is a bounded-stale read: a node that
 holds the partition, owner or replica, answers from its local copy after folding its view forward
@@ -1499,8 +1534,9 @@ to the log's committed head, and a node that holds nothing forwards the read to 
 owner. The answer can trail an in-flight write by a bounded window; it never invents state. When
 trailing is not acceptable — a check immediately before an irreversible action, a read that must
 see a write another node just acknowledged — ask for it: `get(key, ReadConsistency.LINEARIZABLE)`
-routes to the committed owner, orders a no-op consensus round, re-checks the owner's epoch after
-the round, and only then serves, so the read reflects every write acknowledged before it began.
+is served only by the committed owner: it orders a no-op consensus round, re-checks the owner's epoch
+after the round, and only then serves, so the read reflects every write acknowledged before it began.
+A node that is not the owner answers `NotCurrentOwner` and the caller re-resolves.
 The price is a consensus round per read. Default to the bounded-stale form and escalate per call,
 so the code shows exactly which reads paid for certainty.
 
@@ -1518,12 +1554,12 @@ locking primitive to learn, because single-writer-per-key already is one.
 
 A word on what durable means in a running cluster, stated per property with the mechanism that
 earns it, because the rest of the module leans on it. A write acknowledges only after the
-entity's log holds it fsynced on the owner and, at `replication_factor` of two or more, on at
+entity's log holds it fsynced on the owner and, at a `confirmation_factor` of two or more, on at
 least one peer — so an acknowledged write survives the owner's death, and the crash gate
 exercises exactly that: an owner killed mid-traffic, every acknowledged write still present with
-its exact value after the cluster heals. A log whose fsync fails stops accepting writes rather
-than acknowledging what the disk did not take: fail-stop, visible to the operator, instead of
-silent loss. The proven envelope, stated with the same rigor as the write above, now covers a
+its exact value after the cluster heals. The stream write-ahead log beneath it fail-stops on a failed
+frame write or fsync, so later writes fail and acknowledgements stay withheld rather than
+acknowledging what the disk did not take. The proven envelope, stated with the same rigor as the write above, now covers a
 full cluster restart too: the write survives its owner being replaced and a full cluster restart
 that keeps the node data directories, because the same fsync-before-ack discipline applies to the
 per-partition WAL — replayed in full at boot — and the entity's own log restores its snapshot the
@@ -1639,7 +1675,7 @@ compensations were correct; its ledger lived on the stack and died with the proc
 saga keeps the same shape and moves the ledger into an entity, so the runtime remembers where a saga
 got to and can finish it or unwind it after a crash.
 
-A saga is a `DurableEntity<String, SagaState<C>>` whose state is a step ledger over a shared context.
+A saga is a durable entity whose state, `SagaState<C>`, is a step ledger over a shared context.
 The author declares the steps; each is a forward action, the compensation that undoes it, and a
 re-run policy, all reading the immutable context `C`:
 
@@ -1735,21 +1771,26 @@ That leaves the sharpest failure in a distributed saga: the crash between an eff
 it. The payment service charges the card; the process dies before the ledger commits; on recovery,
 nobody knows whether the charge happened. Re-running the step double-charges; skipping it ships an
 unpaid order. This is what `RUN_ONCE` controls. Before it invokes a `RUN_ONCE` step's forward action,
-the runtime writes a `StepAttempt(sagaId, stepIndex)` marker under the fence; if the process crashes
-before the ledger commits, recovery finds the marker and does not invoke that forward action a second
-time, treating the step as taken. The runtime never calls a `RUN_ONCE` forward twice. An `IDEMPOTENT`
+the design has the runtime write a `StepAttempt(sagaId, stepIndex)` marker under the fence; if the
+process crashes before the ledger commits, recovery finds the marker and does not re-invoke that
+forward action, treating the step as taken. The mechanism is the marker: a crash between the marker and
+the effect skips the effect, and that is the price of never repeating it. An `IDEMPOTENT`
 step carries no marker: the author has declared that running it again is harmless, so recovery simply
-re-runs it. The key `(sagaId, stepIndex)` is the idempotency anchor, and it is one instance of a
-general rule: every entity update carries a stable monotonic counter `(key, n)` that a slice can hand
-to a downstream service as an idempotency key, so a retried effect is recognized rather than repeated.
+re-runs it. The `(sagaId, stepIndex)` pair is the idempotency anchor in this sketch; the current
+design spec replaces it with an explicit typed `StepContext` (an `operationId` and a `compensationId`)
+that every forward, outcome lookup and compensation receives, so treat the pair as the shape of the
+idea rather than the final API. The design also intends a stable per-entity monotonic counter
+`(key, n)` that a slice could hand to a downstream service as an idempotency key; the shipped
+`update` returns only the post-update state and does not expose one yet, so today the idempotency key
+is one the slice mints itself and writes into the state or the command.
 
 This also settles a debt left open in Module A. A single operation that must commit to its own store
 and reliably emit an event to another faces the dual-write problem: two writes, no shared
 transaction. The classic answer is a transactional outbox, staging the second write inside the first
 store's transaction and delivering it later by a separate process. Aether reaches the same guarantee
-more directly. The per-entity `(key, n)` counter and a `RUN_ONCE` step let a retried effect land once
-instead of repeating, with no outbox table to maintain and no delivery worker to operate. The
-reliable emission Module A pointed forward to is this.
+more directly. The designed per-entity `(key, n)` counter, or an idempotency key the slice mints itself, and a
+`RUN_ONCE` step would let a retried effect land once instead of repeating, with no outbox table to
+maintain and no delivery worker to operate. The reliable emission Module A pointed forward to is this.
 
 ## Entity, workflow, or saga?
 

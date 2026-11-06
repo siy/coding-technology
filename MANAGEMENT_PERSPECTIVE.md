@@ -374,7 +374,7 @@ This fails because:
 3. **Major refactors**: When touching >50% of a module anyway, migrate to new patterns
 4. **Leave legacy alone**: Existing code stays as-is unless you're already rewriting it
 
-For teams considering Aether: legacy code can be wrapped behind a `@Slice` interface with `Promise.lift()` and deployed as a slice without any rewrite. Its exceptions become typed failures at the boundary, and calls to it go through the runtime's retry and failover, which is safe for operations that tolerate being repeated. Refactoring to clean JBCT patterns happens gradually, at your own pace.
+For teams considering Aether: legacy code can be wrapped behind a `@Slice` interface with `Promise.lift()` and deployed as a slice without any rewrite. Its exceptions become typed failures at the boundary, and retry or circuit breaking is declared per method as configuration rather than written into the code; a retry is safe only for operations that tolerate being repeated. Refactoring to clean JBCT patterns happens gradually, at your own pace.
 
 **The economic logic**: Legacy code is working. It's expensive to maintain, but rewriting it is **pure cost**. New code is where you get leverage - faster development, easier onboarding, better AI collaboration.
 

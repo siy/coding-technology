@@ -1,4 +1,4 @@
-# Part III — The playbook
+# Part II — The playbook
 
 This is where the order application becomes a system. Each chapter opens with a problem,
 takes it apart, derives the idiomatic Aether solution, and folds that solution into the

@@ -1,4 +1,4 @@
-# Part IV — Testing & evolving
+# Part III — Testing & evolving
 
 The order app is built. Parts II and III turned a plain use case into a sliced application
 that reserves inventory, charges the customer, records events, and recovers a half-finished

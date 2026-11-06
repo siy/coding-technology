@@ -1,4 +1,4 @@
-# Part VI — Thinking in Aether
+# Part V — Thinking in Aether
 
 The promise this book opened with was a change of rank, and rank was never about API
 coverage. A senior Aether developer is someone who can stand in front of a problem the

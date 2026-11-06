@@ -32,12 +32,12 @@ command -v xelatex >/dev/null 2>&1 || { echo "Error: xelatex not installed"; exi
 CHAPTERS=(
   introduction.md
   part0-onramp.md
-  part1-no-magic.md
-  part2-aether-model.md
-  part3-playbook.md
-  part4-testing.md
-  part5-operate.md
-  part6-thinking.md
+  part1-aether-model.md
+  part2-playbook.md
+  part3-testing.md
+  part4-operate.md
+  part5-thinking.md
+  part6-under-the-hood.md
   references.md
 )
 for f in "${CHAPTERS[@]}"; do

@@ -1,4 +1,4 @@
-# Part V — Deploy & operate like a senior
+# Part IV — Deploy & operate like a senior
 
 Part IV proved the app four ways: as logic, as a cluster under chaos, as a load curve, and
 as the destination of a migration. Running it in production is the last skill this book teaches,

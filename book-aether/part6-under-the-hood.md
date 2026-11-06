@@ -355,8 +355,8 @@ operator writes is what the slice reads.
 
 An operator change takes this path. The management API hands the key and value to
 `DynamicConfigManager`, which proposes a put to the cluster's consensus store, cluster-wide or
-scoped to one node. When the put commits, each node's `onConfigPut` applies it (a worker's too, under the default
-deployment engine) if it is cluster-wide or names that node, writes it into the overlay, and then calls its applied-listeners
+scoped to one node. When the put commits, each node's `onConfigPut` applies it (on a worker, when the replica
+feed delivers the committed put) if it is cluster-wide or names that node, writes it into the overlay, and then calls its applied-listeners
 in registration order with the dotted key. The overlay write comes first, so a listener that reads
 sees the new value. Two listeners are registered, the `Watched` feed first and the update-method
 dispatch second.

@@ -200,12 +200,12 @@ reactive.0.method=heartbeat
 ```
 
 At start the runtime reads these entries and drives the named method. A method carrying a qualifier of type `Scheduled` (for example
-your own `@Heartbeat`) is called on a schedule; a subscriber method is called for each message; a PG-notify method
-is called for each database notification. Each kind produces its own reactive entry, with
+your own `@Heartbeat`) is called on a schedule; a subscriber method is called for each message. A database-notification method is declared the
+same way, but the runtime half is not wired at this release (Module C). Each kind produces its own reactive entry, with
 its own category and config section.
 
 Some resources use only one side. A SQL connector or an HTTP client is parameter-only,
-because the slice always initiates. A scheduled task or a PG-notify listener is
+because the slice always initiates. A scheduled task is
 method-only, because the runtime always initiates. Pub-sub and streams use both: a
 `Publisher` parameter to send and a subscriber method to receive; a `StreamPublisher` or
 `StreamAccess` parameter to write and read, and a `StreamSubscriber` method to consume. The
@@ -373,7 +373,7 @@ HTTP_402 = ["*PaymentDeclined*"]
 `prefix` is optional and applies to every route. `[routes]` maps each method name to an
 HTTP verb and path; path parameters are written `{id}` or, when you want a type, `{id:Integer}`.
 `[security]` sets the baseline access policy. `[errors]` maps failure patterns to HTTP
-statuses. `default` is the fallback for causes no pattern claims, except that a transient
+statuses. `default` is the fallback for causes no pattern claims, except that, where no pattern set a status, a transient
 cause answers 503 and a validation cause 422; the processor warns at build time about
 concrete `Cause` types no pattern reaches. A pattern matches against the returned `Cause`'s
 type name, which is why a case that needs its own status is its own type, `OutOfStock` or
@@ -395,7 +395,8 @@ path parameters and body into the request type with the generated codec, and cal
 slice method through the dispatch table described in the anatomy section above. A success is
 serialized to the route's response media type, JSON by default, and an empty result becomes
 a 204. A returned `Cause` is mapped to its HTTP status and rendered as an RFC 9457 `ProblemDetail`
-body (served as `application/json`); a request that matches no route becomes a 404 in the same shape.
+body (served as `application/json`); a request that matches no route becomes a 404 `ProblemDetail`
+body, served by the ingress as `application/problem+json`.
 
 That closes the machine. You write an interface, a factory, and a `routes.toml`. The
 processor writes the factory bridge, the `Slice` wrapper with its dispatch table and

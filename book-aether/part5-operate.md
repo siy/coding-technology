@@ -14,7 +14,8 @@ You have slices; production needs them assembled into a deployable unit, placed 
 made live — without hand-wiring and without a maintenance window for the first cut. A blueprint is
 that assembly: the declarative deployable that names the slices, the same assembling from Part 0
 raised to deployment scale. Before anything loads, the cluster checks the config sections those
-slices resolve, read from the slice manifests and the blueprint's `resources.toml`.
+slices resolve, read from the slice manifests and checked against the node configuration and each
+slice's own `resources.toml`.
 
 Operating it is three moves: stand the cluster up once, then push and deploy on each release.
 

@@ -610,9 +610,11 @@ public @interface OnOrderEvent {}
 
 The method shape is the same as a topic subscriber's, the message in and `Promise<Unit>` out, but
 the delivery contract is a stream's. Declaring the method registers a consumer group, named from
-the artifact and the method so every replica of the slice shares one, and the runtime elects
-exactly one node to drive each partition for that group: the partition's owner when it also runs
-the slice, otherwise a slice-bearing node that reads through the owner. Events arrive one at a
+the artifact and the method so every replica of the slice shares one, and the runtime assigns
+each partition for that group to one node, by an epoch-fenced assignment record: the partition's
+owner when it also runs the slice, otherwise a slice-bearing node that reads through the owner.
+During a handover two nodes can briefly deliver the same partition; "Who reads which partition"
+below has the detail. Events arrive one at a
 time, in partition order. The consumer's position is a committed offset per group and partition,
 and it advances only after `record`'s `Promise` succeeds, so a restart or a reassignment resumes
 from the last committed position instead of skipping what it missed. All of this needs the slice
@@ -828,17 +830,17 @@ duplicate, but it is not pub-sub and carries no DLQ; the guarantees above do not
 
 The order ledger and the order-history read model both subscribe to `streams.order-events`, and each slice runs on three nodes. Two questions decide whether either of them works. Do the ledger and the read model split the events between them, or does each see all of them? And of the ledger's three instances, which one reads partition 2? A ledger that receives half the orders is not a ledger, and a team that adds instances to make it faster wants to know whether the instances will get any work.
 
-Each subscriber method is its own consumer group. The group's name is the slice artifact without its version, followed by the method name, so the ledger's `record` method reads as the group `com.example:order-ledger-record`. Groups are independent: the ledger and the read model each read every event of the stream, at their own pace. Within one group, each partition has exactly one node assigned to deliver it. Leaving the version out of the name is deliberate. A new version of the ledger deployed beside the old one joins the same group, so a rolling upgrade continues the group instead of starting a second reader beside it. The same rule cuts the other way: renaming the method, or moving it to another artifact, makes a new group with no committed position of its own. Treat a stream subscriber's method name as part of its contract. Where a new group starts reading is a cursor question, covered with cursors.
+Each subscriber method is its own consumer group. The group's name is the slice artifact without its version, followed by the method name, so the ledger's `record` method reads as the group `com.example:order-ledger-record`. Groups are independent: the ledger and the read model each read every event of the stream, at their own pace. Within one group, the committed assignment record, described below and fenced by an epoch, names exactly one node to deliver each partition; delivery can briefly overlap on a handover, which belongs to the delivery contract, not yet covered in this book. Leaving the version out of the name is deliberate. A new version of the ledger deployed beside the old one joins the same group, so a rolling upgrade continues the group instead of starting a second reader beside it. The same rule cuts the other way: renaming the method, or moving it to another artifact, makes a new group with no committed position of its own. Treat a stream subscriber's method name as part of its contract. Where a new group starts reading is a cursor question, not yet covered in this book.
 
 The assignment is a committed record, one per stream, group and partition, written only by the cluster leader. The leader computes the assignee with two rules. If the node that owns the partition runs the slice, the owner delivers it, reading its own copy. Otherwise the assignee is chosen among the nodes where the slice is active and live, by the same rendezvous hash that places partitions, so every node computes the same answer; that node reads the partition through its owner. A node attaches a partition only when the committed record names it. Each node runs a reconcile pass every five seconds, and the leader's pass writes a new record only where the computed assignee differs from the committed one. Each write carries an epoch, and a write from a deposed leader is refused when it is applied.
 
-Follow those rules to a consequence that is easy to miss. A group's parallelism is capped by the stream's partition count, and the assignment follows where the data lives, not how many instances the slice has. With four partitions, at most four nodes deliver for the ledger, whatever its instance count; if one node owns two partitions and runs the slice, it delivers both while another instance sits idle for this group. Consumption scales with partitions, which the partition note above asks you to choose deliberately, not with replicas.
+Follow those rules to a consequence that is easy to miss: the assignment follows where the data lives, not how many instances the slice has, so adding instances does not by itself add readers. How consumption scales is not yet covered in this book.
 
-There is no join protocol for a slice to run. A rebalance is the leader rewriting a record because the computed assignee moved: a node left the live set, the slice became active or stopped on a node, or a partition's ownership moved. Rendezvous hashing keeps that churn small, since only the partitions whose ranking involved the changed node get a new answer. When no node can run the slice at all, the leader writes nothing, the old record stands, and the partitions appear as `unassignedPartitions` in each node's `/streams/declarative-consumers` report. What a handover means for the events in flight during it is part of the delivery contract and is covered there.
+There is no join protocol for a slice to run. A rebalance is the leader rewriting a record because the computed assignee moved: a node left the live set, the slice became active or stopped on a node, or a partition's ownership moved. Rendezvous hashing keeps that churn small, since only the partitions whose ranking involved the changed node get a new answer. When no node can run the slice at all, the leader writes nothing, the old record stands, and the partitions appear as `unassignedPartitions` in each node's `/streams/declarative-consumers` report. What a handover means for the events in flight during it is part of the delivery contract, not yet covered in this book.
 
 Two limits apply in this release. A `[streams.order-events.consumers.<group>]` table parses, but per-group settings do not reach the runtime, so a non-default value in it is refused at deploy and every group runs on the defaults. A subscriber method may declare `List<OrderEvent>` as its parameter, and the runtime records it as a batch consumer, but it delivers one-element lists; write the handler so that is correct.
 
-A process outside the cluster that reads a stream over the management API has a separate, explicit group mechanism: `POST /streams/groups/join`, `POST /streams/groups/leave`, and `GET /streams/groups` for status. On every join, and on every leave that leaves a member behind, the leader deals the partitions round-robin over the members, sorted by consumer id, under an epoch that refuses a stale rebalance. Its limits are sharp. Membership lives in the leader's memory, so a new leader starts with no members and rebalances only over the clients that join it. Nothing tracks member liveness, so a client that disappears without leaving keeps its partitions until a later rebalance moves them, and when the last member leaves no rebalance runs at all. A client of this mechanism should treat joining as something it repeats, not a registration it makes once.
+A process outside the cluster that reads a stream over the management API has a separate, explicit group mechanism: `POST /streams/groups/join`, `POST /streams/groups/leave`, and `GET /streams/groups` for status. On every join, and on every leave that leaves a member behind, the leader deals the partitions round-robin over the members, sorted by consumer id, under an epoch that refuses a stale rebalance. Its failure behaviour is not yet covered in this book.
 
 ### Reading the log yourself
 
@@ -857,7 +859,7 @@ static Promise<List<List<StreamEvent<OrderEvent>>>> firstPages(StreamAccess<Orde
 }
 ```
 
-Each inner list is one partition, in that partition's order, and that is the only order the stream has to offer across a multi-partition read. The next page of a partition starts at the last offset read plus one. Saving that position durably is what a cursor does, covered with cursors.
+Each inner list is one partition, in that partition's order, and that is the only order the stream has to offer across a multi-partition read. The next page of a partition starts at the last offset read plus one. Saving that position durably is what a cursor does; cursors are not yet covered in this book.
 
 Two reads in the interface look more general than they are. `fetch(fromOffset, maxEvents)`, without a partition, reads the same offset from every partition, merges the results, sorts them by offset and keeps the first `maxEvents`. The offsets it sorts by mean nothing across partitions, and the cut can keep one partition's page while dropping the end of another's, so use it for a glance at a stream, never as a position to resume from. And `metadata()` describes this node's own copy. `partitionCount` is right on every node, but the head, tail and count of a partition this node does not hold read `-1`, `-1` and `0`, and on a node that does hold it they describe the hot ring, the newest part of the log. Events older than the ring's tail remain readable through the same `fetch`; the next section says where they are.
 
@@ -867,14 +869,14 @@ Retention says how long the log keeps an event, and the answer only makes sense 
 
 The first is the hot ring, an off-heap ring buffer per partition holding the newest events. Reads near the head are served from it. Its size comes from the stream's retention, as the next section shows, and when it is full it evicts its oldest events.
 
-The second is the write-ahead log, one append log per partition on local disk. An owner's publish is gated on the event reaching that log with an fsync, and the log is not truncated above the point where events have been sealed, so every event the ring has evicted but not yet sealed is still there. The log's directory is set per node:
+The second is the write-ahead log, one append log per partition on local disk. With the log configured, the default, an owner's publish is gated on the event reaching it with an fsync, and the log is not truncated above the point where events have been sealed, so every event the ring has evicted but not yet sealed is still there. The log's directory is set per node:
 
 ```toml
 [storage.streams]
 wal_path = "/var/lib/aether/wal"   # the node id is appended; unset, the path is derived
 ```
 
-The third is sealed segments. The ring's evicted events queue for a sealer, which writes them out as one segment once the run reaches 1 MiB, 4,096 events, or five seconds of waiting, whichever comes first. Those thresholds are node settings in `[streaming]` (`seal_run_bytes`, `seal_run_events`, `seal_run_age`), and the runtime's own source marks all of them as guesses awaiting a baseline measurement; `seal_run_age` is refused above one day. Segments go to the node's `streams` storage instance, which keeps a small memory tier, a local disk tier capped at 40% of the usable space unless `[streaming] segment_disk_max_bytes` says otherwise, and a cluster-shared tier that, for streams, can only be the DHT. A read below the ring's tail is served from the sealed tier, so a consumer catching up on last week reads through the same API as one reading the last second.
+The third is sealed segments. The ring's evicted events queue for a sealer, which writes them out as one segment once the run reaches 1 MiB, 4,096 events, or five seconds of waiting, whichever comes first. Those thresholds are node settings in `[streaming]` (`seal_run_bytes`, `seal_run_events`, `seal_run_age`), and the runtime's own source marks all of them as guesses awaiting a baseline measurement; `seal_run_age` is refused above one day. Segments go to the node's `streams` storage instance, which keeps a small memory tier, a local disk tier capped at 40% of the usable space at boot, kept between 1 GiB and the usable space less 2 GiB of headroom, unless `[streaming] segment_disk_max_bytes` says otherwise, and a cluster-shared tier that, for streams, can only be the DHT. A read below the ring's tail is served from the sealed tier, so a consumer catching up on last week reads through the same API as one reading the last second.
 
 The model to keep: the ring is a bounded cache of the newest events, the write-ahead log covers the gap until a seal, and the sealed tier is the history. Retention bounds both the ring and the history, by different rules.
 
@@ -911,9 +913,9 @@ retention_mode = "any"   # reclaim at whichever declared bound is reached first
 
 Reclaiming runs as a pass every five minutes. Each pass removes only the oldest whole segments of a partition, as an unbroken prefix, and judges a segment by its newest event's age and by how much is newer than it. That rule earns a precise promise: retention does not reclaim an event before its declared bound. An event can outlive its bound by up to a segment's worth of newer events and one pass interval. Under `all`, a dimension the section did not declare neither reclaims nor blocks.
 
-Retention fails closed. A node that cannot read a stream's policy, because the committed configuration has not been applied there yet or the mode is one this build does not know, reclaims nothing of that stream, and after two such passes raises `STREAM_RETENTION_WITHHELD`. Its disk use grows until the policy is readable. Retention also does not shorten under disk pressure. At 85% of the segment disk tier the node raises `STREAM_SEGMENT_DISK_PRESSURE`; what a full tier does to publishers is backpressure, covered there. Size the declared bounds against the disk of the nodes that hold the partitions, replicas included, rather than against what the stream would like to keep.
+Retention fails closed. A node that cannot read a stream's policy, because the committed configuration has not been applied there yet or the mode is one this build does not know, reclaims nothing of that stream, and after two such passes raises `STREAM_RETENTION_WITHHELD`. Its disk use grows until the policy is readable. Retention also does not shorten under disk pressure. At 85% of the segment disk tier the node raises `STREAM_SEGMENT_DISK_PRESSURE`; what a full tier does to publishers is backpressure, not yet covered in this book. Size the declared bounds against the disk of the nodes that hold the partitions, replicas included, rather than against what the stream would like to keep.
 
-Retention is also a bargain with consumers. A group that falls further behind than the bound has missed what was reclaimed, and no later read can return it. Pick the bound from the slowest consumer you are willing to support, and what a group reads after falling off the end is part of cursor semantics, covered there.
+Retention is also a bargain with consumers. Pick the bound from the slowest consumer you are willing to support; what a group sees after falling off the end of the log is not yet covered in this book.
 
 ### Pub-sub, durable pub-sub, or stream?
 
@@ -1287,8 +1289,11 @@ strategy = "CACHE_ASIDE"
 
 A cache earns its keep on reads and is a hazard on writes, so it goes on the methods that read;
 its hard part is invalidation. The cache interceptor has no pub-sub hook of its own: a write method
-using the `WRITE_AROUND` strategy removes the key on its own node, and other nodes' copies age out
-by TTL unless a slice subscribes to a change event and calls such a method. Module E takes that up
+using the `WRITE_AROUND` strategy removes the key from the cache it is configured with. In `LOCAL`
+mode that is the node's own map, and in `TIERED` mode the node's map and the shared tier, so in both
+other nodes' local copies age out by TTL unless a slice subscribes to a change event and calls such
+a method; in `DISTRIBUTED` mode the removal goes to the shared backend and no node keeps a stale
+copy. Module E takes that up
 alongside the pub-sub from Module B.
 
 When more than one interceptor wraps a method, the order they nest in matters: logging outermost so
@@ -1658,6 +1663,9 @@ that are legal are a small fixed set, and the ones that are not should be imposs
 operation has that shape, modelling it as an entity whose update applies a state-machine transition
 gives you a workflow, and the runtime enforces the legal transitions for you.
 
+> Status: `PersistentWorkflow` and `WorkflowCause` below are design, not shipped API. Neither exists
+> in the rc5 source; what ships is the `StateMachineDefinition` builder shown further down.
+
 ```java
 public interface PersistentWorkflow<S, E> {
     Promise<S>          start(String id, S initial);
@@ -1854,7 +1862,7 @@ unpaid order. This is what `RUN_ONCE` controls. Before it invokes a `RUN_ONCE` s
 the design has the runtime write a `StepAttempt(sagaId, stepIndex)` marker under the fence; if the
 process crashes before the ledger commits, recovery finds the marker and does not re-invoke that
 forward action, treating the step as taken. The mechanism is the marker: a crash between the marker and
-the effect skips the effect, and that is the price of never repeating it. An `IDEMPOTENT`
+the effect would skip the effect, and that would be the price of never repeating it. An `IDEMPOTENT`
 step carries no marker: the author has declared that running it again is harmless, so recovery simply
 re-runs it. The `(sagaId, stepIndex)` pair is the idempotency anchor in this sketch; the current
 design spec replaces it with an explicit typed `StepContext` (an `operationId` and a `compensationId`)
@@ -1960,6 +1968,11 @@ max_entries = 50000
 mode = "DISTRIBUTED"
 ```
 
+Each qualifier in this module (`@CachedPrice`, `@EvictsPrice`, `@LimitOrderIntake`,
+`@BreakOnPaymentOutage`, `@RetryPayment`) is declared the way `@WithQuoteCache` is in Module C, with
+`@ResourceQualifier(type = ..., config = ...)` naming its config section (`cache.prices`,
+`cache.price-evict`, `rate-limit.orders`, `circuit-breaker.payment`, `retry.payment`).
+
 All five keys are required. `cache_name` has no default on purpose: two sections that forgot it
 would otherwise land in one shared namespace. What to cache follows from what a hit means. A hit
 answers with the value the method returned for that key up to `ttl_seconds` ago, so cache a read
@@ -1968,8 +1981,8 @@ cache a read whose staleness is a business error, such as stock on hand at the m
 reservation.
 
 `ttl_seconds` is the staleness you accept, stated in seconds. It is counted from the moment the
-value was stored, not from its last read, and an expired entry is a miss: the cache never serves a
-value past its TTL to cover for a failing method. How old a served value can be depends on `mode`:
+value was stored, not from its last read, and an expired entry is a miss; the cache does not keep
+serving it to cover for a failing method. How old a served value can be, per tier, depends on `mode`:
 
 - `LOCAL` keeps an in-memory map per node, bounded by `max_entries` with the least recently used
   entry evicted first. Each node fills its own copy, so two nodes can answer the same key with two
@@ -1977,7 +1990,7 @@ value past its TTL to cover for a failing method. How old a served value can be 
 - `DISTRIBUTED` keeps one copy per key in the cluster's distributed hash table, under a namespace
   named by `cache_name`, so every node reads the same entry. The expiry is stamped with the writing
   node's wall clock and checked against the reading node's, so clock skew between them moves the
-  expiry by that skew. The cache namespace is replicated once by default, so losing the node that
+  expiry by that skew. The cache namespace is stored with replication factor 1 (a single copy) by default, so losing the node that
   holds an entry turns it into misses. `max_entries` bounds nothing in this mode; the distributed
   backend is built without it.
 - `TIERED` puts a `LOCAL` map in front of the `DISTRIBUTED` one, and a hit in the shared tier is
@@ -1987,8 +2000,9 @@ value past its TTL to cover for a failing method. How old a served value can be 
 
 The cache is fail-open. A shared backend that cannot answer a read is treated as a miss and the
 method runs; one that cannot take a write leaves the method's result standing, and the interceptor
-removes the key so the old value is not left behind. A cache outage costs latency and load on
-whatever the method reads, never a failed order. That is also why the next problem matters: the
+removes the key so the old value is not left behind. A backend that errors costs latency and load on
+whatever the method reads, not a failed order, because the interceptor recovers lookup and store
+failures. A backend that hangs is outside that: the interceptor sets no timeout of its own. That is also why the next problem matters: the
 only expiry the cache enforces on its own is the TTL.
 
 ## Telling the cache a value changed
@@ -2098,8 +2112,9 @@ other paths. Adding a node raises the cluster's effective limit; scaling is cove
 A rejected call does not run the method. The caller receives `RateLimiter.RateLimiterError.LimitExceeded`,
 which carries a `retryAfter` duration and is classified `Cause.Transient`. A slice calling this one
 gets it as the failure of its `Promise`; an HTTP request served on the node that rejected it
-receives 503 Service Unavailable, because that node answers every transient failure with 503. It
-does not receive 429, and no `Retry-After` header is set.
+receives 503 Service Unavailable, because that node's router answers a transient failure with 503 unless the slice's error mapper
+chose another status for it. This interceptor never produces 429 or `Retry-After`; the HTTP edge's
+rate guard is a separate mechanism that does.
 
 ## Failing fast when a dependency is down
 
@@ -2243,7 +2258,7 @@ The pattern is the code above. Each API version gets its own response type, `Ord
 
 Between slices, values travel in a binary codec generated from your records. Its rules decide what
 evolution is safe, and they are short. A record is written field by field in declaration order,
-with no field names on the wire. Each field is preceded by a one-byte type tag, and the reader
+with no field names on the wire. Each field is preceded by a type tag (one byte for primitives and strings, a compact codec tag for other types), and the reader
 compares that tag with the one its own compile-time shape expects; a mismatch fails the decode with
 a `TagMismatchException` naming the record and field. A record's own type tag is derived from its
 fully qualified class name.
@@ -2268,10 +2283,12 @@ the producer emit the new type only after every consumer's deployed version can 
 the old type once no producer emits it. That is two deployments where an in-place edit looks like
 one, and the extra deployment is exactly the window in which both versions run.
 
-Enums get one rule from the codec processor itself. A `@Codec` enum must declare `UNKNOWN` as its
-last constant, or the build fails; enums travel as ordinals, and an ordinal the reader does not have
-decodes to `UNKNOWN`. Add new constants immediately before `UNKNOWN`, never in the middle, and
-treat `UNKNOWN` as a refusal wherever you consume it. There is a less obvious edge: adding a constant
+Enums get one rule. Enums travel as ordinals, so an enum that crosses a slice boundary should
+declare `UNKNOWN` as its last constant. With it, an ordinal the reader does not have decodes to
+`UNKNOWN` and the rest of the message survives; without it, the slice processor warns, and the
+reader fails the decode with `UnknownEnumOrdinalException`. (The build error is for the runtime's
+own `@Codec` enums, not for slices.) Declare it, add new constants immediately before `UNKNOWN`,
+never in the middle, and treat `UNKNOWN` as a refusal wherever you consume it. There is a less obvious edge: adding a constant
 moves `UNKNOWN` to a new ordinal, so an `UNKNOWN` that an old-version slice forwards decodes on the
 new version as the constant you just added. Never forward `UNKNOWN`; reject it where it arrives.
 

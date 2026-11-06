@@ -140,7 +140,7 @@ void placeOrder_succeeds_whenStockIsAvailable() {
     Ordering.ordering(inventory, payments)
                 .placeOrder(sampleOrder)
                 .await()
-                .onFailure(Assertions::fail)
+                .onFailureRun(Assertions::fail)
                 .onSuccess(placed -> assertNotNull(placed.id()));
 }
 ```
@@ -183,7 +183,7 @@ the nodes reaching each other over localhost. Startup is immediate and you can p
 breakpoint anywhere, so this is where you write and debug.
 
 **Forge** is a chaos-testing and debugging tool built on top of Ember. It starts several
-Ember nodes and adds a dashboard, load generation, and chaos controls, so you can kill a
+Ember nodes and adds a REST API for status, load generation, and chaos controls, so you can kill a
 node, kill the leader, or trigger a rolling restart while traffic flows and watch the
 cluster recover.
 
@@ -212,15 +212,15 @@ node or a lost leader, against the same code and the same recovery path; it does
 replay the exact failure production will produce.
 
 That uniformity is a commitment with consequences in both directions, and it is worth
-naming them. Because a cross-slice call is remote in every environment, you never write
-the code that pretends it is local: there is no in-process fast path to design around,
-no "it worked in dev because dev was one process" class of surprise waiting at the first
-real deployment. And because the fabric is the same on your laptop, what Forge shows you
-when you kill the payment node under load is not an approximation of a production
-incident; it is the production incident, brought forward to the point in the schedule
-where it costs a coffee break instead of a war room. The environments differ in scale
-and stakes. They do not differ in behavior, and the whole testing strategy of Part IV
-stands on that.
+naming them. Because a cross-slice call goes through the same invocation fabric and codecs in every
+environment (a call that lands on the same node skips only the network), you never write
+the code that pretends it is local: there is no separate path to design around, and no "it
+worked in dev because dev was one process" class of surprise waiting at the first real
+deployment. And because the fabric is the same on your laptop, what Forge shows you when
+you kill the payment node under load is the same class of incident production will bring,
+not the exact one, brought forward to the point in the schedule where it costs a coffee
+break instead of a war room. The environments differ in scale, stakes, and network timing;
+the code path a call takes does not, and the testing strategy of Part IV stands on that.
 
 ## Idempotency, the price of admission
 
@@ -246,13 +246,14 @@ method is written to be repeated because it will be.
 
 Be precise about what is being promised, because "the same result" is about the world,
 not just the return value. Running the method twice must leave the same external effects
-as running it once: one row, one charge, one email — and the same answer to the caller
-both times. Reads clear the bar by construction. Writes take design, and the two working
+as running it once: one row, one charge, one email — and a repeat the caller can
+recognize as already done. Reads clear the bar by construction. Writes take design, and the two working
 techniques are the ones Part III develops: an idempotency key, some stable identity the
 second attempt carries so the first attempt's work is recognized rather than repeated,
 and the conditional write, an operation phrased so applying it twice converges on the
-same state, the way the persistence module's `ON CONFLICT` insert and the durable
-entity's serialized `create` both do.
+same state, the way the persistence module's `ON CONFLICT` upsert converges on the same row, and the durable
+entity's serialized `create` applies once, with the repeat answering `EntityAlreadyExists`,
+which the caller reads as done.
 
 What matters here is the habit: decide how a write stays safe under repetition while you
 design it, not after an incident teaches you it wasn't. The question "what happens when

@@ -207,8 +207,8 @@ database under management.
 The runtime applies them when the blueprint deploys. The schema manager runs the pending
 migrations against each datasource, records every one in an `aether_schema_history` table with
 its checksum and timestamp, and a slice does not begin serving until its migrations have
-succeeded. That gate is on by default; a blueprint can set `schema_required = false` to opt
-out. So a deploy is migrate-then-serve: the orders table is at the version the code expects
+succeeded. That gate is on by default; a blueprint can set `schema_required = false` under `[deployment]` to
+opt out. So a deploy is migrate-then-serve: the orders table is at the version the code expects
 before the first request reaches it. The engine manages tables, not databases, so the
 datasource's database must already exist; creating it is an environment step, not a migration.
 
@@ -226,8 +226,10 @@ schema/                 -> [database]            (@Sql, @PgSql)
 schema/analytics/       -> [database.analytics]  (@AnalyticsDb)
 ```
 
-Resolution is strict: every schema directory must have a matching config section, and a
-missing one fails the deploy with a clear message rather than guessing.
+Resolution is strict by name: `schema/analytics/` is migrated against `[database.analytics]`,
+never against a guess. A datasource that a slice uses but that has no migrations fails the
+blueprint build (unless the schema is declared external), and a slice whose config section is
+missing is refused at deploy.
 
 Locally, you run an external Postgres (the example projects' `start-postgres.sh` starts one and
 creates the database); the migrations then manage its tables. Production points the same
@@ -388,8 +390,9 @@ src/main/resources/schema/
 
 The schema manager runs each datasource's migrations against that datasource and records them in
 an `aether_schema_history` table inside that datasource's own database, so the two histories
-never mix. Resolution is strict: a schema subdirectory with no matching config section fails the
-deploy rather than running against the wrong place. The migrate-then-serve gate from chapter 3
+never mix. A datasource is migrated by one blueprint only: a second blueprint that migrates the
+same datasource is refused at publish. Resolution is strict: a migration directory whose section is not configured cannot be
+migrated, so the slice is held rather than run against the wrong place. The migrate-then-serve gate from chapter 3
 covers every datasource, so the slice does not begin serving until both schemas are at the
 version the code expects.
 
@@ -607,9 +610,11 @@ public @interface OnOrderEvent {}
 
 The method shape is the same as a topic subscriber's, the message in and `Promise<Unit>` out, but
 the delivery contract is a stream's. Declaring the method registers a consumer group, named from
-the artifact and the method so every replica of the slice shares one, and the runtime elects
-exactly one node to drive each partition for that group: the partition's owner when it also runs
-the slice, otherwise a slice-bearing node that reads through the owner. Events arrive one at a
+the artifact and the method so every replica of the slice shares one, and the runtime assigns
+each partition for that group to one node, by an epoch-fenced assignment record: the partition's
+owner when it also runs the slice, otherwise a slice-bearing node that reads through the owner.
+During a handover two nodes can briefly deliver the same partition; "Who reads which partition"
+below has the detail. Events arrive one at a
 time, in partition order. The consumer's position is a committed offset per group and partition,
 and it advances only after `record`'s `Promise` succeeds, so a restart or a reassignment resumes
 from the last committed position instead of skipping what it missed. All of this needs the slice
@@ -641,8 +646,7 @@ events.fetchFromCommitted("order-ledger", partition, 100)   // Promise<List<Stre
 `fetchFromCommitted(group, partition, max)` reads the next batch from wherever this consumer group
 last committed on that partition: offset 0 the first time, the saved cursor afterwards, so a restart
 resumes rather than replays. `commit(group, partition, offset)` records progress; the cursor is kept
-per group and per partition and, on an owner with a writable data dir, survives a restart. Plain
-`fetch(fromOffset, max)` reads from any position when you want to scan or replay. Each consumer group
+per group and per partition and, on an owner with a writable data dir, survives a restart. To scan or replay from a chosen position, read one partition at a time with `fetch(partition, fromOffset, max)`; the reads are covered in full below, under reading the log yourself. Each consumer group
 keeps its own cursor, so a ledger and a read model read the whole stream independently, at their own
 pace. The read is per partition, so a single-partition stream, the shape the partition note below
 reserves for a log that must read as one total order, makes partition 0 the whole log; a
@@ -659,7 +663,7 @@ The stream's configuration section carries one structural setting and a few tuni
 [streams.order-events]
 partitions = 4            # structural: ordering and parallelism unit
 retention = "time"        # tuning
-retention-value = "30d"   # tuning
+retention_value = "30d"   # tuning
 ```
 
 `partitions` is structural: ordering is guaranteed within a partition, and partitions are the
@@ -684,51 +688,50 @@ reshuffled, so pick the count as deliberately as you pick the key. And per-key o
 within a partition: a stream that must read as one total order across all keys still wants
 `partitions = 1`. `partitions` defaults to four.
 
-The retention keys tune how long the log is kept and how large an
-event may be. Treat those tuning keys as the part of streaming most likely to grow or change as
-the runtime evolves; the shape this chapter relies on, a durable ordered log read by committed
-offset, is the stable part. Verify the current keys against the resource reference when you
-configure a stream.
+`max_event_size` caps a single event, one MiB by default. The retention keys, `retention`, `retention_value`, `retention_mode` and the `max_*` bounds, decide how long the log keeps what it holds; they have their own section below, because what they bound depends on where an event lives. Keys are snake_case, and a key the runtime does not know, a dashed spelling included, is refused when the section is read rather than ignored. Treat the tuning keys as the part of streaming most likely to grow or change as the runtime evolves; the shape this chapter relies on, a durable ordered log read by committed offset, is the stable part. Verify the current keys against the resource reference when you configure a stream.
 
 ### What "durable" depends on
 
 Calling the log durable has glossed one dimension the configuration controls: how many nodes hold
-each partition. Two keys set it, both structural, and their defaults are modest on purpose:
+each partition. Two keys set it, both structural:
 
 ```toml
 [streams.order-events]
-partitions = 4              # ordering and parallelism unit
-replicas = 3                # copies of each partition, including the owner
-min-sync-replicas = 2       # a write resolves only once this many copies, including the owner, confirm it
+partitions = 4                # ordering and parallelism unit
+replication_factor = 3        # copies of each partition, including the owner
+confirmation_factor = 2       # a write resolves only once this many copies, including the owner, hold it
 retention = "time"
-retention-value = "30d"
+retention_value = "30d"
 ```
 
-`replicas` is the number of copies of each partition, counting the owner; `min-sync-replicas` is how
-many of those copies, again counting the owner, must acknowledge a write before the publishing
-`Promise` resolves. Left unset, `replicas` is `1` and `min-sync-replicas` is `0`: the log lives on a
-single owner, and a write resolves the moment that one node has it on disk. That is durable in a
-narrow sense, crash-safe through a per-partition write-ahead log, so a node that dies and restarts
-recovers its log, but not safe against losing the node's disk and not safe against losing the owner.
-Lose that node and its single copy goes with it: a consumer reads empty until the node returns. For a
-stream whose whole point is that no event is lost, one disk is not enough.
+`replication_factor` is the number of copies of each partition, counting the owner;
+`confirmation_factor` is how many of those copies, again counting the owner, must hold a write before
+the publishing `Promise` resolves. Left unset, the stream takes the cluster's replication defaults,
+`replication_factor = 3` and `confirmation_factor = 2` unless the cluster configuration says otherwise.
+Declaring `replication_factor = 1` is allowed but warned: the log then lives on a single owner, and a
+write resolves the moment that one node has it on disk. That is durable in a narrow sense, crash-safe
+through a per-partition write-ahead log, so a node that dies and restarts recovers its log, but not safe
+against losing the node's disk and not safe against losing the owner. With one copy, lose that node and
+its single copy goes with it: a consumer reads empty until the node returns. For a stream whose whole
+point is that no event is lost, one disk is not enough.
 
 One failure sits earlier than any of this: the node's WAL directory itself. A node that finds it
 cannot write there refuses to start, rather than come up and stream non-durably behind a single
 warning buried in the log — the same fail-stop-at-boot idiom the cluster-name and TLS checks use
-(`#634` item 2, `AetherNode.java:875-987`, `verifyWalBootable`/`decideWalAvailability`, wired
+(`#634` item 2, `AetherNode.verifyWalBootable`/`decideWalAvailability`, wired
 through `Main`'s boot sequence). A deployment that genuinely wants best-effort streaming over no
 streaming at all opts in explicitly with `-Daether.allowNonDurableStreams=true` (or
 `AETHER_ALLOW_NON_DURABLE_STREAMS=true`); a node constructed directly rather than through `Main` —
 Forge, a test, an embedded runtime — bypasses this check and keeps the old warn-and-degrade
 behavior, since it is not the deployment the guard protects.
 
-Durability across the loss of a node is what `min-sync-replicas` buys. Set it to `2` or more and
+Durability across the loss of a node is what `confirmation_factor` buys. Set it to `2` or more and
 every write waits for at least one copy beyond the owner, so a caught-up replica always exists —
 and that copy is fsynced on the replica before its ack counts, the same bar the owner clears, so a
 power loss on owner and replica together inside an unsynced window cannot silently erase a write
-the caller was told reached the configured replication factor (`#634` item 1,
-`ReplicationReceiveHandler.java:92-93,255-257`). Then losing the owner is survivable for reads:
+the caller was told reached the configured confirmation factor (`#634` item 1,
+`ReplicationReceiveHandler`: the replica acks only after the batch is fsynced there, and a failed
+sync withholds the ack). Then losing the owner is survivable for reads:
 after the owner is killed, a reader still gets the complete
 prior history and the ordered tail, nothing dropped and nothing reordered. That is proven end to
 end, an owner killed mid-stream and every earlier event still served in offset order alongside the
@@ -758,8 +761,8 @@ Java at all. Only the configuration section grows:
 topic_name = "order-events"
 durability = "durable"        # "ephemeral" (default) | "durable"
 partitions = 1                 # durable only; default 1
-replicas = 2                   # durable only; default 2
-min_sync_replicas = 2          # durable only; default = replicas
+replication_factor = 3         # durable only; default: the cluster's [replication] default (3)
+confirmation_factor = 2        # durable only; default: min(cluster default (2), replication_factor)
 retention = "7d"               # durable only; default 7d
 ```
 
@@ -770,11 +773,12 @@ internally by a replicated stream plus its own dead-letter stream, both provisio
 the topic is provisioned, not lazily on first publish, and a publish resolves once the write
 reaches the replication floor below, not merely once it lands on the owner.
 
-The `replicas >= 2` and `min_sync_replicas == replicas` pairing above is not an arbitrary
-default, it is exactly the stream configuration the previous section proved survives an owner
-kill with every prior event intact. Declare anything outside it, `replicas = 1`, say, or
-`min_sync_replicas` short of `replicas`, and the build rejects the declaration at parse rather
-than silently accepting a weaker guarantee than the one advertised.
+The defaults, `replication_factor = 3` with `confirmation_factor = 2`, are the stream
+configuration the previous section describes as surviving an owner kill with every prior event
+intact. The build refuses a `confirmation_factor` above `replication_factor` or a factor below 1, and
+warns on a declared `replication_factor` below 3, on a `confirmation_factor` equal to
+`replication_factor`, and on `confirmation_factor = 1`, rather than silently accepting a weaker
+guarantee than the one advertised.
 
 What the tier buys, and no more:
 
@@ -821,6 +825,97 @@ command instead of a stream read.
 
 A related but distinct surface: `@Notify` for email or HTTP is at-least-once with retries and may
 duplicate, but it is not pub-sub and carries no DLQ; the guarantees above do not extend to it.
+
+### Who reads which partition
+
+The order ledger and the order-history read model both subscribe to `streams.order-events`, and each slice runs on three nodes. Two questions decide whether either of them works. Do the ledger and the read model split the events between them, or does each see all of them? And of the ledger's three instances, which one reads partition 2? A ledger that receives half the orders is not a ledger, and a team that adds instances to make it faster wants to know whether the instances will get any work.
+
+Each subscriber method is its own consumer group. The group's name is the slice artifact without its version, followed by the method name, so the ledger's `record` method reads as the group `com.example:order-ledger-record`. Groups are independent: the ledger and the read model each read every event of the stream, at their own pace. Within one group, the committed assignment record, described below and fenced by an epoch, names exactly one node to deliver each partition; delivery can briefly overlap on a handover, which belongs to the delivery contract, not yet covered in this book. Leaving the version out of the name is deliberate. A new version of the ledger deployed beside the old one joins the same group, so a rolling upgrade continues the group instead of starting a second reader beside it. The same rule cuts the other way: renaming the method, or moving it to another artifact, makes a new group with no committed position of its own. Treat a stream subscriber's method name as part of its contract. Where a new group starts reading is a cursor question, not yet covered in this book.
+
+The assignment is a committed record, one per stream, group and partition, written only by the cluster leader. The leader computes the assignee with two rules. If the node that owns the partition runs the slice, the owner delivers it, reading its own copy. Otherwise the assignee is chosen among the nodes where the slice is active and live, by the same rendezvous hash that places partitions, so every node computes the same answer; that node reads the partition through its owner. A node attaches a partition only when the committed record names it. Each node runs a reconcile pass every five seconds, and the leader's pass writes a new record only where the computed assignee differs from the committed one. Each write carries an epoch, and a write from a deposed leader is refused when it is applied.
+
+Follow those rules to a consequence that is easy to miss: the assignment follows where the data lives, not how many instances the slice has, so adding instances does not by itself add readers. How consumption scales is not yet covered in this book.
+
+There is no join protocol for a slice to run. A rebalance is the leader rewriting a record because the computed assignee moved: a node left the live set, the slice became active or stopped on a node, or a partition's ownership moved. Rendezvous hashing keeps that churn small, since only the partitions whose ranking involved the changed node get a new answer. When no node can run the slice at all, the leader writes nothing, the old record stands, and the partitions appear as `unassignedPartitions` in each node's `/streams/declarative-consumers` report. What a handover means for the events in flight during it is part of the delivery contract, not yet covered in this book.
+
+Two limits apply in this release. A `[streams.order-events.consumers.<group>]` table parses, but per-group settings do not reach the runtime, so a non-default value in it is refused at deploy and every group runs on the defaults. A subscriber method may declare `List<OrderEvent>` as its parameter, and the runtime records it as a batch consumer, but it delivers one-element lists; write the handler so that is correct.
+
+A process outside the cluster that reads a stream over the management API has a separate, explicit group mechanism: `POST /streams/groups/join`, `POST /streams/groups/leave`, and `GET /streams/groups` for status. On every join, and on every leave that leaves a member behind, the leader deals the partitions round-robin over the members, sorted by consumer id, under an epoch that refuses a stale rebalance. Its failure behaviour is not yet covered in this book.
+
+### Reading the log yourself
+
+Rebuilding the order-history read model from scratch, or an audit job that checks every partition, needs the active form: a `StreamAccess<OrderEvent>` requested against `streams.order-events`, read under your own control. Two reads carry the work. `metadata()` returns the stream's name, its `partitionCount` and a `PartitionInfo` per partition. `fetch(partition, fromOffset, maxEvents)` returns up to `maxEvents` events of one partition from `fromOffset`, each a `StreamEvent` carrying its `offset`, `timestamp`, `partition` and `payload`. Offsets are per partition: offset 7 in partition 0 and offset 7 in partition 3 are unrelated events.
+
+A read of the first page of every partition, then, discovers the count and fans out one read per partition:
+
+```java
+// events : StreamAccess<OrderEvent>, injected against streams.order-events
+static Promise<List<List<StreamEvent<OrderEvent>>>> firstPages(StreamAccess<OrderEvent> events) {
+    return events.metadata()
+                 .flatMap(meta -> Promise.allOf(IntStream.range(0, meta.partitionCount())
+                                                         .mapToObj(partition -> events.fetch(partition, 0L, 500))
+                                                         .toList()))
+                 .flatMap(pages -> Result.allOf(pages).async());
+}
+```
+
+Each inner list is one partition, in that partition's order, and that is the only order the stream has to offer across a multi-partition read. The next page of a partition starts at the last offset read plus one. Saving that position durably is what a cursor does; cursors are not yet covered in this book.
+
+Two reads in the interface look more general than they are. `fetch(fromOffset, maxEvents)`, without a partition, reads the same offset from every partition, merges the results, sorts them by offset and keeps the first `maxEvents`. The offsets it sorts by mean nothing across partitions, and the cut can keep one partition's page while dropping the end of another's, so use it for a glance at a stream, never as a position to resume from. And `metadata()` describes this node's own copy. `partitionCount` is right on every node, but the head, tail and count of a partition this node does not hold read `-1`, `-1` and `0`, and on a node that does hold it they describe the hot ring, the newest part of the log. Events older than the ring's tail remain readable through the same `fetch`; the next section says where they are.
+
+### Where an event lives
+
+Retention says how long the log keeps an event, and the answer only makes sense once you know where the event is kept. A stream partition stores its events in three places, each with its own bound.
+
+The first is the hot ring, an off-heap ring buffer per partition holding the newest events. Reads near the head are served from it. Its size comes from the stream's retention, as the next section shows, and when it is full it evicts its oldest events.
+
+The second is the write-ahead log, one append log per partition on local disk. With the log configured, the default, an owner's publish is gated on the event reaching it with an fsync, and the log is not truncated above the point where events have been sealed, so every event the ring has evicted but not yet sealed is still there. The log's directory is set per node:
+
+```toml
+[storage.streams]
+wal_path = "/var/lib/aether/wal"   # the node id is appended; unset, the path is derived
+```
+
+The third is sealed segments. The ring's evicted events queue for a sealer, which writes them out as one segment once the run reaches 1 MiB, 4,096 events, or five seconds of waiting, whichever comes first. Those thresholds are node settings in `[streaming]` (`seal_run_bytes`, `seal_run_events`, `seal_run_age`), and the runtime's own source marks all of them as guesses awaiting a baseline measurement; `seal_run_age` is refused above one day. Segments go to the node's `streams` storage instance, which keeps a small memory tier, a local disk tier capped at 40% of the usable space at boot, kept between 1 GiB and the usable space less 2 GiB of headroom, unless `[streaming] segment_disk_max_bytes` says otherwise, and a cluster-shared tier that, for streams, can only be the DHT. A read below the ring's tail is served from the sealed tier, so a consumer catching up on last week reads through the same API as one reading the last second.
+
+The model to keep: the ring is a bounded cache of the newest events, the write-ahead log covers the gap until a seal, and the sealed tier is the history. Retention bounds both the ring and the history, by different rules.
+
+Pub-sub has tiers too, on a different axis. A topic's `durability` selects its substrate. An ephemeral topic is a fan-out of calls to the subscribers present, and nothing is stored anywhere. A durable topic is a stream named `topic:<address>`, so its events live in the three places above; its `retention` declares an age only, seven days by default, and its dead-letter stream `topic:<address>.dlq` keeps fourteen days, fixed, with no key to change it. When a subscriber whose handler takes a `MessageContext`, which needs the durable tier, is reached by a publisher whose declaration is ephemeral, the delivery is refused without a call and raised as a `topic-tier-mismatch` operator event. Keep the tier in the one section both sides name.
+
+### How long the log keeps an event
+
+The finance ledger's stream must keep thirty days so an audit can replay a month. A stream of order-page views needs a few hours. Disk is finite on every node that holds a partition. Retention is how each stream states what it needs, and every bound it states applies per partition.
+
+`retention` picks the kind of bound: `count` (the default), `time`, `size` or `compound`. The first three take their value from `retention_value`; `compound` names any of `max_count`, `max_bytes` and `max_age`, and `retention_mode` says whether the declared bounds reclaim at the first one reached (`any`, the default) or only when all are (`all`). Durations are a whole number of milliseconds or of `s`, `m`, `h` or `d`; sizes are bytes or `KB`, `MB` or `GB`, counted in powers of 1,024; counts are whole numbers. Every value is at least 1, and a malformed or overflowing value is refused with the key named.
+
+What a declaration bounds differs by tier, and this is the rule to carry away. The ring uses all three bounds and fills any it was not given with a default of 100,000 events, 256 MiB and 24 hours; a `count` stream's ring has no byte or age bound, since the count sizes it. The sealed tier is bounded only by what the section declares:
+
+| Section declares | Ring holds up to | Sealed history kept |
+|---|---|---|
+| no `retention` key | 100,000 events | 24 hours, the node default |
+| `count`, N | N events | while fewer than N newer events are sealed |
+| `time`, D | 100,000 events, 256 MiB or D, first reached | for D |
+| `size`, S | 100,000 events, S or 24 hours, first reached | until S of newer sealed bytes |
+| `compound` | the declared bounds, defaults for the rest | the declared bounds only |
+
+So the stream configured earlier with `retention = "time"` and `retention_value = "30d"` does not keep thirty days in memory. Its ring evicts at 100,000 events or 256 MiB, those events seal, and the sealed tier keeps them for thirty days, readable through the same `fetch`. A stream with no retention key keeps a day of history, which is rarely what a ledger wants; declare it. And because a count is measured over the sealed tier, a partition with `count` N can serve up to N events from its ring on top of at least N sealed ones.
+
+A compound declaration states several bounds at once:
+
+```toml
+[streams.order-events]
+partitions = 4
+retention = "compound"
+max_age = "30d"
+max_bytes = "8GB"
+retention_mode = "any"   # reclaim at whichever declared bound is reached first
+```
+
+Reclaiming runs as a pass every five minutes. Each pass removes only the oldest whole segments of a partition, as an unbroken prefix, and judges a segment by its newest event's age and by how much is newer than it. That rule earns a precise promise: retention does not reclaim an event before its declared bound. An event can outlive its bound by up to a segment's worth of newer events and one pass interval. Under `all`, a dimension the section did not declare neither reclaims nor blocks.
+
+Retention fails closed. A node that cannot read a stream's policy, because the committed configuration has not been applied there yet or the mode is one this build does not know, reclaims nothing of that stream, and after two such passes raises `STREAM_RETENTION_WITHHELD`. Its disk use grows until the policy is readable. Retention also does not shorten under disk pressure. At 85% of the segment disk tier the node raises `STREAM_SEGMENT_DISK_PRESSURE`; what a full tier does to publishers is backpressure, not yet covered in this book. Size the declared bounds against the disk of the nodes that hold the partitions, replicas included, rather than against what the stream would like to keep.
+
+Retention is also a bargain with consumers. Pick the bound from the slowest consumer you are willing to support; what a group sees after falling off the end of the log is not yet covered in this book.
 
 ### Pub-sub, durable pub-sub, or stream?
 
@@ -935,16 +1030,19 @@ build; what delivers it is config:
 [notification]
 backend = "smtp"
 
-[smtp]
+[notification.smtp_config]
 host = "smtp.example.com"
 port = 587
 tls_mode = "STARTTLS"
+
+[notification.smtp_config.auth]
 username = "orders@shop.example"
 password = "${secrets:smtp/password}"
 ```
 
-`backend = "smtp"` sends through an SMTP server; `backend = "http"` with an `[http-email]` section
-sends through a provider API such as SendGrid or Mailgun instead. The slice builds the same
+`backend = "smtp"` sends through an SMTP server; `backend = "http"` with a
+`[notification.http_config]` section (`provider_hint`, `api_key`) sends through a provider API
+instead; SendGrid, Mailgun, Postmark and Resend have a mapping today. The slice builds the same
 `Notification` either way, and switching providers is a config change. The set of providers behind
 the HTTP backend is the part of this resource most likely to grow, so check the resource
 reference for the current list; the `Notification` model and the `send` call are the stable shape.
@@ -1021,10 +1119,12 @@ from the database itself.
 
 ## Database notifications (PG LISTEN/NOTIFY)
 
-> _Intended design, not yet wired (source as of 2026-06-27): the `PgNotificationSubscriber`
-> resource, the `PgNotification` payload, and the callback machinery exist, but the method-level
-> listener annotation shown here is not yet generated by the processor. Written to the intended
-> shape; verify against source before GA._
+> _Partly wired (source at rc5, `d113279af`): the `PgNotificationSubscriber` resource, the
+> `PgNotification` payload and the callback machinery exist, and the processor now recognizes the
+> method-level listener annotation and writes the `pg-notification` manifest binding shown below.
+> No code that invokes the slice method for that binding was found in the deployment, invoke, slice
+> or node modules at this SHA, so the runtime half is not confirmed. Written to the intended shape;
+> verify against source before GA._
 
 Some events originate in the database. A trigger fires on an `INSERT`, a row's status flips, or
 another service writes through the same Postgres, and the slice wants to react the moment it
@@ -1072,7 +1172,7 @@ a `PgNotification("order_status", "42", pid)`. In the manifest it is a reactive 
 others, with its own category:
 
 ```
-reactive.0.category=pg-notify
+reactive.0.category=pg-notification
 reactive.0.config=pg-notifications.order-changes
 reactive.0.method=onChange
 ```
@@ -1091,12 +1191,12 @@ and in what order, is fixed when the slice is compiled; how each behaves is what
 
 ## Cross-cutting behavior: interceptors
 
-> _Confirmed from source at rc3 (`bfd00615d`). Interceptors are woven into the generated factory at
+> _Confirmed from source at rc5 (`d113279af`). Interceptors are woven into the generated factory at
 > compile time as nested `intercept(...)` calls, and their order is deterministic: the first
 > annotation on a method is the outermost wrapper. Pragmatica #277 removed the older runtime-applied
 > `Aspect` seam, so the interceptor chain is not reconfigured per deployment without a rebuild; what
 > a deployment tunes is each interceptor's config section, not the chain. Seven `MethodInterceptor`
-> types ship. Verify config-section keys against the resource reference before GA._
+> types ship. The config keys shown were checked against the config records at rc5; verify them against the resource reference before GA._
 
 `placeOrder` calls payment over the network. That call fails transiently and should be retried;
 if payment is down, retrying harder makes it worse, so calls should trip a circuit breaker; the
@@ -1134,7 +1234,10 @@ that section exactly as a datasource's did:
 ```toml
 [retry.payment]
 max_attempts = 3
-backoff = "EXPONENTIAL"
+retry_on = "TRANSIENT"    # or NON_TERMINAL
+
+[retry.payment.backoff_strategy]
+type = "fixed"
 interval = "200ms"
 
 [circuit-breaker.payment]
@@ -1143,8 +1246,10 @@ reset_timeout = "30s"
 test_attempts = 3
 
 [logging.orders]
+name = "orders"
 level = "INFO"
 log_args = false
+log_result = false
 log_duration = true
 ```
 
@@ -1175,20 +1280,26 @@ public interface OrderQuote {
 
 ```toml
 [cache.quotes]
+cache_name = "quotes"
 ttl_seconds = 60
 max_entries = 10000
-mode = "LOCAL"            # or DISTRIBUTED, shared across the cluster
+mode = "LOCAL"            # or DISTRIBUTED (shared across the cluster), or TIERED (local in front of distributed)
 strategy = "CACHE_ASIDE"
 ```
 
 A cache earns its keep on reads and is a hazard on writes, so it goes on the methods that read;
-its hard part is invalidation, which Module E takes up alongside the pub-sub from Module B that
-carries the invalidation signal.
+its hard part is invalidation. The cache interceptor has no pub-sub hook of its own: a write method
+using the `WRITE_AROUND` strategy removes the key from the cache it is configured with. In `LOCAL`
+mode that is the node's own map, and in `TIERED` mode the node's map and the shared tier, so in both
+other nodes' local copies age out by TTL unless a slice subscribes to a change event and calls such
+a method; in `DISTRIBUTED` mode the removal goes to the shared backend and no node keeps a stale
+copy. Module E takes that up
+alongside the pub-sub from Module B.
 
 When more than one interceptor wraps a method, the order they nest in matters: logging outermost so
 it records the whole attempt, rate limit before any real work so a rejected call costs nothing, and
-the circuit breaker around retry so a retried call re-enters the breaker and a tripped breaker stops
-the retries. That order is not left to chance. The first annotation on the method is the outermost
+the retry inside the circuit breaker, so the breaker counts one failure per exhausted retry sequence
+rather than one per attempt. That order is not left to chance. The first annotation on the method is the outermost
 wrapper, the next is inside it, and so on down to the method itself, fixed when the slice is
 compiled. It is why the example above lists `@LogCalls` first and `@RetryPayment` last: logging ends
 up outermost, recording the whole attempt, and the retry innermost, closest to the call. Read the
@@ -1416,8 +1527,9 @@ Writes route themselves. A `create`, `update`, or `delete` arriving at a node th
 the key is forwarded to the committed owner rather than refused, and the owner re-runs its
 admission under the fence, so forwarding weakens nothing. A failure crosses back typed: the
 caller pattern-matches `EntityAlreadyExists` or `EntityNotFound` the same way whether the write
-ran locally or three nodes away. Timer operations are the exception; they do not forward, and a
-non-owner answers them with `NotCurrentOwner`.
+ran locally or three nodes away. Timer operations route the same way: a
+`scheduleTimer` or `cancelTimer` at a non-owner is forwarded to the committed owner, and the owner
+stamps the fire instant on its own clock.
 
 Provisioning follows the same four moves as every resource in Part 0: a qualifier annotation, a
 config section, a manifest entry, an injected parameter. Entities come in keyspaces, one per
@@ -1435,16 +1547,20 @@ public @interface OrderEntity {}
 [entities.orders]
 keyspace           = "orders"
 partition_count    = 8     # fence granularity: each partition has one fenced owner
-replication_factor = 3     # copies of each partition's log, including the owner
+replication_factor = 3     # optional: copies of each partition's log, including the owner
+confirmation_factor = 2    # optional: copies that must hold a write before it acknowledges
 ```
 
-All three keys are required and validated when the slice loads, so a rejected value fails loading
-with a named cause rather than surfacing at first write. `replication_factor` is where durability
-is bought, and the write barrier is derived from it: at `3`, a write acknowledges only once the
-owner and at least one peer hold the record, which is what makes state survive the owner's death
-rather than merely its restart. At `1` the entity is still durable across a restart of its own
-node, but the disk it sits on is the only copy; that weaker guarantee is legal and has to be
-chosen on purpose.
+`keyspace` and `partition_count` name the family and its fence granularity. `replication_factor` and
+`confirmation_factor` are optional and default to the cluster's replication defaults, 3 and 2. Values
+are validated when the slice loads, so a rejected value fails loading with a named cause rather than
+surfacing at first write. Durability is bought with the two factors together:
+`replication_factor` is the number of copies of each partition's log, including the owner, and
+`confirmation_factor` is how many of them must hold a write before it acknowledges. At the defaults,
+3 and 2, a write acknowledges only once the owner and at least one peer hold the record, which is what
+makes state survive the owner's death rather than merely its restart. At `replication_factor = 1` the
+entity is still durable across a restart of its own node, but the disk it sits on is the only copy;
+that weaker guarantee is legal and warned, and has to be declared on purpose.
 
 ```java
 @Route("/orders/{id}/cancel")
@@ -1473,25 +1589,29 @@ public sealed interface EntityError extends Cause {
     record EntityAlreadyExists(String key) implements EntityError {}
     record EntityNotFound(String key) implements EntityError {}
     record TimerNotFound(String key, DurableEntity.TimerToken token) implements EntityError {}
-    record TimerNotSupported(String key) implements EntityError {}
+    record TimerTokenMismatch(String key, DurableEntity.TimerToken token, String appliedToken) implements EntityError {}
+    record TimerDelayInvalid(String key, long delayMillis) implements EntityError {}
     record TimerFireFailed(String key, DurableEntity.TimerToken token, Cause cause) implements EntityError {}
     record StaleOwnerEpoch(String key, String presentedEpoch) implements EntityError {}
     record StorageFailed(String key, Cause cause) implements EntityError {}
+    record StorageUnavailable(String key, Cause cause) implements EntityError, Cause.Transient {}
     record NotCurrentOwner(String key, String committedOwner) implements EntityError {}
-    record OwnershipNotYetCommitted(String key, String keyspace, int partition) implements EntityError {}
+    record OwnershipNotYetCommitted(String key, String keyspace, int partition) implements EntityError, Cause.Transient {}
+    record OwnerTransitioning(String key, String reason) implements EntityError, Cause.Transient {}
     record StaleEpochRead(String key, String presentedEpoch, String highWaterEpoch) implements EntityError {}
-    record LinearizableUnavailable(String key) implements EntityError {}
+    record LinearizableUnavailable(String key) implements EntityError, Cause.Transient {}
 }
 ```
 
-`StaleOwnerEpoch` is the one to recognize: it is the fence speaking, and it is transient. It means a
-handover was in flight, the runtime retries against the new owner, and the author rarely sees it.
+`StaleOwnerEpoch` is the one to recognize: it is the fence speaking. This node was deposed as owner
+while the operation was in flight, and the write committed nowhere. It is not marked transient, and the
+caller re-resolves the current owner and retries there.
 
 > _Not yet available: there is no terminal-state predicate on the entity, and so no typed failure
 > for operating on a finished entity or for collecting one that is not finished. Earlier drafts of
 > this listing carried `EntityTerminated` and `EntityNotTerminal`; neither is implemented, and
 > neither is shown above because a sealed interface's variants are exhaustive — a `switch` over
-> `EntityError` must match the eleven above and nothing else._
+> `EntityError` must match the fourteen above and nothing else._
 
 Reads carry their consistency in the call. Plain `get(key)` is a bounded-stale read: a node that
 holds the partition, owner or replica, answers from its local copy after folding its view forward
@@ -1499,8 +1619,9 @@ to the log's committed head, and a node that holds nothing forwards the read to 
 owner. The answer can trail an in-flight write by a bounded window; it never invents state. When
 trailing is not acceptable — a check immediately before an irreversible action, a read that must
 see a write another node just acknowledged — ask for it: `get(key, ReadConsistency.LINEARIZABLE)`
-routes to the committed owner, orders a no-op consensus round, re-checks the owner's epoch after
-the round, and only then serves, so the read reflects every write acknowledged before it began.
+is served only by the committed owner: it orders a no-op consensus round, re-checks the owner's epoch
+after the round, and only then serves, so the read reflects every write acknowledged before it began.
+A node that is not the owner answers `NotCurrentOwner` and the caller re-resolves.
 The price is a consensus round per read. Default to the bounded-stale form and escalate per call,
 so the code shows exactly which reads paid for certainty.
 
@@ -1518,12 +1639,12 @@ locking primitive to learn, because single-writer-per-key already is one.
 
 A word on what durable means in a running cluster, stated per property with the mechanism that
 earns it, because the rest of the module leans on it. A write acknowledges only after the
-entity's log holds it fsynced on the owner and, at `replication_factor` of two or more, on at
+entity's log holds it fsynced on the owner and, at a `confirmation_factor` of two or more, on at
 least one peer — so an acknowledged write survives the owner's death, and the crash gate
 exercises exactly that: an owner killed mid-traffic, every acknowledged write still present with
-its exact value after the cluster heals. A log whose fsync fails stops accepting writes rather
-than acknowledging what the disk did not take: fail-stop, visible to the operator, instead of
-silent loss. The proven envelope, stated with the same rigor as the write above, now covers a
+its exact value after the cluster heals. The stream write-ahead log beneath it fail-stops on a failed
+frame write or fsync, so later writes fail and acknowledgements stay withheld rather than
+acknowledging what the disk did not take. The proven envelope, stated with the same rigor as the write above, now covers a
 full cluster restart too: the write survives its owner being replaced and a full cluster restart
 that keeps the node data directories, because the same fsync-before-ack discipline applies to the
 per-partition WAL — replayed in full at boot — and the entity's own log restores its snapshot the
@@ -1541,6 +1662,9 @@ then Confirmed, then Shipped, or it is Cancelled from either of the first two st
 that are legal are a small fixed set, and the ones that are not should be impossible. When an
 operation has that shape, modelling it as an entity whose update applies a state-machine transition
 gives you a workflow, and the runtime enforces the legal transitions for you.
+
+> Status: `PersistentWorkflow` and `WorkflowCause` below are design, not shipped API. Neither exists
+> in the rc5 source; what ships is the `StateMachineDefinition` builder shown further down.
 
 ```java
 public interface PersistentWorkflow<S, E> {
@@ -1639,7 +1763,7 @@ compensations were correct; its ledger lived on the stack and died with the proc
 saga keeps the same shape and moves the ledger into an entity, so the runtime remembers where a saga
 got to and can finish it or unwind it after a crash.
 
-A saga is a `DurableEntity<String, SagaState<C>>` whose state is a step ledger over a shared context.
+A saga is a durable entity whose state, `SagaState<C>`, is a step ledger over a shared context.
 The author declares the steps; each is a forward action, the compensation that undoes it, and a
 re-run policy, all reading the immutable context `C`:
 
@@ -1735,21 +1859,26 @@ That leaves the sharpest failure in a distributed saga: the crash between an eff
 it. The payment service charges the card; the process dies before the ledger commits; on recovery,
 nobody knows whether the charge happened. Re-running the step double-charges; skipping it ships an
 unpaid order. This is what `RUN_ONCE` controls. Before it invokes a `RUN_ONCE` step's forward action,
-the runtime writes a `StepAttempt(sagaId, stepIndex)` marker under the fence; if the process crashes
-before the ledger commits, recovery finds the marker and does not invoke that forward action a second
-time, treating the step as taken. The runtime never calls a `RUN_ONCE` forward twice. An `IDEMPOTENT`
+the design has the runtime write a `StepAttempt(sagaId, stepIndex)` marker under the fence; if the
+process crashes before the ledger commits, recovery finds the marker and does not re-invoke that
+forward action, treating the step as taken. The mechanism is the marker: a crash between the marker and
+the effect would skip the effect, and that would be the price of never repeating it. An `IDEMPOTENT`
 step carries no marker: the author has declared that running it again is harmless, so recovery simply
-re-runs it. The key `(sagaId, stepIndex)` is the idempotency anchor, and it is one instance of a
-general rule: every entity update carries a stable monotonic counter `(key, n)` that a slice can hand
-to a downstream service as an idempotency key, so a retried effect is recognized rather than repeated.
+re-runs it. The `(sagaId, stepIndex)` pair is the idempotency anchor in this sketch; the current
+design spec replaces it with an explicit typed `StepContext` (an `operationId` and a `compensationId`)
+that every forward, outcome lookup and compensation receives, so treat the pair as the shape of the
+idea rather than the final API. The design also intends a stable per-entity monotonic counter
+`(key, n)` that a slice could hand to a downstream service as an idempotency key; the shipped
+`update` returns only the post-update state and does not expose one yet, so today the idempotency key
+is one the slice mints itself and writes into the state or the command.
 
 This also settles a debt left open in Module A. A single operation that must commit to its own store
 and reliably emit an event to another faces the dual-write problem: two writes, no shared
 transaction. The classic answer is a transactional outbox, staging the second write inside the first
 store's transaction and delivering it later by a separate process. Aether reaches the same guarantee
-more directly. The per-entity `(key, n)` counter and a `RUN_ONCE` step let a retried effect land once
-instead of repeating, with no outbox table to maintain and no delivery worker to operate. The
-reliable emission Module A pointed forward to is this.
+more directly. The designed per-entity `(key, n)` counter, or an idempotency key the slice mints itself, and a
+`RUN_ONCE` step would let a retried effect land once instead of repeating, with no outbox table to
+maintain and no delivery worker to operate. The reliable emission Module A pointed forward to is this.
 
 ## Entity, workflow, or saga?
 
@@ -1802,9 +1931,511 @@ backpressure.
 
 # Module E — Performance and scale
 
-> _Status: scaffold. Caching + invalidation, batching/coalescing, rate-limit/backpressure._
+> _Confirmed from source at rc5 (`d113279af`) for the cache, rate-limit and circuit-breaker
+> interceptors, their config keys, and the causes a caller receives. The database-notification half
+> of the invalidation example inherits the "partly wired" status of that section. Backpressure,
+> batching, scaling and stream delivery guarantees are covered later._
+
+Every performance tool in this module is an interceptor from Module C, and every one of them keeps
+state: cached values, tokens in a bucket, a count of recent failures. The advice for each follows
+from one question, which is where that state lives. Most of it lives in the node, inside one
+slice's copy of the interceptor, so a cluster of five nodes runs five caches, five buckets and five
+breakers unless the configuration says otherwise. A setting that looks right for one process is
+off by a factor of the node count, and each section below names that factor.
+
+## Serving a read without doing the work
+
+`placeOrder` prices every line item, and the price of a product changes a few times a day while it
+is read thousands of times an hour. Reading it from the database on every order is the slice doing
+the same work over and over. A cache returns the stored answer instead, and the interceptor from
+Module C does this without the slice's code changing: on a hit it returns the stored value and the
+method does not run; on a miss it runs the method and stores the result.
+
+```java
+@Slice
+public interface ProductCatalog {
+    @CachedPrice
+    Promise<Money> price(@Key Sku sku);
+}
+```
+
+```toml
+[cache.prices]
+cache_name = "prices"
+strategy = "CACHE_ASIDE"
+ttl_seconds = 30
+max_entries = 50000
+mode = "DISTRIBUTED"
+```
+
+Each qualifier in this module (`@CachedPrice`, `@EvictsPrice`, `@LimitOrderIntake`,
+`@BreakOnPaymentOutage`, `@RetryPayment`) is declared the way `@WithQuoteCache` is in Module C, with
+`@ResourceQualifier(type = ..., config = ...)` naming its config section (`cache.prices`,
+`cache.price-evict`, `rate-limit.orders`, `circuit-breaker.payment`, `retry.payment`).
+
+All five keys are required. `cache_name` has no default on purpose: two sections that forgot it
+would otherwise land in one shared namespace. What to cache follows from what a hit means. A hit
+answers with the value the method returned for that key up to `ttl_seconds` ago, so cache a read
+whose answer you would accept at that age: a price, a product description, a tax table. Do not
+cache a read whose staleness is a business error, such as stock on hand at the moment of
+reservation.
+
+`ttl_seconds` is the staleness you accept, stated in seconds. It is counted from the moment the
+value was stored, not from its last read, and an expired entry is a miss; the cache does not keep
+serving it to cover for a failing method. How old a served value can be, per tier, depends on `mode`:
+
+- `LOCAL` keeps an in-memory map per node, bounded by `max_entries` with the least recently used
+  entry evicted first. Each node fills its own copy, so two nodes can answer the same key with two
+  different prices for up to `ttl_seconds`.
+- `DISTRIBUTED` keeps one copy per key in the cluster's distributed hash table, under a namespace
+  named by `cache_name`, so every node reads the same entry. The expiry is stamped with the writing
+  node's wall clock and checked against the reading node's, so clock skew between them moves the
+  expiry by that skew. The cache namespace is stored with replication factor 1 (a single copy) by default, so losing the node that
+  holds an entry turns it into misses. `max_entries` bounds nothing in this mode; the distributed
+  backend is built without it.
+- `TIERED` puts a `LOCAL` map in front of the `DISTRIBUTED` one, and a hit in the shared tier is
+  copied into the node's map with a fresh TTL. A value stored at the last moment of its shared
+  lifetime therefore lives on in a node's map for one more TTL: under `TIERED`, a served value can be
+  up to twice `ttl_seconds` old.
+
+The cache is fail-open. A shared backend that cannot answer a read is treated as a miss and the
+method runs; one that cannot take a write leaves the method's result standing, and the interceptor
+removes the key so the old value is not left behind. A backend that errors costs latency and load on
+whatever the method reads, not a failed order, because the interceptor recovers lookup and store
+failures. A backend that hangs is outside that: the interceptor sets no timeout of its own. That is also why the next problem matters: the
+only expiry the cache enforces on its own is the TTL.
+
+## Telling the cache a value changed
+
+A merchant lowers a price. With a 30-second TTL, orders placed in the next 30 seconds may still be
+charged the old one. If that window is too wide, shrinking the TTL trades it for more database
+reads; the other move is to remove the entry when the price changes. The cache interceptor's
+`WRITE_AROUND` strategy does exactly that: it runs the method and, once the method succeeds,
+removes the key it was called with.
+
+```java
+@Slice
+public interface ProductCatalog {
+    @CachedPrice
+    Promise<Money> price(@Key Sku sku);
+
+    @EvictsPrice
+    Promise<Unit> changePrice(@Key Sku sku, Money newPrice);
+
+    @EvictsPrice
+    Promise<Unit> evictPrice(@Key Sku sku);
+}
+```
+
+```toml
+[cache.price-evict]
+cache_name = "prices"
+strategy = "WRITE_AROUND"
+ttl_seconds = 30
+max_entries = 50000
+mode = "DISTRIBUTED"
+```
+
+`@EvictsPrice` points at its own section, and that section names the same `cache_name`. Sections
+that share a name share one backend, so the mode, TTL, capacity and key type must agree with every
+other section of that name, or provisioning refuses the slice and names the setting that differs.
+The strategy may differ, which is what lets a `CACHE_ASIDE` reader and a `WRITE_AROUND` invalidator
+work on one namespace. `changePrice` writes the new price and then evicts; `evictPrice`'s body is
+`Promise.unitPromise()`, because the interceptor does all of its work.
+
+What a removal reaches depends on the mode again. Under `DISTRIBUTED` there is one copy, so one
+removal from any node clears it for every node. Under `LOCAL` it clears the calling node's map and
+no other; under `TIERED` it clears the calling node's map and the shared tier, and the other nodes'
+local copies live out their TTL. If invalidation matters to you, use `DISTRIBUTED`: it is the one
+mode where a single removal is complete.
+
+Two details decide whether the removal happens at all. First, interceptors wrap calls that arrive
+through the slice's interface. If `changePrice`'s implementation calls `evictPrice` on its own
+object, that call runs the bare method and evicts nothing; the eviction has to come from outside,
+or from the annotated method itself, as `changePrice` does. Second, prices also change when another
+system writes the catalog table directly. For those, a listener slice calls `evictPrice` through the
+catalog's interface:
+
+```java
+@Slice
+public interface PriceChangeListener {
+    @OnPriceChange
+    Promise<Unit> onChange(PgNotification notification);
+
+    static PriceChangeListener priceChangeListener(ProductCatalog catalog) {
+        return notification -> Sku.sku(notification.payload())
+                                        .async()
+                                        .flatMap(catalog::evictPrice);
+    }
+}
+```
+
+`@OnPriceChange` is a `PgNotificationSubscriber` qualifier declared as in the database notifications
+section of Module C, and a trigger on the catalog table sends the product id as the payload. That
+section's caveat applies here: the runtime half of the listener is not yet confirmed. A pub-sub
+subscriber from Module B calling `evictPrice` works the same way.
+
+Invalidation narrows the window; it does not close it. A failed removal is absorbed and logged at
+DEBUG, a dropped notification never arrives, and a read that loaded the old price just before the
+write can store it just after the removal. Each of those leaves a stale entry, and the TTL is what
+ends it. Keep the TTL at the longest staleness the business accepts, and treat invalidation as the
+mechanism that makes the common case much fresher than that.
+
+## Choosing a rate limit
+
+A rate limit says how much work a method accepts per unit of time and turns away the rest before it
+does any. The rate-limit interceptor is a token bucket:
+
+```toml
+[rate-limit.orders]
+max_requests = 200
+window = "1s"
+burst = 50
+```
+
+The bucket holds `max_requests + burst` tokens and starts full. Each admitted call takes one, and
+tokens come back continuously, one every `window / max_requests`, here one every 5 ms, rather than
+all at once when a window ends. `burst` is extra headroom: after a quiet spell, up to 250 calls go
+through at once, and after that the sustained rate is 200 a second. With `burst = 0` the bucket
+holds exactly `max_requests`. All three keys are required, and a configuration the limiter cannot
+represent, such as more than 65,535 tokens in total or a window shorter than one nanosecond per
+token, fails provisioning with its reason.
+
+The bucket lives in the node. Each node running the slice has its own, and nothing in the
+interceptor coordinates them, so the cluster admits up to the per-node figure times the number of
+nodes running the slice, and a node that receives more than its share rejects calls while its
+neighbours have tokens to spare. Choose the number from the other end: take what the thing you are
+protecting can absorb, a payment gateway's contracted rate or the database's comfortable query
+rate, divide it by the nodes that run the slice, and leave room for traffic that reaches it by
+other paths. Adding a node raises the cluster's effective limit; scaling is covered later.
+
+A rejected call does not run the method. The caller receives `RateLimiter.RateLimiterError.LimitExceeded`,
+which carries a `retryAfter` duration and is classified `Cause.Transient`. A slice calling this one
+gets it as the failure of its `Promise`; an HTTP request served on the node that rejected it
+receives 503 Service Unavailable, because that node's router answers a transient failure with 503 unless the slice's error mapper
+chose another status for it. This interceptor never produces 429 or `Retry-After`; the HTTP edge's
+rate guard is a separate mechanism that does.
+
+## Failing fast when a dependency is down
+
+When the payment gateway stops answering, each call to it waits for its timeout, holds its
+resources while it waits, and fails anyway. A circuit breaker notices the run of failures and stops
+calling: for a while it fails every call at once, without touching the gateway, and then it probes
+to see whether the gateway is back. The keys are the three from Module C, and all three may be
+omitted, falling back to 5 failures, 30 seconds and 3 test calls.
+
+The breaker has three states:
+
+- **Closed.** Calls run. Each failure adds one to a counter and each success resets it to zero, so
+  `failure_threshold` counts failures without a success between them. Reaching it opens the breaker.
+- **Open.** Calls are rejected without running. After `reset_timeout` the breaker moves to half-open,
+  on a timer or on the first call after the timeout, whichever comes first.
+- **Half-open.** Calls run as trials. `test_attempts` successes close the breaker; one failure opens
+  it again for another `reset_timeout`.
+
+A rejected caller receives `CircuitBreaker.CircuitBreakerError.CircuitBreakerOpenError`, classified
+`Cause.Transient`, with a message ending in how long until the breaker tries again. An HTTP request
+served on that node gets 503, the same as a rate-limit rejection.
+
+Three properties shape how you configure it. Every failure counts: the interceptor builds the
+breaker with a trip rule that accepts any cause, and the config offers no filter. A gateway that
+declines five cards in a row opens the breaker exactly as an outage would, so put the breaker on a
+call whose failures are infrastructure, or return the business verdict as a value instead of a
+failure. Half-open admits every call that arrives, not one probe at a time, so a recovering gateway
+receives the full arrival rate at once; a longer `reset_timeout` gives it more time before that
+happens, nothing in the breaker spreads it out. And the breaker is per node, one per config section
+and slice on each node, so with five nodes the gateway sees up to five times `failure_threshold`
+failed calls before every node has stopped calling, and each node probes on its own schedule.
+
+## When the guards meet
+
+Both rejections are `Cause.Transient`, and the retry interceptor's default `retry_on = "TRANSIENT"`
+retries exactly that classification. A retry wrapped around a rate limiter or a breaker retries
+their rejections: it spends further tokens on calls the limiter refused and retries calls the
+breaker refused with the very failure it is designed to return fast. The order Module C gave is
+also the order that keeps them apart, with one addition each:
+
+```java
+@Slice
+public interface Ordering {
+    @LogCalls
+    @LimitOrderIntake
+    @BreakOnPaymentOutage
+    @RetryPayment
+    Promise<OrderPlaced> placeOrder(PlaceOrder request);
+}
+```
+
+The limiter sits outside the breaker as well as outside the retry. Inside the breaker, its own
+rejections would count as failures, and a burst of traffic would open the breaker against a gateway
+that is perfectly healthy. A cache on a read method goes outside the limiter and the breaker, so a hit
+spends no token and is still served while the breaker is open; it serves only unexpired entries, so
+it shortens an outage's reach without hiding the outage.
+
+The three interceptors have this in common: each turns a deployment number into behavior, and each
+number is per node unless the cache is `DISTRIBUTED`. Module F turns from the speed of one
+operation to the shape of the system around it.
 
 # Module F — Architecture in the large
 
-> _Status: scaffold. Event sourcing + read models (CQRS), multi-tenancy, audit-as-data,
-> versioned-message evolution._
+The earlier modules kept one operation correct and fast. This one is about the shape of the whole
+application once it outlives its first version, its first customer and its first auditor. Aether
+contributes less here than anywhere else in the playbook, and that is the point of the module: the
+runtime supplies a handful of hooks (versioned routes, a binary codec with stated rules, a security
+context at the edge, transactions on your datasource), and the architecture is made of your own
+types arranged around them. Three patterns follow: evolving a message while old and new readers
+both run, serving many customers from one deployment, and keeping an audit trail you can query.
+Event sourcing and read models (CQRS) build on the third and come in a later revision of this
+module.
+
+## Changing a message without breaking its readers
+
+The order summary needs a currency. Adding a field to a record is a one-line change, and in a
+single process it is safe. In a cluster it is not, because a deployment does not swap every
+instance at once. Aether's update strategies are canary, blue-green and rolling, and each of them
+runs the old slice version and the new one side by side for a while. Every message type that
+crosses a slice boundary has readers on both sides of that window.
+
+Two version numbers are in play, and they move independently. The **slice version** is the
+artifact's version, the thing a deployment replaces. The **API version** is the HTTP contract an
+external client depends on. A slice can ship ten artifact versions under one API version, or carry
+two API versions inside one artifact. Keep the two apart: the artifact version is your release
+cadence, the API version is a promise to someone you cannot redeploy.
+
+### At the edge: versions in `routes.toml`
+
+For external clients, the API version lives in `routes.toml`. Each `[vN.routes]` block declares the
+routes of version N, and a bind key `get` under `[v1.routes]` binds to a slice method named `getV1`.
+The per-version table carries the lifecycle:
+
+```toml
+[api]
+prefix = "/api/orders"
+
+[security]
+default = "authenticated"
+
+[v1.routes]
+get = "GET /{id:Long}"
+
+[v1]
+deprecated = true
+sunset = "2027-06-30"
+
+[v2.routes]
+get = "GET /{id:Long}"
+
+[v2]
+defaultIfMissing = true
+```
+
+```java
+@Slice
+public interface OrderQueries {
+    record GetOrderRequest(Long id) {}
+
+    record OrderSummaryV1(long id, String status, long totalCents) {}
+    record OrderSummaryV2(long id, String status, long totalCents, String currency) {}
+
+    Promise<OrderSummaryV1> getV1(GetOrderRequest request);
+    Promise<OrderSummaryV2> getV2(GetOrderRequest request);
+}
+```
+
+Whether the version is selected by path (`/api/orders/v1/42`) or by a request header is a
+deployment-level setting, outside `routes.toml`, so the same slice serves either. Responses from
+a deprecated version carry a `Deprecation: true` header, a `Sunset` header when a date is set, and
+a `Link` to the newest non-deprecated successor. The router also counts requests per version and
+counts deprecated-version requests separately, and the management API lists each slice's versions
+at `GET /api/versions`. That counter is how you know when the sunset can actually happen: when it
+reads zero for long enough, delete `getV1` and its record.
+
+The pattern is the code above. Each API version gets its own response type, `OrderSummaryV2` beside
+`OrderSummaryV1`, and one implementation projects the current model into each. Never widen
+`OrderSummaryV1` in place; the whole reason a client pinned to v1 is safe is that v1 stops changing.
+
+### Inside the cluster: the codec's rules
+
+Between slices, values travel in a binary codec generated from your records. Its rules decide what
+evolution is safe, and they are short. A record is written field by field in declaration order,
+with no field names on the wire. Each field is preceded by a type tag (one byte for primitives and strings, a compact codec tag for other types), and the reader
+compares that tag with the one its own compile-time shape expects; a mismatch fails the decode with
+a `TagMismatchException` naming the record and field. A record's own type tag is derived from its
+fully qualified class name.
+
+Read off those rules, the consequences are concrete:
+
+- **Renaming a field is free.** Names never reach the wire.
+- **Removing or retyping a field, or inserting one before others, is a different shape.** A reader
+  on the other version fails on the field where the shapes diverge. The failure is loud, which is
+  the good news. A field appended after the last one is the case to test rather than assume: the
+  older reader can finish its own fields before it reaches the new one, so do not count on the tag
+  check to catch it.
+- **Swapping two fields of the same type is silent.** Both carry the same tag, the check passes,
+  and the values land in each other's fields. This is the one edit the codec cannot catch, and no
+  test that runs a single version will catch it either.
+- **Renaming or moving the record changes its wire identity.** The tag comes from the class name,
+  so to the other version it is a type it has never seen.
+
+The pattern follows from the last rule: **a new shape gets a new name.** Freeze a record once
+another slice reads it. When the shape must change, add `OrderPlacedV2` beside `OrderPlaced`, have
+the producer emit the new type only after every consumer's deployed version can read it, and remove
+the old type once no producer emits it. That is two deployments where an in-place edit looks like
+one, and the extra deployment is exactly the window in which both versions run.
+
+Enums get one rule. Enums travel as ordinals, so an enum that crosses a slice boundary should
+declare `UNKNOWN` as its last constant. With it, an ordinal the reader does not have decodes to
+`UNKNOWN` and the rest of the message survives; without it, the slice processor warns, and the
+reader fails the decode with `UnknownEnumOrdinalException`. (The build error is for the runtime's
+own `@Codec` enums, not for slices.) Declare it, add new constants immediately before `UNKNOWN`,
+never in the middle, and treat `UNKNOWN` as a refusal wherever you consume it. There is a less obvious edge: adding a constant
+moves `UNKNOWN` to a new ordinal, so an `UNKNOWN` that an old-version slice forwards decodes on the
+new version as the constant you just added. Never forward `UNKNOWN`; reject it where it arrives.
+
+Durable topic subscribers make the coexistence explicit. A subscriber's consumer-group identity
+drops the artifact version, so during a blue-green window either version may process the group's
+events, and the event type must be readable by both. What the runtime promises about those events
+reaching a subscriber is a separate question, answered in "Events that must not be lost" in
+Module B.
+
+**The honest limit.** The runtime does not compare record shapes across slice versions before a
+deployment. The codec turns most shape drift into a decode failure at the moment of the call, which
+is far better than garbage, but it is still a failure in production. The new-name rule is your
+check, and it holds only as long as reviewers enforce it.
+
+## One cluster, many customers
+
+Several merchants place orders through one deployment. Each must see only its own orders, and
+nothing in one merchant's traffic may leak into another's answer. The question is where the tenant
+lives, and the answer this book commits to is: in your types, from the first line of the request
+to the last row of the database.
+
+Start with what Aether does not do. It has no tenant concept. Its stated trust model is a single
+application in a single security domain, and the runtime README says it is not hardened for
+multi-tenant deployment. Tenancy inside one cluster is therefore an application property: one
+trusted application serving many customers, each separated from the others by your code. Aether's
+*communities* are a different axis entirely, a grouping of nodes in the core/community/worker node
+hierarchy; a community is not a tenant, and binding one to the other is a deployment decision the
+runtime knows nothing about.
+
+What Aether does provide is the caller's identity at the HTTP edge. When a route is authenticated
+with a JWT, the token's claims become string claims on a `SecurityContext`, and a slice method may
+take that context as a parameter beside exactly one request record. That is where the tenant enters:
+
+```java
+@Slice
+public interface OrderIntake {
+    record PlaceOrderRequest(List<LineItem> items) {}
+
+    Promise<OrderPlaced> placeOrder(SecurityContext security, PlaceOrderRequest request);
+}
+
+public record TenantId(String value) {
+    private static final Cause MISSING_TENANT = Causes.cause("Token carries no tenant claim");
+
+    public static Result<TenantId> tenantId(SecurityContext security) {
+        return Option.option(security.claim("tenant"))
+                     .filter(value -> !value.isBlank())
+                     .map(TenantId::new)
+                     .toResult(MISSING_TENANT);
+    }
+}
+```
+
+`claim` returns null for an absent claim, so it is wrapped at once and never travels further.
+`placeOrder` parses `TenantId.tenantId(security)` first, fails the request if it is missing, and
+from then on the tenant is an ordinary value: a field of every request record sent to another
+slice, a field of every event, the first parameter of every repository method. Carry it
+explicitly. A tenant read from ambient context halfway down a call chain is a tenant that some
+code path will one day forget to read.
+
+In the data, the shared-schema form is the default: a `tenant_id` column on every tenant-owned
+table, part of every key, and in every `WHERE`. Make the type enforce it: if every method on the
+order repository takes a `TenantId`, an unscoped query is a compile error at the call site rather
+than a review comment. When a large customer needs its own database, the multi-datasource support
+in Module A ("More than one datasource") gives each tenant class its own connector, and the
+`TenantId` decides which one a request uses. The repository signatures do not change.
+
+**The honest limit.** Every boundary here is code you wrote. A missed `WHERE tenant_id = ?` is a
+cross-tenant leak, and nothing beneath it will refuse the query. API-key authentication carries no
+claims, so tenancy needs token-based authentication on every tenant-facing route. Customers who must
+be protected from each other as adversaries, rather than merely kept apart, need separate
+clusters; that is what the single-trust-domain statement means in practice.
+
+## The audit trail is data
+
+Support asks who changed the shipping address on order 4417, and when. A log line might answer,
+if it was kept, if it was not rotated away, and if someone can grep it. An audit trail that answers
+reliably is a table: rows you query by order, by tenant, by actor or by time, with the same retention
+and access control as the data it describes.
+
+Aether's own audit records are the wrong place for this. The runtime writes an audit log for its
+operator-facing events (authentication results, deployments, configuration and schema changes), and
+it is a log stream, written for operators. The workflow and saga audit stream from Module D is part
+of a pinned design with no runtime code behind it. Neither records business changes. An application
+audit trail is ordinary slice code, and that is no loss: it is a small amount of code.
+
+The pattern has two parts. First, the audit entry is a type, designed like any other domain record:
+
+```java
+public record AuditEntry(TenantId tenant,
+                         String subject,     // "order:4417"
+                         String action,      // "shipping-address-changed"
+                         String actor,       // Principal.value()
+                         Instant at,
+                         String detail) {}
+```
+
+Second, it is written in the same database transaction as the change it records:
+
+```java
+static OrderMaintenance orderMaintenance(@Sql SqlConnector db) {
+    record orderMaintenance(SqlConnector db) implements OrderMaintenance {
+        @Override
+        public Promise<Unit> changeAddress(SecurityContext security, ChangeAddressRequest request) {
+            return TenantId.tenantId(security)
+                           .async()
+                           .flatMap(tenant -> db.transactional(conn -> updateAndAudit(conn, tenant, security, request)));
+        }
+
+        private Promise<Unit> updateAndAudit(SqlConnector conn,
+                                             TenantId tenant,
+                                             SecurityContext security,
+                                             ChangeAddressRequest request) {
+            return conn.update(UPDATE_ADDRESS, request.address(), tenant.value(), request.orderId())
+                       .flatMap(_ -> conn.update(INSERT_AUDIT,
+                                                 tenant.value(),
+                                                 "order:" + request.orderId(),
+                                                 "shipping-address-changed",
+                                                 security.principal().value(),
+                                                 Timestamp.from(Instant.now()),
+                                                 request.address()))
+                       .mapToUnit();
+        }
+    }
+    return new orderMaintenance(db);
+}
+```
+
+The transaction is what makes the trail trustworthy. The audit row commits with the change or not
+at all, so the trail cannot claim a change that was rolled back, and a change cannot exist without
+its row. Writing the audit entry in a second step, after the change, reopens exactly the gap the
+table was meant to close.
+
+Treat the trail as data in the rest of its life too. It is append-only: the slice that owns it
+exposes inserts and queries, never updates. It carries the tenant, so it obeys the tenancy rules
+above. Its `detail` is a deliberate projection, not a dump of the request; a trail that stores
+whole payloads also stores every secret and personal field the payload carried, and then needs its
+own audit.
+
+**The honest limit.** The trail records what passes through the code that writes it. A change made
+by a migration, by a manual `UPDATE` or by a slice that skips the pattern leaves no row. When other
+slices must react to audit entries, publishing them is a messaging question, and what the runtime
+promises about delivery is covered in Module B ("Pub-sub, durable pub-sub, or stream?"); none of it
+replaces the row written in the transaction. A cross-cutting interceptor (Module C) can enforce
+that audited methods exist, but the entry itself belongs in the business transaction.
+
+An audit table records what happened beside the state that resulted. Turn that around, make the
+recorded changes the source and derive the state from them, and you arrive at event sourcing and
+its read models, which this module will take up once the delivery guarantees they rest on are
+settled.

@@ -59,7 +59,7 @@ public final class OrderQuoteFactory {
             }
 
             public SliceCodec codec(SliceCodec parent) {
-                return SliceCodec.sliceCodec(parent, List.of(/* one TypeCodec per nested type */));
+                return SliceCodec.sliceCodec(parent, List.of(/* one TypeCodec per reachable type */));
             }
 
             public Promise<Unit> stop() {
@@ -86,8 +86,9 @@ the request and response types attached as `TypeToken`s. When a request arrives 
 `quote`, the runtime looks it up here and calls your implementation; the method name and
 its types are how an incoming byte stream finds the right Java method.
 
-`codec()` is the generated serialization. The processor emits one codec per nested type, so
-`QuoteRequest` and `Quote` cross the network without you writing or annotating anything.
+`codec()` is the generated serialization. The processor emits one codec per type reachable
+from the slice's method signatures, so `QuoteRequest` and `Quote` cross the network without
+you writing or annotating anything.
 This is why a slice never carries `@Codec`: the codec already exists, generated from the
 record components.
 
@@ -100,9 +101,9 @@ builds your implementation; `orderQuoteSlice` wraps that implementation as a `Sl
 runtime calls the second one, and it calls it by reflection: it looks for a static method
 whose name is the slice name with `Slice` appended, taking a single `SliceCreationContext`
 and returning `Promise<Slice>`. That one-argument shape is the only contract the runtime
-knows, and the loader checks it: a slice compiled against an older runtime, whose factory
-took a second argument, is rejected with a named error that tells you to rebuild rather than
-failing deep inside reflection. Your own factory, with its real parameters, is called by the
+knows, and the loader checks it: a slice built by a different Aether version, whose factory
+signature does not match, is rejected with a named error that tells you to build it with the
+same Aether version as the runtime, rather than failing deep inside reflection. Your own factory, with its real parameters, is called by the
 generated bridge, never by the runtime directly. Cross-cutting behavior, retries or logging
 or a circuit breaker, is not one of these two methods: it is declared per method as an
 annotation and woven into the same generated bridge at compile time, the third seam Module C
@@ -152,8 +153,10 @@ The runtime moves the slice through five stages:
   scheduled or subscriber method begins receiving calls.
 - **Serve.** Requests arrive, the dispatch table finds the method by name, the generated
   codec decodes the request and encodes the response, and your logic runs.
-- **Stop.** On shutdown or redeploy the runtime calls `stop()`, which releases every
-  resource the slice acquired. The hook is always generated, so nothing leaks.
+- **Stop.** On shutdown or redeploy the runtime calls `stop()`, which asks the
+  resource provider to release every resource the slice provisioned, closing each through its
+  `AsyncCloseable` or `AutoCloseable`; a resource that implements neither is not closed. The
+  hook is always generated.
 
 All of this is decided at build time: the runtime reads the manifest as data and dispatches
 through the generated table. That is the whole of what happens when a request arrives.
@@ -181,7 +184,7 @@ public static Promise<Ordering> ordering(SliceCreationContext ctx) {
 Each `provide` call looks up a config section, builds the resource (a pooled connection, a
 configured client, a topic publisher), and hands it back; `Promise.all` waits for all of
 them; your factory receives them as the parameters you declared. In the manifest these
-appear as `resource.*`, `stream.publisher.*`, and `publish.topics.*` entries, so the runtime
+appear as `resource.*`, `stream.publisher.*`, `stream.access.*`, and `publish.topic.*` entries, so the runtime
 knows what to provision before the slice starts.
 
 **Resource as a method invocation.** The slice does not hold a handle; the runtime calls in
@@ -196,13 +199,13 @@ reactive.0.config=scheduling.heartbeat
 reactive.0.method=heartbeat
 ```
 
-At start the runtime reads these entries and drives the named method. A `@Heartbeat` method
-is called on a schedule; a subscriber method is called for each message; a PG-notify method
-is called for each database notification. Each kind produces its own reactive entry, with
+At start the runtime reads these entries and drives the named method. A method carrying a qualifier of type `Scheduled` (for example
+your own `@Heartbeat`) is called on a schedule; a subscriber method is called for each message. A database-notification method is declared the
+same way, but the runtime half is not wired at this release (Module C). Each kind produces its own reactive entry, with
 its own category and config section.
 
 Some resources use only one side. A SQL connector or an HTTP client is parameter-only,
-because the slice always initiates. A scheduled task or a PG-notify listener is
+because the slice always initiates. A scheduled task is
 method-only, because the runtime always initiates. Pub-sub and streams use both: a
 `Publisher` parameter to send and a subscriber method to receive; a `StreamPublisher` or
 `StreamAccess` parameter to write and read, and a `StreamSubscriber` method to consume. The
@@ -220,21 +223,23 @@ Resources are provisioned from config sections, which raises the obvious questio
 do those sections come from? Config arrives in three layers, and the more specific layer
 wins.
 
-- **Global** is the application's own configuration, and it travels with the blueprint as
-  `resources.toml` (packaged into the artifact as `META-INF/resources.toml`). Topics,
-  stream settings, feature flags, business thresholds: the settings that are part of the
-  app wherever it runs.
+- **The slice's own defaults** ship in its jar as `META-INF/resources.toml`. Topics, stream
+  settings, feature flags, business thresholds: the settings that are part of the app
+  wherever it runs. They are local to each node and are the fallback for any key the
+  deployment does not set.
 - **Node** is the infrastructure configuration on each machine, in `aether.toml`. Database
   hosts, endpoints, credentials: the facts that differ between a laptop, staging, and
-  production.
-- **Slice** is a per-slice override, named in the manifest as `config.file` (for example
-  `slices/Ordering.toml`), for the rare case where one slice needs to depart from the
-  shared settings.
+  production. It overrides the slice's defaults.
+- **Operator changes** made through the management API are stored in the cluster's
+  consensus store and override both.
 
-The runtime merges them in that order, with slice over node over global, so a value set
-closer to the slice replaces the same value set further away. Values written as
-`${secrets:orders/db-password}` are resolved at load time from the platform's secret
-store, so credentials live there rather than in the blueprint.
+The runtime applies them in that order of precedence, so a value set closer to the
+deployment replaces the same value set in the slice's defaults. (A `slices/<Name>.toml`
+file is a different thing: the blueprint generator reads it at build time to set the
+slice's instance count, and it is not a configuration layer.)
+
+Values written as `${secrets:orders/db-password}` are resolved at load time from the
+platform's secret store, so credentials live there rather than in the blueprint.
 
 This split is what makes "configuration change, not code change" concrete. The app's own
 settings ship with the app; the environment's facts live on the node; moving from staging
@@ -243,7 +248,8 @@ configuration on a running cluster through the management API, and the update pr
 through the cluster's consensus store. What that changes is the stored configuration, not
 a running slice: every resource a slice holds was built from the values current when it
 was provisioned, and in the form described here nothing rebuilds it when those values
-change. A slice sees new configuration when it is next reloaded, and not before.
+change. A slice that wants to react to a change declares an update method for the section;
+otherwise it sees new configuration when it is next reloaded.
 
 Through all of this, the slice reads nothing. It declares a qualifier, the runtime reads
 the merged configuration, builds the resource, and hands it over. Configuration is the
@@ -292,6 +298,8 @@ What decides it is a factory you write, registered in the slice's jar under
 
 ```java
 public class ExpressQuoteFactory implements ResourceFactory<ShippingQuote, ShippingConfig> {
+    public Class<ShippingQuote> resourceType() { return ShippingQuote.class; }
+
     public Class<ShippingConfig> configType() { return ShippingConfig.class; }
 
     public boolean supports(ShippingConfig config) { return config.express(); }
@@ -320,7 +328,7 @@ the runtime carries the work before the slice takes over, and the names say whic
 a section sounds like something you read, a step sounds like something that runs.
 
 That difference matters because of a property both levels share, and which the previous
-section stated: neither refreshes. A resource is built once, from the configuration current
+section stated: neither refreshes as a parameter. A resource is built once, from the configuration current
 at that moment. For a section this is easy to forget, because a thing called configuration
 sounds live. For a provisioned step the name carries the truth, since it was assembled once
 and it is what it was assembled into.
@@ -365,13 +373,15 @@ HTTP_402 = ["*PaymentDeclined*"]
 `prefix` is optional and applies to every route. `[routes]` maps each method name to an
 HTTP verb and path; path parameters are written `{id}` or, when you want a type, `{id:Integer}`.
 `[security]` sets the baseline access policy. `[errors]` maps failure patterns to HTTP
-statuses, with `default` as the fallback. A pattern matches against the returned `Cause`'s
+statuses. `default` is the fallback for causes no pattern claims, except that, where no pattern set a status, a transient
+cause answers 503 and a validation cause 422; the processor warns at build time about
+concrete `Cause` types no pattern reaches. A pattern matches against the returned `Cause`'s
 type name, which is why a case that needs its own status is its own type, `OutOfStock` or
 `PaymentDeclined`, rather than one constant of a shared enum: every constant of an enum is
 the same type, so they cannot map to different statuses.
 
 The processor compiles this into the manifest and a generated `OrderingRoutes` class.
-In the manifest each route is fully resolved:
+In the manifest each route is fully resolved (the entry also carries a `route.0.version`, omitted here):
 
 ```
 route.0.handler=placeOrder
@@ -382,9 +392,11 @@ route.0.security=public
 
 When a request arrives, the router matches its method and path to a route, decodes the
 path parameters and body into the request type with the generated codec, and calls the
-slice method through the dispatch table from 1.1. A success is serialized to the route's response media type, JSON by default, and an empty result becomes a 204. A
-returned `Cause` is mapped to its HTTP status and rendered as an RFC 9457 `ProblemDetail`
-body (`application/problem+json`); a request that matches no route becomes a 404 in the same shape.
+slice method through the dispatch table described in the anatomy section above. A success is
+serialized to the route's response media type, JSON by default, and an empty result becomes
+a 204. A returned `Cause` is mapped to its HTTP status and rendered as an RFC 9457 `ProblemDetail`
+body (served as `application/json`); a request that matches no route becomes a 404 `ProblemDetail`
+body, served by the ingress as `application/problem+json`.
 
 That closes the machine. You write an interface, a factory, and a `routes.toml`. The
 processor writes the factory bridge, the `Slice` wrapper with its dispatch table and

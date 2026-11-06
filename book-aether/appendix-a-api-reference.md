@@ -145,7 +145,7 @@ section, on a method taking exactly the message type and returning `Promise<Unit
 subscribers present at publish time, with the returned `Promise` completing when every present
 subscriber's `Promise` settles; `"durable"` backs the topic with a replicated stream and delivers
 at-least-once per consumer group with a group-attributed dead-letter queue, at the cost of
-`partitions`, `replicas`, `min_sync_replicas`, and `retention` keys. A durable subscriber may add
+`partitions`, `replication_factor`, `confirmation_factor`, and `retention` keys. A durable subscriber may add
 a second parameter, `MessageContext context`, carrying a publisher-minted `messageId` stable
 across retries and dead-letter hops. Module B covers the full guarantee, including what remains
 unverified for the multi-node path.
@@ -178,17 +178,17 @@ handler success, retries a failure (three attempts by default), then dead-letter
 Partition routing: mark one record component `@PartitionKey` (`@Target(RECORD_COMPONENT)`);
 keyless events route round-robin.
 
-`[streams.<name>]` keys and defaults:
+`[streams.<name>]` keys and defaults (snake_case; the old keys `replicas` and `min_sync_replicas`, and any dashed spelling, are refused when the section is read):
 
 | Key | Default | Meaning |
 |---|---|---|
 | `partitions` | `4` | ordering and parallelism unit; changing it remaps keys |
-| `replicas` | `1` | copies of each partition, including the owner |
-| `min-sync-replicas` | `0` | copies that must confirm a write before it resolves |
+| `replication_factor` | `3` (the cluster's replication default) | copies of each partition, including the owner |
+| `confirmation_factor` | `min(2, replication_factor)` | copies, including the owner, that must hold a write before it resolves |
 | `retention` | `"count"` | `count` \| `time` \| `size` \| `compound` |
-| `retention-value` | `""` | bound for the chosen retention |
-| `auto-offset-reset` | `"latest"` | where a new consumer group starts |
-| `max-event-size` | `1048576` | bytes |
+| `retention_value` | the retention kind's built-in bound | bound for the chosen retention |
+| `auto_offset_reset` | `"earliest"` | the only accepted value; `"latest"` is rejected |
+| `max_event_size` | `1048576` | bytes |
 | `compression` | `NONE` | payload compression |
 
 Consumer-group overrides live under `[streams.<name>.consumers.<group>]` (error strategy
@@ -217,7 +217,7 @@ public enum ReadConsistency { BOUNDED_STALE, LINEARIZABLE }
 Declare one qualifier per keyspace over `DurableEntity.class`, section `entities.<keyspace>`.
 The section requires all of `keyspace` (non-blank, no `/`), `partition_count` (≥ 1), and
 `replication_factor` (≥ 1); the write barrier is derived as `min(2, replication_factor)`.
-Failures are the sealed `EntityError` — eleven variants, listed in Module D. Timers are durably
+Failures are the sealed `EntityError` — fourteen variants, listed in Module D. Timers are durably
 recorded and fire on a deployed node as of 2026-08-27 (#351); the check interval is a documented
 1-second constant, not a config knob.
 

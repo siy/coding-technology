@@ -12,22 +12,24 @@ nodes rule as a force on your design rather than a footnote in your runbook.
 
 You have slices; production needs them assembled into a deployable unit, placed on a cluster, and
 made live — without hand-wiring and without a maintenance window for the first cut. A blueprint is
-that assembly: the declarative deployable that names the slices and the config sections each one
-resolves, the same assembling from Part 0 raised to deployment scale. The runtime reads the
-blueprint's manifest before it loads a class.
+that assembly: the declarative deployable that names the slices, the same assembling from Part 0
+raised to deployment scale. Before anything loads, the cluster checks the config sections those
+slices resolve, read from the slice manifests and checked against the node configuration and each
+slice's own `resources.toml`.
 
 Operating it is three moves: stand the cluster up once, then push and deploy on each release.
 
 ```bash
-# once — stand up the cluster (seven phases; config per bootstrap-config.md)
+# once — stand up the cluster (eight phases; config per bootstrap-config.md)
 aether cluster bootstrap orders-cluster.toml --wait
 
 # each release
-aether -c <node-ip>:8080 artifacts push   org.example:orders:1.0.0-SNAPSHOT
-aether -c <node-ip>:8080 blueprints deploy org.example:orders:1.0.0-SNAPSHOT --wait
+aether -c <node-ip>:8080 artifacts push   org.example:orders:1.0.0
+aether -c <node-ip>:8080 blueprints deploy org.example:orders:1.0.0 --wait
 ```
 
-Coordinates are `group:artifact:version`; `blueprints deploy` appends `:blueprint` for you, and
+Coordinates are `group:artifact:version`, and the version is a release: the cluster's artifact
+repository is write-once and refuses a SNAPSHOT. `blueprints deploy` appends `:blueprint` for you, and
 `--wait` blocks until the deploy settles. The `deploy-prod.sh` that `jbct init` scaffolds emits
 exactly these two commands, taking the cluster address from `-c` or `AETHER_ENDPOINT`. The
 getting-started tutorial walks the whole path end to end, including a real cloud bootstrap; this
@@ -182,9 +184,9 @@ necessary half of recoverability, not the sufficient half; a clean verdict means
 too late, not that every record in between is actually present. The three sources are read one
 after another rather than as one atomic snapshot, which is the genuine reason the periodic watch
 requires two consecutive bad reads, not one, before it pages a `CRITICAL` `retention-invariant`
-alert (`#634` items 3+4, `RetentionRoutes.java`) — and that periodic half runs only while a
-dashboard client is connected, so an unwatched cluster gets the invariant checked when you call the
-endpoint yourself, not as a standing background guarantee. The same response carries
+alert (`#634` items 3+4, `RetentionRoutes.java`) — and that periodic half runs on a fixed
+interval (`RETENTION_INVARIANT_CHECK_INTERVAL`), whether or not anyone is watching. The same
+response carries
 `wal.failStopped`: a WAL that has stopped accepting writes after a failed fsync shows up here
 before it shows up as a missing event.
 

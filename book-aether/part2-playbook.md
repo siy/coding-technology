@@ -101,7 +101,8 @@ async transport, `io_threads` sizes the Netty event loop.
 
 With `OrderStore` in hand, `placeOrder` gains a step: after reserving inventory and charging
 payment, it saves the order before returning. The order now survives a restart, and because
-`save` is an upsert, a replay after failover writes the same row rather than a duplicate.
+`save` is an upsert, a repeated `save` after a failover, whoever repeats it, writes the same row rather
+than a duplicate.
 The next chapter keeps the persistence and removes the hand-written SQL, letting the
 compiler check queries against the schema.
 
@@ -1604,8 +1605,11 @@ public sealed interface EntityError extends Cause {
 ```
 
 `StaleOwnerEpoch` is the one to recognize: it is the fence speaking. This node was deposed as owner
-while the operation was in flight, and the write committed nowhere. It is not marked transient, and the
-caller re-resolves the current owner and retries there.
+while the operation was in flight, and the write committed nowhere. It is not marked transient, so a
+retry declared with the default `retry_on = "TRANSIENT"` returns it untouched, and the runtime does not
+re-resolve the owner for you. The caller re-issues the operation, by its own code or by a retry declared
+with `retry_on = "NON_TERMINAL"`, and the repeat reaches the new owner the way any write on a non-owner
+does: forwarded to the committed owner.
 
 > _Not yet available: there is no terminal-state predicate on the entity, and so no typed failure
 > for operating on a finished entity or for collecting one that is not finished. Earlier drafts of

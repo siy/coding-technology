@@ -47,8 +47,10 @@ slice's declared dependencies: everything it needs from the outside world appear
 place, checked by the compiler. Because the interface has a single method, the factory
 returns a lambda that implements it, so there is no `OrderingImpl` to write or keep
 in sync. The body is the pipeline from Part 0, unchanged. `Inventory` and `Payments` are
-other slices, and you call them as ordinary method calls; reaching them, routing, retry,
-and failover are the runtime's job, and the call behaves the same wherever they run.
+other slices, and you call them as ordinary method calls; reaching them and choosing the
+instance that serves each call are the runtime's job, and the call behaves the same
+wherever they run. The runtime sends each call once. Asking again after a failure is
+declared on the method (Part II, Module C) or done by the caller.
 
 That is the whole contract. Three rules hold every slice together:
 
@@ -390,8 +392,10 @@ defers only the endpoints, credentials, and sizes that legitimately differ per
 environment. Part IV takes the deployment story from there.
 
 A cross-slice call is written the same way in all three. The runtime routes it through
-its invocation fabric and handles serialization, retry, and failover for you, and nothing
-in the slice names the environment. That is why moving a slice from your laptop to
+its invocation fabric, handles serialization, and picks an instance on a node membership
+still counts alive, and nothing in the slice names the environment. It sends the call
+once and does not re-send it; Part VI lists what the caller gets back when the chosen
+node is lost. That is why moving a slice from your laptop to
 production needs no code change. What the code cannot make identical is what lies
 underneath it: localhost inside one process in Ember and Forge, a real network in Aether.
 Timing, concurrency, and the ways a call can fail differ with it, and the resources a
@@ -412,14 +416,21 @@ the code path a call takes does not, and the testing strategy of Part III stands
 
 ## Idempotency, the price of admission
 
-The runtime makes your slice fault-tolerant and scalable for free, and asks one thing in
-return: a slice method should be idempotent. Given the same request, it should produce the
-same result, even if it runs more than once.
+The runtime places, scales, and routes your slice, and asks one thing in return: a slice
+method should be idempotent. Given the same request, it should produce the same result,
+even if it runs more than once.
 
-This requirement is what the runtime's guarantees are built on.
-Retry, scaling, and failover all work by running a request again, sometimes on a different
-instance. If `placeOrder` is idempotent, a retry after a dropped connection is safe and
-invisible. If it is not, the retry charges the customer twice. In the knowledge-gathering
+This requirement is what the runtime's guarantees are built on, because requests get
+repeated, and each repeat has a named source. The node that receives an HTTP request
+re-sends it to another node when the first attempt provably applied nothing, or when the
+HTTP method is idempotent by its definition in RFC 9110 (`GET`, `HEAD`, `OPTIONS`,
+`TRACE`, `PUT`, `DELETE`). A stream redelivers an event its handler failed. A method with
+a declared retry runs again. A client that saw a timeout sends the request again. Scaling
+adds one more fact: the repeat can land on any instance. If `placeOrder` is idempotent,
+any of those repeats after a dropped connection is safe. If it is not, the repeat charges
+the customer twice. The runtime will not make that repeat on its own: a `POST` whose first
+attempt may have reached a node is answered with a 503 saying the outcome is unknown, and
+the choice to ask again goes back to the caller. In the knowledge-gathering
 frame, an idempotent step gathers the same knowledge no matter how many times it runs, so
 repeating it costs nothing and changes nothing.
 
@@ -427,8 +438,12 @@ The requirement exists because a distributed caller has a blind spot no amount o
 engineering removes. When a call times out, the caller cannot know which side of the
 work the loss happened on: the request may never have arrived, or the work may have
 completed and the acknowledgment died on the way back. Waiting does not resolve the
-ambiguity and asking again is the only move available — so the runtime asks again, after
-failovers, across instance moves, wherever delivery is at-least-once. Repetition is not
+ambiguity, and asking again is the only move available. The runtime asks again in two
+places: at the HTTP entry node, which re-sends a request that is safe to re-send, up to
+three times by default, and in stream and durable-topic delivery, which redelivers a
+failed event a bounded number of times before dead-lettering it. A method with a
+declared retry asks again by its own policy. Everywhere else, every slice-to-slice call
+included, the caller asks again. Repetition is not
 an edge case in a distributed system; it is the ordinary mechanics of one. A slice
 method is written to be repeated because it will be.
 

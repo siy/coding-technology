@@ -506,8 +506,10 @@ worth knowing exactly:
 Three of these rows deserve a sentence each. A timeout means the outcome is unknown, not that the
 call failed: the callee may never have received it, may still be running it, or may have finished
 with the answer lost. A response that arrives after the timer fires finds no pending entry and is
-logged and dropped. The departure row is a fast failure, not a retry; the call path above sends
-each request once, to one node, and retries nothing. If an operation must survive these, make it
+logged and dropped. The departure row is a fast failure, not a retry; the slice-to-slice call path
+above sends each request once, to one node, and retries nothing. The automatic re-send
+of an HTTP request happens earlier, at the HTTP entry node, before any slice is called, and only for a
+request that is safe to re-send. If an operation must survive these, make it
 safe to repeat and declare the retry where Module C puts cross-cutting behavior.
 
 The callee row is the one that surprises people. The callee's `Cause` does not cross the wire;

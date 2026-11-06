@@ -84,8 +84,12 @@ Within that boundary, the chaos controls are real levers. From the `/api/chaos`
 endpoints you kill a node, kill the leader — Forge reports which node was leader and which took
 over — start a rolling restart, or add a node, while the load generator (`/api/load`) drives
 steady traffic through the app. This is where you confirm that your design's idempotency claim
-(Part I) actually holds: kill the leader mid-`placeOrder`, and because the operation is safe to
-repeat, the retry lands on a surviving instance and the customer sees one order and one charge.
+(Part I) actually holds: kill the node serving `placeOrder` mid-call and have the client send
+the request again. The runtime does not re-send a `POST` that may already have reached the killed
+node: the client gets a 503 with the outcome unknown, or a dropped connection if the killed node is
+the one it called, and the repeat is the client's. That repeat lands
+on a surviving instance, and because the operation is safe to repeat, the customer sees one order
+and one charge.
 
 Read the honest limit into your test as well. Forge injects node loss as a graceful stop — the
 node flushes its write-ahead log on the way down — so what it proves is recovery from a clean

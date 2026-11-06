@@ -82,18 +82,23 @@ a business-logic mask, stitched to your code at the dependency level.
 
 That is an architecture problem, and architecture problems have architectural answers.
 Aether is one. You write a `@Slice` interface and its business logic; the runtime
-provides the rest: provisioning, scaling, discovery, transport, retries, circuit
-breaking, configuration, observability, security. None of those are application
-concerns, so none of them appear in your application. A method call through an imported
+provides the rest: provisioning, scaling, discovery, transport, routing around dead
+nodes, configuration, observability, security. Retry and circuit breaking are there
+too, declared on the method that needs them with an annotation and a config section,
+and run by the runtime (Part II, Module C). None of those are application concerns,
+so none of them is code in your application. A method call through an imported
 interface is the only contract you see, and where the target slice runs and how the
 call reaches it are the runtime's business, not yours.
 
 The model asks one thing of your code in return: slice methods should be idempotent,
-so the same request handled by any instance produces the same result. That single
-requirement is what makes transparent retry, scaling, and failover possible, and it is
-why the cluster keeps serving as long as a majority of its nodes are alive. Part I
-returns to idempotency as a design discipline; for now it is enough to know it is the
-price of admission, and a low one.
+so the same request handled twice, by any instance, leaves the same result as handling
+it once. Requests do get repeated. The node that receives an HTTP request re-sends it to
+another node when that is known to be safe, a stream redelivers an event its handler
+failed, a declared retry runs a method again, and a client that saw a timeout asks
+again. Idempotency is what makes each of those repeats harmless, and scaling relies on
+it too, because any instance may serve the repeat. Part I returns to idempotency as a
+design discipline; for now it is enough to know it is the price of admission, and a
+low one.
 
 This is the way Java was meant to run, with the heavy coat of bundled infrastructure
 taken off.

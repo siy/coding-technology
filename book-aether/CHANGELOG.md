@@ -10,6 +10,11 @@ will mark the first edition released to readers.
 ## [Unreleased]
 
 ### Added
+- **Part VI, Under the hood, extended** (verified at pragmatica `release-1.0.0-rc5` `2b4db4a8ef`):
+  "The manifest, read by its consumers", "Inside the resource provider", "How configuration reaches
+  a running slice", "The path of a call between slices", "What crosses the wire"; plus "The cluster
+  beneath the slice", an outline of agreement, the cluster store, node tiers, the deployment state
+  machine and stream storage, held until that runtime work lands.
 - **Streams: consumer groups, reading the log, storage tiers, retention** (*Part III, Module B,
   before "Pub-sub, durable pub-sub, or stream?"*): four sections, "Who reads which partition",
   "Reading the log yourself", "Where an event lives", "How long the log keeps an event". The

@@ -238,8 +238,9 @@ every layer the loader would consult for that slice. The generated bridge's `pro
 do the provisioning; the manifest entries are what let the cluster check, once and for the whole
 blueprint, that those calls will find their sections. The check is narrow on purpose. It covers
 resource dependencies only, leaving topics and streams to their own validation, and it reads the
-node composite of the one node that runs the check (the source calls it the leader's), so a section
-missing from any other node's file passes it. The same parse records the `publish.topic.*` entries as the slice's publishes,
+node composite of the one node that runs the check (the source calls it the leader's). The source
+marks the consequence as unverified design intent: a section missing from another node's file
+would pass the check, so do not rely on it to catch one. The same parse records the `publish.topic.*` entries as the slice's publishes,
 which the blueprint's pub/sub pre-flight reads.
 
 Activation reads a different set. When a slice activates, the node's deployment state

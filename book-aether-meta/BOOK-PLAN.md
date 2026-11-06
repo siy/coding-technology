@@ -340,7 +340,9 @@ building the gap closed.
 
 ## 7. Open items (need decisions later, not blocking)
 
-- **Book name / working title.**
+- **Book name / working title.** RULED (owner, 2026-11-06): *From Terra to Aether: Building Java
+  Applications in Slices*. Terra in the title commits the book to a runtime-choice table, the
+  portability boundary (RFC-0019) and a test-measured resource matrix.
 - **Repo location & build:** follow the `book-pfd/` + `book-pfd-meta/` convention
   (→ `book-aether/` + `book-aether-meta/`?). Pandoc + xelatex toolchain reuse.
 - **Versioning/build conventions:** coordinate with `pfd-editor` (third book now

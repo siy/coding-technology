@@ -1,4 +1,4 @@
-# Changelog — Building Applications with Aether
+# Changelog — From Terra to Aether: Building Java Applications in Slices
 
 All notable changes to the Aether book, newest first. Format:
 [Keep a Changelog](https://keepachangelog.com/); the book uses
@@ -104,6 +104,8 @@ will mark the first edition released to readers.
     separate machines.
 
 ### Changed
+- Title: *Building Applications with Aether* -> *From Terra to Aether*, subtitle *Building Java
+  Applications in Slices* (owner, 2026-11-06). The subtitle replaces *Less art, more engineering*.
 - Slice names follow the business-names rule (`aether-coder`, pragmatica #2523): `OrderService` -> `Ordering`,
   `InventoryService` -> `Inventory`, `PaymentService` -> `Payments`, `ShippingService` -> `Shipping`,
   `NotificationService` -> `Notifications`, with factories and generated names (`OrderingRoutes`,

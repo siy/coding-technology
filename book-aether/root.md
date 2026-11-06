@@ -1,4 +1,4 @@
-# Building Applications with Aether — Reading Order
+# From Terra to Aether: Building Java Applications in Slices — Reading Order
 
 In-progress draft. Read top-to-bottom; each part builds on the one before. Working
 title; structure and rationale live in `../book-aether-meta/BOOK-PLAN.md`.

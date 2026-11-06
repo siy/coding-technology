@@ -7,7 +7,7 @@
 #   ./build-pdf.sh my-name         # override the output basename
 #
 # Manuscript lives in ../book-aether (this script lives in book-aether-meta, alongside cover.svg when one exists).
-# Mirrors book-pfd-meta/build-pdf.sh. TITLE/SUBTITLE are provisional — see BOOK-PLAN.md §7 (open items).
+# Mirrors book-pfd-meta/build-pdf.sh. TITLE/SUBTITLE ruled by the owner 2026-11-06.
 set -e
 export PATH="/Library/TeX/texbin:/opt/homebrew/bin:/usr/local/bin:$PATH"
 
@@ -128,8 +128,8 @@ pandoc --pdf-engine=xelatex \
   -V mainfont="DejaVu Serif" -V sansfont="DejaVu Sans" -V monofont="DejaVu Sans Mono" \
   -V linestretch=1.15 -V code-block-font-size='\small' \
   -V colorlinks=true -V linkcolor=black -V urlcolor=blue \
-  -M title="Building Applications with Aether" \
-  -M subtitle="Less art, more engineering" \
+  -M title="From Terra to Aether" \
+  -M subtitle="Building Java Applications in Slices" \
   -M author="Sergiy Yevtushenko" \
   -M date="$DATE" \
   --include-in-header="$BUILD/header.tex" \

@@ -149,43 +149,57 @@ public Result<User> registerValidated(Email email, Password password) {
 **Team agreement:**
 - All new methods return `Result<T>` or `Promise<T>` for fallible operations
 - New validation uses value object factories
-- Exceptions only at adapter boundaries (wrapping external libraries)
+- Exceptions only at I/O boundaries (inside I/O step factories wrapping external libraries)
 
 **Example: New feature with Result**
 
 ```java
 // NEW FEATURE: Apply discount code
+@UseCase
 public interface ApplyDiscount {
-    Result<DiscountedPrice> apply(OrderId orderId, DiscountCode code);
-}
+    Result<DiscountedPrice> execute(OrderId orderId, DiscountCode code);
 
-// Implementation
-public class ApplyDiscountImpl implements ApplyDiscount {
-    @Override
-    public Result<DiscountedPrice> apply(OrderId orderId, DiscountCode code) {
-        return findOrder(orderId)
-            .flatMap(order -> validateCode(code, order))
-            .map(discount -> calculateDiscountedPrice(order, discount));
+    // I/O steps: each factory wraps an existing repository
+    interface FindOrder {
+        Option<Order> apply(OrderId orderId);
+
+        static FindOrder findOrder(OrderRepository orderRepository) {
+            return id -> Option.from(orderRepository.findById(id.value()));
+        }
     }
 
-    private Result<Order> findOrder(OrderId id) {
-        return Option.option(orderRepository.findById(id.value()))
-            .toResult(OrderError.NOT_FOUND);
+    interface FindDiscount {
+        Option<Discount> apply(DiscountCode code);
+
+        static FindDiscount findDiscount(DiscountRepository discountRepository) {
+            return code -> Option.from(discountRepository.findByCode(code.value()));
+        }
     }
 
-    private Result<Discount> validateCode(DiscountCode code, Order order) {
-        return discountRepository.findByCode(code.value())
+    static ApplyDiscount applyDiscount(FindOrder findOrder, FindDiscount findDiscount) {
+        return (orderId, code) -> findOrder.apply(orderId)
+            .toResult(OrderError.NOT_FOUND)
+            .flatMap(order -> discountedPrice(findDiscount, code, order));
+    }
+
+    private static Result<DiscountedPrice> discountedPrice(FindDiscount findDiscount,
+                                                           DiscountCode code,
+                                                           Order order) {
+        return findDiscount.apply(code)
             .toResult(DiscountError.INVALID_CODE)
             .filter(DiscountError.EXPIRED, d -> !d.isExpired())
-            .filter(DiscountError.MIN_ORDER, d -> order.total().isGreaterThan(d.minOrder()));
+            .filter(DiscountError.MIN_ORDER, d -> order.total().isGreaterThan(d.minOrder()))
+            .map(discount -> calculateDiscountedPrice(order, discount));
     }
 }
 ```
 
+`OrderRepository` and `DiscountRepository` are the codebase's existing repositories. They appear only as parameter types of the I/O factories, so when they are replaced, the use case does not change.
+
 **Bridging old and new:**
 
 ```java
-// Controller bridges exception world to Result world
+// EXISTING controller bridges exception world to Result world
 @PostMapping("/orders/{orderId}/discount")
 public ResponseEntity<?> applyDiscount(
     @PathVariable String orderId,
@@ -195,7 +209,7 @@ public ResponseEntity<?> applyDiscount(
         OrderId.orderId(orderId),
         DiscountCode.discountCode(request.code())
     )
-    .flatMap((oid, code) -> applyDiscount.apply(oid, code))
+    .flatMap((oid, code) -> applyDiscount.execute(oid, code))
     .fold(
         cause -> toErrorResponse(cause),
         price -> ResponseEntity.ok(price)
@@ -211,7 +225,7 @@ public ResponseEntity<?> applyDiscount(
 1. Identify a service method with clear business logic
 2. Extract to use case interface
 3. Move implementation to use case factory
-4. Convert service to thin adapter
+4. Reduce the service to a thin bridge: it assembles the use case and translates at the edge
 
 **Before: Fat service**
 
@@ -264,23 +278,41 @@ public class OrderService {
 
 ```java
 // Use case interface
+@UseCase
 public interface PlaceOrder {
     Promise<OrderConfirmation> execute(OrderRequest request);
 
+    // Each I/O factory takes the existing infrastructure it wraps
     interface CheckInventory {
         Promise<ValidOrder> apply(ValidOrder order);
+
+        static CheckInventory checkInventory(InventoryService inventoryService) {
+            return order -> ...;
+        }
     }
 
     interface ProcessPayment {
         Promise<PaymentConfirmation> apply(ValidOrder order);
+
+        static ProcessPayment processPayment(PaymentGateway paymentGateway) {
+            return order -> ...;
+        }
     }
 
     interface SaveOrder {
         Promise<OrderId> apply(ValidOrder order, PaymentConfirmation payment);
+
+        static SaveOrder saveOrder(DSLContext dsl) {
+            return (order, payment) -> ...;
+        }
     }
 
     interface SendNotification {
         Promise<Unit> apply(OrderId orderId);
+
+        static SendNotification sendNotification(NotificationService notificationService) {
+            return orderId -> ...;
+        }
     }
 
     static PlaceOrder placeOrder(
@@ -301,22 +333,22 @@ public interface PlaceOrder {
     }
 }
 
-// Thin service (adapter)
+// EXISTING service, now a thin bridge: assembles the use case, translates at the edge
 @Service
 public class OrderService {
     private final PlaceOrder placeOrder;
 
     public OrderService(
-        InventoryChecker inventoryChecker,
-        PaymentProcessor paymentProcessor,
-        JooqOrderRepository orderRepository,
-        EmailNotificationSender notificationSender
+        InventoryService inventoryService,
+        PaymentGateway paymentGateway,
+        DSLContext dsl,
+        NotificationService notificationService
     ) {
         this.placeOrder = PlaceOrder.placeOrder(
-            inventoryChecker,
-            paymentProcessor,
-            orderRepository,
-            notificationSender
+            CheckInventory.checkInventory(inventoryService),
+            ProcessPayment.processPayment(paymentGateway),
+            SaveOrder.saveOrder(dsl),
+            SendNotification.sendNotification(notificationService)
         );
     }
 
@@ -331,34 +363,27 @@ public class OrderService {
 }
 ```
 
-### Stage 4: Adapter Isolation (Week 9-12)
+### Stage 4: I/O Isolation (Week 9-12)
 
-**Goal:** All I/O wrapped in adapter leaves with Promise.lift.
+**Goal:** All I/O wrapped in I/O step factories with Promise.lift.
 
-**Identify adapters:**
+**Identify I/O:**
 - Database repositories
 - HTTP clients
 - Message queue producers/consumers
 - File system access
 - Cache clients
 
-**Example: Repository adapter**
+**Example: a save step's I/O factory**
 
 ```java
-// Step interface
+// Step interface; jOOQ appears only in its factory
 public interface SaveUser {
     Promise<UserId> apply(ValidUser user);
-}
 
-// Adapter implementation
-@Repository
-public class JooqUserRepository implements SaveUser {
-    private final DSLContext dsl;
-
-    @Override
-    public Promise<UserId> apply(ValidUser user) {
-        return Promise.lift(
-            RepositoryError.DatabaseFailure::new,
+    static SaveUser saveUser(DSLContext dsl) {
+        return user -> Promise.lift(
+            t -> StorageError.DatabaseFailure.FACTORY.apply(Causes.fromThrowable(t)),
             () -> {
                 String id = dsl.insertInto(USERS)
                     .set(USERS.EMAIL, user.email().value())
@@ -384,9 +409,11 @@ public class JooqUserRepository implements SaveUser {
 Optional<User> javaOptional = repository.findById(id);
 Option<User> option = Option.from(javaOptional);
 
-// In adapter methods
-public Option<User> findById(UserId id) {
-    return Option.from(jpaRepository.findById(id.value()));
+// In an I/O step's factory
+static LoadUser loadUser(JpaRepository<User, String> jpaRepository) {
+    return id -> Promise.lift(t -> DatabaseError.FACTORY.apply(Causes.fromThrowable(t)),
+                              () -> Option.from(jpaRepository.findById(id.value())))
+                        .flatMap(user -> user.async(UserError.NotFound.FACTORY.apply(Causes.cause("No user " + id.value()))));
 }
 
 // Back to Optional (for framework integration)
@@ -396,7 +423,7 @@ Optional<User> back = option.toOptional();
 ### `CompletableFuture<T>` → `Promise<T>`
 
 ```java
-// Wrapping CompletableFuture in adapter
+// Wrapping CompletableFuture, in an I/O step's factory or its helper
 public Promise<User> fetchUser(UserId id) {
     var promise = Promise.<User>promise();
 
@@ -430,11 +457,11 @@ public static <T> Promise<T> fromCompletableFuture(
 
 ### Exceptions → Cause Mapping
 
-**In adapters - use Promise.lift:**
+**In I/O step factories - use Promise.lift:**
 ```java
-public Promise<User> findUser(UserId id) {
-    return Promise.lift(
-        DatabaseError::new,  // Exception → Cause
+static LoadUser loadUser(JdbcTemplate jdbcTemplate) {
+    return id -> Promise.lift(
+        t -> DatabaseError.FACTORY.apply(Causes.fromThrowable(t)),  // Exception → Cause
         () -> jdbcTemplate.queryForObject(SQL, mapper, id.value())
     );
 }
@@ -442,14 +469,15 @@ public Promise<User> findUser(UserId id) {
 
 **Custom exception mapping:**
 ```java
-public Promise<Payment> processPayment(PaymentRequest request) {
-    return Promise.lift(
-        this::mapPaymentException,  // Custom mapper
+// Inside the ChargePayment step interface
+static ChargePayment chargePayment(PaymentGateway paymentGateway) {
+    return request -> Promise.lift(
+        ChargePayment::mapPaymentException,  // Custom mapper
         () -> paymentGateway.charge(request)
     );
 }
 
-private Cause mapPaymentException(Throwable t) {
+private static Cause mapPaymentException(Throwable t) {
     return switch (t) {
         case InsufficientFundsException e -> PaymentError.InsufficientFunds.FACTORY.apply(Causes.fromThrowable(e));
         case CardDeclinedException e -> PaymentError.CardDeclined.FACTORY.apply(Causes.fromThrowable(e));
@@ -459,9 +487,9 @@ private Cause mapPaymentException(Throwable t) {
 }
 ```
 
-### Transitional Adapter Layer
+### Wrapping Legacy Code in Steps
 
-During migration, create adapter methods that bridge old and new code:
+During migration, give a JBCT step an I/O factory that wraps the old code:
 
 ```java
 // Legacy service (throws exceptions)
@@ -471,19 +499,18 @@ public class LegacyUserService {
     }
 }
 
-// JBCT adapter wrapping legacy service
-public class UserServiceAdapter implements FindUser {
-    private final LegacyUserService legacy;
+// JBCT step whose factory wraps the legacy service
+public interface LoadUser {
+    Promise<User> apply(UserId id);
 
-    @Override
-    public Promise<User> apply(UserId id) {
-        return Promise.lift(
-            this::mapLegacyError,
+    static LoadUser loadUser(LegacyUserService legacy) {
+        return id -> Promise.lift(
+            LoadUser::mapLegacyError,
             () -> legacy.findUser(id.value())
         );
     }
 
-    private Cause mapLegacyError(Throwable t) {
+    private static Cause mapLegacyError(Throwable t) {
         return switch (t) {
             case UserNotFoundException e -> UserError.NotFound.FACTORY.apply(Causes.fromThrowable(e));
             default -> Causes.fromThrowable(t);
@@ -493,10 +520,10 @@ public class UserServiceAdapter implements FindUser {
 ```
 
 **Gradual replacement:**
-1. Create adapter wrapping legacy service
-2. Use adapter in new JBCT code
-3. Eventually replace legacy service with JBCT implementation
-4. Remove adapter when migration complete
+1. Create a step whose factory wraps the legacy service
+2. Use the step in new JBCT code
+3. Eventually replace the legacy service with a JBCT implementation - the step's factory changes, its callers do not
+4. Remove the wrapping factory when migration is complete
 
 ---
 
@@ -606,14 +633,14 @@ return findUser(id)
 ### Stage 3 Complete When:
 - [ ] At least one use case extracted
 - [ ] Use case has step interfaces
-- [ ] Service is thin adapter
+- [ ] Service is a thin bridge
 - [ ] Integration tests pass
 
 ### Stage 4 Complete When:
-- [ ] All new adapters use Promise.lift
+- [ ] All new I/O step factories use Promise.lift
 - [ ] Database access wrapped
 - [ ] External HTTP calls wrapped
-- [ ] Error mapping consistent across adapters
+- [ ] Error mapping consistent across I/O steps
 
 ---
 
@@ -625,7 +652,7 @@ return findUser(id)
 
 3. **Identify extraction candidates:** Find a service method with more than 50 lines. Can you identify the Sequencer pattern in it?
 
-4. **Adapter inventory:** List all external dependencies (database, HTTP, message queue). Which ones throw checked exceptions?
+4. **I/O inventory:** List all external dependencies (database, HTTP, message queue). Which ones throw checked exceptions?
 
 ---
 
@@ -636,7 +663,7 @@ Migration to JBCT is incremental:
 1. **Stage 1:** Value objects only - immediate validation benefits
 2. **Stage 2:** Result in new code - stop adding exceptions
 3. **Stage 3:** Extract use cases - separate concerns
-4. **Stage 4:** Adapter isolation - complete the boundary
+4. **Stage 4:** I/O isolation - complete the boundary
 
 Key principles:
 - Never big-bang rewrite

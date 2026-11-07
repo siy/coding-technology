@@ -26,16 +26,14 @@ The `fold()` method is universal but obscures intent. Dedicated methods encode i
 
 ```java
 // BEFORE: fold obscures intent
-return repository()
-    .findById(id)
+return findOrder(id)
     .fold(
         () -> new NotFoundError(id).promise(),
         order -> validateOrder(order)
     );
 
 // AFTER: intent is explicit
-return repository()
-    .findById(id)
+return findOrder(id)
     .async(new NotFoundError(id))
     .flatMap(order -> validateOrder(order));
 ```

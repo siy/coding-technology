@@ -21,7 +21,7 @@
 |---------|-------------|
 | [Parse, Don't Validate](parse-dont-validate.md) | Make invalid states unrepresentable using factory-method construction. |
 | [Error Handling & Composition](error-handling.md) | Errors as typed values, clean monadic composition, and when exceptions are still acceptable. |
-| [Null Policy & Error Recovery](null-policy-recovery.md) | When null is acceptable at adapter boundaries and how to recover gracefully. |
+| [Null Policy & Error Recovery](null-policy-recovery.md) | When null is acceptable at I/O boundaries and how to recover gracefully. |
 
 ---
 
@@ -53,7 +53,7 @@
 | [Complete Example - PlaceOrder](placeorder-example.md) | Multi-step order placement with Fork-Join and error recovery. |
 | [Focused Example - PublishArticle](publisharticle-example.md) | External-service integration using the Sequencer pattern. |
 | [Focused Example - TransferFunds](transferfunds-example.md) | Transactional safety and rollback with typed errors. |
-| [Project Structure & Framework Integration](project-structure.md) | Vertical slicing, package layout, and connecting to Spring Boot and JOOQ. |
+| [Project Structure & Framework Integration](project-structure.md) | Vertical slicing, the business-named package tree, and connecting to jOOQ through an I/O step. |
 
 ---
 

@@ -183,6 +183,7 @@ private static final Cause TOO_SHORT =
 Apply same pattern to use case inputs:
 
 ```java
+@UseCase
 public interface RegisterUser {
     record Request(String email, String password) {}
 
@@ -232,7 +233,7 @@ Result<ValidRequest> validated =
 ```java
 public void sendEmail(Email to, String subject) {
     // No need to check if 'to' is valid - type guarantees it
-    emailService.send(to.value(), subject);
+    mailer.send(to.value(), subject);
 }
 ```
 

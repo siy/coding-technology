@@ -200,14 +200,14 @@ public Result<ValidRegistration> validate(Registration reg) {
 }
 ```
 
-### Aggregate from Multiple Services
+### Aggregate from Multiple Sources
 
 ```java
 public Promise<Report> generateReport(ReportId id) {
     return Promise.all(
-        salesService.getMetrics(id),
-        analyticsService.getStats(id),
-        inventoryService.getStock(id)
+        loadSalesMetrics.apply(id),
+        loadAnalyticsStats.apply(id),
+        loadStockLevels.apply(id)
     ).map((sales, analytics, stock) ->
         new Report(sales, analytics, stock)
     );

@@ -369,17 +369,30 @@ Causes.forOneValue("Invalid email: %s", InvalidEmail::new) // typed:
 
 ## Example Usage Patterns
 
-### Adapter with exception handling
+### I/O step with exception handling
 
 ```java
-public Promise<User> findUser(UserId id) {
-    return Promise.lift(
-        CoreError::database,
-        () -> jdbcTemplate.queryForObject(
-            "SELECT * FROM users WHERE id = ?",
-            new Object[]{id.value()},
-            this::mapUser)
-    );
+sealed interface ProfileError extends Cause {
+    record DatabaseFailure(Cause origin, String message) implements ProfileError, Cause.Wrapped {
+        public static final Fn1<DatabaseFailure, Cause> FACTORY =
+            Causes.forOneValue("Database operation failed", DatabaseFailure::new);
+    }
+}
+
+interface LoadUser {
+    Promise<User> apply(UserId id);
+
+    static LoadUser loadUser(JdbcTemplate jdbcTemplate) {
+        return id -> Promise.lift(
+            t -> ProfileError.DatabaseFailure.FACTORY.apply(Causes.fromThrowable(t)),
+            () -> jdbcTemplate.queryForObject(
+                "SELECT * FROM users WHERE id = ?",
+                new Object[]{id.value()},
+                LoadUser::mapUser)
+        );
+    }
+
+    private static User mapUser(ResultSet row, int rowNum) throws SQLException { ... }
 }
 ```
 

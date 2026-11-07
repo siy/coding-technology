@@ -27,14 +27,14 @@ Run these searches and report ALL hits:
 | Violation | Search Pattern | Rule |
 |-----------|---------------|------|
 | Impl classes | `class.*Impl` | Use lambdas/method refs |
-| Null in business logic | `== null`, `!= null`, `return null` in domain/usecase | Use `Option<T>` |
-| Business exceptions | `throw new`, `throws \w`, `try {`, `catch (` in domain/usecase | Use `Result`/`Promise` with `Cause` |
+| Null in business logic | `== null`, `!= null`, `return null` in business code (outside `io` packages and I/O step factories) | Use `Option<T>` |
+| Business exceptions | `throw new`, `throws \w`, `try {`, `catch (` in business code | Use `Result`/`Promise` with `Cause` |
 | Void type parameter | `Result<Void>`, `Promise<Void>` | Use `Unit`. `void` return OK with `@Contract` (external API) or fire-and-forget |
 | Static failure factories | `Result.failure(`, `Promise.failure(` | Use `cause.result()`/`cause.promise()` |
 | Multi-statement lambdas | `-> {` | Extract to named method |
 | Constructor bypass | `new ValueObject(` outside factory | Use factory method |
 | Nested error channels | `Promise<Result<` | Use `Promise<T>` only |
-| Blocking in business logic | `.await()` in domain/usecase without `@TerminalOperation` | Stay in monadic chain. OK in tests; legitimate uses require `@TerminalOperation` |
+| Blocking in business logic | `.await()` in business code without `@TerminalOperation` | Stay in monadic chain. OK in tests; legitimate uses require `@TerminalOperation` |
 | `@SuppressWarnings` misuse | `@SuppressWarnings` instead of `@Contract`/`@TerminalOperation`/`@NullReturn` | Use dedicated intent annotations: `@Contract` (void/signature dictated externally), `@TerminalOperation` (legitimate await), `@NullReturn` (null-contract callbacks) |
 | Missing intent annotation | `void` method without `@Contract`; `return null` without `@NullReturn` in production code | Annotate or refactor (Unit return / Option) |
 | Abandoned values | Statement-style calls to methods returning `Result`/`Promise` without using return value | Every Result/Promise must be returned or chained |
@@ -43,6 +43,16 @@ Run these searches and report ALL hits:
 | Fail-fast join without reason | `allOrCancel(`, `allOfOrCancel(` | Prefer `all()`/`allOf()`, which report every failure; `allOrCancel` only when the caller must hear about a failure before the slowest input finishes and the first failure decides the outcome (it saves waiting, not work) - ask for that reason |
 | Hand-rolled Verify duplicate | Predicate lambdas re-implementing `Verify.Is` catalog entries (null/blank/length/range/regex) | `Verify.ensure` + `Is::` predicate — catalog in `Verify.java` header |
 | Hand-rolled built-in VO | Custom `Email`/`Url`/`Uuid`/`NonBlankString`/`IsoDateTime` | Use `org.pragmatica.lang.vo` — catalog in `vo/package-info.java` |
+| Layer packages | `package .*\.(usecase\|domain\|adapter\|config\|repository\|controller\|service\|impl\|util\|common\|steps\|internal)(\.\|;)` | Business names only: use case packages under the app root or their workflow/subsystem package; reserved role packages are `shared` and `io` only |
+| Technical type names | `(class\|interface\|record\|enum) \w*(Repository\|Dao\|Controller\|Adapter\|Gateway\|Client\|Impl\|Service\|Manager\|Helper\|Util)\b`; `(class\|interface\|record\|enum) (Jooq\|Jpa\|Jdbc\|Postgres\|Http\|Rest)[A-Z]` | Name for the business intent: Zone-2 step verbs (`LoadUser`, `SaveOrder`, `ChargePayment`). Library types (`DSLContext`, `HttpClient`) as parameter types are fine |
+| I/O types outside I/O code | Imports of `org.jooq`, `java.sql`, `javax.sql`, `java.net.http`, `java.nio.file`, HTTP/messaging client libraries in files outside an `io` package; within a use case file, any use outside a nested I/O step's static factory | Move the call into the I/O step's factory (`static LoadUser loadUser(DSLContext dsl)`) or into `io/` |
+| `lift` outside I/O code | `Promise.lift(`, `Result.lift(`, `Option.lift(`, `.lift1(`… outside `io` packages and nested I/O step factories | Exceptions become a `Cause` only where I/O happens |
+| Sideways imports | `import` of a sibling use case's or sibling workflow's package (anything not an ancestor, a `shared`/`io` package at itself or an ancestor, or its own subtree) | Interact through a use case or step interface at the common ancestor; a materialized workflow composes its own child use cases (downward), never siblings |
+| Missing `@UseCase` | Use case interfaces (single `execute(Request)` + static factory, in a use case package or directly in a workflow package) without `@UseCase`; on Aether, `@Slice` serves as the anchor | Annotate `@UseCase`; never a marker supertype (`extends UseCase…`, a `Step` interface) |
+| Business code calling I/O factories | A use case factory or business step that calls an `io` step's static factory instead of taking the step as a parameter | Take the step as a parameter; only root assembly (plain Java `main`, tests) calls I/O factories |
+| `io` members composing steps | An `io` step whose factory or lambda calls other steps (`flatMap` across injected steps, a Sequencer/Fork-Join) | `io` holds leaves only; the composition is business logic and moves out of `io`, its sub-steps stay as leaves |
+| New type introduced to extract a step | A class/record implementing a nested step interface (`class SaveUserStep implements RegisterUser.SaveUser`), a wrapper or "holder" type created when a step moved out of the use case file | The step interface itself moves out unchanged, carrying its factory: I/O → `<usecase>/io/`, business → use case package, then a sub-package named for its intent |
+| Hand-written controllers / assembly config | `@RestController`, `@Configuration`, `@Bean`, hand-written endpoint classes | Endpoints and assembly are generated by the runtime; plain Java and tests assemble at the root by calling factories |
 
 **If ANY count > 0, those are confirmed violations.**
 
@@ -102,13 +112,13 @@ When invoked with a **focus** parameter, review ONLY that area. Ignore other iss
 | Focus | What to Check |
 |-------|---------------|
 | `Value Objects` | Factory patterns, immutability, Verify.ensure usage |
-| `Use Cases` | Single execute(), factory returns lambda, interface design |
+| `Use Cases` | Single execute(), factory returns lambda, interface design, `@UseCase` present, steps nested with own factories; package model: layer packages, telescope placement, `shared`/`io` at lowest common ancestor, sideways imports, I/O types and `lift` outside I/O code, `io` composing steps, new types introduced to extract a step |
 | `Return Types` | Four return kinds, no Void, no business exceptions |
 | `Structural Patterns` | Leaf/Sequencer/Fork-Join/Condition/Iteration compliance |
 | `Composition Rules` | fold() abuse, lambda complexity, method references |
 | `Null Policy` | Option usage, no null in business logic |
 | `Thread Safety` | Immutability, no shared mutable state in Fork-Join |
-| `Naming Conventions` | Factory naming, zone-appropriate verbs, acronyms as words |
+| `Naming Conventions` | Factory naming, zone-appropriate verbs, acronyms as words, business names only (no technical type/package names) |
 | `Testing Patterns` | Functional assertions, @Nested org, stub patterns |
 | `Cross-Cutting Concerns` | Security, performance, logging |
 | `Aggregate` | Consolidate multiple focused reports into unified assessment |
@@ -119,11 +129,11 @@ When invoked with a **focus** parameter, review ONLY that area. Ignore other iss
 
 | Zone | Location | Naming Style | Example Verbs |
 |------|----------|-------------|---------------|
-| A (Entry) | Controllers, handlers | Business action verbs | `handle`, `process`, `submit` |
-| B (Domain) | Use cases, VOs | Domain vocabulary | `email()`, `validRequest()`, `registerUser()` |
-| C (Infrastructure) | Adapters, repos | Technical names | `findByEmail`, `saveUser`, `fetchProfile` |
+| 1 (Use case) | Use case interfaces and factories | Business goal | `RegisterUser`, `registerUser()` |
+| 2 (Orchestration) | Step interfaces (nested, in `io`, or in `shared`) | Business intent verbs | `LoadUser`, `SaveOrder`, `ChargePayment`, `ValidateInput` |
+| 3 (Implementation) | Leaves: private helpers inside step factories, VO factories | Mechanism verbs, as method names only | `findByEmail`, `fetchProfile`, `hashPassword`, `email()` |
 
-**Check:** Zone 2 step interfaces use Zone 2 verbs (`validate`, `process`, `load`, `save`), not Zone 3 (`fetch`, `parse`, `hash`). Sequencer chains maintain same abstraction level.
+**Check:** Zone 2 step interfaces use Zone 2 verbs (`validate`, `process`, `load`, `save`), not Zone 3 (`fetch`, `parse`, `hash`). Sequencer chains maintain same abstraction level. Technology never appears in a declared type or package name — only in the parameter types of an I/O step's factory.
 
 ---
 
@@ -172,9 +182,12 @@ Run all searches from the Violation Hunting table. Report counts.
 - Zone abstraction consistent
 
 ### Step 3: Structural Review
-- Vertical slicing respected
-- Package placement correct
-- No use case → adapter dependencies
+- Vertical slicing respected; no layer packages (`usecase`, `domain`, `adapter`, `config`)
+- Package placement correct: use cases directly under the app root or under the workflow/subsystem package the design earned (telescope rule); `shared` (business) and `io` (I/O leaves) at the lowest common ancestor of their users; no empty or mechanism-named levels (`steps`, `impl`, `internal`, `util`)
+- Every use case interface carries `@UseCase`; a materialized workflow is a `@UseCase` directly in its workflow package
+- Steps nested in the use case with their own static factories; moved-out steps are the same interface, unchanged (no new types introduced for extraction, no marker supertypes)
+- Imports point up the tree; no sideways imports; business code takes `io` steps as parameters and never calls their factories
+- I/O types and `lift` only in `io` packages and nested I/O step factories; `io` members never compose steps
 - Import/member ordering correct
 - Utility classes → sealed interfaces
 - Both symmetry axes run (see Symmetry Checks)
@@ -185,6 +198,7 @@ Run all searches from the Violation Hunting table. Report counts.
 - Tests: `methodName_outcome_condition`
 - Acronyms as words
 - Zone-appropriate verbs
+- Business names only: no technical words in type or package names (`*Repository`, `*Controller`, `*Service`, `*Impl`, `Jooq*`, `Http*`...)
 
 ### Step 5: Build Configuration
 - Dependency: `org.pragmatica-lite:core:1.0.0-rc4`
@@ -263,6 +277,7 @@ Before submitting, verify:
 - [ ] Every lambda checked for format compliance
 - [ ] Every Fork-Join checked for immutability
 - [ ] Every operation with an inverse partner checked on both sides
+- [ ] Package model checked: layer packages, technical names, I/O types and `lift` placement, sideways imports, `@UseCase`, `io` leaves, extraction types
 - [ ] Zero unreported violations of forbidden patterns
 
 **Missing a violation = review failure.**

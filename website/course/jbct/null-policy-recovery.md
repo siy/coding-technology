@@ -1,12 +1,12 @@
 ---
-reviewed-at: c05471978e8dc91ab6d7c5eeff91901a7bc13ada
+reviewed-at: 5be2405be727cdd3e6a60e69c98205607600d4b3
 ---
 
 ## blurb
 When null is acceptable, converting it to Option at the boundary, and the recovery triple.
 
 ## learn
-- When null is acceptable (adapter boundaries only)
+- When null is acceptable (inside I/O step factories only)
 - Converting null to Option immediately
 - Fallback, alternative-source, and conditional recovery
 - The recovery triple: backward, forward, designing failure out

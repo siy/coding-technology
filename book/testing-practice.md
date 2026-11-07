@@ -3,7 +3,7 @@
 ## What You'll Learn
 
 - How to organize large test counts without drowning in complexity
-- What to test where (value objects, leaves, use cases, adapters)
+- What to test where (value objects, leaves, use cases, I/O steps)
 - Complete worked example: RegisterUser from stub to production
 - How to migrate from traditional unit testing
 
@@ -120,7 +120,7 @@ void execute_fails_forWeakPassword(String password, String expectedReason) {
 **Large use cases -> multiple test files:**
 
 ```
-usecase/
+com.example.app/
 |-- userlogin/
     |-- UserLogin.java (implementation)
     |-- UserLoginValidationTest.java (validation scenarios)
@@ -226,7 +226,7 @@ class RegisterUserTest {
     @Test void execute_fails_whenPasswordHashingFails() { }
 
     // Branch conditions
-    @Test void execute_sendsWelcomeEmail_forNewUser() { }
+    @Test void execute_fails_forPremiumCodeWithShortPassword() { }
 }
 ```
 
@@ -267,28 +267,28 @@ belongs to `flatMap` and the failure's content belongs to the rule that produces
 nine steps does not owe nine failure tests -- the one above owes four, and the rest of its suite
 earns its place by testing behavior, not plumbing.
 
-**4. Adapters: Success + Error Modes (Contract Tests)**
+**4. I/O Steps: Success + Error Modes (Contract Tests)**
 
 ```java
-class JooqUserRepositoryTest {
-    @Test void findById_succeeds_whenUserExists() { }
-    @Test void findById_returnsEmpty_whenUserNotFound() { }
-    @Test void findById_wrapsException_whenDatabaseFails() { }
+class LoadUserTest {
+    @Test void apply_succeeds_whenUserExists() { }
+    @Test void apply_fails_whenUserNotFound() { }
+    @Test void apply_wrapsException_whenDatabaseFails() { }
 }
 ```
 
-**In use case tests:** Stub adapters. Don't test database interaction 30 times.
+**In use case tests:** Stub I/O steps. Don't test database interaction 30 times.
 
 **And note what that stubbing owes.** Every stub in a use case test is an *assumption about
-a boundary*: that the real adapter succeeds that way, fails that way, and translates a
+a boundary*: that the real I/O step succeeds that way, fails that way, and translates a
 transport exception into that typed failure. Nothing in the use case tests checks any of
 it. The contract test is what makes the stub honest, and a suite of integration-first tests
-without adapter contract tests is a suite whose stubs nobody has verified.
+without contract tests of its I/O steps is a suite whose stubs nobody has verified.
 
 The third case above is the one that matters most, and it is the one most often missing:
-the translation from an exception at the boundary to a typed failure inside the domain is
-the adapter's entire job, and no use case test can reach it. Worked in full for
-`InventoryChecker` in [PlaceOrder](placeorder-example.md).
+the translation from an exception at the boundary to a typed failure inside the business code
+is the I/O step's entire job, and no use case test can reach it. Worked in full for
+`ProcessPayment` in [PlaceOrder](placeorder-example.md).
 
 ---
 
@@ -303,11 +303,11 @@ the adapter's entire job, and no use case test can reach it. Worked in full for
         /__________\ Integration Tests (many)
        /            \ - Use case test vectors
       /              \ - All business logic assembled
-     /                \ - Only adapters stubbed
+     /                \ - Only I/O steps stubbed
     /__________________\ Unit Tests (some)
    /                    \ - Value objects (all)
   /                      \ - Complex business leaves
- /                        \ - Adapter contracts
+ /                        \ - I/O step contracts
 /--------------------------\
 ```
 
@@ -322,15 +322,18 @@ the adapter's entire job, and no use case test can reach it. Worked in full for
 ### Phase 1: Stub Everything
 
 ```java
+@UseCase
 public interface RegisterUser {
-    record Request(String email, String password) {}
-    record Response(String userId) {}
+    record Request(String email, String password, String referralCode) {}
+    record Response(UserId userId, ConfirmationToken token) {}
 
     Promise<Response> execute(Request request);
 
     static RegisterUser registerUser() {
-        return request -> Promise.success(new Response("stub-user-id"));
+        return request -> Promise.success(STUB_RESPONSE);
     }
+
+    Response STUB_RESPONSE = new Response(new UserId("stub-user-id"), new ConfirmationToken("stub-token"));
 }
 ```
 
@@ -339,22 +342,23 @@ public interface RegisterUser {
 @Test
 void execute_succeeds_forValidInput() {
     var useCase = RegisterUser.registerUser();
-    var request = new Request("john@example.com", "Valid123");
+    var request = new Request("john@example.com", "Valid1234", null);
 
     useCase.execute(request)
            .await()
            .onFailure(Assertions::fail)
-           .onSuccess(response -> assertEquals("stub-user-id", response.userId()));
+           .onSuccess(response -> assertEquals("stub-user-id", response.userId().value()));
 }
 ```
 
 ### Phase 2: Add Validation
 
 ```java
-record ValidRequest(Email email, Password password) {
+record ValidRequest(Email email, Password password, Option<ReferralCode> referralCode) {
     static Result<ValidRequest> validRequest(Request raw) {
         return Result.all(Email.email(raw.email()),
-                          Password.password(raw.password()))
+                          Password.password(raw.password()),
+                          ReferralCode.referralCode(raw.referralCode()))
                      .map(ValidRequest::new);
     }
 }
@@ -362,7 +366,7 @@ record ValidRequest(Email email, Password password) {
 static RegisterUser registerUser() {
     return request -> ValidRequest.validRequest(request)
                                   .async()
-                                  .map(_ -> new Response("stub-user-id"));
+                                  .map(_ -> STUB_RESPONSE);
 }
 ```
 
@@ -370,7 +374,7 @@ static RegisterUser registerUser() {
 ```java
 @Test
 void execute_fails_forInvalidEmail() {
-    var request = new Request("bad", "Valid123");
+    var request = new Request("bad", "Valid1234", null);
     useCase.execute(request).await().onSuccess(Assertions::fail);
 }
 ```
@@ -380,17 +384,16 @@ void execute_fails_forInvalidEmail() {
 After fully implementing:
 
 ```java
-static RegisterUser registerUser(CheckEmailUniqueness checkUniqueness,
-                                 HashPassword hashPassword,
+static RegisterUser registerUser(CheckEmailUniqueness checkEmail,
+                                 CreateValidUser createValidUser,
                                  SaveUser saveUser,
-                                 SendWelcomeEmail sendEmail) {
+                                 GenerateToken generateToken) {
     return request -> ValidRequest.validRequest(request)
                                   .async()
-                                  .flatMap(checkUniqueness::apply)
-                                  .flatMap(hashPassword::apply)
+                                  .flatMap(checkEmail::apply)
+                                  .flatMap(createValidUser::apply)
                                   .flatMap(saveUser::apply)
-                                  .flatMap(sendEmail::apply)
-                                  .map(user -> new Response(user.id()));
+                                  .flatMap(generateToken::apply);
 }
 ```
 
@@ -400,11 +403,12 @@ class RegisterUserTest {
     @BeforeEach
     void setup() {
         CheckEmailUniqueness stubUniqueness = vr -> Promise.success(vr);
-        HashPassword stubHash = vr -> Promise.success(new HashedPassword("hash"));
-        SaveUser stubSave = hp -> Promise.success(new User("user-1"));
-        SendWelcomeEmail stubEmail = u -> Promise.success(u);
+        CreateValidUser stubCreate = vr -> Promise.success(
+            new ValidUser(vr.email(), new HashedPassword("hash"), vr.referralCode()));
+        SaveUser stubSave = vu -> Promise.success(new User(new UserId("user-1"), vu.email()));
+        GenerateToken stubToken = u -> Promise.success(new Response(u.id(), new ConfirmationToken("token-1")));
 
-        useCase = RegisterUser.registerUser(stubUniqueness, stubHash, stubSave, stubEmail);
+        useCase = RegisterUser.registerUser(stubUniqueness, stubCreate, stubSave, stubToken);
     }
 
     @Nested class HappyPath {
@@ -418,14 +422,14 @@ class RegisterUserTest {
 
     @Nested class StepFailures {
         @Test void execute_fails_whenEmailExists() { /* ... */ }
-        @Test void execute_fails_whenHashingFails() { /* ... */ }
+        @Test void execute_fails_whenUserCreationFails() { /* ... */ }
         @Test void execute_fails_whenSaveFails() { /* ... */ }
-        @Test void execute_fails_whenEmailSendingFails() { /* ... */ }
+        @Test void execute_fails_whenTokenGenerationFails() { /* ... */ }
     }
 }
 ```
 
-**Total:** 8 integration tests, complete behavior coverage, only adapters stubbed.
+**Total:** 8 integration tests, complete behavior coverage, only I/O steps stubbed.
 
 ---
 
@@ -493,8 +497,8 @@ After Migration:
 | Test Type | Speed | What's Stubbed | When to Run |
 |-----------|-------|----------------|-------------|
 | **Unit tests** | < 10ms each | Nothing (pure functions) | Every build |
-| **Fast integration** | < 100ms each | Real business logic, stubbed adapters | Every build |
-| **Slow integration** | 100ms - 1s | Real adapters (DB, HTTP) | Pre-commit, CI |
+| **Fast integration** | < 100ms each | Real business logic, stubbed I/O steps | Every build |
+| **Slow integration** | 100ms - 1s | Real I/O steps (DB, HTTP) | Pre-commit, CI |
 | **E2E tests** | > 1s | Nothing (full stack) | CI only |
 
 **Organize test suites:**
@@ -502,7 +506,7 @@ After Migration:
 ```java
 // Fast tests - run always
 @Tag("fast")
-class UserLoginTest { /* stubbed adapters */ }
+class UserLoginTest { /* stubbed I/O steps */ }
 
 // Slow tests - run before commit
 @Tag("slow")
@@ -590,7 +594,7 @@ void forkJoin_completesAllBranches() {
 2. **Value objects: the decision space** - Unit tests, shaped by the space the factory decides over
 3. **Complex leaves: every branch that decides** - Unit tests if 3+ branches
 4. **Use cases: the four obligations** - Success, validation, one per outward step, one per absorbed failure
-5. **Adapters: Contract tests** - Success + error modes only
+5. **I/O steps: Contract tests** - Success + error modes only
 6. **Migrate incrementally** - Add integration first, then remove redundant unit tests
 
 ---

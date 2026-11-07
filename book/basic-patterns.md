@@ -245,7 +245,7 @@ Maintaining "single level of abstraction" becomes mechanical when you think of y
 - Examples: `ValidateInput.apply()`, `ProcessPayment.apply()`, `HandleNotification.apply()`
 
 **Zone 3 (Implementation Level)** - Concrete technical operations:
-- Business and adapter leaves
+- Business and I/O leaves
 - Names the **mechanism** — how it is actually done
 - Examples: `hashPassword()`, `parseJson()`, `fetchFromDatabase()`, `calculateTax()`
 
@@ -321,11 +321,11 @@ Advanced patterns (Sequencer, Fork-Join, Aspects) covered in [Advanced Patterns]
 
 ## Pattern: Leaf
 
-**Definition:** A **Leaf** (an atomic operation with no substeps) is the smallest unit of processing - a function that does one thing and has no internal steps. It's either a business leaf (pure computation) or an adapter leaf (I/O or side effects).
+**Definition:** A **Leaf** (an atomic operation with no substeps) is the smallest unit of processing - a function that does one thing and has no internal steps. It's either a business leaf (pure computation) or an I/O leaf (I/O or other side effects).
 
 **Rationale (by criteria):**
 - **Mental Overhead**: Atomic operations have no internal steps to track - immediate comprehension (+2)
-- **Business/Technical Ratio**: Business leaves are pure domain logic; adapter leaves isolate technical concerns (+2)
+- **Business/Technical Ratio**: Business leaves are pure domain logic; I/O leaves isolate technical concerns (+2)
 - **Complexity**: One operation per leaf - no hidden interactions (+2)
 - **Reliability**: Pure business leaves are deterministic and easily testable (+1)
 
@@ -356,41 +356,37 @@ public static OrderSummary toSummary(Order order) {
 
 If there's no I/O and no side effects, it's a business leaf. Keep each leaf focused on one transformation or one business rule.
 
-### Adapter Leaves
+### I/O Leaves
 
-Adapter leaves integrate with external systems: databases, HTTP clients, message queues, file systems. They map foreign errors to domain Causes.
+I/O leaves integrate with external systems: databases, HTTP clients, message queues, file systems. An I/O leaf is a step whose static factory takes the infrastructure and implements the step with a lambda. It maps foreign errors to domain Causes.
 
 ```java
-public interface UserRepository {
-    Promise<Option<User>> findByEmail(Email email);
-}
+interface FindUser {
+    Promise<Option<User>> apply(Email email);
 
-// Adapter leaf implementation
-class PostgresUserRepository implements UserRepository {
-    private final DataSource dataSource;
+    // I/O factory: JDBC appears only here
+    static FindUser findUser(DataSource dataSource) {
+        return email -> Promise.lift(t -> StorageError.DatabaseFailure.FACTORY.apply(Causes.fromThrowable(t)),
+                                     () -> {
+                                         try (var conn = dataSource.getConnection();
+                                              var stmt = conn.prepareStatement(
+                                                  "SELECT * FROM users WHERE email = ?")) {
 
-    public Promise<Option<User>> findByEmail(Email email) {
-        return Promise.lift(RepositoryError.DatabaseFailure::new,
-                            () -> {
-                                try (var conn = dataSource.getConnection();
-                                     var stmt = conn.prepareStatement(
-                                         "SELECT * FROM users WHERE email = ?")) {
+                                             stmt.setString(1, email.value());
+                                             var rs = stmt.executeQuery();
 
-                                    stmt.setString(1, email.value());
-                                    var rs = stmt.executeQuery();
-
-                                    return rs.next() ? mapUser(rs) : null;
-                                }
-                            }).map(Option::option);
+                                             return rs.next() ? mapUser(rs) : null;
+                                         }
+                                     }).map(Option::option);
     }
 
-    private User mapUser(ResultSet rs) throws SQLException {
+    private static User mapUser(ResultSet rs) throws SQLException {
         return new User(/* ... */);
     }
 }
 ```
 
-The adapter catches `SQLException` and wraps it in `RepositoryError.DatabaseFailure`, a domain `Cause`. Callers never see `SQLException`.
+The factory catches `SQLException` and wraps it in `StorageError.DatabaseFailure`, a domain `Cause`. Callers never see `SQLException`, and nothing outside the factory sees `DataSource`.
 
 ### Thread Safety
 
@@ -400,7 +396,7 @@ Leaf operations are **thread-safe through confinement** - each invocation operat
 
 **If a leaf is only used by one caller**, keep it nearby (same file, same package).
 
-**If it's reused**, move it immediately to the nearest `shared` package. Don't defer - tech debt accumulates when shared code stays in wrong locations.
+**If it's reused**, move it immediately to the `shared` package - `io` for an I/O leaf - at the lowest common ancestor of its users (see [Project Structure](project-structure.md#shared-code-lives-at-the-lowest-common-ancestor)). Don't defer - tech debt accumulates when shared code stays in wrong locations.
 
 ---
 
@@ -622,6 +618,26 @@ UserId.userId(raw)
 
 This pattern is grep-friendly: searching for `Email.email` finds all email construction sites.
 
+### Business Names Only
+
+Packages and types are named for what they do for the business, never for the technology or pattern that implements them. A step's name is its contract; the technology appears only where it is used, in the parameter types of an I/O step's factory:
+
+```java
+// DO: The name is the contract; jOOQ shows only in the parameter
+interface LoadUser {
+    Promise<User> apply(UserId userId);
+
+    static LoadUser loadUser(DSLContext dsl) { ... }
+}
+
+// DON'T: Technology and pattern in the name
+class JooqUserRepository implements LoadUser { ... }
+class UserController { ... }
+class RegisterUserImpl implements RegisterUser { ... }
+```
+
+The same holds for packages: no `repository`, `controller`, `impl`, `util`, `common`, and no layer packages (`domain`, `adapter`, `config`). The two reserved package names, `shared` and `io`, name a role a package plays in the tree, not a layer — see [Project Structure](project-structure.md#package-structure).
+
 ### Validated Input Naming
 
 Use the `Valid` prefix (not `Validated`) for types representing validated inputs:
@@ -765,7 +781,7 @@ void execute_fails_whenEmailAlreadyExists()
 
 1. **Single Pattern Per Function** - One pattern per function, extract if you see two
 2. **Single Level of Abstraction** - No complex logic in lambdas, only method references or simple forwarding
-3. **Leaf** - Atomic unit: pure computation (business) or I/O (adapter)
+3. **Leaf** - Atomic unit: pure computation (business) or I/O
 4. **Condition** - Branching as values, same type from all branches
 5. **Iteration** - Functional combinators over collections, pure transformations
 6. **Zone-based naming** - Use appropriate verbs for each abstraction level

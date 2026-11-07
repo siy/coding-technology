@@ -362,11 +362,12 @@ public ResponseEntity<?> register(@Valid @RequestBody RegistrationRequest dto) {
                        .fold(this::errorResponse, this::successResponse);
 }
 
-// AFTER: Fully migrated
-@PostMapping("/register")
-public ResponseEntity<?> register(@RequestBody RegisterUser.Request raw) {
-    return registerUser.execute(raw)
-        .fold(this::errorResponse, this::successResponse);
+// AFTER: Fully migrated - the hand-written controller is gone.
+// The runtime generates the endpoint from the use case; Request is the wire contract.
+@UseCase
+public interface RegisterUser {
+    record Request(String email, String password) {}
+    ...
 }
 ```
 

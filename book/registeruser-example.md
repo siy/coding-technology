@@ -43,10 +43,11 @@
 ## Step 1: Use Case Interface
 
 ```java
-package com.example.app.usecase.registeruser;
+package com.example.app.registeruser;
 
 import org.pragmatica.lang.*;
 
+@UseCase
 public interface RegisterUser {
     record Request(String email, String password, String referralCode) {}
     record Response(UserId userId, ConfirmationToken token) {}
@@ -85,9 +86,9 @@ public interface RegisterUser {
 
 This is a **Sequencer pattern**: validate -> check uniqueness -> create user -> save -> generate token.
 
-**Why interface + factory?** Every component — use case, step, adapter — is defined as an interface with a static factory method. This is not arbitrary convention:
+**Why interface + factory?** Every component — use case, business step, I/O step — is defined as an interface with a static factory method. This is not arbitrary convention:
 
-- **Substitutability**: Anyone can implement the interface. Testing, stubbing incomplete implementations, swapping adapters — all work without framework magic or inheritance hierarchies.
+- **Substitutability**: Anyone can implement the interface. Testing, stubbing incomplete implementations, swapping I/O implementations — all work without framework magic or inheritance hierarchies.
 - **Implementation isolation**: Each implementation is self-contained. No shared base classes, no abstract methods to override, no coupling between implementations. Each intersection between implementations is unnecessary coupling with corresponding maintenance overhead — up to needing deep understanding of two projects instead of one, with zero benefit.
 - **Disposable implementation**: A local record or lambda returned by the factory can't be referenced externally. The implementation is replaceable by definition. The interface is the design artifact; the implementation is incidental.
 
@@ -115,7 +116,7 @@ This is **Fork-Join pattern**: validate three fields independently, collect resu
 
 **Email:**
 ```java
-package com.example.app.domain.shared;
+package com.example.app.shared;
 
 public record Email(String value) {
     private static final Pattern EMAIL_PATTERN =
@@ -195,14 +196,22 @@ The `Verify.ensureOption()` method (Pragmatica Core 0.9.0+) handles `Result<Opti
 
 ## Step 4: Step Implementations
 
-**CheckEmailUniqueness (adapter leaf):**
+Each step is an interface nested in `RegisterUser`, and its static factory is the implementation. An I/O step's factory takes the infrastructure it needs; that is the only place the infrastructure appears.
+
+**CheckEmailUniqueness (Condition over an I/O leaf):** the lookup is I/O, the decision is business logic, so the lookup is a nested sub-step, `FindUser`.
 ```java
 interface CheckEmailUniqueness {
     Promise<ValidRequest> apply(ValidRequest request);
 
-    static CheckEmailUniqueness checkEmailUniqueness(UserRepository repository) {
-        return request -> repository.findByEmail(request.email())
-                                    .flatMap(user -> checkPresence(user, request));
+    interface FindUser {
+        Promise<Option<User>> apply(Email email);
+
+        static FindUser findUser(DSLContext dsl) { ... }   // a jOOQ select, lifted like SaveUser's below
+    }
+
+    static CheckEmailUniqueness checkEmailUniqueness(FindUser findUser) {
+        return request -> findUser.apply(request.email())
+                                  .flatMap(user -> checkPresence(user, request));
     }
 
     static Promise<ValidRequest> checkPresence(Option<User> user, ValidRequest request) {
@@ -213,39 +222,31 @@ interface CheckEmailUniqueness {
 }
 ```
 
-**HashPassword (adapter leaf):** hashing is computation, but `BCryptPasswordEncoder` is third-party code that can throw, and turning a foreign exception into a typed `Cause` is adapter work. The step interface stays in the use case; the implementation that lifts the exception lives in the adapter package.
+**HashPassword (I/O leaf):** hashing is computation, but `BCryptPasswordEncoder` is third-party code that can throw, and turning a foreign exception into a typed `Cause` is boundary work. So `HashPassword` is treated as an I/O step: the encoder appears only as its factory's parameter, and the factory lifts the exception.
 ```java
 interface HashPassword {
     Result<HashedPassword> apply(Password password);
-}
 
-class BcryptPasswordHasher implements HashPassword {
-    private final BCryptPasswordEncoder encoder;
-
-    BcryptPasswordHasher(BCryptPasswordEncoder encoder) {
-        this.encoder = encoder;
-    }
-
-    public Result<HashedPassword> apply(Password password) {
-        return Result.lift1(t -> RegistrationError.PasswordHashingFailed.FACTORY.apply(Causes.fromThrowable(t)),
-                            encoder::encode,
-                            password.value())
-                     .map(HashedPassword::new);
+    static HashPassword hashPassword(BCryptPasswordEncoder encoder) {
+        return password -> Result.lift1(t -> RegistrationError.PasswordHashingFailed.FACTORY.apply(Causes.fromThrowable(t)),
+                                        encoder::encode,
+                                        password.value())
+                                 .map(HashedPassword::new);
     }
 }
 ```
 
-**SaveUser (adapter leaf):**
+**SaveUser (I/O leaf):**
 ```java
-class JooqUserRepository implements SaveUser {
-    private final DSLContext dsl;
+interface SaveUser {
+    Promise<User> apply(ValidUser validUser);
 
-    public Promise<User> apply(ValidUser user) {
-        return Promise.lift(t -> RepositoryError.DatabaseFailure.FACTORY.apply(Causes.fromThrowable(t)),
-                            () -> saveUser(user));
+    static SaveUser saveUser(DSLContext dsl) {
+        return user -> Promise.lift(t -> RegistrationError.DatabaseFailure.FACTORY.apply(Causes.fromThrowable(t)),
+                                    () -> insertUser(dsl, user));
     }
 
-    private User saveUser(ValidUser user) {
+    private static User insertUser(DSLContext dsl, ValidUser user) {
         String id = dsl.insertInto(USERS)
                        .set(USERS.EMAIL, user.email().value())
                        .set(USERS.PASSWORD_HASH, user.hashed().value())
@@ -260,19 +261,19 @@ class JooqUserRepository implements SaveUser {
 }
 ```
 
-**GenerateToken (adapter leaf):**
+**GenerateToken (I/O leaf):**
 ```java
-class TokenServiceClient implements GenerateToken {
-    private final HttpClient httpClient;
+interface GenerateToken {
+    Promise<Response> apply(User user);
 
-    public Promise<Response> apply(User user) {
-        return httpClient.post("/tokens/confirm",
-                               Map.of("userId", user.id().value()))
-                         .map(resp -> buildResponse(user.id(), resp))
-                         .mapError(RegistrationError.TokenGenerationFailed.FACTORY);
+    static GenerateToken generateToken(HttpClient httpClient) {
+        return user -> httpClient.post("/tokens/confirm",
+                                       Map.of("userId", user.id().value()))
+                                 .map(resp -> buildResponse(user.id(), resp))
+                                 .mapError(RegistrationError.TokenGenerationFailed.FACTORY);
     }
 
-    private Response buildResponse(UserId userId, Map<String, String> resp) {
+    private static Response buildResponse(UserId userId, Map<String, String> resp) {
         return new Response(userId, new ConfirmationToken(resp.get("token")));
     }
 }
@@ -308,6 +309,11 @@ public sealed interface RegistrationError extends Cause {
     record TokenGenerationFailed(Cause origin, String message) implements RegistrationError, Cause.Wrapped {
         static final Fn1<TokenGenerationFailed, Cause> FACTORY =
             Causes.forOneValue("Token generation failed", TokenGenerationFailed::new);
+    }
+
+    record DatabaseFailure(Cause origin, String message) implements RegistrationError, Cause.Wrapped {
+        static final Fn1<DatabaseFailure, Cause> FACTORY =
+            Causes.forOneValue("Database operation failed", DatabaseFailure::new);
     }
 }
 ```
@@ -389,8 +395,8 @@ void execute_fails_whenEmailAlreadyExists() {
 | ValidRequest.validRequest | Fork-Join | Validate independent fields |
 | Email.email | Leaf | Atomic validation |
 | Password.password | Leaf | Atomic validation with Sequencer internally |
-| CheckEmailUniqueness | Leaf + Condition | Database check with branching |
-| SaveUser | Adapter Leaf | Database write |
+| CheckEmailUniqueness | Condition over I/O Leaf | Database check with branching |
+| SaveUser | I/O Leaf | Database write |
 | RegistrationError | Sealed Interface | Typed error hierarchy |
 
 ---
@@ -401,8 +407,8 @@ void execute_fails_whenEmailAlreadyExists() {
 2. **Sequencer for main flow** - Chain steps with flatMap
 3. **Fork-Join for validation** - Accumulate errors with Result.all()
 4. **Value objects as Leaves** - Parse-don't-validate
-5. **Adapters implement step interfaces** - JOOQ, HTTP clients
-6. **Tests use stubs** - Only adapters stubbed
+5. **I/O steps are implemented by their factories** - jOOQ, HTTP and third-party types appear only as factory parameters
+6. **Tests use stubs** - Only I/O steps stubbed
 
 ---
 

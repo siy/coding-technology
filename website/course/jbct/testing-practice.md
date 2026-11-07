@@ -1,5 +1,5 @@
 ---
-reviewed-at: 4510ee24b6e1d0f6be28cdaf91d0de3293937da8
+reviewed-at: 3c7bf23bbbf363d943e110e49d60b40ad4b7aac3
 ---
 
 ## blurb
@@ -7,7 +7,7 @@ Organizing large test suites, what to test where, and migrating from traditional
 
 ## learn
 - Organizing large test counts without drowning in complexity
-- What to test where: value objects, leaves, use cases, adapters
+- What to test where: value objects, leaves, use cases, I/O steps
 - Complete worked example: RegisterUser from stub to production
 - Migrating from traditional unit testing
 

@@ -1213,7 +1213,11 @@ public interface CreateUser {
         static CreateUserRequest createUserRequest(String email, String password) { return new CreateUserRequest(email, password); }
     }
     record ValidRequest(Email email, Password password) {
-        static ValidRequest validRequest(Email email, Password password) { return new ValidRequest(email, password); }
+        static Result<ValidRequest> validRequest(CreateUserRequest raw) {
+            return Result.all(Email.email(raw.email()),
+                              Password.password(raw.password()))
+                         .map(ValidRequest::new);
+        }
     }
 
     interface CheckEmailUnique {

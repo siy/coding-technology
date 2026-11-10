@@ -241,7 +241,7 @@ record ValidRegistration(Email email, Password password) {
         String localPart = email.value().split("@")[0];
         return pwd.value().contains(localPart)
             ? PASSWORD_CONTAINS_EMAIL.result()
-            : Result.success(ValidRegistration.validRegistration(email, pwd));
+            : Result.success(new ValidRegistration(email, pwd));
     }
 }
 ```
@@ -309,7 +309,7 @@ public record ValidRegistration(Email email, Password password, Age age) {
         return Result.all(Email.email(emailRaw),
                          Password.password(passwordRaw),
                          Age.age(ageRaw))
-                     .map(ValidRegistration::validRegistration);
+                     .map(ValidRegistration::new);
         // If any field fails, Result.all() accumulates ALL errors
         // User sees "Invalid email AND password too short AND age out of range"
     }

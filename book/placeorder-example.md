@@ -593,15 +593,23 @@ package com.example.shop.usecase.placeorder;
 import com.example.shop.domain.shared.Money;
 import com.example.shop.domain.shared.ProductId;
 
-import org.pragmatica.lang.Result;
-
-import java.math.BigDecimal;
-
 /** Unit prices and product facts. Products are known to exist: CheckInventory ran first. */
 public interface PriceList {
     Money unitPrice(ProductId productId);
     boolean isOversized(ProductId productId);
 }
+```
+
+`PriceCalculator` is its own file, next to it:
+
+```java
+package com.example.shop.usecase.placeorder;
+
+import com.example.shop.domain.shared.Money;
+
+import org.pragmatica.lang.Result;
+
+import java.math.BigDecimal;
 
 public interface PriceCalculator {
     Result<Money> calculate(ValidOrderRequest request);
@@ -655,6 +663,7 @@ public interface PriceCalculator {
 The calculator never builds a `Money` itself. Sums and products go through `Money`'s own
 operations, and the one operation that can leave the invariant, a discount, returns
 `Result<Money>`, so `calculate` does too.
+Free shipping compares the cent-rounded discounted price, so an order whose discount rounds it up to exactly 500.00 ships free.
 
 **Count the decisions before writing tests.** Three volume bands, two order-value bands,
 three shipping outcomes: **eighteen combinations**, and the stacking rule is only
@@ -850,14 +859,14 @@ class QuantityTest {
         @Test
         void quantity_succeeds_forPositiveValue() {
             Quantity.quantity(5)
-                .onFailure(Assertions::fail)
+                .onFailure(cause -> Assertions.fail(cause.message()))
                 .onSuccess(q -> assertEquals(5, q.value()));
         }
 
         @Test
         void quantity_succeeds_forMaxValue() {
             Quantity.quantity(100)
-                .onFailure(Assertions::fail)
+                .onFailure(cause -> Assertions.fail(cause.message()))
                 .onSuccess(q -> assertEquals(100, q.value()));
         }
     }
@@ -866,17 +875,17 @@ class QuantityTest {
     class ValidationFails {
         @Test
         void quantity_fails_forZero() {
-            Quantity.quantity(0).onSuccess(Assertions::fail);
+            Quantity.quantity(0).onSuccess(_ -> Assertions.fail("expected a failure"));
         }
 
         @Test
         void quantity_fails_forNegative() {
-            Quantity.quantity(-1).onSuccess(Assertions::fail);
+            Quantity.quantity(-1).onSuccess(_ -> Assertions.fail("expected a failure"));
         }
 
         @Test
         void quantity_fails_forExceedingLimit() {
-            Quantity.quantity(101).onSuccess(Assertions::fail);
+            Quantity.quantity(101).onSuccess(_ -> Assertions.fail("expected a failure"));
         }
     }
 }
@@ -922,7 +931,7 @@ class PriceCalculatorTest {
                                                         BigDecimal expected) {
         calculatorFor(unitPrice, oversized)
             .flatMap(calculator -> calculator.calculate(orderOf(items)))
-            .onFailure(Assertions::fail)
+            .onFailure(cause -> Assertions.fail(cause.message()))
             .onSuccess(total -> assertEquals(expected, total.value()));
     }
 
@@ -975,7 +984,7 @@ void execute_chargesTheCalculatedTotal() {
                        .async()
                        .flatMap(useCase -> useCase.execute(orderRequestOf(25)))
                        .await()
-                       .onFailure(Assertions::fail)
+                       .onFailure(cause -> Assertions.fail(cause.message()))
                        .onSuccess(_ -> assertEquals(new BigDecimal("104.99"), charged.get().value()));
 }
 ```
@@ -1003,7 +1012,7 @@ class InventoryCheckerTest {
 
         checker.apply(requestFor(PRODUCT, 2))
                .await()
-               .onFailure(Assertions::fail);
+               .onFailure(cause -> Assertions.fail(cause.message()));
     }
 
     @Test
@@ -1012,7 +1021,7 @@ class InventoryCheckerTest {
 
         checker.apply(requestFor(PRODUCT, 2))
                .await()
-               .onSuccess(Assertions::fail);
+               .onSuccess(_ -> Assertions.fail("expected a failure"));
     }
 
     @Test
@@ -1021,7 +1030,7 @@ class InventoryCheckerTest {
 
         checker.apply(requestFor(PRODUCT, 2))
                .await()
-               .onSuccess(Assertions::fail)
+               .onSuccess(_ -> Assertions.fail("expected a failure"))
                .onFailure(cause -> assertInstanceOf(OrderError.InsufficientInventory.class, cause));
     }
 }
@@ -1044,7 +1053,7 @@ class PlaceOrderTest {
         // All stubs - happy path
         PlaceOrder.CheckInventory checkInventory = req -> Promise.success(req);
         PlaceOrder.ReserveInventory reserveInventory = req -> Promise.success(
-            ReservedInventory.reservedInventory("res-123", List.of(), Instant.now().plusMinutes(15))
+            ReservedInventory.reservedInventory("res-123", List.of(), Instant.now().plus(Duration.ofMinutes(15)))
         );
         PlaceOrder.ProcessPayment processPayment = (res, total) -> Promise.success(
             PaymentConfirmation.paymentConfirmation("tx-456", Instant.now())
@@ -1074,7 +1083,7 @@ class PlaceOrderTest {
 
             useCase.execute(request)
                 .await()
-                .onFailure(Assertions::fail)
+                .onFailure(cause -> Assertions.fail(cause.message()))
                 .onSuccess(response -> {
                     assertEquals(ORDER_ID, response.orderId().value());
                 });
@@ -1093,7 +1102,7 @@ class PlaceOrderTest {
 
             useCase.execute(request)
                 .await()
-                .onSuccess(Assertions::fail);
+                .onSuccess(_ -> Assertions.fail("expected a failure"));
         }
     }
 
@@ -1110,7 +1119,7 @@ class PlaceOrderTest {
 
             failingUseCase.execute(validRequest())
                 .await()
-                .onSuccess(Assertions::fail);
+                .onSuccess(_ -> Assertions.fail("expected a failure"));
         }
 
         @Test
@@ -1118,7 +1127,7 @@ class PlaceOrderTest {
             var released = new AtomicBoolean(false);
 
             PlaceOrder.ReserveInventory reserveInventory = req -> Promise.success(
-                ReservedInventory.reservedInventory("res-123", List.of(), Instant.now().plusMinutes(15))
+                ReservedInventory.reservedInventory("res-123", List.of(), Instant.now().plus(Duration.ofMinutes(15)))
             );
             PlaceOrder.ProcessPayment failingPayment = (res, total) ->
                 OrderError.PaymentDeclined.FACTORY.apply(Causes.cause("Card declined")).promise();
@@ -1139,7 +1148,7 @@ class PlaceOrderTest {
 
             failingUseCase.execute(validRequest())
                 .await()
-                .onSuccess(Assertions::fail);
+                .onSuccess(_ -> Assertions.fail("expected a failure"));
 
             assertTrue(released.get(), "Inventory should be released on payment failure");
         }

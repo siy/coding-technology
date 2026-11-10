@@ -467,7 +467,7 @@ A: No. Pure functions that cannot fail should return T directly:
 public Money calculateTotal(List<LineItem> items) {
     return items.stream()
         .map(LineItem::subtotal)
-        .reduce(Money.ZERO, Money::add);
+        .reduce(Money.ZERO, Money::plus);
 }
 
 // Returns Result<T> - validation can fail

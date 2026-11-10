@@ -78,6 +78,35 @@ com.example.shop.domain.shared/
 
 ## Step 1: Value Objects
 
+### OrderId
+
+An order id is generated, never read from a request, so the zero-argument factory cannot fail.
+The one-argument factory is for ids that come back from outside (a stored row, a test fixture)
+and keeps the UUID rule from the table above.
+
+```java
+package com.example.shop.domain.shared;
+
+import org.pragmatica.lang.Option;
+import org.pragmatica.lang.Result;
+import org.pragmatica.lang.utils.Causes;
+import org.pragmatica.lang.parse.Network;
+
+import java.util.UUID;
+
+public record OrderId(String value) {
+    public static OrderId orderId() {
+        return new OrderId(UUID.randomUUID().toString());
+    }
+
+    public static Result<OrderId> orderId(String raw) {
+        return Network.parseUUID(raw)
+            .mapError(cause -> Causes.cause("Invalid order ID format", Option.some(cause)))
+            .map(uuid -> new OrderId(uuid.toString()));
+    }
+}
+```
+
 ### ProductId
 
 ```java
@@ -140,6 +169,7 @@ import java.math.RoundingMode;
 public record Money(BigDecimal value) {
     private static final Cause NEGATIVE = Causes.cause("Money cannot be negative");
     private static final Cause TOO_MANY_DECIMALS = Causes.cause("Money allows max 2 decimal places");
+    private static final Cause RATE_OUT_OF_RANGE = Causes.cause("Discount rate must be between 0 and 1");
 
     public static Result<Money> money(BigDecimal raw) {
         if (raw.compareTo(BigDecimal.ZERO) < 0) {
@@ -157,15 +187,30 @@ public record Money(BigDecimal value) {
             .flatMap(Money::money);
     }
 
-    public Money add(Money other) {
+    public static final Money ZERO = new Money(BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP));
+
+    // Sum of two non-negative amounts at scale 2: non-negative, scale 2. The invariant holds by construction.
+    public Money plus(Money other) {
         return new Money(this.value.add(other.value));
     }
 
-    public Money multiply(int quantity) {
-        return new Money(this.value.multiply(BigDecimal.valueOf(quantity)));
+    // A non-negative amount times a positive whole number: non-negative, scale 2. Same argument.
+    public Money times(Quantity quantity) {
+        return new Money(this.value.multiply(BigDecimal.valueOf(quantity.value())));
     }
 
-    public static final Money ZERO = new Money(BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP));
+    public boolean isAtLeast(Money other) {
+        return this.value.compareTo(other.value) >= 0;
+    }
+
+    // A rate outside [0, 1] would produce a negative amount, and the product has more than 2 decimals:
+    // both are the invariant's business, so the result goes back through the factory.
+    public Result<Money> discountedBy(BigDecimal rate) {
+        if (rate.signum() < 0 || rate.compareTo(BigDecimal.ONE) > 0) {
+            return RATE_OUT_OF_RANGE.result();
+        }
+        return money(this.value.multiply(BigDecimal.ONE.subtract(rate)).setScale(2, RoundingMode.HALF_UP));
+    }
 }
 ```
 
@@ -393,6 +438,8 @@ package com.example.shop.usecase.placeorder;
 
 import org.pragmatica.lang.Promise;
 import org.pragmatica.lang.Result;
+import org.pragmatica.lang.Cause;
+import org.pragmatica.lang.Unit;
 import com.example.shop.domain.shared.OrderId;
 import com.example.shop.domain.shared.Money;
 
@@ -466,15 +513,15 @@ public interface PlaceOrder {
         ReleaseInventory releaseInventory,
         PriceCalculator priceCalculator
     ) {
-        var total = priceCalculator.calculate(request);
-
-        return reserveInventory.apply(request)
-            .flatMap(reservation -> processPayment.apply(reservation, total)
-                .flatMap(payment -> createOrder.apply(reservation, payment))
-                .map(orderId -> Response.response(orderId, total))
-                .fold(result -> result.fold(
-                    cause -> compensateAndFail(reservation, releaseInventory, cause),
-                    Promise::success)));
+        return priceCalculator.calculate(request)
+            .async()
+            .flatMap(total -> reserveInventory.apply(request)
+                .flatMap(reservation -> processPayment.apply(reservation, total)
+                    .flatMap(payment -> createOrder.apply(reservation, payment))
+                    .map(orderId -> Response.response(orderId, total))
+                    .fold(result -> result.fold(
+                        cause -> compensateAndFail(reservation, releaseInventory, cause),
+                        Promise::success))));
     }
 
     private static Promise<Response> compensateAndFail(
@@ -546,8 +593,9 @@ package com.example.shop.usecase.placeorder;
 import com.example.shop.domain.shared.Money;
 import com.example.shop.domain.shared.ProductId;
 
+import org.pragmatica.lang.Result;
+
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 
 /** Unit prices and product facts. Products are known to exist: CheckInventory ran first. */
 public interface PriceList {
@@ -556,23 +604,22 @@ public interface PriceList {
 }
 
 public interface PriceCalculator {
-    Money calculate(ValidOrderRequest request);
+    Result<Money> calculate(ValidOrderRequest request);
 
-    Money FLAT_SHIPPING      = new Money(new BigDecimal("9.99"));
-    Money OVERSIZED_SHIPPING = new Money(new BigDecimal("49.99"));
-    BigDecimal FREE_SHIPPING_THRESHOLD = new BigDecimal("500.00");
-    BigDecimal LARGE_ORDER_THRESHOLD   = new BigDecimal("1000.00");
-
-    static PriceCalculator priceCalculator(PriceList prices) {
+    /// Prices and thresholds are configuration: the wiring parses them once through `Money.money`.
+    static PriceCalculator priceCalculator(PriceList prices,
+                                           Money flatShipping,
+                                           Money oversizedShipping,
+                                           Money freeShippingThreshold,
+                                           Money largeOrderThreshold) {
         return request -> {
-            var subtotal = request.lines()
+            var subtotal = request.items()
                                   .stream()
                                   .map(line -> prices.unitPrice(line.productId())
-                                                     .multiply(line.quantity().value()))
-                                  .reduce(Money.ZERO, Money::add)
-                                  .value();
+                                                     .times(line.quantity()))
+                                  .reduce(Money.ZERO, Money::plus);
 
-            var itemCount = request.lines()
+            var itemCount = request.items()
                                    .stream()
                                    .mapToInt(line -> line.quantity().value())
                                    .sum();
@@ -583,26 +630,31 @@ public interface PriceCalculator {
                            : BigDecimal.ZERO;
 
             // Rule 2: order value.
-            var valueRate = subtotal.compareTo(LARGE_ORDER_THRESHOLD) >= 0
+            var valueRate = subtotal.isAtLeast(largeOrderThreshold)
                             ? new BigDecimal("0.05")
                             : BigDecimal.ZERO;
 
-            // Rule 3: they do not stack. The customer gets the better of the two.
-            var discounted = subtotal.multiply(BigDecimal.ONE.subtract(volumeRate.max(valueRate)));
-
-            // Rule 4: shipping, decided after the discount.
-            var oversized = request.lines()
+            var oversized = request.items()
                                    .stream()
                                    .anyMatch(line -> prices.isOversized(line.productId()));
-            var shipping = oversized                                          ? OVERSIZED_SHIPPING.value()
-                         : discounted.compareTo(FREE_SHIPPING_THRESHOLD) >= 0 ? BigDecimal.ZERO
-                                                                              : FLAT_SHIPPING.value();
 
-            return new Money(discounted.add(shipping).setScale(2, RoundingMode.HALF_UP));
+            // Rule 3: they do not stack. The customer gets the better of the two.
+            return subtotal.discountedBy(volumeRate.max(valueRate))
+                           .map(discounted -> {
+                               // Rule 4: shipping, decided after the discount.
+                               var shipping = oversized                                    ? oversizedShipping
+                                            : discounted.isAtLeast(freeShippingThreshold) ? Money.ZERO
+                                                                                          : flatShipping;
+                               return discounted.plus(shipping);
+                           });
         };
     }
 }
 ```
+
+The calculator never builds a `Money` itself. Sums and products go through `Money`'s own
+operations, and the one operation that can leave the invariant, a discount, returns
+`Result<Money>`, so `calculate` does too.
 
 **Count the decisions before writing tests.** Three volume bands, two order-value bands,
 three shipping outcomes: **eighteen combinations**, and the stacking rule is only
@@ -746,8 +798,6 @@ import com.example.shop.usecase.placeorder.PaymentConfirmation;
 import com.example.shop.usecase.placeorder.OrderError;
 import com.example.shop.domain.shared.OrderId;
 
-import java.util.UUID;
-
 import static com.example.shop.adapter.persistence.Tables.*;
 
 public class JooqOrderRepository implements CreateOrder {
@@ -762,10 +812,10 @@ public class JooqOrderRepository implements CreateOrder {
         return Promise.lift(
             t -> OrderError.OrderNotSaved.FACTORY.apply(Causes.fromThrowable(t)),
             () -> {
-                var orderId = UUID.randomUUID().toString();
+                var orderId = OrderId.orderId();
 
                 dsl.insertInto(ORDERS)
-                    .set(ORDERS.ID, orderId)
+                    .set(ORDERS.ID, orderId.value())
                     .set(ORDERS.RESERVATION_ID, reservation.reservationId())
                     .set(ORDERS.PAYMENT_TX_ID, payment.transactionId())
                     .set(ORDERS.STATUS, "CONFIRMED")
@@ -773,13 +823,13 @@ public class JooqOrderRepository implements CreateOrder {
 
                 for (var item : reservation.items()) {
                     dsl.insertInto(ORDER_ITEMS)
-                        .set(ORDER_ITEMS.ORDER_ID, orderId)
+                        .set(ORDER_ITEMS.ORDER_ID, orderId.value())
                         .set(ORDER_ITEMS.PRODUCT_ID, item.productId())
                         .set(ORDER_ITEMS.QUANTITY, item.quantity())
                         .execute();
                 }
 
-                return new OrderId(orderId);
+                return orderId;
             }
         );
     }
@@ -870,17 +920,28 @@ class PriceCalculatorTest {
                                                         int items,
                                                         boolean oversized,
                                                         BigDecimal expected) {
-        var prices = priceListOf(unitPrice, oversized);
+        calculatorFor(unitPrice, oversized)
+            .flatMap(calculator -> calculator.calculate(orderOf(items)))
+            .onFailure(Assertions::fail)
+            .onSuccess(total -> assertEquals(expected, total.value()));
+    }
 
-        assertEquals(expected, PriceCalculator.priceCalculator(prices)
-                                              .calculate(orderOf(items))
-                                              .value());
+    /** The production rates and thresholds, parsed the way the wiring parses them. */
+    static Result<PriceCalculator> calculatorFor(BigDecimal unitPrice, boolean oversized) {
+        return Result.all(Money.money(unitPrice),
+                          Money.money("9.99"),
+                          Money.money("49.99"),
+                          Money.money("500.00"),
+                          Money.money("1000.00"))
+                     .map((unit, flat, over, free, large) ->
+                              PriceCalculator.priceCalculator(priceListOf(unit, oversized),
+                                                              flat, over, free, large));
     }
 
     /** Every unit costs the same, so the subtotal is unit price times item count. */
-    static PriceList priceListOf(BigDecimal unitPrice, boolean oversized) {
+    static PriceList priceListOf(Money unitPrice, boolean oversized) {
         return new PriceList() {
-            public Money unitPrice(ProductId id)  { return new Money(unitPrice); }
+            public Money unitPrice(ProductId id)  { return unitPrice; }
             public boolean isOversized(ProductId id) { return oversized; }
         };
     }
@@ -906,17 +967,16 @@ void execute_chargesTheCalculatedTotal() {
         charged.set(total);
         return Promise.success(PaymentConfirmation.paymentConfirmation("tx-456", Instant.now()));
     };
-    // The REAL PriceCalculator, over the same price list the table uses:
+    // The REAL PriceCalculator, over the same price list and rates the table uses:
     // 4.00 a unit, not oversized. Twenty-five items is 100.00, less 5% volume,
     // plus flat shipping.
-    var priceCalculator = PriceCalculator.priceCalculator(
-        PriceCalculatorTest.priceListOf(new BigDecimal("4.00"), false));
-    // ... remaining stubs
-
-    useCase.execute(orderRequestOf(25))
-           .await()
-           .onFailure(Assertions::fail)
-           .onSuccess(_ -> assertEquals(new BigDecimal("104.99"), charged.get().value()));
+    PriceCalculatorTest.calculatorFor(new BigDecimal("4.00"), false)
+                       .map(priceCalculator -> placeOrderWith(processPayment, priceCalculator)) // ... remaining stubs
+                       .async()
+                       .flatMap(useCase -> useCase.execute(orderRequestOf(25)))
+                       .await()
+                       .onFailure(Assertions::fail)
+                       .onSuccess(_ -> assertEquals(new BigDecimal("104.99"), charged.get().value()));
 }
 ```
 
@@ -975,6 +1035,8 @@ the one thing no use case test can reach.
 
 ```java
 class PlaceOrderTest {
+    private static final String ORDER_ID = "7c9e6679-7425-40de-944b-e07fc1f90ae7";
+
     private PlaceOrder useCase;
 
     @BeforeEach
@@ -987,12 +1049,10 @@ class PlaceOrderTest {
         PlaceOrder.ProcessPayment processPayment = (res, total) -> Promise.success(
             PaymentConfirmation.paymentConfirmation("tx-456", Instant.now())
         );
-        PlaceOrder.CreateOrder createOrder = (res, pay) -> Promise.success(
-            new OrderId("order-789")
-        );
+        PlaceOrder.CreateOrder createOrder = (res, pay) -> OrderId.orderId(ORDER_ID).async();
         PlaceOrder.SendConfirmation sendConfirmation = (id, req) -> Promise.success(null);
         PlaceOrder.ReleaseInventory releaseInventory = res -> Promise.success(null);
-        PriceCalculator priceCalculator = req -> new Money(BigDecimal.valueOf(99.99));
+        PriceCalculator priceCalculator = req -> Money.money("99.99");
 
         useCase = PlaceOrder.placeOrder(
             checkInventory, reserveInventory, processPayment,
@@ -1006,17 +1066,17 @@ class PlaceOrderTest {
         void execute_succeeds_forValidOrder() {
             var request = OrderRequest.orderRequest(
                 "550e8400-e29b-41d4-a716-446655440000",
-                List.of(new OrderRequest.LineItemRequest(
+                List.of(OrderRequest.LineItemRequest.lineItemRequest(
                     "660e8400-e29b-41d4-a716-446655440001", 2
                 )),
-                new OrderRequest.AddressRequest("123 Main St", "City", "12345", "US")
+                OrderRequest.AddressRequest.addressRequest("123 Main St", "City", "12345", "US")
             );
 
             useCase.execute(request)
                 .await()
                 .onFailure(Assertions::fail)
                 .onSuccess(response -> {
-                    assertEquals("order-789", response.orderId().value());
+                    assertEquals(ORDER_ID, response.orderId().value());
                 });
         }
     }
@@ -1028,7 +1088,7 @@ class PlaceOrderTest {
             var request = OrderRequest.orderRequest(
                 "550e8400-e29b-41d4-a716-446655440000",
                 List.of(),
-                new OrderRequest.AddressRequest("123 Main St", "City", "12345", "US")
+                OrderRequest.AddressRequest.addressRequest("123 Main St", "City", "12345", "US")
             );
 
             useCase.execute(request)
@@ -1074,7 +1134,7 @@ class PlaceOrderTest {
                 null,
                 null,
                 releaseInventory,
-                req -> Money.ZERO
+                req -> Result.success(Money.ZERO)
             );
 
             failingUseCase.execute(validRequest())
@@ -1088,10 +1148,10 @@ class PlaceOrderTest {
     private OrderRequest validRequest() {
         return OrderRequest.orderRequest(
             "550e8400-e29b-41d4-a716-446655440000",
-            List.of(new OrderRequest.LineItemRequest(
+            List.of(OrderRequest.LineItemRequest.lineItemRequest(
                 "660e8400-e29b-41d4-a716-446655440001", 2
             )),
-            new OrderRequest.AddressRequest("123 Main St", "City", "12345", "US")
+            OrderRequest.AddressRequest.addressRequest("123 Main St", "City", "12345", "US")
         );
     }
 }

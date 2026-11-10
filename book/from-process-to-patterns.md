@@ -178,8 +178,12 @@ A workflow **materializes** into a code entity only when it gains a **trigger of
 
 ```java
 public interface SettleHolds {                    // materialized: its own nightly trigger
-    record Request(BusinessDay day) {}
-    record Settled(int confirmed, int released) {}
+    record Request(BusinessDay day) {
+        static Request request(BusinessDay day) { return new Request(day); }
+    }
+    record Settled(int confirmed, int released) {
+        static Settled settled(int confirmed, int released) { return new Settled(confirmed, released); }
+    }
 
     Promise<Settled> execute(Request request);
 

@@ -343,9 +343,11 @@ Use blank lines to separate logical sections. Comments are optional—use only w
 
 ```java
 public interface GetUserProfile {
-    record Request(String userId) {}
+    record Request(String userId) {
+        static Request request(String userId) { return new Request(userId); }
+    }
     record Response(String userId, String email, String displayName) {
-        static Response fromUser(User user) {
+        static Response response(User user) {
             return new Response(user.id().value(),
                                 user.email().value(),
                                 user.displayName());
@@ -362,7 +364,7 @@ public interface GetUserProfile {
         return request -> UserId.userId(request.userId())
                                 .async()
                                 .flatMap(fetchUser::apply)
-                                .map(Response::fromUser);
+                                .map(Response::response);
     }
 }
 ```

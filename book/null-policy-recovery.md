@@ -380,7 +380,9 @@ Here, profile is **required** (must succeed), but orders and recommendations gra
 
 ```java
 public interface LoadConfig {
-    record Config(String apiUrl, int timeout, boolean retryEnabled) {}
+    record Config(String apiUrl, int timeout, boolean retryEnabled) {
+        static Config config(String apiUrl, int timeout, boolean retryEnabled) { return new Config(apiUrl, timeout, retryEnabled); }
+    }
 
     Promise<Config> load();
 
@@ -388,7 +390,7 @@ public interface LoadConfig {
                                  LoadFromEnv loadEnv) {
         return () -> loadFile.apply()
                              .orElse(loadEnv.apply())
-                             .recover(cause -> new Config("https://api.default.com", 30, true));  // FER: built-in defaults
+                             .recover(cause -> Config.config("https://api.default.com", 30, true));  // FER: built-in defaults
     }
 }
 ```

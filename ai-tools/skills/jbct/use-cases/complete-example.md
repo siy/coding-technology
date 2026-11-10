@@ -21,9 +21,13 @@ import org.pragmatica.result.Result;
 import org.pragmatica.promise.Promise;
 
 public interface RegisterUser extends UseCase.WithPromise<Response, Request> {
-    record Request(String email, String password) {}
+    record Request(String email, String password) {
+        static Request request(String email, String password) { return new Request(email, password); }
+    }
 
-    record Response(String userId, String confirmationToken) {}
+    record Response(String userId, String confirmationToken) {
+        static Response response(String userId, String confirmationToken) { return new Response(userId, confirmationToken); }
+    }
 
     @Override
     Promise<Response> execute(Request request);
@@ -160,7 +164,7 @@ public interface RegisterUser extends UseCase.WithPromise<Response, Request> {
                     .flatMap(hashed -> saveUser.apply(valid.email(), hashed))
             )
             .flatMap(sendEmail::apply)
-            .map(token -> new Response(
+            .map(token -> Response.response(
                 user.id().value().toString(),
                 token.value()
             ));

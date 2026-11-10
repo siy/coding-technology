@@ -26,6 +26,8 @@ Use this when the operation is pure computation with no possibility of failure o
 
 ```java
 public record FullName(String value) {
+    public static FullName fullName(String value) { return new FullName(value); }
+
     public String initials() {  // returns String (T)
         return value.chars()
                     .filter(Character::isUpperCase)

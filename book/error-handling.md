@@ -98,7 +98,7 @@ private Result<User> checkAccountStatus(User user) {
 
 Every failure is a `Cause`, and `Cause` has exactly one abstract member: `message()`. The construction idiom satisfies it structurally, so no error type ever hand-writes prose in a method body.
 
-A use case's failures form a sealed interface with two kinds of members. A **data-carrying failure** is a record: its components are the error's data, in declaration order, with a trailing `String message` component whose generated accessor *is* the `message()` implementation. Its `FACTORY`, built from a message template and the canonical constructor reference, is the construction path. **Fixed-text failures** share one enum in a prescribed shape - a single `message` field, a constructor, a field-returning accessor - with each failure declared as one constant carrying its text.
+A use case's failures form a sealed interface with two kinds of members. A **data-carrying failure** is a record: its components are the error's data, in declaration order, with a trailing `String message` component whose generated accessor *is* the `message()` implementation. Its `FACTORY`, built from a message template and the canonical constructor reference, is the construction path, and the record's type-named static factory (`accountLocked(userId)`, like every record's) delegates to it with the non-message components. **Fixed-text failures** share one enum in a prescribed shape - a single `message` field, a constructor, a field-returning accessor - with each failure declared as one constant carrying its text.
 
 ```java
 public sealed interface LoginError extends Cause {
@@ -106,6 +106,8 @@ public sealed interface LoginError extends Cause {
     record AccountLocked(UserId userId, String message) implements LoginError {
         static final Fn1<AccountLocked, UserId> FACTORY =
             Causes.forOneValue("Account is locked: %s", AccountLocked::new);
+
+        static AccountLocked accountLocked(UserId userId) { return FACTORY.apply(userId); }
     }
 
     enum General implements LoginError {
@@ -132,7 +134,7 @@ Three rules govern the shape:
 
 - **Every value the template formats is a component.** The factory's parameters are exactly the non-message components, so the data an error mentions stays typed - renderable at the boundary, countable in telemetry, never trapped in prose. The `message` component comes last, which is what lets the constructor reference serve as the factory argument. Zero data is a property, not an omission: `INVALID_CREDENTIALS` deliberately says nothing about which credential failed.
 - **One discriminable case per failure** - its own record type or its own enum constant. Qualified enum constant case labels (`case General.INVALID_CREDENTIALS ->`) discriminate constants in a switch over the sealed interface, and listing every constant preserves exhaustiveness: adding a constant breaks every switch, exactly as adding a record does.
-- **The `FACTORY` is the only constructor call site.** `new AccountLocked(id, "hand-typed prose")` compiles and silently decouples the stored message from the declared template; routed through the factory, template and data cannot disagree.
+- **The `FACTORY` is the only constructor call site.** `new AccountLocked(id, "hand-typed prose")` compiles and silently decouples the stored message from the declared template; routed through the factory, template and data cannot disagree. The type-named factory delegates to `FACTORY`, so the one rule that every record is built through a factory named for its type holds here too.
 
 ---
 
@@ -144,6 +146,8 @@ Two mixins nested in `Cause` remove the remaining overrides. A failure wrapping 
 record PaymentFailed(Cause origin, String message) implements TransferError, Cause.Wrapped {
     static final Fn1<PaymentFailed, Cause> FACTORY =
         Causes.forOneValue("Payment step failed", PaymentFailed::new);
+
+    static PaymentFailed paymentFailed(Cause origin) { return FACTORY.apply(origin); }
 }
 
 // translation at a composition boundary:
@@ -247,6 +251,8 @@ Users see all errors at once, not fix-and-retry repeatedly.
 record DatabaseFailure(Cause origin, String message) implements RepositoryError, Cause.Wrapped {
     static final Fn1<DatabaseFailure, Cause> FACTORY =
         Causes.forOneValue("Database failure", DatabaseFailure::new);
+
+    static DatabaseFailure databaseFailure(Cause origin) { return FACTORY.apply(origin); }
 }
 
 public Promise<Option<User>> findById(UserId id) {

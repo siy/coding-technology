@@ -50,7 +50,7 @@ class UserLoginTest {
     void setup() {
         stubCreds = vr -> Result.success(new Credentials("user-1"));
         stubStatus = c -> Result.success(new Account(c.userId(), true));
-        stubToken = acc -> Result.success(new Response("token-" + acc.userId()));
+        stubToken = acc -> Result.success(Response.response("token-" + acc.userId()));
         useCase = UserLogin.userLogin(stubCreds, stubStatus, stubToken);
     }
 
@@ -323,13 +323,17 @@ the adapter's entire job, and no use case test can reach it. Worked in full for
 
 ```java
 public interface RegisterUser {
-    record Request(String email, String password) {}
-    record Response(String userId) {}
+    record Request(String email, String password) {
+        static Request request(String email, String password) { return new Request(email, password); }
+    }
+    record Response(String userId) {
+        static Response response(String userId) { return new Response(userId); }
+    }
 
     Promise<Response> execute(Request request);
 
     static RegisterUser registerUser() {
-        return request -> Promise.success(new Response("stub-user-id"));
+        return request -> Promise.success(Response.response("stub-user-id"));
     }
 }
 ```
@@ -339,7 +343,7 @@ public interface RegisterUser {
 @Test
 void execute_succeeds_forValidInput() {
     var useCase = RegisterUser.registerUser();
-    var request = new Request("john@example.com", "Valid123");
+    var request = Request.request("john@example.com", "Valid123");
 
     useCase.execute(request)
            .await()
@@ -362,7 +366,7 @@ record ValidRequest(Email email, Password password) {
 static RegisterUser registerUser() {
     return request -> ValidRequest.validRequest(request)
                                   .async()
-                                  .map(_ -> new Response("stub-user-id"));
+                                  .map(_ -> Response.response("stub-user-id"));
 }
 ```
 
@@ -370,7 +374,7 @@ static RegisterUser registerUser() {
 ```java
 @Test
 void execute_fails_forInvalidEmail() {
-    var request = new Request("bad", "Valid123");
+    var request = Request.request("bad", "Valid123");
     useCase.execute(request).await().onSuccess(Assertions::fail);
 }
 ```
@@ -390,7 +394,7 @@ static RegisterUser registerUser(CheckEmailUniqueness checkUniqueness,
                                   .flatMap(hashPassword::apply)
                                   .flatMap(saveUser::apply)
                                   .flatMap(sendEmail::apply)
-                                  .map(user -> new Response(user.id()));
+                                  .map(user -> Response.response(user.id()));
 }
 ```
 

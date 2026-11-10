@@ -19,7 +19,7 @@ Before reporting completion, you MUST:
 3. **Run targeted searches** on your own changes:
    - `-> {` (multi-statement lambdas)
    - `Result.failure(` / `Promise.failure(` (static failure factories)
-   - `new <ValueObject>(` outside factory methods (constructor bypass)
+   - `new <Record>(` / `<Record>::new` outside the record's own type-named factory (constructor bypass); every record has such a factory
    - `throw new` / `try {` in domain/usecase packages
    - `.await()` in domain/usecase packages (must have `@TerminalOperation` if legitimate)
    - `@SuppressWarnings` used instead of `@Contract` / `@TerminalOperation` / `@NullReturn`
@@ -150,7 +150,7 @@ Can this operation fail?
 
 ### Parse, Don't Validate
 
-Valid objects constructed only when validation succeeds. Factory methods: `TypeName.typeName(...)` (lowercase-first).
+Valid objects constructed only when validation succeeds. Factory methods: `TypeName.typeName(...)` (lowercase-first). Every record has a type-named factory (`Profile.profile(...)`), no exceptions: `Result<Self>` if the record has any invariant, `Self` if it has none; a generator or framework that builds a record with `new`/`::new` instead of its factory is defective.
 (`Email` below is a teaching example — production code uses `org.pragmatica.lang.vo.Email`; check
 the `vo` package before hand-rolling ANY common value object.)
 
@@ -178,7 +178,7 @@ All failures as sealed `Cause` types.
 <!-- book:typed-errors -->
 Every failure is a `Cause`, and `Cause` has exactly one abstract member: `message()`. The construction idiom satisfies it structurally, so no error type ever hand-writes prose in a method body.
 
-A use case's failures form a sealed interface with two kinds of members. A **data-carrying failure** is a record: its components are the error's data, in declaration order, with a trailing `String message` component whose generated accessor *is* the `message()` implementation. Its `FACTORY`, built from a message template and the canonical constructor reference, is the construction path. **Fixed-text failures** share one enum in a prescribed shape - a single `message` field, a constructor, a field-returning accessor - with each failure declared as one constant carrying its text.
+A use case's failures form a sealed interface with two kinds of members. A **data-carrying failure** is a record: its components are the error's data, in declaration order, with a trailing `String message` component whose generated accessor *is* the `message()` implementation. Its `FACTORY`, built from a message template and the canonical constructor reference, is the construction path, and the record's type-named static factory (`accountLocked(userId)`, like every record's) delegates to it with the non-message components. **Fixed-text failures** share one enum in a prescribed shape - a single `message` field, a constructor, a field-returning accessor - with each failure declared as one constant carrying its text.
 
 ```java
 public sealed interface LoginError extends Cause {
@@ -186,6 +186,8 @@ public sealed interface LoginError extends Cause {
     record AccountLocked(UserId userId, String message) implements LoginError {
         static final Fn1<AccountLocked, UserId> FACTORY =
             Causes.forOneValue("Account is locked: %s", AccountLocked::new);
+
+        static AccountLocked accountLocked(UserId userId) { return FACTORY.apply(userId); }
     }
 
     enum General implements LoginError {
@@ -212,7 +214,7 @@ Three rules govern the shape:
 
 - **Every value the template formats is a component.** The factory's parameters are exactly the non-message components, so the data an error mentions stays typed - renderable at the boundary, countable in telemetry, never trapped in prose. The `message` component comes last, which is what lets the constructor reference serve as the factory argument. Zero data is a property, not an omission: `INVALID_CREDENTIALS` deliberately says nothing about which credential failed.
 - **One discriminable case per failure** - its own record type or its own enum constant. Qualified enum constant case labels (`case General.INVALID_CREDENTIALS ->`) discriminate constants in a switch over the sealed interface, and listing every constant preserves exhaustiveness: adding a constant breaks every switch, exactly as adding a record does.
-- **The `FACTORY` is the only constructor call site.** `new AccountLocked(id, "hand-typed prose")` compiles and silently decouples the stored message from the declared template; routed through the factory, template and data cannot disagree.
+- **The `FACTORY` is the only constructor call site.** `new AccountLocked(id, "hand-typed prose")` compiles and silently decouples the stored message from the declared template; routed through the factory, template and data cannot disagree. The type-named factory delegates to `FACTORY`, so the one rule that every record is built through a factory named for its type holds here too.
 <!-- /book:typed-errors -->
 
 <!-- book:wrapped-terminal-causes -->
@@ -222,6 +224,8 @@ Two mixins nested in `Cause` remove the remaining overrides. A failure wrapping 
 record PaymentFailed(Cause origin, String message) implements TransferError, Cause.Wrapped {
     static final Fn1<PaymentFailed, Cause> FACTORY =
         Causes.forOneValue("Payment step failed", PaymentFailed::new);
+
+    static PaymentFailed paymentFailed(Cause origin) { return FACTORY.apply(origin); }
 }
 
 // translation at a composition boundary:
@@ -314,17 +318,21 @@ records carry the previous container as a type parameter; **the `mapWith` family
 the jbct skill:
 
 ```java
-record ValidRequest(UserId userId) {}
-record UserProfile<T>(T request, Profile profile) {}      // previous stage + new knowledge
+record ValidRequest(UserId userId) {
+    static ValidRequest validRequest(UserId userId) { return new ValidRequest(userId); }
+}
+record UserProfile<T>(T request, Profile profile) {   // previous stage + new knowledge
+    static <T> UserProfile<T> userProfile(T request, Profile profile) { return new UserProfile<>(request, profile); }
+}
 
 return Request.parse(raw)                                              // Result<ValidRequest>
-    .mapWith(ValidRequest::userId, profiles::fetch, UserProfile::new) // op on ONE field, original kept
+    .mapWith(ValidRequest::userId, profiles::fetch, UserProfile::userProfile) // op on ONE field, original kept
     .ensureWith(p -> entitlements.check(p.request().userId()))        // gate; container unchanged
     .map(Response::from);
 ```
 
 `mapWith(getter, operation, factory)` — operation is effectful, factory combines original +
-result (pure); `flatMapWith` — factory may fail (validating stage constructors); `ensureWith` —
+result (pure); `flatMapWith` — factory may fail (validating stage factories); `ensureWith` —
 operation result discarded, success gates the chain (the fallible counterpart to `onSuccess`).
 Whole-object forms (`mapWith(operation, factory)`) cover stages needing several accumulated
 facts. No multi-getter arities exist — multi-projection decomposition is `all(...)`'s job.
@@ -385,9 +393,9 @@ Promise.any(a, b, c)                      // First success wins
 ### Context-Preserving Combinators (core 1.0.0-rc1+, on Result/Option/Promise)
 
 ```java
-r.mapWith(T::field, op, Stage::new)       // effectful op on a projection; factory(original, result)
-r.mapWith(op, Stage::new)                  // whole-object form
-r.flatMapWith(T::field, op, Stage::create) // same, fallible factory (validating stage constructor)
+r.mapWith(T::field, op, Stage::stage)      // effectful op on a projection; factory(original, result)
+r.mapWith(op, Stage::stage)                // whole-object form
+r.flatMapWith(T::field, op, Stage::stage) // same, fallible factory (validating stage factory)
 r.ensureWith(T::field, op)                 // op result discarded; success gates; failure propagates
                                            //   (transient gates only — if read later, return evidence + mapWith)
 ```

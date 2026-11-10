@@ -65,7 +65,7 @@ A direct `new Email(...)` outside the factory is easy to spot and is the thing t
 
 ### 2. Static Factory Method
 
-Factory named after type (lowercase-first):
+Factory named after type (lowercase-first). Every record has a type-named factory (`Profile.profile(...)`), no exceptions: `Result<Self>` if the record has any invariant, `Self` if it has none; a generator or framework that builds a record with `new`/`::new` instead of its factory is defective.
 
 ```java
 public static Result<Email> email(String raw) { ... }
@@ -184,7 +184,9 @@ Apply same pattern to use case inputs:
 
 ```java
 public interface RegisterUser {
-    record Request(String email, String password) {}
+    record Request(String email, String password) {
+        static Request request(String email, String password) { return new Request(email, password); }
+    }
 
     // Validated input with Valid prefix
     record ValidRequest(Email email, Password password) {

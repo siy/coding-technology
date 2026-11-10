@@ -46,8 +46,12 @@ A Sequencer should have 2 to 5 steps. Fewer than 2, and it's probably just a Lea
 
 ```java
 public interface ProcessOrder {
-    record Request(String orderId, String paymentToken) {}
-    record Response(OrderConfirmation confirmation) {}
+    record Request(String orderId, String paymentToken) {
+        static Request request(String orderId, String paymentToken) { return new Request(orderId, paymentToken); }
+    }
+    record Response(OrderConfirmation confirmation) {
+        static Response response(OrderConfirmation confirmation) { return new Response(confirmation); }
+    }
 
     Result<Response> execute(Request request);
 

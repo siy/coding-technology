@@ -28,9 +28,13 @@ This focused example demonstrates the **Condition pattern** for routing logic in
 ```java
 public enum AuthorTier { PREMIUM, STANDARD, NEW }
 
-public record ArticleId(String value) { /* factory omitted for brevity */ }
+public record ArticleId(String value) {
+    public static ArticleId articleId(String value) { return new ArticleId(value); }
+}
 
-public record AuthorId(String value) { /* factory omitted for brevity */ }
+public record AuthorId(String value) {
+    public static Result<AuthorId> authorId(String raw) { ... }
+}
 
 public record Article(
     ArticleId id,
@@ -38,7 +42,11 @@ public record Article(
     String title,
     String content,
     AuthorTier authorTier
-) {}
+) {
+    public static Article article(ArticleId id, AuthorId authorId, String title, String content, AuthorTier authorTier) {
+        return new Article(id, authorId, title, content, authorTier);
+    }
+}
 
 public enum PublishStatus {
     PUBLISHED,
@@ -46,7 +54,9 @@ public enum PublishStatus {
     PENDING_SENIOR_REVIEW
 }
 
-public record PublishResult(ArticleId articleId, PublishStatus status) {}
+public record PublishResult(ArticleId articleId, PublishStatus status) {
+    public static PublishResult publishResult(ArticleId articleId, PublishStatus status) { return new PublishResult(articleId, status); }
+}
 ```
 
 ---
@@ -180,7 +190,7 @@ public interface PublishArticle {
         SaveArticle saveArticle
     ) {
         return saveArticle.apply(article)
-            .map(id -> new PublishResult(id, PublishStatus.PUBLISHED));
+            .map(id -> PublishResult.publishResult(id, PublishStatus.PUBLISHED));
     }
 
     // Route 2: Standard - editorial review
@@ -231,7 +241,7 @@ Condition does not transform data inline. Each route delegates to a separate met
 // WRONG: Transformation in condition
 return switch (article.authorTier()) {
     case PREMIUM -> saveArticle.apply(article)
-        .map(id -> new PublishResult(id, PublishStatus.PUBLISHED));  // Too much here
+        .map(id -> PublishResult.publishResult(id, PublishStatus.PUBLISHED));  // Too much here
     ...
 };
 
@@ -264,13 +274,13 @@ class PublishArticleTest {
 
             PublishArticle.SaveArticle saveArticle = article -> {
                 saved.set(article);
-                return Promise.success(new ArticleId("art-123"));
+                return Promise.success(ArticleId.articleId("art-123"));
             };
 
             var useCase = PublishArticle.publishArticle(
                 saveArticle,
                 article -> Promise.success(article),
-                (id, status) -> Promise.success(new PublishResult(id, status))
+                (id, status) -> Promise.success(PublishResult.publishResult(id, status))
             );
 
             useCase.execute(requestWithTier(AuthorTier.PREMIUM))
@@ -285,9 +295,9 @@ class PublishArticleTest {
         @Test
         void execute_queuesForEditorialReview_forStandardAuthor() {
             var useCase = PublishArticle.publishArticle(
-                article -> Promise.success(new ArticleId("art-123")),
+                article -> Promise.success(ArticleId.articleId("art-123")),
                 article -> Promise.success(article),
-                (id, status) -> Promise.success(new PublishResult(id, status))
+                (id, status) -> Promise.success(PublishResult.publishResult(id, status))
             );
 
             useCase.execute(requestWithTier(AuthorTier.STANDARD))
@@ -308,9 +318,9 @@ class PublishArticleTest {
             };
 
             var useCase = PublishArticle.publishArticle(
-                article -> Promise.success(new ArticleId("art-123")),
+                article -> Promise.success(ArticleId.articleId("art-123")),
                 checkPlagiarism,
-                (id, status) -> Promise.success(new PublishResult(id, status))
+                (id, status) -> Promise.success(PublishResult.publishResult(id, status))
             );
 
             useCase.execute(requestWithTier(AuthorTier.NEW))
@@ -328,9 +338,9 @@ class PublishArticleTest {
                 PublishError.General.PLAGIARISM_DETECTED.promise();
 
             var useCase = PublishArticle.publishArticle(
-                article -> Promise.success(new ArticleId("art-123")),
+                article -> Promise.success(ArticleId.articleId("art-123")),
                 failingCheck,
-                (id, status) -> Promise.success(new PublishResult(id, status))
+                (id, status) -> Promise.success(PublishResult.publishResult(id, status))
             );
 
             useCase.execute(requestWithTier(AuthorTier.NEW))

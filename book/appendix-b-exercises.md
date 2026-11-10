@@ -139,16 +139,22 @@ public sealed interface RegistrationError extends Cause {
     record EmailExists(String email, String message) implements RegistrationError {
         static final Fn1<EmailExists, String> FACTORY =
             Causes.forOneValue("Email already registered: %s", EmailExists::new);
+
+        static EmailExists emailExists(String email) { return FACTORY.apply(email); }
     }
 
     record WeakPassword(String weakness, String message) implements RegistrationError {
         static final Fn1<WeakPassword, String> FACTORY =
             Causes.forOneValue("Password too weak: %s", WeakPassword::new);
+
+        static WeakPassword weakPassword(String weakness) { return FACTORY.apply(weakness); }
     }
 
     record InvalidUsername(String invalidChars, String message) implements RegistrationError {
         static final Fn1<InvalidUsername, String> FACTORY =
             Causes.forOneValue("Username contains invalid characters: %s", InvalidUsername::new);
+
+        static InvalidUsername invalidUsername(String invalidChars) { return FACTORY.apply(invalidChars); }
     }
 }
 ```
@@ -356,7 +362,7 @@ public Result<User> processUser(UserDto dto) {
     return Result.all(Email.email(dto.email()),
                      processOptionalName(dto.name()),
                      processOptionalAddress(dto.address()))
-                 .map(User::new);
+                 .map(User::user);
 }
 
 private Result<Option<Name>> processOptionalName(String raw) {
@@ -380,7 +386,9 @@ private Result<Option<Address>> processOptionalAddress(AddressDto dto) {
 }
 
 // User record accepts Option types
-public record User(Email email, Option<Name> name, Option<Address> address) {}
+public record User(Email email, Option<Name> name, Option<Address> address) {
+    public static User user(Email email, Option<Name> name, Option<Address> address) { return new User(email, name, address); }
+}
 ```
 
 </details>
@@ -451,7 +459,7 @@ return validateOrder(request)
 return Promise.all(fetchUserProfile(userId),
                   fetchUserOrders(userId),
                   fetchUserPreferences(userId))
-              .map(Dashboard::new);
+              .map(Dashboard::dashboard);
 
 // C
 return switch (user.tier()) {
@@ -488,7 +496,9 @@ Implement a dashboard loader that fetches three pieces of data in parallel:
 public interface LoadDashboard {
     Promise<Dashboard> load(UserId userId);
 
-    record Dashboard(UserProfile profile, List<Order> orders, List<Product> recommendations) {}
+    record Dashboard(UserProfile profile, List<Order> orders, List<Product> recommendations) {
+        static Dashboard dashboard(UserProfile profile, List<Order> orders, List<Product> recommendations) { return new Dashboard(profile, orders, recommendations); }
+    }
 }
 ```
 
@@ -499,7 +509,9 @@ public interface LoadDashboard {
 public interface LoadDashboard {
     Promise<Dashboard> load(UserId userId);
 
-    record Dashboard(UserProfile profile, List<Order> orders, List<Product> recommendations) {}
+    record Dashboard(UserProfile profile, List<Order> orders, List<Product> recommendations) {
+        static Dashboard dashboard(UserProfile profile, List<Order> orders, List<Product> recommendations) { return new Dashboard(profile, orders, recommendations); }
+    }
 
     interface FetchProfile {
         Promise<UserProfile> apply(UserId userId);
@@ -520,7 +532,7 @@ public interface LoadDashboard {
                                     fetchOrders.apply(userId),
                                     fetchRecommendations.apply(userId)
                                         .recover(cause -> List.of()))  // FER: empty list, keep going
-                                .map(Dashboard::new);
+                                .map(Dashboard::dashboard);
     }
 }
 ```
@@ -678,7 +690,7 @@ public class OrderProcessor {
                 processedOrders.add(order);
                 totalAmount += order.amount();
             })
-            .map(OrderResult::new);
+            .map(OrderResult::orderResult);
     }
 }
 ```
@@ -698,12 +710,14 @@ public class OrderProcessor {
     public Promise<OrderResult> process(Order order) {
         return validateOrder(order)
             .flatMap(this::chargePayment)
-            .map(payment -> new OrderResult(order, payment));
+            .map(payment -> OrderResult.orderResult(order, payment));
     }
 }
 
 // Track processed orders externally with thread-safe collection if needed
 public record OrderResult(Order order, Payment payment) {
+    public static OrderResult orderResult(Order order, Payment payment) { return new OrderResult(order, payment); }
+
     public int amount() {
         return order.amount();
     }
@@ -960,8 +974,12 @@ Design a use case interface for "Cancel Order" with these requirements:
 public interface CancelOrder {
     Promise<CancellationResult> execute(CancelRequest request);
 
-    record CancelRequest(UserId userId, OrderId orderId) {}
-    record CancellationResult(OrderId orderId, Option<RefundId> refundId) {}
+    record CancelRequest(UserId userId, OrderId orderId) {
+        static CancelRequest cancelRequest(UserId userId, OrderId orderId) { return new CancelRequest(userId, orderId); }
+    }
+    record CancellationResult(OrderId orderId, Option<RefundId> refundId) {
+        static CancellationResult cancellationResult(OrderId orderId, Option<RefundId> refundId) { return new CancellationResult(orderId, refundId); }
+    }
 
     // Step interfaces
     interface FindOrder {
@@ -999,7 +1017,7 @@ public interface CancelOrder {
             .flatMap(validateCancellable::apply)
             .flatMap(order -> processRefund.apply(order)
                 .flatMap(refundId -> updateStatus.apply(order.id(), OrderStatus.CANCELLED)
-                    .map(unit -> new CancellationResult(order.id(), refundId))))
+                    .map(unit -> CancellationResult.cancellationResult(order.id(), refundId))))
             .onSuccess(result -> sendNotification.apply(request.userId(), request.orderId())
                 .onFailure(cause -> log.warn("Notification failed", cause)));
     }
@@ -1191,8 +1209,12 @@ public class UserService {
 public interface CreateUser {
     Promise<UserId> execute(CreateUserRequest request);
 
-    record CreateUserRequest(String email, String password) {}
-    record ValidRequest(Email email, Password password) {}
+    record CreateUserRequest(String email, String password) {
+        static CreateUserRequest createUserRequest(String email, String password) { return new CreateUserRequest(email, password); }
+    }
+    record ValidRequest(Email email, Password password) {
+        static ValidRequest validRequest(Email email, Password password) { return new ValidRequest(email, password); }
+    }
 
     interface CheckEmailUnique {
         Promise<Email> apply(Email email);

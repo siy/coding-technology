@@ -169,13 +169,13 @@ class UserLoginTest {
     void setup() {
         mockCredentials = vr -> Result.success(new Credentials("user-1"));
         mockStatus = c -> Result.success(new Account(c.userId(), true));
-        mockToken = acc -> Result.success(new Response("token-" + acc.userId()));
+        mockToken = acc -> Result.success(Response.response("token-" + acc.userId()));
         useCase = UserLogin.userLogin(mockCredentials, mockStatus, mockToken);
     }
 
     @Test
     void execute_succeeds_forValidInput() {
-        var request = new Request("john@example.com", "Valid123", null);
+        var request = Request.request("john@example.com", "Valid123", null);
 
         useCase.execute(request)
                .onFailure(Assertions::fail)
@@ -317,13 +317,17 @@ At each phase, **all tests remain green**. You're not breaking and fixing - you'
 
 ```java
 public interface UserLogin {
-    record Request(String email, String password, String referral) {}
-    record Response(String token) {}
+    record Request(String email, String password, String referral) {
+        static Request request(String email, String password, String referral) { return new Request(email, password, referral); }
+    }
+    record Response(String token) {
+        static Response response(String token) { return new Response(token); }
+    }
 
     Result<Response> execute(Request request);
 
     static UserLogin userLogin() {
-        return request -> Result.success(new Response("stub-token"));
+        return request -> Result.success(Response.response("stub-token"));
     }
 }
 ```
@@ -335,7 +339,7 @@ class UserLoginTest {
     @Test
     void execute_succeeds_forValidInput() {
         var useCase = UserLogin.userLogin();
-        var request = new Request("john@example.com", "Valid123", null);
+        var request = Request.request("john@example.com", "Valid123", null);
 
         useCase.execute(request)
                .onSuccess(response -> assertEquals("stub-token", response.token()));
@@ -363,7 +367,7 @@ record ValidRequest(Email email, Password password, Option<ReferralCode> referra
 ```java
 static UserLogin userLogin() {
     return request -> ValidRequest.validRequest(request)
-                                  .map(_ -> new Response("stub-token"));
+                                  .map(_ -> Response.response("stub-token"));
 }
 ```
 
@@ -373,7 +377,7 @@ static UserLogin userLogin() {
 @Test
 void execute_fails_forInvalidEmail() {
     var useCase = UserLogin.userLogin();
-    var request = new Request("bad-email", "Valid123", null);
+    var request = Request.request("bad-email", "Valid123", null);
 
     useCase.execute(request)
            .onSuccess(Assertions::fail);
@@ -382,7 +386,7 @@ void execute_fails_forInvalidEmail() {
 @Test
 void execute_aggregatesMultipleErrors() {
     var useCase = UserLogin.userLogin();
-    var request = new Request("bad", "weak", "invalid-ref");
+    var request = Request.request("bad", "weak", "invalid-ref");
 
     useCase.execute(request)
            .onSuccess(Assertions::fail)
@@ -428,7 +432,7 @@ public class TestData {
         }
 
         public Request build() {
-            return new Request(email, password, referral);
+            return Request.request(email, password, referral);
         }
     }
 }
@@ -446,10 +450,10 @@ var invalidEmail = TestData.request().withEmail("bad").build();
 
 ```java
 public interface TestVectors {
-    Request VALID = new Request("user@example.com", "Valid123", null);
-    Request INVALID_EMAIL = new Request("bad", "Valid123", null);
-    Request WEAK_PASSWORD = new Request("user@example.com", "weak", null);
-    Request MULTIPLE_ERRORS = new Request("bad", "weak", "invalid");
+    Request VALID = Request.request("user@example.com", "Valid123", null);
+    Request INVALID_EMAIL = Request.request("bad", "Valid123", null);
+    Request WEAK_PASSWORD = Request.request("user@example.com", "weak", null);
+    Request MULTIPLE_ERRORS = Request.request("bad", "weak", "invalid");
 }
 ```
 

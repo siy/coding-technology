@@ -244,32 +244,44 @@ public sealed interface OrderError extends Cause {
     record InsufficientInventory(List<ProductId> products, String message) implements OrderError {
         static final Fn1<InsufficientInventory, List<ProductId>> FACTORY =
             Causes.forOneValue("Insufficient inventory for products: %s", InsufficientInventory::new);
+
+        static InsufficientInventory insufficientInventory(List<ProductId> products) { return FACTORY.apply(products); }
     }
 
     record InvalidQuantity(ProductId productId, Quantity requested, Quantity available, String message)
         implements OrderError {
         static final Fn3<InvalidQuantity, ProductId, Quantity, Quantity> FACTORY =
             Causes.forThreeValues("Product %s: requested %s, available %s", InvalidQuantity::new);
+
+        static InvalidQuantity invalidQuantity(ProductId productId, Quantity requested, Quantity available) { return FACTORY.apply(productId, requested, available); }
     }
 
     record PaymentFailed(Cause origin, String message) implements OrderError, Cause.Wrapped {
         static final Fn1<PaymentFailed, Cause> FACTORY =
             Causes.forOneValue("Payment processing failed", PaymentFailed::new);
+
+        static PaymentFailed paymentFailed(Cause origin) { return FACTORY.apply(origin); }
     }
 
     record PaymentDeclined(Cause origin, String message) implements OrderError, Cause.Wrapped {
         static final Fn1<PaymentDeclined, Cause> FACTORY =
             Causes.forOneValue("Payment was declined", PaymentDeclined::new);
+
+        static PaymentDeclined paymentDeclined(Cause origin) { return FACTORY.apply(origin); }
     }
 
     record PaymentTimedOut(Cause origin, String message) implements OrderError, Cause.Wrapped {
         static final Fn1<PaymentTimedOut, Cause> FACTORY =
             Causes.forOneValue("Payment service timed out", PaymentTimedOut::new);
+
+        static PaymentTimedOut paymentTimedOut(Cause origin) { return FACTORY.apply(origin); }
     }
 
     record OrderNotSaved(Cause origin, String message) implements OrderError, Cause.Wrapped {
         static final Fn1<OrderNotSaved, Cause> FACTORY =
             Causes.forOneValue("Failed to save order", OrderNotSaved::new);
+
+        static OrderNotSaved orderNotSaved(Cause origin) { return FACTORY.apply(origin); }
     }
 }
 ```
@@ -290,8 +302,18 @@ public record OrderRequest(
     List<LineItemRequest> items,
     AddressRequest shippingAddress
 ) {
-    public record LineItemRequest(String productId, int quantity) {}
-    public record AddressRequest(String street, String city, String postalCode, String country) {}
+    public static OrderRequest orderRequest(String customerId,
+                                            List<LineItemRequest> items,
+                                            AddressRequest shippingAddress) {
+        return new OrderRequest(customerId, items, shippingAddress);
+    }
+
+    public record LineItemRequest(String productId, int quantity) {
+        public static LineItemRequest lineItemRequest(String productId, int quantity) { return new LineItemRequest(productId, quantity); }
+    }
+    public record AddressRequest(String street, String city, String postalCode, String country) {
+        public static AddressRequest addressRequest(String street, String city, String postalCode, String country) { return new AddressRequest(street, city, postalCode, country); }
+    }
 }
 ```
 
@@ -376,7 +398,9 @@ import com.example.shop.domain.shared.Money;
 
 public interface PlaceOrder {
 
-    record Response(OrderId orderId, Money total) {}
+    record Response(OrderId orderId, Money total) {
+        static Response response(OrderId orderId, Money total) { return new Response(orderId, total); }
+    }
 
     Promise<Response> execute(OrderRequest request);
 
@@ -447,7 +471,7 @@ public interface PlaceOrder {
         return reserveInventory.apply(request)
             .flatMap(reservation -> processPayment.apply(reservation, total)
                 .flatMap(payment -> createOrder.apply(reservation, payment))
-                .map(orderId -> new Response(orderId, total))
+                .map(orderId -> Response.response(orderId, total))
                 .fold(result -> result.fold(
                     cause -> compensateAndFail(reservation, releaseInventory, cause),
                     Promise::success)));
@@ -481,7 +505,15 @@ public record ReservedInventory(
     List<ReservedItem> items,
     Instant expiresAt
 ) {
-    public record ReservedItem(String productId, int quantity) {}
+    public static ReservedInventory reservedInventory(String reservationId,
+                                                      List<ReservedItem> items,
+                                                      Instant expiresAt) {
+        return new ReservedInventory(reservationId, items, expiresAt);
+    }
+
+    public record ReservedItem(String productId, int quantity) {
+        public static ReservedItem reservedItem(String productId, int quantity) { return new ReservedItem(productId, quantity); }
+    }
 }
 ```
 
@@ -495,7 +527,11 @@ import java.time.Instant;
 public record PaymentConfirmation(
     String transactionId,
     Instant processedAt
-) {}
+) {
+    public static PaymentConfirmation paymentConfirmation(String transactionId, Instant processedAt) {
+        return new PaymentConfirmation(transactionId, processedAt);
+    }
+}
 ```
 
 ### PriceCalculator
@@ -675,7 +711,7 @@ public class PaymentProcessor implements ProcessPayment {
         return Promise.lift(
             this::mapPaymentError,
             () -> gateway.charge(total.value())
-        ).map(txId -> new PaymentConfirmation(txId, Instant.now()));
+        ).map(txId -> PaymentConfirmation.paymentConfirmation(txId, Instant.now()));
     }
 
     // Every branch carries the exception: the classification is a choice of wrapper, never a replacement
@@ -868,7 +904,7 @@ void execute_chargesTheCalculatedTotal() {
 
     PlaceOrder.ProcessPayment processPayment = (reserved, total) -> {
         charged.set(total);
-        return Promise.success(new PaymentConfirmation("tx-456", Instant.now()));
+        return Promise.success(PaymentConfirmation.paymentConfirmation("tx-456", Instant.now()));
     };
     // The REAL PriceCalculator, over the same price list the table uses:
     // 4.00 a unit, not oversized. Twenty-five items is 100.00, less 5% volume,
@@ -946,10 +982,10 @@ class PlaceOrderTest {
         // All stubs - happy path
         PlaceOrder.CheckInventory checkInventory = req -> Promise.success(req);
         PlaceOrder.ReserveInventory reserveInventory = req -> Promise.success(
-            new ReservedInventory("res-123", List.of(), Instant.now().plusMinutes(15))
+            ReservedInventory.reservedInventory("res-123", List.of(), Instant.now().plusMinutes(15))
         );
         PlaceOrder.ProcessPayment processPayment = (res, total) -> Promise.success(
-            new PaymentConfirmation("tx-456", Instant.now())
+            PaymentConfirmation.paymentConfirmation("tx-456", Instant.now())
         );
         PlaceOrder.CreateOrder createOrder = (res, pay) -> Promise.success(
             new OrderId("order-789")
@@ -968,7 +1004,7 @@ class PlaceOrderTest {
     class HappyPath {
         @Test
         void execute_succeeds_forValidOrder() {
-            var request = new OrderRequest(
+            var request = OrderRequest.orderRequest(
                 "550e8400-e29b-41d4-a716-446655440000",
                 List.of(new OrderRequest.LineItemRequest(
                     "660e8400-e29b-41d4-a716-446655440001", 2
@@ -989,7 +1025,7 @@ class PlaceOrderTest {
     class ValidationFailures {
         @Test
         void execute_fails_forEmptyOrder() {
-            var request = new OrderRequest(
+            var request = OrderRequest.orderRequest(
                 "550e8400-e29b-41d4-a716-446655440000",
                 List.of(),
                 new OrderRequest.AddressRequest("123 Main St", "City", "12345", "US")
@@ -1022,7 +1058,7 @@ class PlaceOrderTest {
             var released = new AtomicBoolean(false);
 
             PlaceOrder.ReserveInventory reserveInventory = req -> Promise.success(
-                new ReservedInventory("res-123", List.of(), Instant.now().plusMinutes(15))
+                ReservedInventory.reservedInventory("res-123", List.of(), Instant.now().plusMinutes(15))
             );
             PlaceOrder.ProcessPayment failingPayment = (res, total) ->
                 OrderError.PaymentDeclined.FACTORY.apply(Causes.cause("Card declined")).promise();
@@ -1050,7 +1086,7 @@ class PlaceOrderTest {
     }
 
     private OrderRequest validRequest() {
-        return new OrderRequest(
+        return OrderRequest.orderRequest(
             "550e8400-e29b-41d4-a716-446655440000",
             List.of(new OrderRequest.LineItemRequest(
                 "660e8400-e29b-41d4-a716-446655440001", 2

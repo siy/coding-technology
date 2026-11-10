@@ -222,11 +222,10 @@ result.onSuccess(validEmail -> {
 
 ```java
 // Combine validated values
-Result<ValidRequest> validated =
+Result<ValidCredentials> validated =
     Result.all(Email.email(emailRaw),
-              Password.password(passwordRaw),
-              UserId.userId(userIdRaw))
-          .map(ValidRequest::new);
+               Password.password(passwordRaw))
+          .map(ValidCredentials::validCredentials);
 ```
 
 ### No Defensive Checks

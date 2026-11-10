@@ -222,7 +222,7 @@ private ProcessedUser processUser(User user) {
     log.info("Processing user: {}", user.id());
     String normalized = user.email().toLowerCase();
     cache.put(user.id(), user);
-    return new ProcessedUser(user.id(), normalized);
+    return ProcessedUser.processedUser(user.id(), normalized);
 }
 ```
 
@@ -452,7 +452,7 @@ A: Wrap at the adapter boundary:
 ```java
 public Promise<User> findUser(UserId id) {
     return Promise.lift(
-        DatabaseError::new,
+        t -> DatabaseError.FACTORY.apply(Causes.fromThrowable(t)),
         () -> jdbcTemplate.queryForObject(sql, mapper, id.value())
     );
 }
@@ -467,7 +467,7 @@ A: No. Pure functions that cannot fail should return T directly:
 public Money calculateTotal(List<LineItem> items) {
     return items.stream()
         .map(LineItem::subtotal)
-        .reduce(Money.ZERO, Money::plus);
+        .reduce(Money.ZERO, Money::add);
 }
 
 // Returns Result<T> - validation can fail
@@ -530,7 +530,7 @@ public class JooqOrderRepository implements SaveOrder {
     @Override
     public Promise<OrderId> apply(ValidOrder order) {
         return Promise.lift(
-            DatabaseError::new,
+            t -> DatabaseError.FACTORY.apply(Causes.fromThrowable(t)),
             () -> saveInTransaction(order)
         );
     }

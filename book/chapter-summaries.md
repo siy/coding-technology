@@ -113,7 +113,7 @@ public record Email(String value) {
 
 **Leaf:** Atomic adapter operation
 ```java
-Promise.lift(Error::new, () -> external.call())
+Promise.lift(t -> Error.FACTORY.apply(Causes.fromThrowable(t)), () -> external.call())
 ```
 
 **Condition:** Route by discriminator
@@ -142,7 +142,7 @@ a.flatMap(b).flatMap(c)
 
 **Fork-Join:** Parallel independent operations
 ```java
-Promise.all(a, b, c).map(Combine::new)
+Promise.all(a, b, c).map(Combine::combine)
 ```
 
 **Aspects:** Cross-cutting concerns as wrappers

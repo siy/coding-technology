@@ -41,6 +41,11 @@ public record TransferId(String value) {
 public record Money(BigDecimal value) {
     public static Money money(BigDecimal value) { return new Money(value); }
 
+    public static Result<Money> money(String raw) {
+        return Result.lift(Causes::fromThrowable, () -> new BigDecimal(raw))
+                     .map(Money::money);
+    }
+
     public boolean isGreaterThan(Money other) {
         return this.value.compareTo(other.value) > 0;
     }

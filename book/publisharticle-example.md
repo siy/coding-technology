@@ -350,7 +350,7 @@ class PublishArticleTest {
     }
 
     private ArticleRequest requestWithTier(AuthorTier tier) {
-        return new ArticleRequest(
+        return ArticleRequest.articleRequest(
             "author-123",
             "This is a valid title for testing",
             "x".repeat(600),  // Valid content length

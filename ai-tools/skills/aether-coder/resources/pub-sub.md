@@ -15,7 +15,7 @@ Usage:
 static OrderService orderService(@OrderEvents Publisher<OrderPlacedEvent> events,
                                   @Sql SqlConnector db) {
     return request -> processOrder(db, request)
-                         .onSuccess(order -> events.publish(new OrderPlacedEvent(order.id())));
+                         .onSuccess(order -> events.publish(OrderPlacedEvent.orderPlacedEvent(order.id())));
 }
 ```
 

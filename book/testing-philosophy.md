@@ -167,8 +167,8 @@ class UserLoginTest {
 
     @BeforeEach
     void setup() {
-        mockCredentials = vr -> Result.success(new Credentials("user-1"));
-        mockStatus = c -> Result.success(new Account(c.userId(), true));
+        mockCredentials = vr -> Result.success(Credentials.credentials("user-1"));
+        mockStatus = c -> Result.success(Account.account(c.userId(), true));
         mockToken = acc -> Result.success(Response.response("token-" + acc.userId()));
         useCase = UserLogin.userLogin(mockCredentials, mockStatus, mockToken);
     }

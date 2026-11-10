@@ -385,7 +385,7 @@ public class UserController {
 
     @GetMapping("/{userId}")
     public ResponseEntity<?> getProfile(@PathVariable String userId) {
-        var request = new GetUserProfile.Request(userId);
+        var request = GetUserProfile.Request.request(userId);
 
         return getUserProfile.execute(request)
             .await()
@@ -426,22 +426,20 @@ public class JooqUserRepository implements GetUserProfile.FetchUser {
 
     public Promise<User> apply(UserId userId) {
         return Promise.lift(ProfileError.DatabaseFailure::cause, () -> findRow(userId))
-                      .flatMap(found -> found.async(ProfileError.UserNotFound.FACTORY.apply(userId)));
+                      .flatMap(found -> found.async(ProfileError.UserNotFound.FACTORY.apply(userId)))
+                      .flatMap(row -> toDomain(row).async());
     }
 
-    private Option<User> findRow(UserId userId) {
+    private Option<Record> findRow(UserId userId) {
         return Option.from(dsl.selectFrom(USERS)
                               .where(USERS.ID.eq(userId.value()))
-                              .fetchOptional())
-                     .map(this::toDomain);
+                              .fetchOptional());
     }
 
-    private User toDomain(Record record) {
-        return new User(
-            new UserId(record.get(USERS.ID)),
-            new Email(record.get(USERS.EMAIL)),
-            record.get(USERS.DISPLAY_NAME)
-        );
+    private Result<User> toDomain(Record record) {
+        return Result.all(UserId.userId(record.get(USERS.ID)),
+                          Email.email(record.get(USERS.EMAIL)))
+                     .map((id, email) -> User.user(id, email, record.get(USERS.DISPLAY_NAME)));
     }
 }
 ```

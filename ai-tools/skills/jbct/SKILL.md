@@ -398,9 +398,9 @@ Promise.all(applyBogo(cart, context),     // mutates context
 **Rule:** Lambdas passed to monadic operations (`map`, `flatMap`, `recover`, `filter`) must be minimal.
 
 **Allowed:**
-- Method references: `Email::new`, `this::processUser`, `User::id`
+- Method references: `Email::email`, `this::processUser`, `User::id`
 - Parameter forwarding: `user -> validate(requiredRole, user)`
-- Constructor references for error mapping: `RepositoryError.DatabaseFailure::new`
+- Error mapping at `lift` boundaries: the error type's `FACTORY` applied to the converted throwable, `t -> RepositoryError.DatabaseFailure.FACTORY.apply(Causes.fromThrowable(t))`
 
 **Forbidden:**
 - Conditionals (`if`, ternary, `switch`)
@@ -489,7 +489,7 @@ Every method must have clear data flow:
 private Promise<User> createUser(ValidRequest valid) {
     return hashPassword.apply(valid.password())
         .flatMap(hashed -> userRepository.save(
-            new User(UserId.generate(), valid.email(), hashed)));
+            User.user(UserId.generate(), valid.email(), hashed)));
 }
 ```
 
@@ -527,8 +527,8 @@ return loadUser(userId)
 - Debuggable intermediate states
 
 ```java
-private static final Cause NOT_FOUND = new UserNotFound("User not found");
-private static final Cause TIMEOUT = new ServiceUnavailable("Request timed out");
+private static final Cause NOT_FOUND = Causes.cause("User not found");
+private static final Cause TIMEOUT = Causes.cause("Request timed out");
 
 private Promise<User> recoverNetworkError(Cause cause) {
     return switch (cause) {
@@ -556,7 +556,7 @@ Atomic unit - one operation, no composition:
 ```java
 public Promise<User> findUser(UserId id) {
     return Promise.lift(
-        RepositoryError.DatabaseFailure::new,
+        t -> RepositoryError.DatabaseFailure.FACTORY.apply(Causes.fromThrowable(t)),
         () -> jdbcTemplate.queryForObject(...)
     );
 }
@@ -580,7 +580,7 @@ return Promise.all(fetchProfile.apply(userId),
                    fetchPreferences.apply(userId),
                    fetchOrders.apply(userId))
         .map((profile, prefs, orders) ->
-            new Dashboard(profile, prefs, orders));
+            Dashboard.dashboard(profile, prefs, orders));
 ```
 
 **Thread Safety:** All parallel operations must receive immutable inputs. No shared mutable state.
@@ -672,13 +672,13 @@ promise.allOrCancel(fn1, fn2, fn3).map(combine);     // Parallel, fail-fast + ca
 ```java
 // Lift exceptions in adapters
 Promise.lift(
-    RepositoryError.DatabaseFailure::new,
+    t -> RepositoryError.DatabaseFailure.FACTORY.apply(Causes.fromThrowable(t)),
     () -> jdbcTemplate.queryForObject(...)
 );
 
 // With custom exception mapper (constructor reference preferred)
 Result.lift(
-    CustomError.ProcessingFailed::new,
+    t -> CustomError.ProcessingFailed.FACTORY.apply(Causes.fromThrowable(t)),
     () -> riskyOperation()
 );
 ```

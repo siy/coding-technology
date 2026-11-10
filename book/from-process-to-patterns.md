@@ -97,7 +97,7 @@ return ValidRequest.validRequest(request)
                    .flatMap(valid -> Promise.all(           // ALL
                        checkInventory.apply(valid),          //   InventoryStatus
                        processPayment.apply(valid))          //   PaymentResult
-                       .map(ReservedOrder::new))             // Transform
+                       .map(ReservedOrder::reservedOrder))             // Transform
                    .flatMap(createOrder::apply)               // Sequential
                    .flatMap(sendConfirmation::apply);         // Sequential
 ```
@@ -118,7 +118,7 @@ Result.all(
     ValidItem.validateAll(raw.items()),
     ShippingAddress.shippingAddress(raw.shippingAddress()),
     PaymentMethod.paymentMethod(raw.paymentMethod())
-).map(ValidRequest::new);
+).map(ValidRequest::validRequest);
 ```
 
 The `ALL` operator here accumulates all failures rather than short-circuiting — `Result.all` gathers all the knowledge about what's wrong, not just the first problem.

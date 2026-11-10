@@ -276,7 +276,7 @@ Result.all(
     Email.email(request.email()),
     Password.password(request.password()),
     ReferralCode.referralCode(request.referralCode())  // returns Result<Option<>>
-).map(ValidRequest::new)
+).map(ValidRequest::validRequest)
 ```
 
 ### Pattern: Sequential Processing (Sequencer)
@@ -299,7 +299,7 @@ Promise.all(
     loadProfile.execute(userId),
     loadPreferences.execute(userId),
     loadHistory.execute(userId)
-).map(Dashboard::new)
+).map(Dashboard::dashboard)
 ```
 
 ### Pattern: Conditional Processing (Condition)

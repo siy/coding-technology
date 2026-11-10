@@ -234,7 +234,7 @@ class BcryptPasswordHasher implements HashPassword {
         return Result.lift1(t -> RegistrationError.PasswordHashingFailed.FACTORY.apply(Causes.fromThrowable(t)),
                             encoder::encode,
                             password.value())
-                     .map(HashedPassword::new);
+                     .map(HashedPassword::hashedPassword);
     }
 }
 ```
@@ -246,20 +246,21 @@ class JooqUserRepository implements SaveUser {
 
     public Promise<User> apply(ValidUser user) {
         return Promise.lift(t -> RepositoryError.DatabaseFailure.FACTORY.apply(Causes.fromThrowable(t)),
-                            () -> saveUser(user));
+                            () -> insertUser(user))
+                      .flatMap(id -> UserId.userId(id)
+                                           .map(userId -> User.user(userId, user.email()))
+                                           .async());
     }
 
-    private User saveUser(ValidUser user) {
-        String id = dsl.insertInto(USERS)
-                       .set(USERS.EMAIL, user.email().value())
-                       .set(USERS.PASSWORD_HASH, user.hashed().value())
-                       .set(USERS.REFERRAL_CODE,
-                            user.refCode().map(ReferralCode::value).or(null))
-                       .returningResult(USERS.ID)
-                       .fetchSingle()
-                       .value1();
-
-        return new User(new UserId(id), user.email());
+    private String insertUser(ValidUser user) {
+        return dsl.insertInto(USERS)
+                  .set(USERS.EMAIL, user.email().value())
+                  .set(USERS.PASSWORD_HASH, user.hashed().value())
+                  .set(USERS.REFERRAL_CODE,
+                       user.refCode().map(ReferralCode::value).or(null))
+                  .returningResult(USERS.ID)
+                  .fetchSingle()
+                  .value1();
     }
 }
 ```
@@ -277,7 +278,7 @@ class TokenServiceClient implements GenerateToken {
     }
 
     private Response buildResponse(UserId userId, Map<String, String> resp) {
-        return Response.response(userId, new ConfirmationToken(resp.get("token")));
+        return Response.response(userId, ConfirmationToken.confirmationToken(resp.get("token")));
     }
 }
 ```
@@ -355,10 +356,12 @@ void validRequest_succeeds_forValidInput() {
 void execute_succeeds_forValidInput() {
     CheckEmailUniqueness checkEmail = req -> Promise.success(req);
     CreateValidUser createUser = req -> Promise.success(
-        new ValidUser(req.email(), new HashedPassword("hashed"), req.referralCode()));
-    SaveUser saveUser = user -> Promise.success(new User(new UserId("user-123"), user.email()));
+        ValidUser.validUser(req.email(), HashedPassword.hashedPassword("hashed"), req.referralCode()));
+    SaveUser saveUser = user -> UserId.userId("user-123")
+                                      .map(userId -> User.user(userId, user.email()))
+                                      .async();
     GenerateToken generateToken = user -> Promise.success(
-        Response.response(user.id(), new ConfirmationToken("token-456")));
+        Response.response(user.id(), ConfirmationToken.confirmationToken("token-456")));
 
     var useCase = RegisterUser.registerUser(checkEmail, createUser, saveUser, generateToken);
     var request = Request.request("user@example.com", "Valid1234", null);

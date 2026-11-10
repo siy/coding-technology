@@ -271,19 +271,19 @@ Result<User> user = userPromise.await();
 // Result.all - accumulates all failures
 Result.all(Email.email(emailRaw),
            Password.password(passwordRaw))
-      .map(ValidCredentials::new);
+      .map(ValidCredentials::validCredentials);
 
 // Promise.all - waits for all inputs, accumulates failures (allOrCancel fails fast)
 Promise.all(fetchProfile.apply(userId),
             fetchPreferences.apply(userId),
             fetchOrders.apply(userId))
        .map((profile, prefs, orders) ->
-           new Dashboard(profile, prefs, orders));
+           Dashboard.dashboard(profile, prefs, orders));
 
 // Option.all - fail-fast on first empty
 Option.all(findTheme(userId),
            findLanguage(userId))
-      .map((theme, lang) -> new UserSettings(theme, lang));
+      .map((theme, lang) -> UserSettings.userSettings(theme, lang));
 ```
 
 ## Error Handling
@@ -398,7 +398,7 @@ void email_fails_forNull() {
 
 @Test
 void validRequest_fails_whenFieldNull() {
-    var request = new Request("valid@example.com", null);  // Test null field
+    var request = Request.request("valid@example.com", null);  // Test null field
     ValidRequest.validRequest(request)
                 .onSuccess(Assertions::fail);
 }

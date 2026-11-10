@@ -297,14 +297,14 @@ Explain the difference in behavior and output:
 Result<ValidForm> validateA(Form form) {
     return Email.email(form.email())
         .flatMap(email -> Password.password(form.password())
-            .map(password -> new ValidForm(email, password)));
+            .map(password -> ValidForm.validForm(email, password)));
 }
 
 // Version B
 Result<ValidForm> validateB(Form form) {
     return Result.all(Email.email(form.email()),
                      Password.password(form.password()))
-                 .map(ValidForm::new);
+                 .map(ValidForm::validForm);
 }
 ```
 
@@ -369,7 +369,7 @@ private Result<Option<Name>> processOptionalName(String raw) {
     return Option.option(raw)
         .map(String::trim)
         .filter(s -> !s.isBlank())
-        .map(Name::new)
+        .map(Name::name)
         .fold(
             () -> Result.success(Option.none()),
             name -> Result.success(Option.some(name))
@@ -690,7 +690,7 @@ public class OrderProcessor {
                 processedOrders.add(order);
                 totalAmount += order.amount();
             })
-            .map(OrderResult::orderResult);
+            .map(OrderResult::new);
     }
 }
 ```
@@ -743,7 +743,7 @@ private BatchResult aggregateResults(List<Result<OrderResult>> results) {
         .mapToInt(OrderResult::amount)
         .sum();
 
-    return new BatchResult(successful, total);
+    return BatchResult.batchResult(successful, total);
 }
 ```
 
@@ -843,13 +843,13 @@ class TransferFundsTest {
 
     // Success stubs
     private static final ValidateAccounts VALID_ACCOUNTS =
-        (from, to) -> Promise.success(new ValidatedAccounts(
-            new Account(from, Money.money(1000)),
-            new Account(to, Money.money(500))
+        (from, to) -> Promise.success(ValidatedAccounts.validatedAccounts(
+            Account.account(from, Money.money(BigDecimal.valueOf(1000))),
+            Account.account(to, Money.money(BigDecimal.valueOf(500)))
         ));
 
     private static final ExecuteTransfer TRANSFER_SUCCESS =
-        (accounts, amount) -> Promise.success(new TransferId("TXN-001"));
+        (accounts, amount) -> Promise.success(TransferId.transferId("TXN-001"));
 
     // Failure stubs
     private static final ValidateAccounts SOURCE_NOT_FOUND =
@@ -861,13 +861,13 @@ class TransferFundsTest {
     @Test
     void transfer_succeeds_forValidAccounts() {
         var useCase = TransferFunds.transferFunds(VALID_ACCOUNTS, TRANSFER_SUCCESS);
-        var request = new TransferRequest(
-            new AccountId("ACC-001"),
-            new AccountId("ACC-002"),
-            Money.money(100)
-        );
+        var request = Result.all(AccountId.accountId("ACC-001"),
+                                 AccountId.accountId("ACC-002"))
+                            .map((from, to) -> TransferRequest.transferRequest(
+                                from, to, Money.money(BigDecimal.valueOf(100))));
 
-        useCase.execute(request)
+        request.async()
+               .flatMap(useCase::execute)
                .await()
                .onFailure(Assertions::fail)
                .onSuccess(result ->
@@ -877,13 +877,13 @@ class TransferFundsTest {
     @Test
     void transfer_fails_whenSourceNotFound() {
         var useCase = TransferFunds.transferFunds(SOURCE_NOT_FOUND, TRANSFER_SUCCESS);
-        var request = new TransferRequest(
-            new AccountId("INVALID"),
-            new AccountId("ACC-002"),
-            Money.money(100)
-        );
+        var request = Result.all(AccountId.accountId("ACC-404"),
+                                 AccountId.accountId("ACC-002"))
+                            .map((from, to) -> TransferRequest.transferRequest(
+                                from, to, Money.money(BigDecimal.valueOf(100))));
 
-        useCase.execute(request)
+        request.async()
+               .flatMap(useCase::execute)
                .await()
                .onSuccess(Assertions::fail);
     }
@@ -928,7 +928,7 @@ class SlowServiceTest {
             TimeSpan.timeSpan(100).millis()
         );
 
-        withTimeout.fetch(new DataId("test"))
+        withTimeout.fetch(DataId.dataId("test"))
                    .await(TimeSpan.timeSpan(500).millis())
                    .onSuccess(Assertions::fail)
                    .onFailure(cause ->
@@ -937,14 +937,14 @@ class SlowServiceTest {
 
     @Test
     void fetch_succeeds_whenServiceFastEnough() {
-        SlowService fast = id -> Promise.success(new Data("result"));
+        SlowService fast = id -> Promise.success(Data.data("result"));
 
         var withTimeout = SlowService.withTimeout(
             fast,
             TimeSpan.timeSpan(1).seconds()
         );
 
-        withTimeout.fetch(new DataId("test"))
+        withTimeout.fetch(DataId.dataId("test"))
                    .await()
                    .onFailure(Assertions::fail)
                    .onSuccess(data ->
@@ -1083,7 +1083,7 @@ public interface BookSeat {
                                     releaseSeat, refundPayment,
                                     reservationId, paymentId, cause),
                                 Promise::success))
-                            .map(unit -> new Booking(reservationId, paymentId))));
+                            .map(unit -> Booking.booking(reservationId, paymentId))));
     }
 
     private static Promise<PaymentId> compensateReservation(ReleaseSeat releaseSeat,

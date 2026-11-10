@@ -51,7 +51,11 @@ static ReplayService replayService(@AuditAccess StreamAccess<AuditEvent> stream)
 ## Partition Key
 
 ```java
-public record AuditEvent(@PartitionKey String userId, String action, Instant timestamp) {}
+public record AuditEvent(@PartitionKey String userId, String action, Instant timestamp) {
+    public static AuditEvent auditEvent(String userId, String action, Instant timestamp) {
+        return new AuditEvent(userId, action, timestamp);
+    }
+}
 ```
 
 ## Config

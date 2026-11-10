@@ -14,15 +14,19 @@ sealed interface OrderError extends Cause {
     record CustomerNotFound(String customerId, String message) implements OrderError {
         static final Fn1<CustomerNotFound, String> FACTORY =
             Causes.forOneValue("Customer not found: %s", CustomerNotFound::new);
+
+        static CustomerNotFound customerNotFound(String customerId) { return FACTORY.apply(customerId); }
     }
     record PaymentFailed(String reason, String transactionId, String message) implements OrderError {
         static final Fn2<PaymentFailed, String, String> FACTORY =
             Causes.forTwoValues("Payment failed: %s (tx %s)", PaymentFailed::new);
+
+        static PaymentFailed paymentFailed(String reason, String transactionId) { return FACTORY.apply(reason, transactionId); }
     }
 }
 ```
 
-**Convention:** Enum for fixed-message errors, records for errors with context data. Records carry a trailing `String message` component and construct through their `FACTORY`.
+**Convention:** Enum for fixed-message errors, records for errors with context data. Records carry a trailing `String message` component. Each has a type-named factory (`customerNotFound(...)`) that delegates to its `FACTORY`; callers use the type-named factory.
 
 ## HTTP Status Mapping (routes.toml)
 

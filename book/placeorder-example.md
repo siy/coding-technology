@@ -965,7 +965,8 @@ items the volume rule wins. Neither fact is visible from any single row.
 
 The table cannot see whether the calculated price is the price actually charged. That is a
 fact about the chain, so it needs exactly one test in `PlaceOrderTest` -- and it needs an
-**interaction assertion**, because the total does not appear in the use case's response:
+**interaction assertion**: the amount that matters is the one the payment stub received, not
+the `total` the response carries, so the test captures what was charged:
 
 ```java
 @Test

@@ -7,13 +7,23 @@ Every slice is a Java interface annotated with `@Slice`:
 ```java
 @Slice
 public interface PaymentService {
-    record ProcessRequest(String orderId, Money amount, PaymentMethod method) {}
-    record ProcessResponse(String transactionId, PaymentStatus status) {}
+    record ProcessRequest(String orderId, Money amount, PaymentMethod method) {
+        static ProcessRequest processRequest(String orderId, Money amount, PaymentMethod method) {
+            return new ProcessRequest(orderId, amount, method);
+        }
+    }
+    record ProcessResponse(String transactionId, PaymentStatus status) {
+        static ProcessResponse processResponse(String transactionId, PaymentStatus status) {
+            return new ProcessResponse(transactionId, status);
+        }
+    }
 
     sealed interface PaymentError extends Cause {
         record Declined(String reason, String message) implements PaymentError {
             static final Fn1<Declined, String> FACTORY =
                 Causes.forOneValue("Payment declined: %s", Declined::new);
+
+            static Declined declined(String reason) { return FACTORY.apply(reason); }
         }
         enum General implements PaymentError {
             GATEWAY_TIMEOUT("Payment gateway timeout"),

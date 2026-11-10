@@ -22,7 +22,7 @@ public Promise<Dashboard> loadDashboard(UserId userId) {
         fetchPreferences.apply(userId),
         fetchRecentOrders.apply(userId)
     ).map((profile, prefs, orders) ->
-        new Dashboard(profile, prefs, orders)
+        Dashboard.dashboard(profile, prefs, orders)
     );
 }
 ```
@@ -51,7 +51,7 @@ public Result<ValidRequest> validate(Request request) {
         Email.email(request.email()),
         Password.password(request.password()),
         UserId.userId(request.userId())
-    ).map(ValidRequest::new);
+    ).map(ValidRequest::validRequest);
 }
 ```
 
@@ -141,7 +141,7 @@ step1.apply(input)
 
 ```java
 Promise.all(fetchA, fetchB, fetchC)
-    .map((a, b, c) -> new Combined(a, b, c));
+    .map((a, b, c) -> Combined.combined(a, b, c));
 ```
 
 ### 3. Prefer all() Over allOrCancel()
@@ -182,7 +182,7 @@ public Promise<EnrichedUser> enrichUser(UserId id) {
         loadProfile.apply(id),
         loadPermissions.apply(id)
     ).map((user, profile, permissions) ->
-        new EnrichedUser(user, profile, permissions)
+        EnrichedUser.enrichedUser(user, profile, permissions)
     );
 }
 ```
@@ -196,7 +196,7 @@ public Result<ValidRegistration> validate(Registration reg) {
         Password.password(reg.password()),
         Username.username(reg.username()),
         PhoneNumber.phoneNumber(reg.phone())
-    ).map(ValidRegistration::new);
+    ).map(ValidRegistration::validRegistration);
 }
 ```
 
@@ -209,7 +209,7 @@ public Promise<Report> generateReport(ReportId id) {
         analyticsService.getStats(id),
         inventoryService.getStock(id)
     ).map((sales, analytics, stock) ->
-        new Report(sales, analytics, stock)
+        Report.report(sales, analytics, stock)
     );
 }
 ```
@@ -238,7 +238,7 @@ Promise.all(
     fetchUser.apply(id),
     fetchTheme.apply(id).map(Option::option)  // Wrap in Option
 ).map((user, maybeTheme) ->
-    new UserWithTheme(user, maybeTheme.orElse(Theme.DEFAULT))
+    UserWithTheme.userWithTheme(user, maybeTheme.orElse(Theme.DEFAULT))
 );
 ```
 
@@ -260,7 +260,7 @@ void loadDashboard_combinesAllData() {
         fetchUser, fetchTheme, fetchOrders
     );
 
-    useCase.execute(new Request(id.value()))
+    useCase.execute(Request.request(id.value()))
            .await()
            .onFailure(Assertions::fail)
            .onSuccess(dashboard -> {
@@ -277,7 +277,7 @@ void loadDashboard_fails_whenAnyOperationFails() {
 
     var useCase = LoadDashboard.loadDashboard(fetchUser, fetchTheme);
 
-    useCase.execute(new Request(UserId.random().value()))
+    useCase.execute(Request.request(UserId.random().value()))
            .await()
            .onSuccess(Assertions::fail);
 }
@@ -291,7 +291,7 @@ return Result.all(
         Email.email(request.email()),
         Password.password(request.password())
     )
-    .map(ValidRequest::new)
+    .map(ValidRequest::validRequest)
     .async()                          // Switch to Promise
     .flatMap(checkAvailability::apply)  // Sequencer starts
     .flatMap(saveUser::apply);

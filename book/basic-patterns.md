@@ -102,7 +102,7 @@ private Result<ReportData> fetchReportData(ValidRequest request) {
     // This function is a Fork-Join
     return Result.all(fetchUserData(request.userId()),
                       fetchSalesData(request.dateRange()))
-                 .map(ReportData::new);
+                 .map(ReportData::reportData);
 }
 ```
 
@@ -119,7 +119,7 @@ If you're writing a Sequencer and realize step 3 needs to do a Fork-Join interna
 ## Single Level of Abstraction
 
 **The rule:** No complex logic inside lambdas. Lambdas passed to `map`, `flatMap`, and similar combinators may contain only:
-- Method references (e.g., `Email::new`, `this::processUser`)
+- Method references (e.g., `Email::email`, `this::processUser`)
 - Single method calls with parameter forwarding (e.g., `param -> someMethod(outerParam, param)`)
 
 **Why?** Lambdas are composition points, not implementation locations. When you bury logic inside a lambda, you hide abstraction levels and make the code harder to read, test, and reuse. Extract complex logic to named functions - the name documents intent, the function becomes testable in isolation, and the composition chain stays flat and readable.
@@ -138,13 +138,13 @@ return fetchUser(userId)
         if (user.isActive() && user.hasPermission("admin")) {
             return loadAdminDashboard(user)
                 .map(dashboard -> {
-                    var summary = new Summary(
+                    var summary = Summary.summary(
                         dashboard.metrics(),
                         dashboard.alerts().stream()
                             .filter(Alert::isUrgent)
                             .toList()
                     );
-                    return new Response(user, summary);
+                    return Response.response(user, summary);
                 });
         } else {
             return AccessError.InsufficientPermissions.INSTANCE.promise();
@@ -175,8 +175,8 @@ private boolean isActiveAdministrator(User user) {
 
 private Response buildResponse(Dashboard dashboard) {
     var urgentAlerts = filterUrgentAlerts(dashboard.alerts());
-    var summary = new Summary(dashboard.metrics(), urgentAlerts);
-    return new Response(dashboard.user(), summary);
+    var summary = Summary.summary(dashboard.metrics(), urgentAlerts);
+    return Response.response(dashboard.user(), summary);
 }
 
 private List<Alert> filterUrgentAlerts(List<Alert> alerts) {
@@ -194,7 +194,7 @@ Now the top-level chain reads linearly: fetch -> check access -> load dashboard 
 
 **Method references:**
 ```java
-.map(Email::new)
+.flatMap(Email::email)
 .flatMap(this::saveUser)
 .map(User::id)
 ```
@@ -348,9 +348,9 @@ public static Result<Unit> checkInventory(Product product, Quantity requested) {
 
 // Data transformation leaf
 public static OrderSummary toSummary(Order order) {
-    return new OrderSummary(order.id(),
-                            order.totalAmount(),
-                            order.items().size());
+    return OrderSummary.orderSummary(order.id(),
+                                     order.totalAmount(),
+                                     order.items().size());
 }
 ```
 
@@ -370,7 +370,7 @@ class PostgresUserRepository implements UserRepository {
     private final DataSource dataSource;
 
     public Promise<Option<User>> findByEmail(Email email) {
-        return Promise.lift(RepositoryError.DatabaseFailure::new,
+        return Promise.lift(t -> RepositoryError.DatabaseFailure.FACTORY.apply(Causes.fromThrowable(t)),
                             () -> {
                                 try (var conn = dataSource.getConnection();
                                      var stmt = conn.prepareStatement(
@@ -385,7 +385,7 @@ class PostgresUserRepository implements UserRepository {
     }
 
     private User mapUser(ResultSet rs) throws SQLException {
-        return new User(/* ... */);
+        return User.user(/* ... */);
     }
 }
 ```
@@ -535,7 +535,7 @@ List<ActiveUser> activeUsers(List<User> users) {
 }
 
 private ActiveUser toActiveUser(User user) {
-    return new ActiveUser(user.id(), user.email());
+    return ActiveUser.activeUser(user.id(), user.email());
 }
 ```
 

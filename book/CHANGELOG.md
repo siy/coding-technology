@@ -12,12 +12,19 @@ repository root `CHANGELOG.md`.
 ### Changed
 - *Parse, Don't Validate*, "Naming Conventions" and "Key Takeaways": every record has a type-named static factory, with
   no exceptions. A record with any invariant has a fallible factory returning `Result<Self>`; a record without
-  invariants returns `Self`; the factory is the only construction path. 66 examples across 15 chapters gain the
-  factory (requests, responses, stage records, data-carrying causes, domain records); two `Validated` examples stay as
-  counterexamples. Data-carrying cause records get a type-named factory that delegates to their `FACTORY`. Call sites
-  that used `new` or `::new` on those records now call the factory. *Knowledge-Gathering Pipelines* states the stage
-  factory, not the canonical constructor, as the combinator argument; its heading "Validating stage constructors" is
-  now "Validating stage factories".
+  invariants returns `Self`; the factory is the only construction path. Examples across 15 chapters, Appendix B and
+  the `ai-tools/` skills and agents gain the factory (requests, responses, stage records, data-carrying causes, domain
+  records), and every `new X(` / `X::new` of a record outside its own body now calls it. Counterexamples (the
+  `Validated` examples, "Wrong", "Before" and "DON'T" code) stay as written. Data-carrying cause records get a
+  type-named factory that delegates to their `FACTORY`; `lift` boundaries apply that `FACTORY` to the converted
+  throwable. *Knowledge-Gathering Pipelines* states the stage factory, not the canonical constructor, as the combinator
+  argument; its heading "Validating stage constructors" is now "Validating stage factories". *Transfer Funds* adds
+  `Money.money(String)` returning `Result<Money>` beside the infallible `Money.money(BigDecimal)`.
+- *PlaceOrder Example*: `Money` builds only through `money(...)`, with `plus`, `times`, `isAtLeast` (infallible) and
+  `discountedBy` (`Result<Money>`) replacing `add` and `multiply`; `PriceCalculator.calculate` returns `Result<Money>`
+  and takes prices and thresholds as parameters; `OrderId.orderId()` generates and `OrderId.orderId(String)` parses;
+  test assertions report `cause.message()`; the composition-test prose no longer says the total is absent from the
+  response.
 - Dependency coordinates move to Pragmatica Core **1.0.0-rc4** (*Pragmatica Core Essentials*, *Appendix A*), the
   release Maven Central last published. The API verification baseline is unchanged.
 - *Error Handling*, "Carry the origin; do not print it": both version-stamped statements re-read against Core source

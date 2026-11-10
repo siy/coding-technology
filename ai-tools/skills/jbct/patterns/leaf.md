@@ -16,7 +16,7 @@ Leaves are the building blocks. All other patterns compose leaves.
 
 ```java
 private User mapToUser(ResultSet rs) throws SQLException {
-    return new User(
+    return User.user(
         UserId.unsafe(UUID.fromString(rs.getString("id"))),
         Email.unsafe(rs.getString("email")),
         rs.getString("display_name")
@@ -34,7 +34,7 @@ private Result<ValidOrder> validateOrderLimits(Order order) {
     if (order.items().size() > MAX_ITEMS_PER_ORDER) {
         return OrderError.TooManyItems.INSTANCE.result();
     }
-    return Result.success(new ValidOrder(order));
+    return Result.success(ValidOrder.validOrder(order));
 }
 ```
 
@@ -133,7 +133,7 @@ public Promise<Unit> publishEvent(OrderPlaced event) {
 private User mapToUser(ResultSet rs) throws SQLException {
     var attributes = new HashMap<String, String>();  // Thread-confined
     // Build user from result set
-    return new User(...);  // Immutable result
+    return User.user(...);  // Immutable result
 }
 ```
 
@@ -309,7 +309,7 @@ public Result<ValidOrder> checkInventory(Order order) {
             ).result();
         }
     }
-    return Result.success(new ValidOrder(order));
+    return Result.success(ValidOrder.validOrder(order));
 }
 ```
 

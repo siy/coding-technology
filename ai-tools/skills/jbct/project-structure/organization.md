@@ -366,7 +366,7 @@ public interface RegisterUser extends UseCase.WithPromise<Response, Request> {
                     .flatMap(hashed -> saveUser.apply(valid, hashed))
             )
             .flatMap(sendEmail::apply)
-            .map(token -> new Response(user.id(), token));
+            .map(token -> Response.response(user.id(), token));
     }
 }
 ```

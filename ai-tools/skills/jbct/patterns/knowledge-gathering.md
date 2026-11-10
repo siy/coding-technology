@@ -14,7 +14,7 @@ The `mapWith` family flattens the nested-`flatMap`-with-captured-binding workaro
 
 ```java
 // instead of:
-result.flatMap(t -> operation(t.field()).map(b -> new Stage<>(t, b)))
+result.flatMap(t -> operation(t.field()).map(b -> Stage.stage(t, b)))
 // write:
 result.mapWith(T::field, this::operation, Stage::stage)
 ```
@@ -41,7 +41,7 @@ result.mapWith(T::field, this::operation, Stage::stage)
 
 `ensureWith` is the *gating* side effect: unlike `onSuccess` (Consumer, cannot fail, does not gate `Promise` chains), `ensureWith` awaits the operation and propagates its failure. Entitlement checks, rate limits, fire-and-forget audit writes, notifications.
 
-**Load-bearing rule (ensureWith vs mapWith).** The deciding question is *does any later step read the outcome?* If no — it is transient, gate it away with `ensureWith`. If yes — the operation must return *evidence* and be accreted via `mapWith`, so holding the next stage proves the check passed. The same audit operation lands in two homes by this test: `ensureWith(audit::write)` when nobody reads the id, `mapWith(getter, audit::write, Audited::new)` when a later step needs it. Corollary: **a load-bearing check that returns only a boolean is itself the parse-don't-validate anti-pattern** — make it return the proof.
+**Load-bearing rule (ensureWith vs mapWith).** The deciding question is *does any later step read the outcome?* If no — it is transient, gate it away with `ensureWith`. If yes — the operation must return *evidence* and be accreted via `mapWith`, so holding the next stage proves the check passed. The same audit operation lands in two homes by this test: `ensureWith(audit::write)` when nobody reads the id, `mapWith(getter, audit::write, Audited::audited)` when a later step needs it. Corollary: **a load-bearing check that returns only a boolean is itself the parse-don't-validate anti-pattern** — make it return the proof.
 
 ## Stage-accretion containers
 
@@ -86,7 +86,7 @@ result.mapWith(T::id, profiles::fetch, ...).mapWith(T::id, prefs::fetch, ...)   
 result.all(Result::success,                          // keep the container itself
            v -> profiles.fetch(v.id()),              // independent fetch 1
            v -> prefs.fetch(v.id()))                 // independent fetch 2
-      .map(Enriched::new)                            // record Enriched<T>(T request, Profile p, Prefs pr)
+      .map(Enriched::enriched)                        // Enriched<T>(T request, Profile p, Prefs pr), built by its factory enriched(...)
 
 // WRONG: non-gating side effect via ensureWith — use onSuccess for fire-and-forget consumers
 promise.ensureWith(t -> log.info(t))                 // log returning Promise just to gate? use onSuccess

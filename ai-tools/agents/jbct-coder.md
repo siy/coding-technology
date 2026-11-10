@@ -274,9 +274,9 @@ If mixing patterns, split into separate functions.
 
 | Allowed | Forbidden |
 |---------|-----------|
-| Method references: `.map(Email::new)` | Multi-statement `{}` blocks |
+| Method references: `.flatMap(Email::email)` | Multi-statement `{}` blocks |
 | Single expressions: `.map(v -> expr)` | Ternaries inside lambdas |
-| Constructor refs: `.map(Pair::new)` | if/switch/nested maps |
+| Factory refs: `.map(Pair::pair)` | if/switch/nested maps |
 
 Extract anything complex to a named method.
 
@@ -342,7 +342,7 @@ Decision rules (get these right):
   Yes → the operation must return *evidence*, accreted via `mapWith` (so the next stage proves it
   passed). A load-bearing check that returns only a boolean is the parse-don't-validate anti-pattern.
 - **Several INDEPENDENT fetches → Fork-Join, not chained `mapWith`** (which runs them serially):
-  `r.all(M::success, v -> f1(v.id()), v -> f2(v.id())).map(Enriched::new)` — identity projection
+  `r.all(M::success, v -> f1(v.id()), v -> f2(v.id())).map(Enriched::enriched)` — identity projection
   keeps the container; the accreting record gathers more than one fact at once.
 - **Accrete within a use case; flatten to a named milestone record at boundaries** other code names
   (deep `request()` chains / a step-interface seam are the flattening signal). Two-step pipeline
@@ -381,7 +381,7 @@ Option.some(value) / Option.none() / Option.option(nullable)
 ### Aggregation
 
 ```java
-Result.all(a, b, c).map(Ctor::new)       // Parallel validation (collects failures)
+Result.all(a, b, c).map(Combined::combined) // Parallel validation (collects failures)
 Result.allOf(list)                         // Collection → Result<List<T>>
 Promise.all(a, b, c).map(this::combine)   // Parallel async (accumulates failures, 1-15 params)
 Promise.allOrCancel(a, b, c).map(combine) // Fail-fast: first failure, cancels the rest (prefer all())
@@ -643,7 +643,7 @@ jbct check src/main/java     # Format + lint (combined)
 |-----------|-----|
 | Multi-statement lambda | Extract to method |
 | Nested monadic ops `.flatMap(x -> y.map(...))` | Extract inner to method |
-| Always-succeeding `Result.success(new X())` | Return `X` directly |
+| Always-succeeding `Result.success(X.x())` | Return `X` directly |
 | Mixed I/O and domain | Split to adapter |
 | Primitive obsession (`String url`) | Create value object |
 | FQCN in method body | Add import |

@@ -48,8 +48,8 @@ class UserLoginTest {
 
     @BeforeEach
     void setup() {
-        stubCreds = vr -> Result.success(new Credentials("user-1"));
-        stubStatus = c -> Result.success(new Account(c.userId(), true));
+        stubCreds = vr -> Result.success(Credentials.credentials("user-1"));
+        stubStatus = c -> Result.success(Account.account(c.userId(), true));
         stubToken = acc -> Result.success(Response.response("token-" + acc.userId()));
         useCase = UserLogin.userLogin(stubCreds, stubStatus, stubToken);
     }
@@ -169,7 +169,7 @@ class PricingEngine {
 **Trivial leaf (covered by integration):**
 ```java
 static Price applyTax(Price base) {
-    return new Price(base.amount().multiply(TAX_RATE));
+    return Price.price(base.amount().multiply(TAX_RATE));
 }
 // No dedicated test - covered when use case tested
 ```
@@ -404,8 +404,8 @@ class RegisterUserTest {
     @BeforeEach
     void setup() {
         CheckEmailUniqueness stubUniqueness = vr -> Promise.success(vr);
-        HashPassword stubHash = vr -> Promise.success(new HashedPassword("hash"));
-        SaveUser stubSave = hp -> Promise.success(new User("user-1"));
+        HashPassword stubHash = vr -> Promise.success(HashedPassword.hashedPassword("hash"));
+        SaveUser stubSave = hp -> Promise.success(User.user("user-1"));
         SendWelcomeEmail stubEmail = u -> Promise.success(u);
 
         useCase = RegisterUser.registerUser(stubUniqueness, stubHash, stubSave, stubEmail);

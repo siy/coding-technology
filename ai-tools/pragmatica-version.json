@@ -314,7 +314,7 @@
       "count": 1,
       "class": "historical",
       "since": "2026-09-09",
-      "why": "NOT named by issue #60. An availability floor ('the mapWith family (core 1.0.0-rc1+)') split across lines 304-305, which is why the prose window is two lines rather than one."
+      "why": "NOT named by issue #60. An availability floor ('the mapWith family (core 1.0.0-rc1+)') split across lines 226-227 (moved from ai-tools/agents/jbct-coder.md:304-305 on 2026-11-12), which is why the prose window is two lines rather than one."
     },
     {
       "path": "ai-tools/skills/jbct/reference/coder-api-patterns.md",

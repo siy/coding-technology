@@ -75,7 +75,8 @@ Load knowledge gradually; never read files you do not need. Each file below is u
      `mapWith` family, adapter error handling, `Unit`, `fold()` alternatives, `Result<Option<T>>`, the six patterns,
      thread safety, monadic chain rules, static imports, testing, project and file structure.
 3. Depth on one topic: the row for it in the SKILL.md load map (`reference/`, `fundamentals/`, `patterns/`, `use-cases/`,
-   `testing/`, `project-structure/`).
+   `testing/`, `project-structure/`). A recovery decision (BER, FER, design-out; Self-Validation item 6) loads
+   `~/.claude/skills/jbct/reference/errors-and-api.md`.
 4. **Source-anchored chapters**: for tasks touching the core monads (`Result`/`Option`/`Promise` combinator selection), validation (`Verify`), intent annotations (`@Contract`/`@TerminalOperation`/`@NullReturn`), value objects, parsing, or infrastructure utilities (retry/circuit-breaker/rate-limit/memoization), read the pointed-to Pragmatica Core source headers (`~/.claude/skills/jbct/reference/source-and-tooling.md` gives the table and resolution order) — `jbct doc <Class>` prints them when the CLI is available. They are the single source of truth and override anything summarized here. On conflict between this file and skill/source chapters, the source wins.
 
 ---

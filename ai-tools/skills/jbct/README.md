@@ -25,7 +25,8 @@ The skill is organized by topic for progressive detalization:
 
 ```
 jbct/
-├── SKILL.md                      # Entry point with quick reference
+├── SKILL.md                      # Index: load map, workflow, self-validation checkpoint
+├── reference/                    # Former SKILL.md body and jbct-coder rule body, loaded on demand
 ├── README.md                     # This file
 ├── fundamentals/                 # Core principles
 │   ├── four-return-kinds.md     # T, Option, Result, Promise
@@ -74,7 +75,7 @@ No explicit invocation needed - the skill activates based on context.
 
 The skill uses a three-tier structure:
 
-1. **SKILL.md** - Quick reference with essential patterns and rules
+1. **SKILL.md** - Index: which file to load for which task, plus the workflow and self-validation checkpoint; the rules themselves are in `reference/`
 2. **Topic files** - Detailed explanations with full examples (fundamentals/, patterns/, use-cases/)
 3. **Advanced topics** - Testing strategies, project organization, complete examples
 

@@ -97,7 +97,8 @@ The skill uses progressive detalization:
 
 ```
 jbct/
-├── SKILL.md                      # Entry point with quick reference
+├── SKILL.md                      # Index: load map, workflow, self-validation checkpoint
+├── reference/                    # Former SKILL.md body and jbct-coder rule body, loaded on demand
 ├── fundamentals/                 # Core principles
 │   ├── four-return-kinds.md     # T, Option, Result, Promise
 │   ├── parse-dont-validate.md   # Value object patterns

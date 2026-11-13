@@ -33,6 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `README.md`, matching the other copy (`articles/no-framework-no-pain.md`).
 
 ### Added
+- **Read-size gate for skill and agent files** (`ai-tools/check-drift.sh` step 7b): every file under `ai-tools/skills/` and `ai-tools/agents/` must fit the subagent read guard's 24,576-byte limit, above which an unbounded Read is refused. It prints the examined count and fails on an examined-nothing run. `project-structure/organization.md` was 24,391 bytes when it was added.
 - **Prefer `all()` over `allOrCancel()`** (`skills/jbct/patterns/fork-join.md`, `skills/jbct/SKILL.md`, `agents/jbct-coder.md`, `agents/jbct-reviewer.md`) — mirrors the JBCT book rule; the reviewer gains a "Fail-fast join without reason" search for `allOrCancel(`/`allOfOrCancel(`.
 - **Series glossary entry *Residual*** (`website/content/glossary.md`) — mirrors the PFD 3.0.1 glossary entry
   and links it to *data as residue*, so the two terms are told apart on the site as in the book.

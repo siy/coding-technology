@@ -114,7 +114,7 @@ public record Email(String value) {
 }
 ```
 
-Three lines of factory is the price of consistency. A reader never has to ask whether this particular record is built with `new` or with a factory, and a record that later acquires an invariant changes its factory's return type, not its call sites' shape. A generator or framework that builds a record with `new` or `::new` instead of its factory is defective: it bypasses the one construction path.
+Three lines of factory is the price of consistency. A reader never has to ask whether this particular record is built with `new` or with a factory, and a record that later acquires an invariant changes its factory's return type, not its call sites' shape. A generator or framework that builds a record with `new` or `::new` instead of its factory is defective: it bypasses the one construction path. The rule does not reach a local record: a record declared inside a factory method as the implementation of an interface (the nested record pattern) is instantiated once, inside that method, and cannot be instantiated anywhere else, so the enclosing factory is already its only construction path.
 
 **Validated input naming**: Use the `Valid` prefix for types representing validated inputs:
 
@@ -402,7 +402,7 @@ public ResponseEntity<?> register(@RequestBody RegisterUser.Request raw) {
 
 1. **Validation IS construction** - If an instance exists, it's valid
 2. **Fallible factories return `Result<T>`** - Success means valid object
-3. **Every record has a type-named factory** - `Result<Self>` if the record has any invariant, `Self` if it has none; the factory is the only construction path
+3. **Every record has a type-named factory** - `Result<Self>` if the record has any invariant, `Self` if it has none; the factory is the only construction path (a local record inside a factory method is outside the rule)
 4. **`Result.all()` accumulates errors** - Show all problems at once
 5. **Normalization in factories** - Trim, lowercase, etc. happen once
 6. **`Result<Option<T>>`** - For optional values that must validate when present

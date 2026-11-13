@@ -181,7 +181,7 @@ Run all searches from the Violation Hunting table. Report counts.
 - Both symmetry axes run (see Symmetry Checks)
 
 ### Step 4: Naming Review
-- Factory: `TypeName.typeName()` on EVERY record, no exceptions; `Result<Self>` if the record has any invariant, `Self` if none
+- Factory: `TypeName.typeName()` on EVERY record, no exceptions; `Result<Self>` if the record has any invariant, `Self` if none. A local record declared inside a factory method is outside the rule (only that method can instantiate it): do not flag its `new`
 - Validated: `Valid` prefix
 - Tests: `methodName_outcome_condition`
 - Acronyms as words

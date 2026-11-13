@@ -139,7 +139,7 @@ For each input field, determine:
 1. **Type**: Primitive wrapper or composite?
 2. **Validation rules**: What makes it valid?
 3. **Optionality**: Required (`T`) or optional (`Option<T>`)?
-4. **Factory method**: `TypeName.typeName(String raw) → Result<TypeName>` (every record has a type-named factory; `Result<Self>` if any invariant, `Self` if none)
+4. **Factory method**: `TypeName.typeName(String raw) → Result<TypeName>` (every record has a type-named factory; `Result<Self>` if any invariant, `Self` if none; a local record inside a factory method is outside the rule)
 
 Example analysis:
 ```

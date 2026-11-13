@@ -719,7 +719,7 @@ Which applies is a judgment — reversibility, the value of partial progress, th
 
 ## Naming Conventions
 
-- **Factory methods**: `TypeName.typeName(...)` (lowercase-first). Every record has a type-named factory (`Profile.profile(...)`), no exceptions: `Result<Self>` if the record has any invariant, `Self` if it has none; a generator or framework that builds a record with `new`/`::new` instead of its factory is defective.
+- **Factory methods**: `TypeName.typeName(...)` (lowercase-first). Every record has a type-named factory (`Profile.profile(...)`), no exceptions: `Result<Self>` if the record has any invariant, `Self` if it has none; a generator or framework that builds a record with `new`/`::new` instead of its factory is defective; a local record declared inside a factory method is outside the rule: it is instantiated once, inside that method, and cannot be instantiated anywhere else.
 - **Validated inputs**: `Valid` prefix (not `Validated`): `ValidRequest`, `ValidUser`
 - **Error types**: Past tense verbs: `EmailNotFound`, `AccountLocked`, `PaymentFailed`
 - **State-machine state types**: `*State` suffix for the sealed sum of lifecycle states — `HoldState`, `BookingState`, `SeatState` — with variants kept bare (`Free`, `Held`, `Confirmed`, `Cancelled`, never `HeldState`). Reserve the suffix for the lifecycle sum a guarded transition advances, not every mutable holder; it joins the suffix-by-role family (`*Request`, `*Response`, `Cause`).

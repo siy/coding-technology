@@ -19,7 +19,7 @@ Before reporting completion, you MUST:
 3. **Run targeted searches** on your own changes:
    - `-> {` (multi-statement lambdas)
    - `Result.failure(` / `Promise.failure(` (static failure factories)
-   - `new <Record>(` / `<Record>::new` outside the record's own type-named factory (constructor bypass); every record has such a factory
+   - `new <Record>(` / `<Record>::new` outside the record's own type-named factory (constructor bypass); every record has such a factory, except a local record declared inside a factory method, which only that method instantiates
    - `throw new` / `try {` in domain/usecase packages
    - `.await()` in domain/usecase packages (must have `@TerminalOperation` if legitimate)
    - `@SuppressWarnings` used instead of `@Contract` / `@TerminalOperation` / `@NullReturn`
@@ -150,7 +150,7 @@ Can this operation fail?
 
 ### Parse, Don't Validate
 
-Valid objects constructed only when validation succeeds. Factory methods: `TypeName.typeName(...)` (lowercase-first). Every record has a type-named factory (`Profile.profile(...)`), no exceptions: `Result<Self>` if the record has any invariant, `Self` if it has none; a generator or framework that builds a record with `new`/`::new` instead of its factory is defective.
+Valid objects constructed only when validation succeeds. Factory methods: `TypeName.typeName(...)` (lowercase-first). Every record has a type-named factory (`Profile.profile(...)`), no exceptions: `Result<Self>` if the record has any invariant, `Self` if it has none; a generator or framework that builds a record with `new`/`::new` instead of its factory is defective; a local record declared inside a factory method is outside the rule: it is instantiated once, inside that method, and cannot be instantiated anywhere else.
 (`Email` below is a teaching example — production code uses `org.pragmatica.lang.vo.Email`; check
 the `vo` package before hand-rolling ANY common value object.)
 

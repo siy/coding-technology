@@ -19,7 +19,8 @@ repository root `CHANGELOG.md`.
   type-named factory that delegates to their `FACTORY`; `lift` boundaries apply that `FACTORY` to the converted
   throwable. *Knowledge-Gathering Pipelines* states the stage factory, not the canonical constructor, as the combinator
   argument; its heading "Validating stage constructors" is now "Validating stage factories". *Transfer Funds* adds
-  `Money.money(String)` returning `Result<Money>` beside the infallible `Money.money(BigDecimal)`.
+  `Money.money(String)` returning `Result<Money>` beside the infallible `Money.money(BigDecimal)`. The rule does not reach a local
+  record declared inside a factory method (the nested record pattern): only that method can instantiate it.
 - *PlaceOrder Example*: `Money` builds only through `money(...)`, with `plus`, `times`, `isAtLeast` (infallible) and
   `discountedBy` (`Result<Money>`) replacing `add` and `multiply`; `PriceCalculator.calculate` returns `Result<Money>`
   and takes prices and thresholds as parameters; `OrderId.orderId()` generates and `OrderId.orderId(String)` parses;

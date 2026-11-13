@@ -12,7 +12,7 @@ repository root `CHANGELOG.md`.
 ### Changed
 - *Parse, Don't Validate*, "Naming Conventions" and "Key Takeaways": every record has a type-named static factory, with
   no exceptions. A record with any invariant has a fallible factory returning `Result<Self>`; a record without
-  invariants returns `Self`; the factory is the only construction path. Examples across 15 chapters, Appendix B and
+  invariants returns `Self`; the factory is the only construction path from outside the record. Examples across 15 chapters, Appendix B and
   the `ai-tools/` skills and agents gain the factory (requests, responses, stage records, data-carrying causes, domain
   records), and every `new X(` / `X::new` of a record outside its own body now calls it. Counterexamples (the
   `Validated` examples, "Wrong", "Before" and "DON'T" code) stay as written. Data-carrying cause records get a
@@ -21,7 +21,7 @@ repository root `CHANGELOG.md`.
   argument; its heading "Validating stage constructors" is now "Validating stage factories". *Transfer Funds* adds
   `Money.money(String)` returning `Result<Money>` beside the infallible `Money.money(BigDecimal)`. The rule does not reach a local
   record declared inside a factory method (the nested record pattern): only that method can instantiate it.
-- *PlaceOrder Example*: `Money` builds only through `money(...)`, with `plus`, `times`, `isAtLeast` (infallible) and
+- *PlaceOrder Example*: callers build `Money` only through `money(...)`, with `plus`, `times`, `isAtLeast` (infallible) and
   `discountedBy` (`Result<Money>`) replacing `add` and `multiply`; `PriceCalculator.calculate` returns `Result<Money>`
   and takes prices and thresholds as parameters; `OrderId.orderId()` generates and `OrderId.orderId(String)` parses;
   test assertions report `cause.message()`; the composition-test prose no longer says the total is absent from the

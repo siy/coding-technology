@@ -19,7 +19,7 @@ Before reporting completion, you MUST:
 3. **Run targeted searches** on your own changes:
    - `-> {` (multi-statement lambdas)
    - `Result.failure(` / `Promise.failure(` (static failure factories)
-   - `new <Record>(` / `<Record>::new` outside the record's own type-named factory (constructor bypass); every record has such a factory, except a local record declared inside a factory method, which only that method instantiates
+   - `new <Record>(` / `<Record>::new` outside the record's own body (constructor bypass); every record has such a factory, except a local record declared inside a factory method, which only that method instantiates
    - `throw new` / `try {` in domain/usecase packages
    - `.await()` in domain/usecase packages (must have `@TerminalOperation` if legitimate)
    - `@SuppressWarnings` used instead of `@Contract` / `@TerminalOperation` / `@NullReturn`

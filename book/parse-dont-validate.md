@@ -100,7 +100,7 @@ AccountId.accountId(raw)
 
 This creates a natural, readable call site that's grep-friendly and allows static imports: because each factory is named for its own type, many of them can be statically imported into one scope without the collisions a shared name like `of` would cause.
 
-**Every record has a factory**: One rule, no exceptions, no conditions. Every record has a static factory named after its type — `Profile.profile(...)` — and that factory is the only construction path. A record with any invariant gets a fallible factory that returns `Result<Self>`; a record without invariants gets one that returns `Self`:
+**Every record has a factory**: One rule, no exceptions, no conditions. Every record has a static factory named after its type — `Profile.profile(...)` — and that factory is the only construction path from outside the record. A record with any invariant gets a fallible factory that returns `Result<Self>`; a record without invariants gets one that returns `Self`:
 
 ```java
 public record Profile(String displayName, Option<String> bio) {
@@ -114,7 +114,7 @@ public record Email(String value) {
 }
 ```
 
-Three lines of factory is the price of consistency. A reader never has to ask whether this particular record is built with `new` or with a factory, and a record that later acquires an invariant changes its factory's return type, not its call sites' shape. A generator or framework that builds a record with `new` or `::new` instead of its factory is defective: it bypasses the one construction path. The rule does not reach a local record: a record declared inside a factory method as the implementation of an interface (the nested record pattern) is instantiated once, inside that method, and cannot be instantiated anywhere else, so the enclosing factory is already its only construction path.
+Three lines of factory is the price of consistency. A reader never has to ask whether this particular record is built with `new` or with a factory, and a record that later acquires an invariant changes its factory's return type, not its call sites' shape. A generator or framework that builds a record with `new` or `::new` instead of its factory is defective: it bypasses the one construction path. The rule does not reach a local record: a record declared inside a factory method as the implementation of an interface (the nested record pattern) is instantiated once, inside that method, and cannot be instantiated anywhere else, so the enclosing factory is already its only construction path. Inside its own body a record may call its constructor directly: a private helper finishing the factory's validation chain, or an operation such as `Money.plus` whose result keeps the invariant by construction, needs no second pass through the factory.
 
 **Validated input naming**: Use the `Valid` prefix for types representing validated inputs:
 
@@ -402,7 +402,7 @@ public ResponseEntity<?> register(@RequestBody RegisterUser.Request raw) {
 
 1. **Validation IS construction** - If an instance exists, it's valid
 2. **Fallible factories return `Result<T>`** - Success means valid object
-3. **Every record has a type-named factory** - `Result<Self>` if the record has any invariant, `Self` if it has none; the factory is the only construction path (a local record inside a factory method is outside the rule)
+3. **Every record has a type-named factory** - `Result<Self>` if the record has any invariant, `Self` if it has none; the factory is the only construction path from outside the record (a local record inside a factory method is outside the rule)
 4. **`Result.all()` accumulates errors** - Show all problems at once
 5. **Normalization in factories** - Trim, lowercase, etc. happen once
 6. **`Result<Option<T>>`** - For optional values that must validate when present

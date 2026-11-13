@@ -93,7 +93,6 @@ The HTML template uses these placeholders:
 - `MANAGEMENT_PERSPECTIVE.md` → `MANAGEMENT_PERSPECTIVE.html`
 - `CHANGELOG.md` → `CHANGELOG.html`
 - `PL_IMPROVEMENTS.md` → `PL_IMPROVEMENTS.html`
-- `jbct-coder.md` → `jbct-coder.html`
 
 ### Book Pages
 

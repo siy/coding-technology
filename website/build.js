@@ -80,7 +80,6 @@ const SITEMAP_URLS = [];
 const ORPHAN_ALLOWED = new Set([
   'CHANGELOG.html',
   'PL_IMPROVEMENTS.html',
-  'jbct-coder.html',
   'jbct-reviewer.html',
 ]);
 
@@ -941,7 +940,6 @@ function buildLessonPages(course, flat) {
 const LEGACY_PAGES = [
   { src: 'CHANGELOG.md', out: 'CHANGELOG.html', description: 'Changelog for the JBCT repository and shared assets: tooling, AI skills, and build scripts.' },
   { src: 'PL_IMPROVEMENTS.md', out: 'PL_IMPROVEMENTS.html', description: 'Language-level improvements that would make functional Java backends simpler — observations from applying JBCT in practice.' },
-  { src: 'jbct-coder.md', out: 'jbct-coder.html', description: 'The jbct-coder subagent: JBCT-compliant Java code generation with Claude Code.' },
   { src: 'jbct-reviewer.md', out: 'jbct-reviewer.html', description: 'The jbct-reviewer subagent: JBCT compliance review for Java backend code.' }
 ];
 
@@ -1055,6 +1053,12 @@ function buildRedirects() {
   // from the site and unaudited. The README stays in the repository, which is where it now points.
   ['/AI-TOOLING.html', '/AI-TOOLING', '/ai-tooling.html', '/ai-tooling'].forEach(old => {
     lines.push(`${old} https://github.com/siy/coding-technology/tree/main/ai-tools 301`);
+  });
+  // jbct-coder.html (the root jbct-coder.md symlink) retired 2026-11-13 on owner ruling: a page from
+  // the old site, and since the agent's rule body moved to skill reference files it no longer
+  // carried the rules. The agent definition stays in the repository, which is where it now points.
+  ['/jbct-coder.html', '/jbct-coder'].forEach(old => {
+    lines.push(`${old} https://github.com/siy/coding-technology/blob/main/ai-tools/agents/jbct-coder.md 301`);
   });
   lines.push('/book/* /java/jbct/course/ 301');
 

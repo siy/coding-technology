@@ -172,6 +172,21 @@ fi
 # mechanism and, more importantly, what a green result does NOT claim.
 python3 blurb-stamps.py --check || FAIL=1
 
+# --- 7b. Every skill and agent file fits one subagent Read ---
+# The subagent read guard (~/.claude/hooks/subagent-read-guard.py, LIMIT_BYTES = 24 * 1024)
+# refuses an unbounded Read of a larger file, so a lane loading an oversized reference gets
+# a refusal or a partial range instead of the rules. organization.md sat 185 bytes under it
+# (2026-11-13, owner ruling: gate it here). Keep this constant equal to the guard's.
+READ_LIMIT=24576
+examined=0
+while IFS= read -r f; do
+  examined=$((examined + 1))
+  size=$(wc -c < "$f" | tr -d ' ')
+  [ "$size" -gt "$READ_LIMIT" ] && fail "$f is $size bytes, over the $READ_LIMIT-byte subagent read limit: split it"
+done < <(find skills agents -type f)
+[ "$examined" -gt 0 ] || fail "read-size check examined no files"
+note "read-size: examined $examined file(s) under skills/ and agents/ against $READ_LIMIT bytes"
+
 # --- 8. Installed copy matches this repo (local only; absent in CI) ---
 INSTALLED="${CLAUDE_HOME:-$HOME/.claude}"
 if [ -d "$INSTALLED/skills" ]; then

@@ -1094,7 +1094,7 @@ Before considering JBCT code complete, verify ALL of these:
 - [ ] Dependencies injected via factory parameters
 
 ### Naming
-- [ ] Factory methods: `TypeName.typeName(...)` on every record (`Result<Self>` if any invariant, `Self` if none)
+- [ ] Factory methods: `TypeName.typeName(...)` on every record (`Result<Self>` if any invariant, `Self` if none; a local record inside a factory method is exempt)
 - [ ] Validated types: `Valid` prefix (not `Validated`)
 - [ ] Errors: past tense (`NotFound`, `Failed`, `Expired`)
 

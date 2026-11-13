@@ -32,8 +32,8 @@ Run these searches and report ALL hits:
 | Void type parameter | `Result<Void>`, `Promise<Void>` | Use `Unit`. `void` return OK with `@Contract` (external API) or fire-and-forget |
 | Static failure factories | `Result.failure(`, `Promise.failure(` | Use `cause.result()`/`cause.promise()` |
 | Multi-statement lambdas | `-> {` | Extract to named method |
-| Constructor bypass | `new Record(` or `Record::new` outside the record's own type-named factory (any record, not only value objects) | Use the factory method |
-| Record without factory | `record X(` with no `static ... x(` in its body | Add the type-named factory: `Result<X>` if any invariant, `X` if none |
+| Constructor bypass | `new Record(` or `Record::new` outside the record's own type-named factory (any record, not only value objects; not a local record declared inside a factory method) | Use the factory method |
+| Record without factory | `record X(` with no `static ... x(` in its body (a local record declared inside a factory method is exempt) | Add the type-named factory: `Result<X>` if any invariant, `X` if none |
 | Nested error channels | `Promise<Result<` | Use `Promise<T>` only |
 | Blocking in business logic | `.await()` in domain/usecase without `@TerminalOperation` | Stay in monadic chain. OK in tests; legitimate uses require `@TerminalOperation` |
 | `@SuppressWarnings` misuse | `@SuppressWarnings` instead of `@Contract`/`@TerminalOperation`/`@NullReturn` | Use dedicated intent annotations: `@Contract` (void/signature dictated externally), `@TerminalOperation` (legitimate await), `@NullReturn` (null-contract callbacks) |

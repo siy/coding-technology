@@ -227,7 +227,7 @@ DECLARATION = os.path.join(HERE, 'pragmatica-version.json')
 MAVEN_WINDOW = 6
 
 # How many lines a prose anchor may be separated from the literal it attributes. Two,
-# because ai-tools/agents/jbct-coder.md:304 ends a line with "(core" and starts the next
+# because ai-tools/skills/jbct/reference/coder-rules.md:226 ends a line with "(core" and starts the next
 # with "1.0.0-rc1+)".
 PROSE_WINDOW = 2
 

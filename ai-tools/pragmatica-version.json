@@ -153,7 +153,7 @@
       "why": "The prose sentence introducing the Maven block six lines below it. It states what the tooling depends on; if it disagreed with that block it would be a defect."
     },
     {
-      "path": "ai-tools/skills/jbct/SKILL.md",
+      "path": "ai-tools/skills/jbct/reference/errors-and-api.md",
       "match": "JBCT uses **Pragmatica Core",
       "field": "depends_on",
       "count": 1,
@@ -209,7 +209,7 @@
       "why": "A behaviour statement about the declared release. Re-read at tag v1.0.0-rc4 on 2026-10-21 (Cause.java: Wrapped still derives source() only and delegates neither isTerminal() nor isTransient(), which rc4 added), so the sentence was rewritten to name both classifications, not merely re-dated; first read at v1.0.0-rc3 on 2026-10-09. It stays depends_on so the next bump FAILS here: a planned Core change (owner, 2026-10-09) makes Wrapped delegate classification to its origin, which falsifies the sentence. Re-read Cause.java at the new tag and rewrite the sentence; never move the literal alone."
     },
     {
-      "path": "ai-tools/skills/jbct/SKILL.md",
+      "path": "ai-tools/skills/jbct/reference/errors-and-api.md",
       "match": "At Pragmatica 1.0.0-rc4 `Cause.Wrapped`",
       "field": "depends_on",
       "count": 1,
@@ -217,7 +217,7 @@
       "why": "Synced copy of book/error-handling.md's wrapped-terminal-causes block (sync-book-blocks.py); same claim, same reason."
     },
     {
-      "path": "ai-tools/agents/jbct-coder.md",
+      "path": "ai-tools/skills/jbct/reference/coder-rules.md",
       "match": "At Pragmatica 1.0.0-rc4 `Cause.Wrapped`",
       "field": "depends_on",
       "count": 1,
@@ -233,7 +233,7 @@
       "why": "Read from CstCauseFactoryArityRule at tag v1.0.0-rc3, and re-read at v1.0.0-rc4 on 2026-10-21 (the file is byte-identical at both tags, blob 996abeb4): the arity equation counts origin, so a carry-don't-print wrapper template is flagged. Owner ruled 2026-10-10 that the linter will exempt a Cause.Wrapped origin; the next bump must fail here so the suppression advice is re-checked against the new linter and removed if the exemption shipped."
     },
     {
-      "path": "ai-tools/skills/jbct/SKILL.md",
+      "path": "ai-tools/skills/jbct/reference/errors-and-api.md",
       "match": "At Pragmatica 1.0.0-rc4 the linter's `JBCT-CAUSE-04`",
       "field": "depends_on",
       "count": 1,
@@ -241,7 +241,7 @@
       "why": "Synced copy of book/error-handling.md's wrapped-terminal-causes block; same claim, same reason."
     },
     {
-      "path": "ai-tools/agents/jbct-coder.md",
+      "path": "ai-tools/skills/jbct/reference/coder-rules.md",
       "match": "At Pragmatica 1.0.0-rc4 the linter's `JBCT-CAUSE-04`",
       "field": "depends_on",
       "count": 1,
@@ -308,16 +308,16 @@
       "why": "NOT named by issue #60. '**Availability**: pragmatica core 1.0.0-rc1+' — the trailing + makes it a floor, the release the feature became available in, true for every later release. Moving it would narrow a true statement."
     },
     {
-      "path": "ai-tools/agents/jbct-coder.md",
+      "path": "ai-tools/skills/jbct/reference/coder-rules.md",
       "match": "1.0.0-rc1+) makes each stage",
       "version": "1.0.0-rc1",
       "count": 1,
       "class": "historical",
       "since": "2026-09-09",
-      "why": "NOT named by issue #60. An availability floor ('the mapWith family (core 1.0.0-rc1+)') split across lines 304-305, which is why the prose window is two lines rather than one."
+      "why": "NOT named by issue #60. An availability floor ('the mapWith family (core 1.0.0-rc1+)') split across lines 226-227 (moved from ai-tools/agents/jbct-coder.md:304-305 on 2026-11-12), which is why the prose window is two lines rather than one."
     },
     {
-      "path": "ai-tools/agents/jbct-coder.md",
+      "path": "ai-tools/skills/jbct/reference/coder-api-patterns.md",
       "match": "(core 1.0.0-rc1+, on Result/Option/Promise)",
       "version": "1.0.0-rc1",
       "count": 1,

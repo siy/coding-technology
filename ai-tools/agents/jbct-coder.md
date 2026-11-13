@@ -214,7 +214,7 @@ Three rules govern the shape:
 
 - **Every value the template formats is a component.** The factory's parameters are exactly the non-message components, so the data an error mentions stays typed - renderable at the boundary, countable in telemetry, never trapped in prose. The `message` component comes last, which is what lets the constructor reference serve as the factory argument. Zero data is a property, not an omission: `INVALID_CREDENTIALS` deliberately says nothing about which credential failed.
 - **One discriminable case per failure** - its own record type or its own enum constant. Qualified enum constant case labels (`case General.INVALID_CREDENTIALS ->`) discriminate constants in a switch over the sealed interface, and listing every constant preserves exhaustiveness: adding a constant breaks every switch, exactly as adding a record does.
-- **The `FACTORY` is the only constructor call site.** `new AccountLocked(id, "hand-typed prose")` compiles and silently decouples the stored message from the declared template; routed through the factory, template and data cannot disagree. The type-named factory delegates to `FACTORY`, so the one rule that every record is built through a factory named for its type holds here too.
+- **The `FACTORY` is the only constructor call site, inside the record's own body as well.** `new AccountLocked(id, "hand-typed prose")` compiles and silently decouples the stored message from the declared template; routed through the factory, template and data cannot disagree. The type-named factory delegates to `FACTORY`, so the one rule that every record is built through a factory named for its type holds here too.
 <!-- /book:typed-errors -->
 
 <!-- book:wrapped-terminal-causes -->

@@ -206,7 +206,7 @@ class RegisterUserTest {
 ```java
 class TestData {
     static User user(UserId id) {
-        return new User(
+        return User.user(
             id,
             Email.unsafe("test@example.com"),
             "Test User",

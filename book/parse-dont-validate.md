@@ -100,7 +100,7 @@ AccountId.accountId(raw)
 
 This creates a natural, readable call site that's grep-friendly and allows static imports: because each factory is named for its own type, many of them can be statically imported into one scope without the collisions a shared name like `of` would cause.
 
-**Every record has a factory**: One rule, no exceptions, no conditions. Every record has a static factory named after its type — `Profile.profile(...)` — and that factory is the only construction path from outside the record. A record with any invariant gets a fallible factory that returns `Result<Self>`; a record without invariants gets one that returns `Self`:
+**Every record has a factory**: One rule for every record that code outside it constructs, with no conditions. Every record has a static factory named after its type — `Profile.profile(...)` — and that factory is the only construction path from outside the record. A record with any invariant gets a fallible factory that returns `Result<Self>`; a record without invariants gets one that returns `Self`:
 
 ```java
 public record Profile(String displayName, Option<String> bio) {

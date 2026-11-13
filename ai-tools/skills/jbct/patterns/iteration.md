@@ -205,7 +205,7 @@ public Result<List<ValidOrder>> validateOrders(List<Order> orders) {
                         .map(ValidItem::validItem)
                         .toList()
                 );
-            return itemsResult.map(items -> new ValidOrder(order, items));
+            return itemsResult.map(items -> ValidOrder.validOrder(order, items));
         })
         .toList();
 

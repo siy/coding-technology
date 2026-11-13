@@ -338,8 +338,14 @@ Cause.Wrapped    // declares Cause origin(); derives source() from it
 **Template syntax** (uses String.format, Locale.ROOT):
 ```java
 Causes.forOneValue("Invalid email: %s")                    // anonymous, ad-hoc tier
-Causes.forOneValue("Invalid email: %s", InvalidEmail::new) // typed:
-// record InvalidEmail(String raw, String message) implements EmailError
+
+// typed tier: the record's own body hands its constructor to the template
+record InvalidEmail(String raw, String message) implements EmailError {
+    static final Fn1<InvalidEmail, String> FACTORY =
+        Causes.forOneValue("Invalid email: %s", InvalidEmail::new);
+
+    static InvalidEmail invalidEmail(String raw) { return FACTORY.apply(raw); }
+}
 ```
 
 ---

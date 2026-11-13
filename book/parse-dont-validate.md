@@ -100,12 +100,32 @@ AccountId.accountId(raw)
 
 This creates a natural, readable call site that's grep-friendly and allows static imports: because each factory is named for its own type, many of them can be statically imported into one scope without the collisions a shared name like `of` would cause.
 
+**Every record has a factory**: One rule for every record that code outside it constructs, with no conditions. Every record has a static factory named after its type — `Profile.profile(...)` — and that factory is the only construction path from outside the record. A record with any invariant gets a fallible factory that returns `Result<Self>`; a record without invariants gets one that returns `Self`:
+
+```java
+public record Profile(String displayName, Option<String> bio) {
+    public static Profile profile(String displayName, Option<String> bio) {
+        return new Profile(displayName, bio);
+    }
+}
+
+public record Email(String value) {
+    public static Result<Email> email(String raw) { ... }
+}
+```
+
+Three lines of factory is the price of consistency. A reader never has to ask whether this particular record is built with `new` or with a factory, and a record that later acquires an invariant changes its factory's return type, not its call sites' shape. A generator or framework that builds a record with `new` or `::new` instead of its factory is defective: it bypasses the one construction path. The rule does not reach a local record: a record declared inside a factory method as the implementation of an interface (the nested record pattern) is instantiated once, inside that method, and cannot be instantiated anywhere else, so the enclosing factory is already its only construction path. Inside its own body a record may call its constructor directly: a private helper finishing the factory's validation chain, or an operation such as `Money.plus` whose result keeps the invariant by construction, needs no second pass through the factory.
+
 **Validated input naming**: Use the `Valid` prefix for types representing validated inputs:
 
 ```java
 // DO: Use Valid prefix
-record ValidRequest(Email email, Password password) { ... }
-record ValidUser(Email email, HashedPassword hashed) { ... }
+record ValidRequest(Email email, Password password) {
+    static Result<ValidRequest> validRequest(Email email, Password password) { ... }
+}
+record ValidUser(Email email, HashedPassword hashed) {
+    static ValidUser validUser(Email email, HashedPassword hashed) { ... }
+}
 
 // DON'T: Use Validated prefix (too verbose)
 record ValidatedRequest(...)
@@ -283,9 +303,9 @@ public record ValidOrder(OrderId id, Money total, List<LineItem> items) {
 
 ```java
 public record ValidRegistration(Email email, Password password, Age age) {
-    public static Result<ValidRegistration> validate(String emailRaw,
-                                                     String passwordRaw,
-                                                     String ageRaw) {
+    public static Result<ValidRegistration> validRegistration(String emailRaw,
+                                                              String passwordRaw,
+                                                              String ageRaw) {
         return Result.all(Email.email(emailRaw),
                          Password.password(passwordRaw),
                          Age.age(ageRaw))
@@ -381,11 +401,12 @@ public ResponseEntity<?> register(@RequestBody RegisterUser.Request raw) {
 ## Key Takeaways
 
 1. **Validation IS construction** - If an instance exists, it's valid
-2. **Factory methods return `Result<T>`** - Success means valid object
-3. **`Result.all()` accumulates errors** - Show all problems at once
-4. **Normalization in factories** - Trim, lowercase, etc. happen once
-5. **`Result<Option<T>>`** - For optional values that must validate when present
-6. **Adopt incrementally** - Start at boundaries, work inward
+2. **Fallible factories return `Result<T>`** - Success means valid object
+3. **Every record has a type-named factory** - `Result<Self>` if the record has any invariant, `Self` if it has none; the factory is the only construction path from outside the record (a local record inside a factory method is outside the rule)
+4. **`Result.all()` accumulates errors** - Show all problems at once
+5. **Normalization in factories** - Trim, lowercase, etc. happen once
+6. **`Result<Option<T>>`** - For optional values that must validate when present
+7. **Adopt incrementally** - Start at boundaries, work inward
 
 ---
 

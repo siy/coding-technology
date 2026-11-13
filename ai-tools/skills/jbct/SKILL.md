@@ -318,8 +318,12 @@ public record Age(int value) {
 
 ```java
 public interface RegisterUser extends UseCase.WithPromise<Response, Request> {
-    record Request(String email, String password) {}
-    record Response(UserId userId, ConfirmationToken token) {}
+    record Request(String email, String password) {
+        static Request request(String email, String password) { return new Request(email, password); }
+    }
+    record Response(UserId userId, ConfirmationToken token) {
+        static Response response(UserId userId, ConfirmationToken token) { return new Response(userId, token); }
+    }
 
     // Nested API: steps as single-method interfaces
     interface CheckEmail { Promise<ValidRequest> apply(ValidRequest valid); }
@@ -394,9 +398,9 @@ Promise.all(applyBogo(cart, context),     // mutates context
 **Rule:** Lambdas passed to monadic operations (`map`, `flatMap`, `recover`, `filter`) must be minimal.
 
 **Allowed:**
-- Method references: `Email::new`, `this::processUser`, `User::id`
+- Method references: `Email::email`, `this::processUser`, `User::id`
 - Parameter forwarding: `user -> validate(requiredRole, user)`
-- Constructor references for error mapping: `RepositoryError.DatabaseFailure::new`
+- Error mapping at `lift` boundaries: the error type's `FACTORY` applied to the converted throwable, `t -> RepositoryError.DatabaseFailure.FACTORY.apply(Causes.fromThrowable(t))`
 
 **Forbidden:**
 - Conditionals (`if`, ternary, `switch`)
@@ -485,7 +489,7 @@ Every method must have clear data flow:
 private Promise<User> createUser(ValidRequest valid) {
     return hashPassword.apply(valid.password())
         .flatMap(hashed -> userRepository.save(
-            new User(UserId.generate(), valid.email(), hashed)));
+            User.user(UserId.generate(), valid.email(), hashed)));
 }
 ```
 
@@ -501,14 +505,18 @@ return loadUser(userId)
             .map(prefs -> new Dashboard(user, orders, prefs))));
 
 // ✅ CORRECT: Growing context with intermediate records
-record UserWithOrders(User user, List<Order> orders) {}
-record DashboardContext(User user, List<Order> orders, Preferences prefs) {}
+record UserWithOrders(User user, List<Order> orders) {
+    static UserWithOrders userWithOrders(User user, List<Order> orders) { return new UserWithOrders(user, orders); }
+}
+record DashboardContext(User user, List<Order> orders, Preferences prefs) {
+    static DashboardContext dashboardContext(User user, List<Order> orders, Preferences prefs) { return new DashboardContext(user, orders, prefs); }
+}
 
 return loadUser(userId)
     .flatMap(user -> loadOrders(user.id())
-        .map(orders -> new UserWithOrders(user, orders)))
+        .map(orders -> UserWithOrders.userWithOrders(user, orders)))
     .flatMap(ctx -> loadPreferences(ctx.user().id())
-        .map(prefs -> new DashboardContext(ctx.user(), ctx.orders(), prefs)))
+        .map(prefs -> DashboardContext.dashboardContext(ctx.user(), ctx.orders(), prefs)))
     .map(this::buildDashboard);
 ```
 
@@ -519,8 +527,8 @@ return loadUser(userId)
 - Debuggable intermediate states
 
 ```java
-private static final Cause NOT_FOUND = new UserNotFound("User not found");
-private static final Cause TIMEOUT = new ServiceUnavailable("Request timed out");
+private static final Cause NOT_FOUND = Causes.cause("User not found");
+private static final Cause TIMEOUT = Causes.cause("Request timed out");
 
 private Promise<User> recoverNetworkError(Cause cause) {
     return switch (cause) {
@@ -548,7 +556,7 @@ Atomic unit - one operation, no composition:
 ```java
 public Promise<User> findUser(UserId id) {
     return Promise.lift(
-        RepositoryError.DatabaseFailure::new,
+        t -> RepositoryError.DatabaseFailure.FACTORY.apply(Causes.fromThrowable(t)),
         () -> jdbcTemplate.queryForObject(...)
     );
 }
@@ -572,7 +580,7 @@ return Promise.all(fetchProfile.apply(userId),
                    fetchPreferences.apply(userId),
                    fetchOrders.apply(userId))
         .map((profile, prefs, orders) ->
-            new Dashboard(profile, prefs, orders));
+            Dashboard.dashboard(profile, prefs, orders));
 ```
 
 **Thread Safety:** All parallel operations must receive immutable inputs. No shared mutable state.
@@ -664,13 +672,13 @@ promise.allOrCancel(fn1, fn2, fn3).map(combine);     // Parallel, fail-fast + ca
 ```java
 // Lift exceptions in adapters
 Promise.lift(
-    RepositoryError.DatabaseFailure::new,
+    t -> RepositoryError.DatabaseFailure.FACTORY.apply(Causes.fromThrowable(t)),
     () -> jdbcTemplate.queryForObject(...)
 );
 
 // With custom exception mapper (constructor reference preferred)
 Result.lift(
-    CustomError.ProcessingFailed::new,
+    t -> CustomError.ProcessingFailed.FACTORY.apply(Causes.fromThrowable(t)),
     () -> riskyOperation()
 );
 ```
@@ -711,7 +719,7 @@ Which applies is a judgment — reversibility, the value of partial progress, th
 
 ## Naming Conventions
 
-- **Factory methods**: `TypeName.typeName(...)` (lowercase-first)
+- **Factory methods**: `TypeName.typeName(...)` (lowercase-first). Every record has a type-named factory (`Profile.profile(...)`), no exceptions: `Result<Self>` if the record has any invariant, `Self` if it has none; a generator or framework that builds a record with `new`/`::new` instead of its factory is defective; a local record declared inside a factory method is outside the rule: it is instantiated once, inside that method, and cannot be instantiated anywhere else.
 - **Validated inputs**: `Valid` prefix (not `Validated`): `ValidRequest`, `ValidUser`
 - **Error types**: Past tense verbs: `EmailNotFound`, `AccountLocked`, `PaymentFailed`
 - **State-machine state types**: `*State` suffix for the sealed sum of lifecycle states — `HoldState`, `BookingState`, `SeatState` — with variants kept bare (`Free`, `Held`, `Confirmed`, `Cancelled`, never `HeldState`). Reserve the suffix for the lifecycle sum a guarded transition advances, not every mutable holder; it joins the suffix-by-role family (`*Request`, `*Response`, `Cause`).
@@ -828,7 +836,7 @@ com.example.app/
 <!-- book:typed-errors -->
 Every failure is a `Cause`, and `Cause` has exactly one abstract member: `message()`. The construction idiom satisfies it structurally, so no error type ever hand-writes prose in a method body.
 
-A use case's failures form a sealed interface with two kinds of members. A **data-carrying failure** is a record: its components are the error's data, in declaration order, with a trailing `String message` component whose generated accessor *is* the `message()` implementation. Its `FACTORY`, built from a message template and the canonical constructor reference, is the construction path. **Fixed-text failures** share one enum in a prescribed shape - a single `message` field, a constructor, a field-returning accessor - with each failure declared as one constant carrying its text.
+A use case's failures form a sealed interface with two kinds of members. A **data-carrying failure** is a record: its components are the error's data, in declaration order, with a trailing `String message` component whose generated accessor *is* the `message()` implementation. Its `FACTORY`, built from a message template and the canonical constructor reference, is the construction path, and the record's type-named static factory (`accountLocked(userId)`, like every record's) delegates to it with the non-message components. **Fixed-text failures** share one enum in a prescribed shape - a single `message` field, a constructor, a field-returning accessor - with each failure declared as one constant carrying its text.
 
 ```java
 public sealed interface LoginError extends Cause {
@@ -836,6 +844,8 @@ public sealed interface LoginError extends Cause {
     record AccountLocked(UserId userId, String message) implements LoginError {
         static final Fn1<AccountLocked, UserId> FACTORY =
             Causes.forOneValue("Account is locked: %s", AccountLocked::new);
+
+        static AccountLocked accountLocked(UserId userId) { return FACTORY.apply(userId); }
     }
 
     enum General implements LoginError {
@@ -862,7 +872,7 @@ Three rules govern the shape:
 
 - **Every value the template formats is a component.** The factory's parameters are exactly the non-message components, so the data an error mentions stays typed - renderable at the boundary, countable in telemetry, never trapped in prose. The `message` component comes last, which is what lets the constructor reference serve as the factory argument. Zero data is a property, not an omission: `INVALID_CREDENTIALS` deliberately says nothing about which credential failed.
 - **One discriminable case per failure** - its own record type or its own enum constant. Qualified enum constant case labels (`case General.INVALID_CREDENTIALS ->`) discriminate constants in a switch over the sealed interface, and listing every constant preserves exhaustiveness: adding a constant breaks every switch, exactly as adding a record does.
-- **The `FACTORY` is the only constructor call site.** `new AccountLocked(id, "hand-typed prose")` compiles and silently decouples the stored message from the declared template; routed through the factory, template and data cannot disagree.
+- **The `FACTORY` is the only constructor call site, inside the record's own body as well.** `new AccountLocked(id, "hand-typed prose")` compiles and silently decouples the stored message from the declared template; routed through the factory, template and data cannot disagree. The type-named factory delegates to `FACTORY`, so the one rule that every record is built through a factory named for its type holds here too.
 <!-- /book:typed-errors -->
 
 ### Wrapped and Terminal Causes
@@ -874,6 +884,8 @@ Two mixins nested in `Cause` remove the remaining overrides. A failure wrapping 
 record PaymentFailed(Cause origin, String message) implements TransferError, Cause.Wrapped {
     static final Fn1<PaymentFailed, Cause> FACTORY =
         Causes.forOneValue("Payment step failed", PaymentFailed::new);
+
+    static PaymentFailed paymentFailed(Cause origin) { return FACTORY.apply(origin); }
 }
 
 // translation at a composition boundary:
@@ -903,14 +915,14 @@ Carrying the cause does not carry its retry classification. At Pragmatica 1.0.0-
 // Test failures - use .onSuccess(Assertions::fail)
 @Test
 void validation_fails_forInvalidInput() {
-    ValidRequest.validRequest(new Request("invalid", "bad"))
+    ValidRequest.validRequest(Request.request("invalid", "bad"))
                 .onSuccess(Assertions::fail);
 }
 
 // Test successes - chain onFailure then onSuccess
 @Test
 void validation_succeeds_forValidInput() {
-    ValidRequest.validRequest(new Request("valid@example.com", "Valid1234"))
+    ValidRequest.validRequest(Request.request("valid@example.com", "Valid1234"))
                 .onFailure(Assertions::fail)
                 .onSuccess(valid -> {
                     assertEquals("valid@example.com", valid.email().value());
@@ -1082,7 +1094,7 @@ Before considering JBCT code complete, verify ALL of these:
 - [ ] Dependencies injected via factory parameters
 
 ### Naming
-- [ ] Factory methods: `TypeName.typeName(...)`
+- [ ] Factory methods: `TypeName.typeName(...)` on every record (`Result<Self>` if any invariant, `Self` if none; a local record inside a factory method is exempt)
 - [ ] Validated types: `Valid` prefix (not `Validated`)
 - [ ] Errors: past tense (`NotFound`, `Failed`, `Expired`)
 

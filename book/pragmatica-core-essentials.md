@@ -54,7 +54,7 @@ implementation 'org.pragmatica-lite:core:1.0.0-rc4'
 ```java
 import org.pragmatica.lang.Option;
 
-Option<User> user = Option.some(new User("Alice"));
+Option<User> user = Option.some(User.user("Alice"));
 Option<User> nobody = Option.none();
 Option<User> fromNullable = Option.option(possiblyNullValue);
 ```
@@ -69,7 +69,7 @@ Option<User> fromNullable = Option.option(possiblyNullValue);
 import org.pragmatica.lang.Result;
 import org.pragmatica.lang.Cause;
 
-Result<Email> valid = Result.success(new Email("user@example.com"));
+Result<Email> valid = Email.email("user@example.com");
 Result<Email> invalid = INVALID_EMAIL.result();  // Preferred: fluent style
 
 // Also works (but verbose)
@@ -222,12 +222,12 @@ Result<Password> password = Password.password(rawPassword);
 
 // Wrong: Nested Result
 Result<Result<ValidRequest>> nested = email.map(e ->
-    password.map(p -> new ValidRequest(e, p))
+    password.map(p -> ValidRequest.validRequest(e, p))
 );
 
 // Correct: Flat chain
 Result<ValidRequest> flat = email.flatMap(e ->
-    password.map(p -> new ValidRequest(e, p))
+    password.map(p -> ValidRequest.validRequest(e, p))
 );
 ```
 
@@ -274,7 +274,7 @@ Result<ValidRequest> request = Result.all(
     Email.email(raw.email()),
     Password.password(raw.password()),
     Name.name(raw.name())
-).map(ValidRequest::new);
+).map(ValidRequest::validRequest);
 ```
 
 **Behavior:** Accumulates ALL failures into CompositeCause. Does not short-circuit.
@@ -286,7 +286,7 @@ Promise<Dashboard> dashboard = Promise.all(
     fetchProfile(userId),
     fetchOrders(userId),
     fetchPreferences(userId)
-).map(Dashboard::new);
+).map(Dashboard::dashboard);
 ```
 
 **Behavior:** Executes in parallel and waits for every input. If any fail, accumulates ALL failures into CompositeCause, like `Result.all`. `Promise.allOrCancel` is the fail-fast form: first failure, remaining inputs cancelled.
@@ -327,7 +327,7 @@ Result<Integer> parsed = Result.lift(() -> Integer.parseInt(raw));
 
 // With custom error mapping
 Result<Integer> parsed = Result.lift(
-    ParseError::new,
+    t -> ParseError.FACTORY.apply(Causes.fromThrowable(t)),
     () -> Integer.parseInt(raw)
 );
 ```
@@ -337,14 +337,14 @@ Result<Integer> parsed = Result.lift(
 ```java
 // Single parameter
 Result<Hash> hashed = Result.lift1(
-    HashError::new,
+    t -> HashError.FACTORY.apply(Causes.fromThrowable(t)),
     encoder::encode,
     password.value()
 );
 
 // Two parameters
 Result<Token> token = Result.lift2(
-    TokenError::new,
+    t -> TokenError.FACTORY.apply(Causes.fromThrowable(t)),
     tokenService::generate,
     userId,
     expiry
@@ -355,7 +355,7 @@ Result<Token> token = Result.lift2(
 
 ```java
 Promise<User> user = Promise.lift(
-    DatabaseError::new,
+    t -> DatabaseError.FACTORY.apply(Causes.fromThrowable(t)),
     () -> jdbcTemplate.queryForObject(sql, mapper, id)
 );
 ```

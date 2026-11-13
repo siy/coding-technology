@@ -30,21 +30,32 @@ This focused example demonstrates **Aspects** for cross-cutting concerns in a fi
 ## Domain Model
 
 ```java
-public record AccountId(String value) { /* factory omitted */ }
+public record AccountId(String value) {
+    public static Result<AccountId> accountId(String raw) { ... }
+}
 
-public record TransferId(String value) { /* factory omitted */ }
+public record TransferId(String value) {
+    public static TransferId transferId(String value) { return new TransferId(value); }
+}
 
 public record Money(BigDecimal value) {
+    public static Money money(BigDecimal value) { return new Money(value); }
+
+    public static Result<Money> money(String raw) {
+        return Result.lift(Causes::fromThrowable, () -> new BigDecimal(raw))
+                     .map(Money::money);
+    }
+
     public boolean isGreaterThan(Money other) {
         return this.value.compareTo(other.value) > 0;
     }
 
     public Money subtract(Money other) {
-        return new Money(this.value.subtract(other.value));
+        return money(this.value.subtract(other.value));
     }
 
     public Money add(Money other) {
-        return new Money(this.value.add(other.value));
+        return money(this.value.add(other.value));
     }
 }
 
@@ -54,13 +65,25 @@ public record TransferRequest(
     String destinationAccountId,
     String amount,
     String initiatedBy
-) {}
+) {
+    public static TransferRequest transferRequest(String requestId,
+                                                  String sourceAccountId,
+                                                  String destinationAccountId,
+                                                  String amount,
+                                                  String initiatedBy) {
+        return new TransferRequest(requestId, sourceAccountId, destinationAccountId, amount, initiatedBy);
+    }
+}
 
 public record TransferResult(
     TransferId transferId,
     Money amount,
     Instant completedAt
-) {}
+) {
+    public static TransferResult transferResult(TransferId transferId, Money amount, Instant completedAt) {
+        return new TransferResult(transferId, amount, completedAt);
+    }
+}
 ```
 
 ---
@@ -92,11 +115,15 @@ public sealed interface TransferError extends Cause {
         static final Fn2<AuthorizationRequired, Money, Money> FACTORY =
             Causes.forTwoValues("Transfer of %s requires authorization (threshold: %s)",
                                 AuthorizationRequired::new);
+
+        static AuthorizationRequired authorizationRequired(Money amount, Money threshold) { return FACTORY.apply(amount, threshold); }
     }
 
     record TransferFailed(Cause origin, String message) implements TransferError, Cause.Wrapped {
         static final Fn1<TransferFailed, Cause> FACTORY =
             Causes.forOneValue("Transfer execution failed", TransferFailed::new);
+
+        static TransferFailed transferFailed(Cause origin) { return FACTORY.apply(origin); }
     }
 }
 ```
@@ -249,7 +276,7 @@ public interface TransferFunds {
         Result<TransferResult> result,
         Instant startTime
     ) {
-        var entry = new AuditEntry(
+        var entry = AuditEntry.auditEntry(
             transfer.requestId(),
             "TRANSFER",
             transfer.initiatedBy(),
@@ -281,7 +308,17 @@ public record AuditEntry(
     Instant completedAt,
     String outcome,
     String details
-) {}
+) {
+    public static AuditEntry auditEntry(String requestId,
+                                        String operation,
+                                        String initiatedBy,
+                                        Instant startedAt,
+                                        Instant completedAt,
+                                        String outcome,
+                                        String details) {
+        return new AuditEntry(requestId, operation, initiatedBy, startedAt, completedAt, outcome, details);
+    }
+}
 ```
 
 ### RetryPolicy
@@ -374,8 +411,8 @@ public class TransferExecutor implements TransferFunds.ExecuteTransfer {
         accounts.credit(transfer.destinationAccount(), transfer.amount());
         idempotencyStore.record(transfer.requestId());
 
-        return new TransferResult(
-            new TransferId(UUID.randomUUID().toString()),
+        return TransferResult.transferResult(
+            TransferId.transferId(UUID.randomUUID().toString()),
             transfer.amount(),
             Instant.now()
         );
@@ -459,8 +496,8 @@ class TransferFundsTest {
                 if (attempts.incrementAndGet() < 3) {
                     return TransientError.TRANSIENT_ERROR.promise();
                 }
-                return Promise.success(new TransferResult(
-                    new TransferId("tx-123"),
+                return Promise.success(TransferResult.transferResult(
+                    TransferId.transferId("tx-123"),
                     transfer.amount(),
                     Instant.now()
                 ));
@@ -495,7 +532,7 @@ class TransferFundsTest {
             var useCase = TransferFunds.transferFunds(
                 t -> Promise.success(t),
                 t -> Promise.success(t),
-                t -> Promise.success(new TransferResult(new TransferId("tx-123"), t.amount(), Instant.now())),
+                t -> Promise.success(TransferResult.transferResult(TransferId.transferId("tx-123"), t.amount(), Instant.now())),
                 auditLog,
                 TimeSpan.timeSpan(5).seconds(),
                 RetryPolicy.retryPolicy(0, Set.of())
@@ -521,7 +558,7 @@ class TransferFundsTest {
             var useCase = TransferFunds.transferFunds(
                 t -> Promise.success(t),
                 t -> TransferError.General.INSUFFICIENT_FUNDS.promise(),
-                t -> Promise.success(new TransferResult(new TransferId("tx-123"), t.amount(), Instant.now())),
+                t -> Promise.success(TransferResult.transferResult(TransferId.transferId("tx-123"), t.amount(), Instant.now())),
                 auditLog,
                 TimeSpan.timeSpan(5).seconds(),
                 RetryPolicy.retryPolicy(0, Set.of())
@@ -544,7 +581,7 @@ class TransferFundsTest {
             var useCase = TransferFunds.transferFunds(
                 t -> Promise.success(t),
                 t -> Promise.success(t),
-                t -> Promise.success(new TransferResult(new TransferId("tx-123"), t.amount(), Instant.now())),
+                t -> Promise.success(TransferResult.transferResult(TransferId.transferId("tx-123"), t.amount(), Instant.now())),
                 failingAudit,
                 TimeSpan.timeSpan(5).seconds(),
                 RetryPolicy.retryPolicy(0, Set.of())
@@ -558,7 +595,7 @@ class TransferFundsTest {
     }
 
     private TransferRequest validRequest() {
-        return new TransferRequest(
+        return TransferRequest.transferRequest(
             "req-123",
             "acc-source",
             "acc-dest",

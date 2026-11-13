@@ -40,7 +40,7 @@ The goal is 100% compliance through systematic verification, not heroic effort.
 
 ```java
 // Method references (ALWAYS PREFERRED)
-.map(Email::new)
+.flatMap(Email::email)
 .flatMap(this::validate)
 
 // Single-value expression (no braces)
@@ -48,7 +48,7 @@ The goal is 100% compliance through systematic verification, not heroic effort.
 .filter(s -> !s.isBlank())
 
 // Multi-value expression (no braces)
-.map((a, b) -> new Pair(a, b))
+.map((a, b) -> Pair.pair(a, b))
 ```
 
 ### Extraction Pattern
@@ -311,7 +311,7 @@ static Step validate(Validator validator) {
 |-----------|-----------|-----|
 | Multi-statement lambda | `{ }` with multiple lines | Extract to method |
 | Nested monadic ops | `.flatMap(x -> y.map(...))` | Extract inner to method |
-| Always-succeeding Result | `Result.success(new X())` | Return X directly |
+| Always-succeeding Result | `Result.success(X.x())` | Return X directly |
 | Mixed I/O and domain | File/DB ops in domain class | Split to adapter |
 | Primitive obsession | `String url`, `int poolSize` | Create value object |
 | Conditional logging | `if (x) log.debug()` | Remove condition |

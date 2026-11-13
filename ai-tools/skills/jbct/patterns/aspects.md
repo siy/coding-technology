@@ -231,6 +231,15 @@ public record AspectConfig(
     boolean metricsEnabled,
     String metricName
 ) {
+    public static AspectConfig aspectConfig(boolean retryEnabled,
+                                            RetryPolicy retryPolicy,
+                                            boolean timeoutEnabled,
+                                            TimeSpan timeout,
+                                            boolean metricsEnabled,
+                                            String metricName) {
+        return new AspectConfig(retryEnabled, retryPolicy, timeoutEnabled, timeout, metricsEnabled, metricName);
+    }
+
     public <T> Promise<T> apply(Promise<T> operation) {
         Promise<T> result = operation;
 

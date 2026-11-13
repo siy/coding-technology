@@ -14,9 +14,9 @@ The `mapWith` family flattens the nested-`flatMap`-with-captured-binding workaro
 
 ```java
 // instead of:
-result.flatMap(t -> operation(t.field()).map(b -> new Stage<>(t, b)))
+result.flatMap(t -> operation(t.field()).map(b -> Stage.stage(t, b)))
 // write:
-result.mapWith(T::field, this::operation, Stage::new)
+result.mapWith(T::field, this::operation, Stage::stage)
 ```
 
 ## The six combinators
@@ -41,25 +41,31 @@ result.mapWith(T::field, this::operation, Stage::new)
 
 `ensureWith` is the *gating* side effect: unlike `onSuccess` (Consumer, cannot fail, does not gate `Promise` chains), `ensureWith` awaits the operation and propagates its failure. Entitlement checks, rate limits, fire-and-forget audit writes, notifications.
 
-**Load-bearing rule (ensureWith vs mapWith).** The deciding question is *does any later step read the outcome?* If no — it is transient, gate it away with `ensureWith`. If yes — the operation must return *evidence* and be accreted via `mapWith`, so holding the next stage proves the check passed. The same audit operation lands in two homes by this test: `ensureWith(audit::write)` when nobody reads the id, `mapWith(getter, audit::write, Audited::new)` when a later step needs it. Corollary: **a load-bearing check that returns only a boolean is itself the parse-don't-validate anti-pattern** — make it return the proof.
+**Load-bearing rule (ensureWith vs mapWith).** The deciding question is *does any later step read the outcome?* If no — it is transient, gate it away with `ensureWith`. If yes — the operation must return *evidence* and be accreted via `mapWith`, so holding the next stage proves the check passed. The same audit operation lands in two homes by this test: `ensureWith(audit::write)` when nobody reads the id, `mapWith(getter, audit::write, Audited::audited)` when a later step needs it. Corollary: **a load-bearing check that returns only a boolean is itself the parse-don't-validate anti-pattern** — make it return the proof.
 
 ## Stage-accretion containers
 
-The factory slot's `(T, B) -> U` shape is exactly the canonical constructor of a knowledge-accreting record — each pipeline stage holds new knowledge plus the previous container as a type parameter:
+The factory slot's `(T, B) -> U` shape is exactly the parameter list of a knowledge-accreting record's type-named factory — each pipeline stage holds new knowledge plus the previous container as a type parameter:
 
 ```java
-record ValidRequest(UserId userId) {}
-record UserProfile<T>(T request, Profile profile) {}
-record UserArticles<T>(T request, List<Article> articles) {}
+record ValidRequest(UserId userId) {
+    static ValidRequest validRequest(UserId userId) { return new ValidRequest(userId); }
+}
+record UserProfile<T>(T request, Profile profile) {
+    static <T> UserProfile<T> userProfile(T request, Profile profile) { return new UserProfile<>(request, profile); }
+}
+record UserArticles<T>(T request, List<Article> articles) {
+    static <T> UserArticles<T> userArticles(T request, List<Article> articles) { return new UserArticles<>(request, articles); }
+}
 
 Request.parse(raw)                                                       // Result<ValidRequest>
-       .mapWith(ValidRequest::userId, profiles::fetch, UserProfile::new) // Result<UserProfile<ValidRequest>>
+       .mapWith(ValidRequest::userId, profiles::fetch, UserProfile::userProfile) // Result<UserProfile<ValidRequest>>
        .ensureWith(p -> entitlements.check(p.request().userId()))        // gate; container unchanged
-       .mapWith(UserProfile::profile, articles::byAuthor, UserArticles::new)
+       .mapWith(UserProfile::profile, articles::byAuthor, UserArticles::userArticles)
        .map(Response::from);
 ```
 
-Every slot is a method reference: getter = record accessor, operation = service method against its **narrow natural input** (no container coupling), factory = next stage's canonical constructor. A well-shaped stage has no lambda bodies. Earlier knowledge stays reachable through the `request()` chain; nothing is lost — the factory always receives the full previous container.
+Every slot is a method reference: getter = record accessor, operation = service method against its **narrow natural input** (no container coupling), factory = next stage's type-named factory. A well-shaped stage has no lambda bodies. Earlier knowledge stays reachable through the `request()` chain; nothing is lost — the factory always receives the full previous container.
 
 ## When to use
 
@@ -80,7 +86,7 @@ result.mapWith(T::id, profiles::fetch, ...).mapWith(T::id, prefs::fetch, ...)   
 result.all(Result::success,                          // keep the container itself
            v -> profiles.fetch(v.id()),              // independent fetch 1
            v -> prefs.fetch(v.id()))                 // independent fetch 2
-      .map(Enriched::new)                            // record Enriched<T>(T request, Profile p, Prefs pr)
+      .map(Enriched::enriched)                        // Enriched<T>(T request, Profile p, Prefs pr), built by its factory enriched(...)
 
 // WRONG: non-gating side effect via ensureWith — use onSuccess for fire-and-forget consumers
 promise.ensureWith(t -> log.info(t))                 // log returning Promise just to gate? use onSuccess
@@ -99,12 +105,12 @@ result.flatMap(t -> operation(t.field()))            // original t gone; use map
 ## Boundaries (when NOT to accrete)
 
 - **Two-step pipeline where each step needs only the previous step's output** → plain `flatMap`; a stage record is ceremony. Accretion's defining trigger is "a *later* step needs *earlier* knowledge."
-- **A composed type needs naming** (step-interface boundary, sub-pipeline seam) → flatten the `E<D<C<...>>>` accretion into a named milestone record (`record EnrichedOrder(ValidRequest request, Profile profile, List<Article> articles) {}`). Accrete generically *within* a use case; flatten at boundaries other code must speak about.
+- **A composed type needs naming** (step-interface boundary, sub-pipeline seam) → flatten the `E<D<C<...>>>` accretion into a named milestone record (`record EnrichedOrder(ValidRequest request, Profile profile, List<Article> articles) { static EnrichedOrder enrichedOrder(...) { ... } }`). Accrete generically *within* a use case; flatten at boundaries other code must speak about.
 - **A `request()` chain three hops deep** → same flattening signal, or a capability interface (`HasUserId`) if the depth comes from operation reuse rather than pipeline length.
 
 ## Testing
 
-- Stage records with canonical constructors need **no dedicated tests** — nothing to get wrong.
+- Stage records whose factories only assemble their components need **no dedicated tests** — nothing to get wrong.
 - Validating stage factories (`flatMapWith` constructors) are tested **like value objects**: success + one test per rejection rule.
 - Pipelines: stub the step operations, assert the happy path, then **one test per failing step** — including `ensureWith` stages: its failure must fail the chain, and its success must leave the container untouched (assert the *same instance* flows through).
 

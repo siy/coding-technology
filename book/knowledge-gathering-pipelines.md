@@ -57,9 +57,15 @@ has gotten.
 The direct translation of "each stage = previous stage + new knowledge":
 
 ```java
-record ValidRequest(UserId userId) {}
-record WithProfile(ValidRequest request, Profile profile) {}
-record WithArticles(WithProfile request, List<Article> articles) {}
+record ValidRequest(UserId userId) {
+    static ValidRequest validRequest(UserId userId) { return new ValidRequest(userId); }
+}
+record WithProfile(ValidRequest request, Profile profile) {
+    static WithProfile withProfile(ValidRequest request, Profile profile) { return new WithProfile(request, profile); }
+}
+record WithArticles(WithProfile request, List<Article> articles) {
+    static WithArticles withArticles(WithProfile request, List<Article> articles) { return new WithArticles(request, articles); }
+}
 ```
 
 This already delivers the core guarantee — holding a `WithArticles` proves the profile and
@@ -70,9 +76,15 @@ predecessor needs a new record.
 ### The refinement: the previous stage as a type parameter
 
 ```java
-record ValidRequest(UserId userId) {}
-record UserProfile<T>(T request, Profile profile) {}
-record UserArticles<T>(T request, List<Article> articles) {}
+record ValidRequest(UserId userId) {
+    static ValidRequest validRequest(UserId userId) { return new ValidRequest(userId); }
+}
+record UserProfile<T>(T request, Profile profile) {
+    static <T> UserProfile<T> userProfile(T request, Profile profile) { return new UserProfile<>(request, profile); }
+}
+record UserArticles<T>(T request, List<Article> articles) {
+    static <T> UserArticles<T> userArticles(T request, List<Article> articles) { return new UserArticles<>(request, articles); }
+}
 ```
 
 Two things change, both significant.
@@ -95,11 +107,13 @@ error, not a runtime surprise. The compiler tracks pipeline progress for you.
 
 - **Component name `request`** for the previous-stage reference, uniformly. Access chains then
   read mechanically: `a.request().request().userId()`.
-- **The canonical constructor is the stage factory.** Its shape — `(T previous, Knowledge
-  gathered)` — is not an accident; it is the exact shape the pipeline combinators expect (next
-  section). Keep it.
-- **A validating stage adds a static factory** returning `Result`, following the value-object
-  convention (`QuotaScoped.quotaScoped(...)` below).
+- **Every stage record has a type-named factory, and its shape is the stage shape.** Its
+  parameters — `(T previous, Knowledge gathered)` — are not an accident; they are the exact
+  shape the pipeline combinators expect (next section), so the factory's method reference is
+  what goes into the combinator slot. Keep it.
+- **A validating stage's factory returns `Result`**, following the value-object
+  convention (`QuotaScoped.quotaScoped(...)` below); a stage with no invariants returns the
+  stage record itself.
 
 ### Reaching back: access patterns
 
@@ -114,6 +128,10 @@ stage type:
 interface HasUserId { UserId userId(); }
 
 record UserProfile<T extends HasUserId>(T request, Profile profile) implements HasUserId {
+    static <T extends HasUserId> UserProfile<T> userProfile(T request, Profile profile) {
+        return new UserProfile<>(request, profile);
+    }
+
     @Override
     public UserId userId() { return request.userId(); }
 }
@@ -135,10 +153,10 @@ binding:
 ```java
 // BEFORE: nesting + capture, just to keep the container alive
 validRequest.flatMap(valid -> profiles.fetch(valid.userId())
-                                      .map(profile -> new UserProfile<>(valid, profile)));
+                                      .map(profile -> UserProfile.userProfile(valid, profile)));
 
-// AFTER: source accessor + operation + next-stage constructor
-validRequest.mapWith(ValidRequest::userId, profiles::fetch, UserProfile::new);
+// AFTER: source accessor + operation + next-stage factory
+validRequest.mapWith(ValidRequest::userId, profiles::fetch, UserProfile::userProfile);
 ```
 
 ### The six combinators
@@ -168,13 +186,13 @@ propagates as empty; on `Promise`, the chain genuinely awaits the operation befo
 
 ### Why the factory slot fits the data structure
 
-Look at the factory's shape: `(T, B) -> U`. That is *exactly* the canonical constructor of a
-stage record — `(previous container, new knowledge) -> next stage`. The data
+Look at the factory's shape: `(T, B) -> U`. That is *exactly* the parameter list of a stage
+record's factory — `(previous container, new knowledge) -> next stage`. The data
 structure and the combinator family are two halves of one design: a well-shaped stage is a
 single line of method references, with no lambda bodies at all:
 
 ```java
-.mapWith(ValidRequest::userId, profiles::fetch, UserProfile::new)
+.mapWith(ValidRequest::userId, profiles::fetch, UserProfile::userProfile)
 //        ^ which knowledge      ^ what to do     ^ what the next stage looks like
 ```
 
@@ -184,9 +202,9 @@ single line of method references, with no lambda bodies at all:
 Promise<Response> handle(Request raw) {
     return ValidRequest.validRequest(raw)                                  // Result<ValidRequest>
         .async()                                                           // → Promise<ValidRequest>
-        .mapWith(ValidRequest::userId, profiles::fetch, UserProfile::new)  // Promise<UserProfile<ValidRequest>>
+        .mapWith(ValidRequest::userId, profiles::fetch, UserProfile::userProfile)  // Promise<UserProfile<ValidRequest>>
         .ensureWith(p -> p.request().userId(), rateLimiter::check)         // transient gate; container unchanged
-        .mapWith(p -> p.request().userId(), articles::byAuthor, UserArticles::new)
+        .mapWith(p -> p.request().userId(), articles::byAuthor, UserArticles::userArticles)
                                               // Promise<UserArticles<UserProfile<ValidRequest>>>
         .map(Response::from);                                              // knowledge → answer
 }
@@ -222,7 +240,7 @@ pass/fail. An audit write whose confirmation is consumed downstream is then a `m
 `ensureWith`:
 
 ```java
-.mapWith(p -> p.request().userId(), audit::write, Audited::new)   // record Audited<T>(T request, AuditId id)
+.mapWith(p -> p.request().userId(), audit::write, Audited::audited)   // record Audited<T>(T request, AuditId id)
 ```
 
 The same audit operation lands in two homes, decided by whether anyone reads the id. A
@@ -230,7 +248,7 @@ load-bearing outcome always carries a value to accrete; a pass/fail with no valu
 token, transient — a load-bearing check that returns only a boolean is itself the
 parse-don't-validate anti-pattern.
 
-### Validating stage constructors: flatMapWith
+### Validating stage factories: flatMapWith
 
 Parse-don't-validate applies at stage boundaries too. When entering the next stage is itself
 conditional on the gathered knowledge, give the stage record a validating factory and use
@@ -247,7 +265,7 @@ record QuotaScoped<T>(T request, Quota quota) {
 validRequest.flatMapWith(ValidRequest::userId, quotas::lookup, QuotaScoped::quotaScoped);
 ```
 
-Operation failure and constructor rejection both propagate as the chain's failure. The result is
+Operation failure and factory rejection both propagate as the chain's failure. The result is
 a pipeline in which *holding a `QuotaScoped<...>` proves quota was available* — the
 progress-proof property extends to business conditions, not just data presence.
 
@@ -258,7 +276,7 @@ container:
 
 ```java
 .mapWith(p -> recommender.suggest(p.request().userId(), p.profile().interests()),
-         Recommended::new)
+         Recommended::recommended)
 ```
 
 For cross-pipeline reuse of such operations, prefer capability bounds (`HasUserId`,
@@ -278,11 +296,11 @@ one step — the identity projection keeps the container in play:
 .all(Promise::success,                              // keep the container itself
      v -> profiles.fetch(v.userId()),               // independent fetch 1
      v -> preferences.fetch(v.userId()))            // independent fetch 2
-.map(Enriched::new)                                 // (ValidRequest, Profile, Prefs) -> Enriched<...>
+.map(Enriched::enriched)                             // (ValidRequest, Profile, Prefs) -> Enriched<...>
 ```
 
-with `record Enriched<T>(T request, Profile profile, Prefs prefs)` — the canonical-constructor
-convention extends naturally to stages that gather more than one fact at once.
+with `record Enriched<T>(T request, Profile profile, Prefs prefs)` and its factory
+`Enriched.enriched(...)` — the convention extends naturally to stages that gather more than one fact at once.
 
 ### Design notes
 
@@ -317,7 +335,9 @@ need naming (a step interface boundary, a sub-pipeline seam), that is the signal
 into a named milestone record**:
 
 ```java
-record EnrichedOrder(ValidRequest request, Profile profile, List<Article> articles) {}
+record EnrichedOrder(ValidRequest request, Profile profile, List<Article> articles) {
+    static EnrichedOrder enrichedOrder(ValidRequest request, Profile profile, List<Article> articles) { return new EnrichedOrder(request, profile, articles); }
+}
 ```
 
 Rule of thumb: accrete generically *within* a use case; flatten to a named record at boundaries
@@ -341,7 +361,7 @@ compiler, not the test suite, reports pipeline-shape mistakes.
 
 ## Testing
 
-Stage records with canonical constructors need no dedicated tests — there is nothing to get
+Stage records whose factories only assemble their components need no dedicated tests — there is nothing to get
 wrong. Validating stage factories are tested like value objects: success plus one test per
 rejection rule. Pipelines are tested per the evolutionary strategy (Chapters 11–12): stub the
 step operations, assert the happy path, then one test per failing step — including the
@@ -352,13 +372,13 @@ container untouched (assert the same instance flows through).
 
 - **Growing context**: each pipeline stage's container = **previous container as a type parameter
   + new knowledge**, so the composed type is a compiler-checked proof of pipeline progress.
-- The canonical constructor `(T, Knowledge)` of a stage record is exactly the factory shape
+- The type-named factory `(T, Knowledge)` of a stage record is exactly the factory shape
   `mapWith`/`flatMapWith` expect — a well-shaped stage is one lambda-free line: getter,
-  operation, constructor.
+  operation, factory.
 - Operations take their **narrow natural input**; the getter slot couples them to the pipeline
   at the wiring site only.
 - `ensureWith` = transient gates whose outcome no later step reads (gate, discard, pass through);
-  `flatMapWith` = validating stage constructors; whole-object forms + capability bounds = stages
+  `flatMapWith` = validating stage factories; whole-object forms + capability bounds = stages
   needing several facts. A load-bearing outcome returns evidence and is accreted, not gated away.
 - Multi-projection decomposition belongs to `all(...)`; independent parallel gathering belongs
   to Fork-Join with an accreting combine step.

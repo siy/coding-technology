@@ -139,16 +139,22 @@ public sealed interface RegistrationError extends Cause {
     record EmailExists(String email, String message) implements RegistrationError {
         static final Fn1<EmailExists, String> FACTORY =
             Causes.forOneValue("Email already registered: %s", EmailExists::new);
+
+        static EmailExists emailExists(String email) { return FACTORY.apply(email); }
     }
 
     record WeakPassword(String weakness, String message) implements RegistrationError {
         static final Fn1<WeakPassword, String> FACTORY =
             Causes.forOneValue("Password too weak: %s", WeakPassword::new);
+
+        static WeakPassword weakPassword(String weakness) { return FACTORY.apply(weakness); }
     }
 
     record InvalidUsername(String invalidChars, String message) implements RegistrationError {
         static final Fn1<InvalidUsername, String> FACTORY =
             Causes.forOneValue("Username contains invalid characters: %s", InvalidUsername::new);
+
+        static InvalidUsername invalidUsername(String invalidChars) { return FACTORY.apply(invalidChars); }
     }
 }
 ```
@@ -291,14 +297,14 @@ Explain the difference in behavior and output:
 Result<ValidForm> validateA(Form form) {
     return Email.email(form.email())
         .flatMap(email -> Password.password(form.password())
-            .map(password -> new ValidForm(email, password)));
+            .map(password -> ValidForm.validForm(email, password)));
 }
 
 // Version B
 Result<ValidForm> validateB(Form form) {
     return Result.all(Email.email(form.email()),
                      Password.password(form.password()))
-                 .map(ValidForm::new);
+                 .map(ValidForm::validForm);
 }
 ```
 
@@ -356,14 +362,14 @@ public Result<User> processUser(UserDto dto) {
     return Result.all(Email.email(dto.email()),
                      processOptionalName(dto.name()),
                      processOptionalAddress(dto.address()))
-                 .map(User::new);
+                 .map(User::user);
 }
 
 private Result<Option<Name>> processOptionalName(String raw) {
     return Option.option(raw)
         .map(String::trim)
         .filter(s -> !s.isBlank())
-        .map(Name::new)
+        .map(Name::name)
         .fold(
             () -> Result.success(Option.none()),
             name -> Result.success(Option.some(name))
@@ -380,7 +386,9 @@ private Result<Option<Address>> processOptionalAddress(AddressDto dto) {
 }
 
 // User record accepts Option types
-public record User(Email email, Option<Name> name, Option<Address> address) {}
+public record User(Email email, Option<Name> name, Option<Address> address) {
+    public static User user(Email email, Option<Name> name, Option<Address> address) { return new User(email, name, address); }
+}
 ```
 
 </details>
@@ -451,7 +459,7 @@ return validateOrder(request)
 return Promise.all(fetchUserProfile(userId),
                   fetchUserOrders(userId),
                   fetchUserPreferences(userId))
-              .map(Dashboard::new);
+              .map(Dashboard::dashboard);
 
 // C
 return switch (user.tier()) {
@@ -488,7 +496,9 @@ Implement a dashboard loader that fetches three pieces of data in parallel:
 public interface LoadDashboard {
     Promise<Dashboard> load(UserId userId);
 
-    record Dashboard(UserProfile profile, List<Order> orders, List<Product> recommendations) {}
+    record Dashboard(UserProfile profile, List<Order> orders, List<Product> recommendations) {
+        static Dashboard dashboard(UserProfile profile, List<Order> orders, List<Product> recommendations) { return new Dashboard(profile, orders, recommendations); }
+    }
 }
 ```
 
@@ -499,7 +509,9 @@ public interface LoadDashboard {
 public interface LoadDashboard {
     Promise<Dashboard> load(UserId userId);
 
-    record Dashboard(UserProfile profile, List<Order> orders, List<Product> recommendations) {}
+    record Dashboard(UserProfile profile, List<Order> orders, List<Product> recommendations) {
+        static Dashboard dashboard(UserProfile profile, List<Order> orders, List<Product> recommendations) { return new Dashboard(profile, orders, recommendations); }
+    }
 
     interface FetchProfile {
         Promise<UserProfile> apply(UserId userId);
@@ -520,7 +532,7 @@ public interface LoadDashboard {
                                     fetchOrders.apply(userId),
                                     fetchRecommendations.apply(userId)
                                         .recover(cause -> List.of()))  // FER: empty list, keep going
-                                .map(Dashboard::new);
+                                .map(Dashboard::dashboard);
     }
 }
 ```
@@ -698,12 +710,14 @@ public class OrderProcessor {
     public Promise<OrderResult> process(Order order) {
         return validateOrder(order)
             .flatMap(this::chargePayment)
-            .map(payment -> new OrderResult(order, payment));
+            .map(payment -> OrderResult.orderResult(order, payment));
     }
 }
 
 // Track processed orders externally with thread-safe collection if needed
 public record OrderResult(Order order, Payment payment) {
+    public static OrderResult orderResult(Order order, Payment payment) { return new OrderResult(order, payment); }
+
     public int amount() {
         return order.amount();
     }
@@ -729,7 +743,7 @@ private BatchResult aggregateResults(List<Result<OrderResult>> results) {
         .mapToInt(OrderResult::amount)
         .sum();
 
-    return new BatchResult(successful, total);
+    return BatchResult.batchResult(successful, total);
 }
 ```
 
@@ -829,13 +843,13 @@ class TransferFundsTest {
 
     // Success stubs
     private static final ValidateAccounts VALID_ACCOUNTS =
-        (from, to) -> Promise.success(new ValidatedAccounts(
-            new Account(from, Money.money(1000)),
-            new Account(to, Money.money(500))
+        (from, to) -> Promise.success(ValidatedAccounts.validatedAccounts(
+            Account.account(from, Money.money(BigDecimal.valueOf(1000))),
+            Account.account(to, Money.money(BigDecimal.valueOf(500)))
         ));
 
     private static final ExecuteTransfer TRANSFER_SUCCESS =
-        (accounts, amount) -> Promise.success(new TransferId("TXN-001"));
+        (accounts, amount) -> Promise.success(TransferId.transferId("TXN-001"));
 
     // Failure stubs
     private static final ValidateAccounts SOURCE_NOT_FOUND =
@@ -847,13 +861,13 @@ class TransferFundsTest {
     @Test
     void transfer_succeeds_forValidAccounts() {
         var useCase = TransferFunds.transferFunds(VALID_ACCOUNTS, TRANSFER_SUCCESS);
-        var request = new TransferRequest(
-            new AccountId("ACC-001"),
-            new AccountId("ACC-002"),
-            Money.money(100)
-        );
+        var request = Result.all(AccountId.accountId("ACC-001"),
+                                 AccountId.accountId("ACC-002"))
+                            .map((from, to) -> TransferRequest.transferRequest(
+                                from, to, Money.money(BigDecimal.valueOf(100))));
 
-        useCase.execute(request)
+        request.async()
+               .flatMap(useCase::execute)
                .await()
                .onFailure(Assertions::fail)
                .onSuccess(result ->
@@ -863,13 +877,13 @@ class TransferFundsTest {
     @Test
     void transfer_fails_whenSourceNotFound() {
         var useCase = TransferFunds.transferFunds(SOURCE_NOT_FOUND, TRANSFER_SUCCESS);
-        var request = new TransferRequest(
-            new AccountId("INVALID"),
-            new AccountId("ACC-002"),
-            Money.money(100)
-        );
+        var request = Result.all(AccountId.accountId("ACC-404"),
+                                 AccountId.accountId("ACC-002"))
+                            .map((from, to) -> TransferRequest.transferRequest(
+                                from, to, Money.money(BigDecimal.valueOf(100))));
 
-        useCase.execute(request)
+        request.async()
+               .flatMap(useCase::execute)
                .await()
                .onSuccess(Assertions::fail);
     }
@@ -914,7 +928,7 @@ class SlowServiceTest {
             TimeSpan.timeSpan(100).millis()
         );
 
-        withTimeout.fetch(new DataId("test"))
+        withTimeout.fetch(DataId.dataId("test"))
                    .await(TimeSpan.timeSpan(500).millis())
                    .onSuccess(Assertions::fail)
                    .onFailure(cause ->
@@ -923,14 +937,14 @@ class SlowServiceTest {
 
     @Test
     void fetch_succeeds_whenServiceFastEnough() {
-        SlowService fast = id -> Promise.success(new Data("result"));
+        SlowService fast = id -> Promise.success(Data.data("result"));
 
         var withTimeout = SlowService.withTimeout(
             fast,
             TimeSpan.timeSpan(1).seconds()
         );
 
-        withTimeout.fetch(new DataId("test"))
+        withTimeout.fetch(DataId.dataId("test"))
                    .await()
                    .onFailure(Assertions::fail)
                    .onSuccess(data ->
@@ -960,8 +974,12 @@ Design a use case interface for "Cancel Order" with these requirements:
 public interface CancelOrder {
     Promise<CancellationResult> execute(CancelRequest request);
 
-    record CancelRequest(UserId userId, OrderId orderId) {}
-    record CancellationResult(OrderId orderId, Option<RefundId> refundId) {}
+    record CancelRequest(UserId userId, OrderId orderId) {
+        static CancelRequest cancelRequest(UserId userId, OrderId orderId) { return new CancelRequest(userId, orderId); }
+    }
+    record CancellationResult(OrderId orderId, Option<RefundId> refundId) {
+        static CancellationResult cancellationResult(OrderId orderId, Option<RefundId> refundId) { return new CancellationResult(orderId, refundId); }
+    }
 
     // Step interfaces
     interface FindOrder {
@@ -999,7 +1017,7 @@ public interface CancelOrder {
             .flatMap(validateCancellable::apply)
             .flatMap(order -> processRefund.apply(order)
                 .flatMap(refundId -> updateStatus.apply(order.id(), OrderStatus.CANCELLED)
-                    .map(unit -> new CancellationResult(order.id(), refundId))))
+                    .map(unit -> CancellationResult.cancellationResult(order.id(), refundId))))
             .onSuccess(result -> sendNotification.apply(request.userId(), request.orderId())
                 .onFailure(cause -> log.warn("Notification failed", cause)));
     }
@@ -1065,7 +1083,7 @@ public interface BookSeat {
                                     releaseSeat, refundPayment,
                                     reservationId, paymentId, cause),
                                 Promise::success))
-                            .map(unit -> new Booking(reservationId, paymentId))));
+                            .map(unit -> Booking.booking(reservationId, paymentId))));
     }
 
     private static Promise<PaymentId> compensateReservation(ReleaseSeat releaseSeat,
@@ -1191,8 +1209,16 @@ public class UserService {
 public interface CreateUser {
     Promise<UserId> execute(CreateUserRequest request);
 
-    record CreateUserRequest(String email, String password) {}
-    record ValidRequest(Email email, Password password) {}
+    record CreateUserRequest(String email, String password) {
+        static CreateUserRequest createUserRequest(String email, String password) { return new CreateUserRequest(email, password); }
+    }
+    record ValidRequest(Email email, Password password) {
+        static Result<ValidRequest> validRequest(CreateUserRequest raw) {
+            return Result.all(Email.email(raw.email()),
+                              Password.password(raw.password()))
+                         .map(ValidRequest::new);
+        }
+    }
 
     interface CheckEmailUnique {
         Promise<Email> apply(Email email);

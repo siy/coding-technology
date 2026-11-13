@@ -105,7 +105,7 @@ class RegisterUserTest {
     void execute_fails_whenEmailInvalid() {
         var useCase = RegisterUser.registerUser(successStub(), successStub());
 
-        useCase.execute(new Request("invalid", "ValidPass123"))
+        useCase.execute(Request.request("invalid", "ValidPass123"))
                .await()
                .onSuccess(Assertions::fail);
     }
@@ -206,7 +206,7 @@ class RegisterUserTest {
 ```java
 class TestData {
     static User user(UserId id) {
-        return new User(
+        return User.user(
             id,
             Email.unsafe("test@example.com"),
             "Test User",
@@ -215,14 +215,14 @@ class TestData {
     }
 
     static RegisterUser.Request validRequest() {
-        return new RegisterUser.Request(
+        return RegisterUser.Request.request(
             "test@example.com",
             "ValidPass123"
         );
     }
 
     static RegisterUser.Request requestWith(String email, String password) {
-        return new RegisterUser.Request(email, password);
+        return RegisterUser.Request.request(email, password);
     }
 }
 ```
@@ -282,7 +282,7 @@ void error_containsExpectedMessage() {
 
 @Test
 void compositeCause_containsAllErrors() {
-    var request = new Request("invalid", "weak");
+    var request = Request.request("invalid", "weak");
 
     ValidRequest.validRequest(request)
                 .onFailure(cause -> {

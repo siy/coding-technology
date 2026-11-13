@@ -7,10 +7,14 @@
 ```java
 public interface UseCaseName extends UseCase.WithPromise<Response, Request> {
     // Input from external world
-    record Request(String field1, String field2) {}
+    record Request(String field1, String field2) {
+        static Request request(String field1, String field2) { return new Request(field1, field2); }
+    }
 
     // Output to external world
-    record Response(String result) {}
+    record Response(String result) {
+        static Response response(String result) { return new Response(result); }
+    }
 
     // Validated input (Valid prefix, not Validated)
     record ValidRequest(ValueObject1 vo1, ValueObject2 vo2) {
@@ -32,7 +36,7 @@ public interface UseCaseName extends UseCase.WithPromise<Response, Request> {
             .async()
             .flatMap(step1::apply)
             .flatMap(step2::apply)
-            .map(result -> new Response(result.value()));
+            .map(result -> Response.response(result.value()));
     }
 }
 ```
@@ -53,7 +57,9 @@ public interface RegisterUser extends UseCase.WithPromise<Response, Request> {
 External input - uses primitive types or strings:
 
 ```java
-record Request(String email, String password, String userId) {}
+record Request(String email, String password, String userId) {
+    static Request request(String email, String password, String userId) { return new Request(email, password, userId); }
+}
 ```
 
 **Not** domain types - validation happens in ValidRequest factory.
@@ -63,7 +69,9 @@ record Request(String email, String password, String userId) {}
 External output - can use domain types or primitives:
 
 ```java
-record Response(UserId userId, String confirmationToken) {}
+record Response(UserId userId, String confirmationToken) {
+    static Response response(UserId userId, String confirmationToken) { return new Response(userId, confirmationToken); }
+}
 ```
 
 ### 4. ValidRequest Record
@@ -108,7 +116,7 @@ static RegisterUser registerUser(CheckEmail check, SaveUser save, SendEmail send
         .flatMap(check::apply)
         .flatMap(save::apply)
         .flatMap(send::apply)
-        .map(token -> new Response(user.id(), token));
+        .map(token -> Response.response(user.id(), token));
 }
 
 // ❌ WRONG - Nested record implementation
@@ -127,9 +135,13 @@ static RegisterUser registerUser(CheckEmail check, SaveUser save) {
 
 ```java
 public interface RegisterUser extends UseCase.WithPromise<Response, Request> {
-    record Request(String email, String password) {}
+    record Request(String email, String password) {
+        static Request request(String email, String password) { return new Request(email, password); }
+    }
 
-    record Response(UserId userId, ConfirmationToken token) {}
+    record Response(UserId userId, ConfirmationToken token) {
+        static Response response(UserId userId, ConfirmationToken token) { return new Response(userId, token); }
+    }
 
     record ValidRequest(Email email, Password password) {
         static Result<ValidRequest> validRequest(Request raw) {
@@ -169,7 +181,7 @@ public interface RegisterUser extends UseCase.WithPromise<Response, Request> {
                     .flatMap(hashed -> saveUser.apply(valid, hashed))
             )
             .flatMap(sendConfirmation::apply)
-            .map(token -> new Response(user.id(), token));
+            .map(token -> Response.response(user.id(), token));
     }
 }
 ```
@@ -208,14 +220,18 @@ Descriptive action names:
 
 ```java
 public interface ValidateOrder extends UseCase.WithResult<Response, Request> {
-    record Request(String orderId) {}
-    record Response(boolean isValid) {}
+    record Request(String orderId) {
+        static Request request(String orderId) { return new Request(orderId); }
+    }
+    record Response(boolean isValid) {
+        static Response response(boolean isValid) { return new Response(isValid); }
+    }
 
     // Factory returns lambda with Result
     static ValidateOrder validateOrder(OrderRepository repo) {
         return request -> OrderId.orderId(request.orderId())
             .flatMap(repo::findOrder)
-            .map(order -> new Response(order.isValid()));
+            .map(order -> Response.response(order.isValid()));
     }
 }
 ```
@@ -224,15 +240,19 @@ public interface ValidateOrder extends UseCase.WithResult<Response, Request> {
 
 ```java
 public interface GetUserById extends UseCase.WithPromise<Response, Request> {
-    record Request(String userId) {}
-    record Response(User user) {}
+    record Request(String userId) {
+        static Request request(String userId) { return new Request(userId); }
+    }
+    record Response(User user) {
+        static Response response(User user) { return new Response(user); }
+    }
 
     // No ValidRequest - direct parsing
     static GetUserById getUserById(FetchUser fetchUser) {
         return request -> UserId.userId(request.userId())
             .async()
             .flatMap(fetchUser::apply)
-            .map(Response::new);
+            .map(Response::response);
     }
 }
 ```
@@ -241,7 +261,9 @@ public interface GetUserById extends UseCase.WithPromise<Response, Request> {
 
 ```java
 public interface TransferMoney {
-    record Request(String fromAccount, String toAccount, String amount) {}
+    record Request(String fromAccount, String toAccount, String amount) {
+        static Request request(String fromAccount, String toAccount, String amount) { return new Request(fromAccount, toAccount, amount); }
+    }
 
     record ValidAccounts(AccountId from, AccountId to) {
         static Result<ValidAccounts> validAccounts(String from, String to) {

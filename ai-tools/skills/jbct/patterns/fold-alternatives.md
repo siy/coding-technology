@@ -36,7 +36,7 @@ return repository()
 // AFTER: intent is explicit
 return repository()
     .findById(id)
-    .async(new NotFoundError(id))
+    .async(NotFoundError.notFoundError(id))
     .flatMap(order -> validateOrder(order));
 ```
 

@@ -297,7 +297,7 @@ public interface PlaceOrder {
             .flatMap(pair -> saveOrder.apply(pair.first(), pair.second()))
             .onSuccess(orderId -> sendNotification.apply(orderId)
                 .onFailure(e -> { /* log but don't fail */ }))
-            .map(OrderConfirmation::new);
+            .map(OrderConfirmation::orderConfirmation);
     }
 }
 
@@ -358,17 +358,14 @@ public class JooqUserRepository implements SaveUser {
     @Override
     public Promise<UserId> apply(ValidUser user) {
         return Promise.lift(
-            RepositoryError.DatabaseFailure::new,
-            () -> {
-                String id = dsl.insertInto(USERS)
-                    .set(USERS.EMAIL, user.email().value())
-                    .set(USERS.PASSWORD_HASH, user.passwordHash().value())
-                    .returningResult(USERS.ID)
-                    .fetchSingle()
-                    .value1();
-                return new UserId(id);
-            }
-        );
+            t -> RepositoryError.DatabaseFailure.FACTORY.apply(Causes.fromThrowable(t)),
+            () -> dsl.insertInto(USERS)
+                     .set(USERS.EMAIL, user.email().value())
+                     .set(USERS.PASSWORD_HASH, user.passwordHash().value())
+                     .returningResult(USERS.ID)
+                     .fetchSingle()
+                     .value1()
+        ).flatMap(id -> UserId.userId(id).async());
     }
 }
 ```
@@ -434,7 +431,7 @@ public static <T> Promise<T> fromCompletableFuture(
 ```java
 public Promise<User> findUser(UserId id) {
     return Promise.lift(
-        DatabaseError::new,  // Exception → Cause
+        t -> DatabaseError.FACTORY.apply(Causes.fromThrowable(t)),  // Exception → Cause
         () -> jdbcTemplate.queryForObject(SQL, mapper, id.value())
     );
 }

@@ -21,9 +21,13 @@ import org.pragmatica.result.Result;
 import org.pragmatica.promise.Promise;
 
 public interface RegisterUser extends UseCase.WithPromise<Response, Request> {
-    record Request(String email, String password) {}
+    record Request(String email, String password) {
+        static Request request(String email, String password) { return new Request(email, password); }
+    }
 
-    record Response(String userId, String confirmationToken) {}
+    record Response(String userId, String confirmationToken) {
+        static Response response(String userId, String confirmationToken) { return new Response(userId, confirmationToken); }
+    }
 
     @Override
     Promise<Response> execute(Request request);
@@ -160,7 +164,7 @@ public interface RegisterUser extends UseCase.WithPromise<Response, Request> {
                     .flatMap(hashed -> saveUser.apply(valid.email(), hashed))
             )
             .flatMap(sendEmail::apply)
-            .map(token -> new Response(
+            .map(token -> Response.response(
                 user.id().value().toString(),
                 token.value()
             ));
@@ -219,7 +223,7 @@ public class HashPasswordAdapter implements RegisterUser.HashPassword {
             SecurityError::cause,
             () -> {
                 String hashed = passwordEncoder.encode(password.value());
-                return new HashedPassword(hashed);
+                return HashedPassword.hashedPassword(hashed);
             }
         );
     }
@@ -247,7 +251,7 @@ public class SaveUserAdapter implements RegisterUser.SaveUser {
         return Promise.lift(
             DatabaseError::cause,
             () -> {
-                User user = new User(
+                User user = User.user(
                     UserId.random(),
                     email,
                     hashed,
@@ -365,7 +369,7 @@ class RegisterUserTest {
     @Test
     void execute_succeeds_withValidInput() {
         var checkEmail = stub(valid -> Promise.success(valid));
-        var hashPassword = stub(pwd -> Promise.success(new HashedPassword("hashed")));
+        var hashPassword = stub(pwd -> Promise.success(HashedPassword.hashedPassword("hashed")));
         var saveUser = stub((email, hash) -> Promise.success(testUser()));
         var sendEmail = stub(user -> Promise.success(testToken()));
 
@@ -384,7 +388,7 @@ class RegisterUserTest {
 
     @Test
     void execute_fails_whenEmailInvalid() {
-        var request = new RegisterUser.Request("invalid", "ValidPass123");
+        var request = RegisterUser.Request.request("invalid", "ValidPass123");
 
         useCase.execute(request)
                .await()
@@ -393,7 +397,7 @@ class RegisterUserTest {
 
     @Test
     void execute_fails_whenPasswordWeak() {
-        var request = new RegisterUser.Request("test@example.com", "weak");
+        var request = RegisterUser.Request.request("test@example.com", "weak");
 
         useCase.execute(request)
                .await()

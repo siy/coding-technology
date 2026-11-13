@@ -83,7 +83,7 @@ public Option<User> findByEmail(Email email) {
 **JDBC ResultSet example:**
 ```java
 public Promise<Option<User>> loadUser(UserId id) {
-    return Promise.lift(RepositoryError.DatabaseFailure::new,
+    return Promise.lift(t -> RepositoryError.DatabaseFailure.FACTORY.apply(Causes.fromThrowable(t)),
                         () -> {
                             ResultSet rs = executeQuery(id);
                             User user = rs.next() ? mapUser(rs) : null;  // null if not found
@@ -104,7 +104,7 @@ When persisting to databases with nullable columns, convert `Option<T>` to null 
 // Adapter layer - JOOQ insert with optional field
 public Promise<Unit> saveUser(User user) {
     return Promise.lift(
-            RepositoryError.DatabaseFailure::new,
+            t -> RepositoryError.DatabaseFailure.FACTORY.apply(Causes.fromThrowable(t)),
             () -> {
                 dsl.insertInto(USERS)
                    .set(USERS.ID, user.id().value())
@@ -141,7 +141,7 @@ void email_fails_forNull() {
 
 @Test
 void validRequest_fails_whenFieldNull() {
-    var request = new Request("valid@example.com", null);  // Test null password
+    var request = Request.request("valid@example.com", null);  // Test null password
     ValidRequest.validRequest(request)
                 .onSuccess(Assertions::fail);
 }
@@ -370,7 +370,7 @@ public Promise<Dashboard> loadDashboard(UserId userId) {
     return Promise.all(loadUserProfile(userId),
                        loadRecentOrders(userId).recover(cause -> List.of()),      // FER: empty section, page still renders
                        loadRecommendations(userId).recover(cause -> List.of()))   // FER: same
-                  .map(Dashboard::new);
+                  .map(Dashboard::dashboard);
 }
 ```
 
@@ -380,7 +380,9 @@ Here, profile is **required** (must succeed), but orders and recommendations gra
 
 ```java
 public interface LoadConfig {
-    record Config(String apiUrl, int timeout, boolean retryEnabled) {}
+    record Config(String apiUrl, int timeout, boolean retryEnabled) {
+        static Config config(String apiUrl, int timeout, boolean retryEnabled) { return new Config(apiUrl, timeout, retryEnabled); }
+    }
 
     Promise<Config> load();
 
@@ -388,7 +390,7 @@ public interface LoadConfig {
                                  LoadFromEnv loadEnv) {
         return () -> loadFile.apply()
                              .orElse(loadEnv.apply())
-                             .recover(cause -> new Config("https://api.default.com", 30, true));  // FER: built-in defaults
+                             .recover(cause -> Config.config("https://api.default.com", 30, true));  // FER: built-in defaults
     }
 }
 ```

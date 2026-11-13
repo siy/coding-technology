@@ -46,8 +46,12 @@ A Sequencer should have 2 to 5 steps. Fewer than 2, and it's probably just a Lea
 
 ```java
 public interface ProcessOrder {
-    record Request(String orderId, String paymentToken) {}
-    record Response(OrderConfirmation confirmation) {}
+    record Request(String orderId, String paymentToken) {
+        static Request request(String orderId, String paymentToken) { return new Request(orderId, paymentToken); }
+    }
+    record Response(OrderConfirmation confirmation) {
+        static Response response(OrderConfirmation confirmation) { return new Response(confirmation); }
+    }
 
     Result<Response> execute(Request request);
 
@@ -195,7 +199,7 @@ return validate.apply(request)
 private Promise<ReservationInput> fetchUserAndProduct(ValidRequest request) {
     return Promise.all(fetchUser(request.userId()),
                        fetchProduct(request.productId()))
-                  .map(ReservationInput::new);
+                  .map(ReservationInput::reservationInput);
 }
 ```
 
@@ -222,7 +226,7 @@ Not concurrent, just collects multiple Results:
 Result<ValidRequest> validated = Result.all(Email.email(raw.email()),
                                             Password.password(raw.password()),
                                             AccountId.accountId(raw.accountId()))
-                                       .map(ValidRequest::new);
+                                       .map(ValidRequest::validRequest);
 ```
 
 If all succeed, you get a tuple of values to pass to the combiner. If any fail, you get a `CompositeCause` containing all failures (not just the first).
@@ -241,7 +245,7 @@ Promise<Dashboard> buildDashboard(UserId userId) {
 private Dashboard createDashboard(Profile profile,
                                   List<Order> orders,
                                   List<Notification> notifications) {
-    return new Dashboard(profile, orders, notifications);
+    return Dashboard.dashboard(profile, orders, notifications);
 }
 ```
 
@@ -273,7 +277,7 @@ private Report createReport(List<Result<HealthStatus>> results) {
                           .filter(Result::isFailure)
                           .map(Result::cause)
                           .toList();
-    return new Report(successes, failures);
+    return Report.report(successes, failures);
 }
 ```
 

@@ -49,7 +49,7 @@ public Result<Order> calculateTotal(Cart cart) {
     for (Item item : cart.items()) {
         total += item.price();  // Sequential mutation
     }
-    return Result.success(new Order(cart, total));
+    return Result.success(Order.order(cart, total));
 }
 ```
 
@@ -200,7 +200,7 @@ private Promise<Discount> applyDiscount(Cart cart) {
 // CORRECT: Create new instances
 private Promise<Discount> applyDiscount(Cart cart) {
     var discountAmount = calculateDiscountFor(cart);
-    return Promise.success(new Discount(cart, discountAmount));  // Returns new data
+    return Promise.success(Discount.discount(cart, discountAmount));  // Returns new data
 }
 ```
 

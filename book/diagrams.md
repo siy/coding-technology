@@ -54,7 +54,7 @@ flowchart TB
 return Promise.all(stepA.apply(input),
                   stepB.apply(input),
                   stepC.apply(input))
-              .map(CombinedResult::new);
+              .map(CombinedResult::combinedResult);
 ```
 
 ---
@@ -150,7 +150,7 @@ flowchart LR
 **Code Pattern:**
 ```java
 return Promise.lift(
-    DatabaseError::new,
+    t -> DatabaseError.FACTORY.apply(Causes.fromThrowable(t)),
     () -> jdbcTemplate.queryForObject(sql, mapper, params)
 );
 ```

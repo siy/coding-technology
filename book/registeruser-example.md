@@ -48,8 +48,12 @@ package com.example.app.usecase.registeruser;
 import org.pragmatica.lang.*;
 
 public interface RegisterUser {
-    record Request(String email, String password, String referralCode) {}
-    record Response(UserId userId, ConfirmationToken token) {}
+    record Request(String email, String password, String referralCode) {
+        static Request request(String email, String password, String referralCode) { return new Request(email, password, referralCode); }
+    }
+    record Response(UserId userId, ConfirmationToken token) {
+        static Response response(UserId userId, ConfirmationToken token) { return new Response(userId, token); }
+    }
 
     Promise<Response> execute(Request request);
 
@@ -230,7 +234,7 @@ class BcryptPasswordHasher implements HashPassword {
         return Result.lift1(t -> RegistrationError.PasswordHashingFailed.FACTORY.apply(Causes.fromThrowable(t)),
                             encoder::encode,
                             password.value())
-                     .map(HashedPassword::new);
+                     .map(HashedPassword::hashedPassword);
     }
 }
 ```
@@ -242,20 +246,21 @@ class JooqUserRepository implements SaveUser {
 
     public Promise<User> apply(ValidUser user) {
         return Promise.lift(t -> RepositoryError.DatabaseFailure.FACTORY.apply(Causes.fromThrowable(t)),
-                            () -> saveUser(user));
+                            () -> insertUser(user))
+                      .flatMap(id -> UserId.userId(id)
+                                           .map(userId -> User.user(userId, user.email()))
+                                           .async());
     }
 
-    private User saveUser(ValidUser user) {
-        String id = dsl.insertInto(USERS)
-                       .set(USERS.EMAIL, user.email().value())
-                       .set(USERS.PASSWORD_HASH, user.hashed().value())
-                       .set(USERS.REFERRAL_CODE,
-                            user.refCode().map(ReferralCode::value).or(null))
-                       .returningResult(USERS.ID)
-                       .fetchSingle()
-                       .value1();
-
-        return new User(new UserId(id), user.email());
+    private String insertUser(ValidUser user) {
+        return dsl.insertInto(USERS)
+                  .set(USERS.EMAIL, user.email().value())
+                  .set(USERS.PASSWORD_HASH, user.hashed().value())
+                  .set(USERS.REFERRAL_CODE,
+                       user.refCode().map(ReferralCode::value).or(null))
+                  .returningResult(USERS.ID)
+                  .fetchSingle()
+                  .value1();
     }
 }
 ```
@@ -273,7 +278,7 @@ class TokenServiceClient implements GenerateToken {
     }
 
     private Response buildResponse(UserId userId, Map<String, String> resp) {
-        return new Response(userId, new ConfirmationToken(resp.get("token")));
+        return Response.response(userId, ConfirmationToken.confirmationToken(resp.get("token")));
     }
 }
 ```
@@ -303,11 +308,15 @@ public sealed interface RegistrationError extends Cause {
     record PasswordHashingFailed(Cause origin, String message) implements RegistrationError, Cause.Wrapped {
         static final Fn1<PasswordHashingFailed, Cause> FACTORY =
             Causes.forOneValue("Password hashing failed", PasswordHashingFailed::new);
+
+        static PasswordHashingFailed passwordHashingFailed(Cause origin) { return FACTORY.apply(origin); }
     }
 
     record TokenGenerationFailed(Cause origin, String message) implements RegistrationError, Cause.Wrapped {
         static final Fn1<TokenGenerationFailed, Cause> FACTORY =
             Causes.forOneValue("Token generation failed", TokenGenerationFailed::new);
+
+        static TokenGenerationFailed tokenGenerationFailed(Cause origin) { return FACTORY.apply(origin); }
     }
 }
 ```
@@ -322,7 +331,7 @@ Sealed interface ensures exhaustive pattern matching.
 ```java
 @Test
 void validRequest_fails_forInvalidEmail() {
-    var request = new Request("not-an-email", "Valid1234", null);
+    var request = Request.request("not-an-email", "Valid1234", null);
 
     ValidRequest.validRequest(request)
                 .onSuccess(Assertions::fail);
@@ -330,7 +339,7 @@ void validRequest_fails_forInvalidEmail() {
 
 @Test
 void validRequest_succeeds_forValidInput() {
-    var request = new Request("user@example.com", "Valid1234", "ABC123");
+    var request = Request.request("user@example.com", "Valid1234", "ABC123");
 
     ValidRequest.validRequest(request)
                 .onFailure(Assertions::fail)
@@ -347,13 +356,15 @@ void validRequest_succeeds_forValidInput() {
 void execute_succeeds_forValidInput() {
     CheckEmailUniqueness checkEmail = req -> Promise.success(req);
     CreateValidUser createUser = req -> Promise.success(
-        new ValidUser(req.email(), new HashedPassword("hashed"), req.referralCode()));
-    SaveUser saveUser = user -> Promise.success(new User(new UserId("user-123"), user.email()));
+        ValidUser.validUser(req.email(), HashedPassword.hashedPassword("hashed"), req.referralCode()));
+    SaveUser saveUser = user -> UserId.userId("user-123")
+                                      .map(userId -> User.user(userId, user.email()))
+                                      .async();
     GenerateToken generateToken = user -> Promise.success(
-        new Response(user.id(), new ConfirmationToken("token-456")));
+        Response.response(user.id(), ConfirmationToken.confirmationToken("token-456")));
 
     var useCase = RegisterUser.registerUser(checkEmail, createUser, saveUser, generateToken);
-    var request = new Request("user@example.com", "Valid1234", null);
+    var request = Request.request("user@example.com", "Valid1234", null);
 
     useCase.execute(request)
           .await()

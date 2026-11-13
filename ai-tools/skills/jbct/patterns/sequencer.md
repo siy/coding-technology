@@ -17,8 +17,12 @@ return step1(input)
 
 ```java
 public interface RegisterUser extends UseCase.WithPromise<Response, Request> {
-    record Request(String email, String password) {}
-    record Response(UserId userId, String confirmationToken) {}
+    record Request(String email, String password) {
+        static Request request(String email, String password) { return new Request(email, password); }
+    }
+    record Response(UserId userId, String confirmationToken) {
+        static Response response(UserId userId, String confirmationToken) { return new Response(userId, confirmationToken); }
+    }
 
     // Steps as single-method interfaces
     interface CheckEmail { Promise<ValidRequest> apply(ValidRequest valid); }
@@ -39,7 +43,7 @@ public interface RegisterUser extends UseCase.WithPromise<Response, Request> {
             .flatMap(hashPassword::apply)
             .flatMap(saveUser::apply)
             .flatMap(sendConfirmation::apply)
-            .map(token -> new Response(user.id(), token));
+            .map(token -> Response.response(user.id(), token));
     }
 }
 ```
@@ -193,11 +197,17 @@ void execute_fails_whenEmailExists() {
 
 ```java
 public interface GetUserProfile extends UseCase.WithPromise<Response, Request> {
-    record Request(String userId) {}
-    record Response(String userId, String email, String displayName, List<String> orders) {}
+    record Request(String userId) {
+        static Request request(String userId) { return new Request(userId); }
+    }
+    record Response(String userId, String email, String displayName, List<String> orders) {
+        static Response response(String userId, String email, String displayName, List<String> orders) { return new Response(userId, email, displayName, orders); }
+    }
 
     // Intermediate context for growing data
-    record UserContext(User user, List<Order> orders) {}
+    record UserContext(User user, List<Order> orders) {
+        static UserContext userContext(User user, List<Order> orders) { return new UserContext(user, orders); }
+    }
 
     interface FetchUser { Promise<User> apply(UserId id); }
     interface FetchOrders { Promise<List<Order>> apply(UserId id); }
@@ -207,12 +217,12 @@ public interface GetUserProfile extends UseCase.WithPromise<Response, Request> {
             .async()
             .flatMap(fetchUser::apply)
             .flatMap(user -> fetchOrders.apply(user.id())
-                .map(orders -> new UserContext(user, orders)))
+                .map(orders -> UserContext.userContext(user, orders)))
             .map(GetUserProfile::toResponse);
     }
 
     private static Response toResponse(UserContext ctx) {
-        return new Response(
+        return Response.response(
             ctx.user().id().value().toString(),
             ctx.user().email().value(),
             ctx.user().displayName(),

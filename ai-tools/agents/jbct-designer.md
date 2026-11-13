@@ -139,7 +139,7 @@ For each input field, determine:
 1. **Type**: Primitive wrapper or composite?
 2. **Validation rules**: What makes it valid?
 3. **Optionality**: Required (`T`) or optional (`Option<T>`)?
-4. **Factory method**: `TypeName.typeName(String raw) → Result<TypeName>`
+4. **Factory method**: `TypeName.typeName(String raw) → Result<TypeName>` (every record has a type-named factory; `Result<Self>` if any invariant, `Self` if none; a local record inside a factory method is outside the rule)
 
 Example analysis:
 ```
@@ -276,7 +276,7 @@ Result.all(
     Email.email(request.email()),
     Password.password(request.password()),
     ReferralCode.referralCode(request.referralCode())  // returns Result<Option<>>
-).map(ValidRequest::new)
+).map(ValidRequest::validRequest)
 ```
 
 ### Pattern: Sequential Processing (Sequencer)
@@ -299,7 +299,7 @@ Promise.all(
     loadProfile.execute(userId),
     loadPreferences.execute(userId),
     loadHistory.execute(userId)
-).map(Dashboard::new)
+).map(Dashboard::dashboard)
 ```
 
 ### Pattern: Conditional Processing (Condition)

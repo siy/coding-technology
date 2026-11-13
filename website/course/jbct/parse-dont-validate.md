@@ -1,5 +1,5 @@
 ---
-reviewed-at: a8e2027e8d0060e533385f175b098bc23bae8dcd
+reviewed-at: 1ad10c8e9fb00928aa61a563c9bc1e1d6b6243fd
 ---
 
 ## blurb
@@ -7,7 +7,7 @@ Make invalid states unrepresentable: validation becomes construction, not a sepa
 
 ## learn
 - Why validation should be inseparable from construction
-- Factory methods that return Result<T>
+- Factory methods that return Result<T>, and the one rule that every record has a type-named factory
 - Cross-field validation
 - Incremental adoption in existing codebases
 

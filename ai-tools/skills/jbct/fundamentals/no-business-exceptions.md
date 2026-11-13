@@ -89,6 +89,8 @@ public sealed interface RegistrationError extends Cause {
 public sealed interface UserError extends Cause {
 
     record NotFound(UserId userId) implements UserError {
+        static NotFound notFound(UserId userId) { return new NotFound(userId); }
+
         @Override
         public String message() {
             return "User not found: " + userId.value();
@@ -96,6 +98,8 @@ public sealed interface UserError extends Cause {
     }
 
     record Locked(UserId userId, Instant until) implements UserError {
+        static Locked locked(UserId userId, Instant until) { return new Locked(userId, until); }
+
         @Override
         public String message() {
             return "User " + userId.value() + " locked until " + until;
@@ -112,7 +116,7 @@ Used automatically by `Result.all()` to accumulate failures:
 Result<ValidRequest> result =
     Result.all(Email.email(emailRaw),
               Password.password(passwordRaw))
-          .map(ValidRequest::new);
+          .map(ValidRequest::validRequest);
 
 // If both fail, result contains CompositeCause with both errors
 result.onFailure(cause -> {
@@ -142,6 +146,8 @@ public sealed interface OrderError extends Cause {
         }
 
         record InvalidQuantity(int quantity) implements ValidationError {
+            static InvalidQuantity invalidQuantity(int quantity) { return new InvalidQuantity(quantity); }
+
             @Override
             public String message() {
                 return "Invalid quantity: " + quantity;
@@ -153,6 +159,8 @@ public sealed interface OrderError extends Cause {
     sealed interface BusinessRuleError extends OrderError {
         record InsufficientStock(ProductId productId, int available)
             implements BusinessRuleError {
+            static InsufficientStock insufficientStock(ProductId productId, int available) { return new InsufficientStock(productId, available); }
+
             @Override
             public String message() {
                 return "Insufficient stock for " + productId.value()
@@ -161,6 +169,8 @@ public sealed interface OrderError extends Cause {
         }
 
         record PaymentFailed(String reason) implements BusinessRuleError {
+            static PaymentFailed paymentFailed(String reason) { return new PaymentFailed(reason); }
+
             @Override
             public String message() {
                 return "Payment failed: " + reason;
@@ -233,16 +243,22 @@ public sealed interface DatabaseError extends Cause {
     record Timeout(Cause origin, String message) implements DatabaseError, Cause.Wrapped {
         static final Fn1<Timeout, Cause> FACTORY =
             Causes.forOneValue("Database operation timed out", Timeout::new);
+
+        static Timeout timeout(Cause origin) { return FACTORY.apply(origin); }
     }
 
     record ConstraintViolation(Cause origin, String message) implements DatabaseError, Cause.Wrapped {
         static final Fn1<ConstraintViolation, Cause> FACTORY =
             Causes.forOneValue("Database constraint violation", ConstraintViolation::new);
+
+        static ConstraintViolation constraintViolation(Cause origin) { return FACTORY.apply(origin); }
     }
 
     record Failed(Cause origin, String message) implements DatabaseError, Cause.Wrapped {
         static final Fn1<Failed, Cause> FACTORY =
             Causes.forOneValue("Database operation failed", Failed::new);
+
+        static Failed failed(Cause origin) { return FACTORY.apply(origin); }
     }
 }
 ```
@@ -295,7 +311,7 @@ public Result<Response> execute(Request request) {
         Email.email(request.email()),
         Password.password(request.password()),
         UserId.userId(request.userId())
-    ).map(ValidRequest::new)
+    ).map(ValidRequest::validRequest)
      .flatMap(this::process);
 }
 ```
@@ -325,7 +341,7 @@ public Promise<Response> execute(Request request) {
 ```java
 @Test
 void execute_fails_whenEmailInvalid() {
-    var request = new Request("invalid-email", "ValidPass123");
+    var request = Request.request("invalid-email", "ValidPass123");
 
     useCase.execute(request)
            .onSuccess(Assertions::fail);  // Fail if unexpectedly succeeds
@@ -333,7 +349,7 @@ void execute_fails_whenEmailInvalid() {
 
 @Test
 void execute_fails_whenEmailAlreadyExists() {
-    var request = new Request("existing@example.com", "ValidPass123");
+    var request = Request.request("existing@example.com", "ValidPass123");
 
     useCase.execute(request)
            .async()
@@ -389,6 +405,8 @@ enum NotFound implements UserError {
 
 ```java
 record InsufficientFunds(Money required, Money available) implements PaymentError {
+    static InsufficientFunds insufficientFunds(Money required, Money available) { return new InsufficientFunds(required, available); }
+
     @Override
     public String message() {
         return "Insufficient funds: required " + required + ", available " + available;

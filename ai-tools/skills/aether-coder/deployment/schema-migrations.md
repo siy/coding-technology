@@ -23,7 +23,14 @@ schema/analytics/          # → [database.analytics]
 
 ## Gating
 
-Slices won't activate until their schema migrations complete. Per-blueprint opt-out via `schema_required = false`.
+Slices do not begin serving until their schema migrations have succeeded (migrate, then serve). The gate is on by default; a blueprint opts out under its `[deployment]` table:
+
+```toml
+[deployment]
+schema_required = false
+```
+
+Each migration is recorded with its checksum in an `aether_schema_history` table inside that datasource's own database. The engine manages tables, not databases: the datasource's database must already exist, and creating it is an environment step, not a migration. A datasource is migrated by one blueprint only; a second blueprint that migrates the same datasource is refused at publish. A migration directory whose config section is not configured cannot be migrated, so the slice is held rather than run against the wrong place.
 
 ## Migration Types
 

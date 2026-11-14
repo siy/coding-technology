@@ -29,16 +29,20 @@ timeout_ms = 5000
 [messaging.order-events]
 topic_name = "order-events"
 
-# Streaming
+# Streaming (snake_case keys; usually shipped as the slice's resources.toml, see resources/streaming.md)
 [streams.audit-log]
 partitions = 8
 retention = "time"
-retention-value = "24h"
+retention_value = "24h"
 
 # Notifications
 [notification]
-provider = "smtp"
+backend = "smtp"
+
+[notification.smtp_config]
 host = "smtp.example.com"
+port = 587
+tls_mode = "STARTTLS"
 
 # PostgreSQL Notifications
 [pg-notifications.order-changes]
@@ -52,3 +56,5 @@ port = 443
 ```
 
 Secret resolution: `${secrets:path}` resolved via cloud provider (AWS SM, GCP SM, Azure KV, Hetzner env vars).
+
+Layering: `aether.toml` overrides the slice's own defaults (`META-INF/resources.toml`); operator changes via the management API override both. See [configuration.md](../resources/configuration.md).

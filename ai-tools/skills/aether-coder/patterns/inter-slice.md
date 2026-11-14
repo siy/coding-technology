@@ -17,7 +17,7 @@ The annotation processor detects non-annotated interface parameters, classifies 
 ## Call Routing and Retry
 
 - **Routing:** each call goes to one live instance of the dependency, chosen round-robin per artifact and method. The local node is one candidate among the others, with no local preference. A call that lands on the calling node still goes through encode and decode, because each slice has its own classloader.
-- **Retry:** the runtime sends a slice-to-slice call once and does not re-send it on failure. The runtime re-sends only at the HTTP entry node (a forwarded request that is safe to re-send) and in event delivery (stream and durable-topic redelivery). Everywhere else the caller asks again, either by a declared retry interceptor (see [interceptors.md](../resources/interceptors.md)) or in its own code.
+- **Retry:** the runtime never re-sends a slice-to-slice call that may have reached its target. A request the transport provably did not write is the one exception: the invoker re-routes it to another instance, at most `timeouts.invocation.max_retries` times (default 3). The runtime re-sends only at the HTTP entry node (a forwarded request that is safe to re-send) and in event delivery (stream and durable-topic redelivery). Everywhere else the caller asks again, either by a declared retry interceptor (see [interceptors.md](../resources/interceptors.md)) or in its own code.
 - **Consequence:** every slice method must be idempotent (an idempotency key or a conditional write), and no caller may assume the runtime retries a call for it.
 
 ## Dependency Classification

@@ -57,4 +57,4 @@ private Promise<ProcessResponse> handlePaymentFailure(Cause cause) {
 }
 ```
 
-`retryWithBackup` and `waitAndRetry` are the caller's own code: the runtime does not re-send a slice-to-slice call, so a retry here is the caller's decision, and the method it calls again must be idempotent.
+`retryWithBackup` and `waitAndRetry` are the caller's own code: the runtime does not re-send a slice-to-slice call that may have reached its target, so a retry here is the caller's decision, and the method it calls again must be idempotent.

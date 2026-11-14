@@ -49,11 +49,11 @@ A consumer is a small read-process-commit loop, one partition at a time:
 ```java
 // stream: StreamAccess<AuditEvent>, injected as @AuditAccess StreamAccess<AuditEvent> stream
 stream.fetchFromCommitted("audit-replay", partition, 100)   // Promise<List<StreamEvent<AuditEvent>>>
-      .flatMap(batch -> applyInOrder(batch))                // your per-event handling, yields the last offset
+      .flatMap(batch -> applyInOrder(batch))                // your per-event handling, yields the next offset to read (last + 1)
       .flatMap(offset -> stream.commit("audit-replay", partition, offset));
 ```
 
-- `fetchFromCommitted(group, partition, max)` reads from the group's committed offset (offset 0 the first time), so a restart resumes rather than replays. A multi-partition stream needs a loop per partition.
+- `fetchFromCommitted(group, partition, max)` reads from the group's committed offset (offset 0 the first time), so a restart resumes rather than replays. Commit the next offset to read (last processed + 1): the fetch is inclusive, so committing the last processed offset reads that event again on resume. A multi-partition stream needs a loop per partition.
 - To replay from a chosen position, use `fetch(partition, fromOffset, max)` on one partition.
 - Never use the no-partition `fetch(fromOffset, maxEvents)` to resume: it merges the same offset across partitions and sorts by offsets that mean nothing across partitions. Use it for a glance only.
 - Each consumer group keeps its own cursor, so two groups read the whole stream independently.

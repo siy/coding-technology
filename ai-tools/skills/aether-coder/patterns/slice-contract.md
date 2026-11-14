@@ -57,7 +57,7 @@ public interface Payments {
 - Request/Response/Error types nested inside the interface
 - Name a slice after its business capability (`Ordering`, `Payments`, `Inventory`), not `...Service`
 - Each failure that needs its own HTTP status is its own record type (`Declined`, `GatewayTimeout`, `InvalidCard`): `routes.toml` globs match the Cause type name, and every constant of one enum is the same type (see [routes-toml.md](../deployment/routes-toml.md))
-- Every method must be idempotent: the runtime re-sends only at the HTTP entry node and in event delivery, but a request still repeats (HTTP entry re-send, client resend, event redelivery, a declared retry), and a slice-to-slice call is never re-sent for you. Use an idempotency key or a conditional write (`ON CONFLICT`); see [inter-slice.md](inter-slice.md)
+- Every method must be idempotent: the runtime re-sends only at the HTTP entry node and in event delivery, but a request still repeats (HTTP entry re-send, client resend, event redelivery, a declared retry), and a slice-to-slice call that may have reached its target is never re-sent for you. Use an idempotency key or a conditional write (`ON CONFLICT`); see [inter-slice.md](inter-slice.md)
 - JBCT patterns apply: lambdas for single-method slices, inline records for multi-method
 
 ## Single-Method Slice (Lambda)

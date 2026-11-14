@@ -178,7 +178,7 @@ Field: referralCode
 
 For each failure point, define:
 
-1. **Error name**: Noun-first, past tense (`EmailNotFound`, `PaymentFailed`)
+1. **Error name**: names the failure in business terms (`EmailNotFound`, `AccountLocked`, `PaymentFailed`)
 2. **Category**: Validation, business or infrastructure (a column in the design table, not a type split)
 3. **Shape**: A failure a caller can act on, render or count is a record: components are the data it mentions, a trailing `String message`, a `FACTORY` built with `Causes.forOneValue(template, X::new)`, and a type-named factory delegating to it. Fixed text is one constant of the hierarchy's single `General` enum. Never `new X(..., "prose")`.
 4. **Recovery**: Can caller recover? How? (See Step 7 for BER, FER, design-out.)
@@ -217,7 +217,7 @@ For each step in the use case:
 3. **Output**: one of four shapes: `T` (sync, cannot fail), `Option<T>` (sync, may be absent), `Result<T>` (sync, can fail), `Promise<T>` (async, can fail). The only composition is `Result<Option<T>>` / `Promise<Option<T>>`; `Promise<Result<T>>`, `Result<Result<T>>`, `Option<Option<T>>` and `Option<List<T>>` are forbidden. `Promise` marks leaving the process; CPU-bound work returns `Result`. A step that cannot fail returns plain `T`, never a `Promise<T>` of only `.success`.
 4. **Pattern**: Leaf, Sequencer, Fork-Join, etc.
 5. **Recovery**: for each step that changes state, BER (compensate by inverse), FER (degrade forward), design-out, or none. An absorbed failure (`.recover(...)`, a swallowing `.onFailure`) needs a stated reason; silence is not an answer.
-6. **Names**: a step interface names intent (`LoadUser`), a leaf names mechanism; predicates take `is`/`has`/`can`; validated inputs take `Valid` (not `Validated`); error names are past tense.
+6. **Names**: a step interface names intent (`LoadUser`), a leaf names mechanism; predicates take `is`/`has`/`can`; validated inputs take `Valid` (not `Validated`); an error name states what failed (`AccountLocked`, `DatabaseFailure`).
 
 Example:
 ```
@@ -417,7 +417,7 @@ When design is complete, provide:
 3. **Interface signatures** (exact method signatures)
 4. **Test scenarios** (what to test)
 5. **Record factories**: every record in the design (requests, responses, stage records, causes) lists its type-named factory
-6. **Null and annotations**: no `null` in business signatures (`Option<T>`; `Option.option(nullable)` only at adapters); `void` only with `@Contract`; `.await()` only with `@TerminalOperation`
+6. **Null and annotations**: no `null` in business signatures (`Option<T>`; `Option.option(nullable)` only at adapters); return `Unit`, never `void` (`void` only where an external contract forces it, marked `@Contract`); `.await()` only with `@TerminalOperation`
 
 The coder should be able to implement mechanically from your design.
 
@@ -428,7 +428,7 @@ The coder should be able to implement mechanically from your design.
 Stop and clarify if you see:
 
 - **Unclear dependencies**: "Does step B need step A's output?"
-- **Mixed sync/async**: Some steps sync, others async (usually all should be async)
+- **Async without leaving the process**: a step typed `Promise` that does no I/O (CPU-bound work returns `Result`; a step that cannot fail returns `T`)
 - **Vague validation**: "Validate the email" (what rules exactly?)
 - **Missing error cases**: Happy path only, no failure handling
 - **Circular dependencies**: Step A needs B, B needs A
@@ -467,7 +467,7 @@ Stop and clarify if you see:
 5. **Errors:**
    - Validation: InvalidEmail, WeakPassword, InvalidReferralCode
    - Business: EmailAlreadyExists
-   - Infrastructure: DatabaseUnavailable, EmailServiceDown
+   - Infrastructure: DatabaseFailure, EmailServiceFailure (each a `Cause.Wrapped` record carrying its origin)
 
 6. **Composition:**
    ```

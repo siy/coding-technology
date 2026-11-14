@@ -80,7 +80,6 @@ const SITEMAP_URLS = [];
 const ORPHAN_ALLOWED = new Set([
   'CHANGELOG.html',
   'PL_IMPROVEMENTS.html',
-  'jbct-reviewer.html',
 ]);
 
 // ---------- Course registry (JBCT + PFD + AS) ----------
@@ -939,8 +938,7 @@ function buildLessonPages(course, flat) {
 
 const LEGACY_PAGES = [
   { src: 'CHANGELOG.md', out: 'CHANGELOG.html', description: 'Changelog for the JBCT repository and shared assets: tooling, AI skills, and build scripts.' },
-  { src: 'PL_IMPROVEMENTS.md', out: 'PL_IMPROVEMENTS.html', description: 'Language-level improvements that would make functional Java backends simpler — observations from applying JBCT in practice.' },
-  { src: 'jbct-reviewer.md', out: 'jbct-reviewer.html', description: 'The jbct-reviewer subagent: JBCT compliance review for Java backend code.' }
+  { src: 'PL_IMPROVEMENTS.md', out: 'PL_IMPROVEMENTS.html', description: 'Language-level improvements that would make functional Java backends simpler — observations from applying JBCT in practice.' }
 ];
 
 function rewriteLegacyLinks(content, srcDir, outDir) {
@@ -1054,11 +1052,14 @@ function buildRedirects() {
   ['/AI-TOOLING.html', '/AI-TOOLING', '/ai-tooling.html', '/ai-tooling'].forEach(old => {
     lines.push(`${old} https://github.com/siy/coding-technology/tree/main/ai-tools 301`);
   });
-  // jbct-coder.html (the root jbct-coder.md symlink) retired 2026-11-13 on owner ruling: a page from
-  // the old site, and since the agent's rule body moved to skill reference files it no longer
-  // carried the rules. The agent definition stays in the repository, which is where it now points.
-  ['/jbct-coder.html', '/jbct-coder'].forEach(old => {
-    lines.push(`${old} https://github.com/siy/coding-technology/blob/main/ai-tools/agents/jbct-coder.md 301`);
+  // jbct-coder.html and jbct-reviewer.html (the root jbct-*.md symlinks) retired 2026-11-13/14 on owner
+  // ruling: pages from the old site, and since the coder's rule body moved to skill reference files
+  // its page no longer carried the rules. The agent definitions stay in the repository, which is
+  // where the old URLs now point.
+  ['jbct-coder', 'jbct-reviewer'].forEach(agent => {
+    [`/${agent}.html`, `/${agent}`].forEach(old => {
+      lines.push(`${old} https://github.com/siy/coding-technology/blob/main/ai-tools/agents/${agent}.md 301`);
+    });
   });
   lines.push('/book/* /java/jbct/course/ 301');
 

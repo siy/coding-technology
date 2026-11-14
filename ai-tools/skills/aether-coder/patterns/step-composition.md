@@ -6,13 +6,13 @@ Slice → Step → Leaf pattern with transitive resource provisioning and transi
 
 ```java
 @Slice
-public interface OrderProcessor {
+public interface Ordering {
     Promise<OrderConfirmation> processOrder(OrderRequest request);
 
     // Steps as plain interface dependencies — NOT @Slice, NOT annotated
-    static OrderProcessor orderProcessor(ValidateOrder validate,
-                                          PersistOrder persist,
-                                          OrderEventListener listener) {
+    static Ordering ordering(ValidateOrder validate,
+                             PersistOrder persist,
+                             OrderEventListener listener) {
         return request -> validate.apply(request)
                                    .flatMap(persist::apply)
                                    .map(OrderConfirmation::from);

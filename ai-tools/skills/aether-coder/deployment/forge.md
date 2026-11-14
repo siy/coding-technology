@@ -8,9 +8,13 @@
 ./run-forge.sh --with-load    # Start with built-in load generator
 ```
 
-- Dashboard: `http://localhost:8888`
+- Forge REST API (status, `/api/load`, `/api/chaos`): `http://localhost:8888`. There is no dashboard
 - App HTTP: `http://localhost:8070` (nodes: 8070+)
 - Management: `http://localhost:5150`
+
+Ember is the single-JVM runtime: the whole cluster in one process, nodes reaching each other over localhost, a breakpoint anywhere; write and debug there. Forge is chaos testing built on Ember: several Ember nodes plus the REST API above, so you can kill a node or the leader, or roll a restart, while load runs. Forge is a simulation of distribution, not a distributed deployment: its nodes share one process, one memory and one failure domain, so "5 nodes" means five topology positions, not five machines. It injects node loss as a graceful stop (the node flushes its write-ahead log on the way down), so it proves recovery from a clean departure, not from a crash between a write and its fsync. Aether is the same nodes on separate machines.
+
+Forge data lives under `.aether/forge-data` next to `forge.toml`.
 
 ## forge.toml
 
@@ -52,11 +56,13 @@ curl -s -X POST http://localhost:8070/api/v1/orders/ \
 
 ## Unit Tests (JBCT Style)
 
+A slice's dependencies are plain interfaces, so a test fakes them with lambdas (`Inventory inventory = items -> Promise.success(...)`) and calls the factory directly:
+
 ```java
 @Test
 void processPayment_succeeds_forValidCard() {
-    var service = PaymentService.paymentService(mockDb, mockInventory);
-    service.processPayment(validRequest)
+    var payments = Payments.payments(mockDb, mockInventory);
+    payments.processPayment(validRequest)
            .await()
            .onFailure(Assertions::fail)
            .onSuccess(response -> assertEquals("APPROVED", response.status().name()));

@@ -4,12 +4,13 @@
 
 ```java
 sealed interface OrderError extends Cause {
-    enum General implements OrderError {
-        DUPLICATE_ORDER("Order already exists"),
-        INVENTORY_UNAVAILABLE("Requested items not available");
-        private final String message;
-        General(String message) { this.message = message; }
-        @Override public String message() { return message; }
+    record DuplicateOrder(String message) implements OrderError {
+        static DuplicateOrder duplicateOrder() { return new DuplicateOrder("Order already exists"); }
+    }
+    record InventoryUnavailable(String message) implements OrderError {
+        static InventoryUnavailable inventoryUnavailable() {
+            return new InventoryUnavailable("Requested items not available");
+        }
     }
     record CustomerNotFound(String customerId, String message) implements OrderError {
         static final Fn1<CustomerNotFound, String> FACTORY =
@@ -26,20 +27,21 @@ sealed interface OrderError extends Cause {
 }
 ```
 
-**Convention:** Enum for fixed-message errors, records for errors with context data. Records carry a trailing `String message` component. Each has a type-named factory (`customerNotFound(...)`) that delegates to its `FACTORY`; callers use the type-named factory.
+**Convention:** One record per failure, with a trailing `String message` component. Data-carrying records have a type-named factory (`customerNotFound(...)`) that delegates to its `FACTORY`; fixed-message records have a no-argument type-named factory (`duplicateOrder()`). Callers use the type-named factory. A failure that needs its own HTTP status is never one constant of a shared enum: the router matches the Cause's type name, and every constant of an enum is the same type. An enum is fine only for causes that all map to one status.
 
 ## HTTP Status Mapping (routes.toml)
 
 ```toml
 [errors]
 default = 500
+strict = true          # optional: a Cause type no pattern reaches fails the build
 HTTP_404 = ["*NotFound*"]
-HTTP_409 = ["*DUPLICATE_ORDER*"]
-HTTP_422 = ["*INVENTORY_UNAVAILABLE*"]
+HTTP_409 = ["*DuplicateOrder*"]
+HTTP_422 = ["*InventoryUnavailable*"]
 HTTP_402 = ["*PaymentFailed*"]
 ```
 
-Glob patterns match against Cause type names.
+A glob matches the returned Cause's type simple name only, never the message and never an enum constant. Where no pattern sets a status, a transient cause answers 503 and a validation cause 422; `default` is the fallback for the rest. Without `strict = true` the processor only warns about concrete `Cause` types no pattern reaches.
 
 ## Pattern Matching in Slice Code
 
@@ -49,8 +51,10 @@ Glob patterns match against Cause type names.
 private Promise<ProcessResponse> handlePaymentFailure(Cause cause) {
     return switch (cause) {
         case OrderError.PaymentFailed pf -> retryWithBackup(pf);
-        case OrderError.General.INVENTORY_UNAVAILABLE -> waitAndRetry();
+        case OrderError.InventoryUnavailable _ -> waitAndRetry();
         default -> cause.promise();
     };
 }
 ```
+
+`retryWithBackup` and `waitAndRetry` are the caller's own code: the runtime does not re-send a slice-to-slice call that may have reached its target, so a retry here is the caller's decision, and the method it calls again must be idempotent.

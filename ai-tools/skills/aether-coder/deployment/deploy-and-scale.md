@@ -6,11 +6,13 @@
 mvn jbct:generate-blueprint
 ```
 
-Deploy:
+Deploy (push the artifact, then deploy its blueprint):
 ```bash
-aether deploy blueprint.toml
-aether blueprint deploy org.example:my-app:1.0.0:blueprint
+aether -c <node>:8080 artifacts push org.example:my-app:1.0.0
+aether -c <node>:8080 blueprints deploy org.example:my-app:1.0.0 --wait
 ```
+
+Coordinates are `group:artifact:version` and the version is a release: the cluster's artifact repository is write-once and refuses a SNAPSHOT (cluster deploys use release versions; SNAPSHOT is for Forge and local builds). `blueprints deploy` appends `:blueprint` itself, so do not write the suffix. `--wait` blocks until the deploy settles. On a secured cluster (the default, `API_KEY`), `artifacts push` needs an OPERATOR or ADMIN key.
 
 ## Blueprint Assembly from External Slices
 
@@ -23,12 +25,12 @@ Teams publish slices independently; an ops team assembles a deployment blueprint
 <dependencies>
     <dependency>
         <groupId>com.acme.slices</groupId>
-        <artifactId>order-processor</artifactId>
+        <artifactId>ordering</artifactId>
         <version>2.1.0</version>
     </dependency>
     <dependency>
         <groupId>com.acme.slices</groupId>
-        <artifactId>inventory-manager</artifactId>
+        <artifactId>inventory</artifactId>
         <version>1.5.0</version>
     </dependency>
 </dependencies>
@@ -44,8 +46,8 @@ Local `@Slice` depends on external slice JAR on classpath:
 
 ```java
 @Slice
-public interface OrderProcessor {
-    static OrderProcessor orderProcessor(InventoryManager inventory, @Sql SqlConnector db) {
+public interface Ordering {
+    static Ordering ordering(Inventory inventory, @Sql SqlConnector db) {
         return request -> inventory.checkStock(request.itemId())
                                    .flatMap(stock -> persistOrder(db, request, stock));
     }
@@ -63,26 +65,31 @@ Plugin discovers manifests from both `target/classes/META-INF/slice/` and depend
 ## Scaling
 
 ```bash
-aether scale org.example:my-service:1.0.0 --instances 5
+aether scale org.example:my-service:1.0.0 -n 5 --placement WORKER_PREFERRED --wait
 ```
 
-Blueprint per-slice config:
+`--placement` is `CORE_ONLY`, `WORKER_PREFERRED` or `WORKER_ONLY`. Blueprint per-slice config:
 ```toml
 [[slices]]
-artifact = "org.example:payment-service:1.0.0"
+artifact = "org.example:payments:1.0.0"
 instances = 3
-timeout_ms = 30000
-memory_mb = 512
+maxInstances = 10
 ```
+
+Parsed keys per slice: `artifact`, `instances`, `minAvailable`, `maxInstances`, `scaleUpThreshold`, `scaleDownThreshold` (BlueprintParser.java). A per-slice autoscaler (on by default, runs on the leader) moves each slice one instance at a time between its bounds, from that slice's own load (active invocations and p95 latency).
 
 ## Deployment Strategies
 
+`aether deploy <coords>` replaces the running version in place, the same immediate deploy as `blueprints deploy`. To prove a version on live traffic first, use a gradual strategy (`--canary`; `--blue-green` and `--rolling` also exist) whose promotion is gated on measured health:
+
 ```bash
-aether deploy blueprint.toml --strategy canary
-aether deploy promote
-aether deploy rollback
-aether deploy complete
+aether deploy org.example:my-app:1.1.0 --canary --traffic 5 --error-rate 0.01 --latency 500
+aether deploy promote  <deploymentId> --traffic 25
+aether deploy complete <deploymentId>
+aether deploy rollback <deploymentId>
 ```
+
+The canary starts at 5 percent of traffic and holds; `--error-rate` and `--latency` are the gates it measures against.
 
 ## Monitoring
 

@@ -787,6 +787,12 @@ const LANDING_PAGES = [
     fallbackTitle: 'Read-Point Planning: Your Backlog Is a Cache of Beliefs',
     crumb: crumbSub('/articles/', 'Articles', 'Read-Point Planning'), nav: 'articles',
     related: [{ href: '/articles/', label: 'All articles', note: 'back to the list' }]
+  },
+  {
+    src: 'articles/design-metaprinciples.md', out: 'articles/design-metaprinciples/index.html',
+    fallbackTitle: 'Design Metaprinciples: Less Art, More Engineering',
+    crumb: crumbSub('/articles/', 'Articles', 'Design Metaprinciples'), nav: 'articles',
+    related: [{ href: '/articles/', label: 'All articles', note: 'back to the list' }]
   }
 ];
 

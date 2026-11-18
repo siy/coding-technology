@@ -5,6 +5,11 @@ works it out at article length — the canonical copy lives here.
 
 ## The method
 
+**[Design Metaprinciples: Less Art, More Engineering](/articles/design-metaprinciples/)**
+Principles shape a design; metaprinciples shape how the principles are chosen. Five questions asked
+of every design decision (how many ways, where to cut, what may I claim, how much, how to enforce),
+each explained with one ordinary thing: a train.
+
 **[Software's Second Free Lunch](/articles/softwares-second-free-lunch/)**
 Development does not scale by adding people, and AI does not fix it — it cuts the cost of a
 worker, not the coupling that caps how many can help. Borrow the trick that makes GPUs scale,

@@ -15,7 +15,7 @@ Below are the five metaprinciples that govern the systems I design. To keep them
 ## 1. One answer per question, or an explicit refusal
 ### Determinism with its honesty clause
 
-Nobody at a railway decides how far apart the rails should be. That question was answered once, the answer is called the gauge, and because of it any car can run on any line. Where two gauges meet, everything stops: the cargo is moved or the wheels are changed, and the whole journey waits for it. That is the price of having two answers to one question.
+Nobody at a railway decides how far apart the rails should be. That question was answered once, the answer is called the gauge, and because of it a car built in one country can run on the lines of another. Where two gauges meet, everything stops: the cargo is moved or the wheels are changed, and the whole journey waits for it. That is the price of having two answers to one question.
 
 Our work consists of decisions, a lot of them, and each decision is overhead. When there is a good way to do a thing, we choose it once and the decision space shrinks by one level. The fewer decisions we have to make at the low level, the more time we have for the decisions at the higher one.
 
@@ -51,7 +51,7 @@ This is not minimalism as taste. A long train is fine when there is a lot to car
 ## 5. Impossible beats forbidden
 ### Structure enforces; policy doesn't
 
-A road tells the driver where to go with lines and signs, and the driver has to watch them every second. A locomotive has no steering wheel. Nobody forbids the train to leave the track, it simply cannot, and so the question never takes any of the driver's attention.
+A road tells the driver where to go with lines and signs, and the driver has to watch them every second. A locomotive has no steering wheel. Nobody forbids the train to leave the track; there is nothing to steer with, and so the question never takes any of the driver's attention.
 
 A rule that forbids a wrong choice has to be remembered by everyone, every time. A structure that makes the wrong choice impossible has to be built once. When some wrong choices cannot be expressed at all, nobody has to watch for them, and the mental overhead of guarding correctness goes down.
 

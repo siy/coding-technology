@@ -443,8 +443,11 @@ places: at the HTTP entry node, which re-sends a forwarded request that is safe 
 up to three times by default, fewer when fewer nodes are connected or the request's time
 budget runs out; and in event delivery, which redelivers a failed event (three attempts
 for a stream consumer by default, five for a durable topic) before dead-lettering it. A method with a
-declared retry asks again by its own policy. Everywhere else, every slice-to-slice call
-included, the caller asks again. Repetition is not
+declared retry asks again by its own policy. A slice-to-slice call that the transport refused
+to write, which proves nothing was sent, goes to another instance instead (up to three times
+by default, `timeouts.invocation.max_retries`, and never past the call's deadline); that is a
+re-route, not a repeat. Everywhere else the caller asks again, and that includes every
+slice-to-slice call that may have been sent. Repetition is not
 an edge case in a distributed system; it is the ordinary mechanics of one. A slice
 method is written to be repeated because it will be.
 

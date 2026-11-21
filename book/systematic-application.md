@@ -157,15 +157,20 @@ public record Config(DbUrl url, DbPassword pass) {
 ### Zone Placement
 
 ```
-Zone A (Entry): Controllers, handlers, main
+Config (outermost ring, outside the zones): main, config loading, wiring
+  -> Wiring names: assemble the adapters and use cases; no business logic
+
+Adapter zone (inbound): Controllers, handlers
   -> Business action verbs: handleRegistration(), processOrder()
 
-Zone B (Domain): Use cases, value objects, domain services
+Domain zone: Use cases, value objects, domain services
   -> Domain vocabulary: Email.email(), ValidRequest.validRequest()
 
-Zone C (Infrastructure): DB, external APIs, config loading
+Adapter zone (outbound): DB access, external API clients
   -> Technical names: loadAllGenerations(), saveUser(), readFile()
 ```
+
+These are the architectural Three Zones (External, Adapter, Domain; the databases and APIs themselves are the External zone), inside the config ring of D6: config reads and wires, and only the adapter zone converts between external representations and domain types. The numbered Zone 1 / 2 / 3 of *Basic Patterns* is a different model, the Three-Zone Framework, which sets a function's level of abstraction: Zone 2 names the intent, Zone 3 names the mechanism. The two share a name and answer different questions.
 
 ---
 

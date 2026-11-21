@@ -146,6 +146,33 @@ will mark the first edition released to readers.
   `Shipping` slice.
 
 ### Fixed
+- Corrections verified at pragmatica `release-1.0.0-rc6` `54de803dbc`, source only:
+  - *Appendix A*, "Configuration layering": stated most-specific-wins as blueprint `resources.toml` < `aether.toml` <
+    `slices/<Slice>.toml`, which inverts the slice layer and names a file that is not a layer. It now reads first-wins
+    per key: operator overrides > `aether.toml` > the slice's `META-INF/resources.toml`, with `slices/<Name>.toml` as
+    blueprint-generator input, as Parts I and VI already said (`aether/slice/.../SliceStore.java:195-200`,
+    `aether/node/.../assembly/SliceRuntimeAssembly.java:583`).
+  - *Appendix A*, streams: `[streams.<name>.consumers.<group>]` was documented as a working override (error strategy,
+    `maxRetries`, `deadLetterStream`, checkpoint interval). No per-consumer setting reaches the running consumer, and
+    deploy validation and activation refuse any consumer key set to a non-default value; the paragraph now says so and
+    lists the real snake_case keys. The `compression` row said "payload compression"; any value but `NONE` is refused
+    and segments are written uncompressed (`aether/slice/.../blueprint/InertKeyRules.java:76-104,129-138`,
+    `aether/aether-deployment/.../validation/StreamResourceValidator.java:741-748`,
+    `aether/aether-stream/.../StreamSectionBinding.java:102`).
+  - *Part IV*, "Scaling one slice": the blueprint key `minInstances` is `minAvailable`
+    (`aether/slice/.../blueprint/BlueprintParser.java:174-180`).
+  - *Part I*, "Idempotency, the price of admission", and *Part VI*, "The path of a call between slices": stale after
+    pragmatica #2807 (fix `9a008dfc21`, PR #2814). Part I said every slice-to-slice call is asked again only by its
+    caller; Part VI said the invoker ignores the transport's write outcome, so a refused frame surfaced as a timeout,
+    and that the call path sends to one node. Both now say a request the transport refused to write fails at once and
+    is re-routed to another instance, up to `timeouts.invocation.max_retries` (3) within the caller's deadline, and that
+    a request that may have been sent is never sent again. Part VI's failure table gains the `NoInstanceAccepted` row
+    (`aether/aether-invoke/.../SliceInvoker.java:197-200,698-743,883,919-927`, `SliceInvokerError.java:75-84`,
+    `SliceRuntimeAssembly.java:332`).
+    Part VI's selection paragraph now says an empty first selection fails with `No endpoint found` and an empty
+    selection after a refused write ends the call with `NoInstanceAccepted`; the refused write fails the attempt, not
+    the call, which is re-routed (`SliceInvoker.java:730-744`). Part I's sentence on what the caller asks again is
+    reworded without change of meaning.
 - Retry and failover claims (verified at pragmatica `release-1.0.0-rc5` `c44325600c`, source only): the
   runtime sends each slice-to-slice call once, to an instance on a node membership still counts alive;
   it re-sends only at the HTTP entry node (a request provably not applied, or an RFC 9110 idempotent

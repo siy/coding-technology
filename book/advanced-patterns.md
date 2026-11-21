@@ -270,12 +270,10 @@ Promise<Report> generateSystemReport(List<ServiceId> services) {
 
 private Report createReport(List<Result<HealthStatus>> results) {
     var successes = results.stream()
-                           .filter(Result::isSuccess)
-                           .map(Result::value)
+                           .flatMap(Result::stream)
                            .toList();
     var failures = results.stream()
-                          .filter(Result::isFailure)
-                          .map(Result::cause)
+                          .flatMap(result -> result.fold(Stream::of, _ -> Stream.<Cause>empty()))
                           .toList();
     return Report.report(successes, failures);
 }

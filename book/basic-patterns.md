@@ -570,9 +570,12 @@ private Promise<List<Receipt>> appendReceipt(List<Receipt> receipts, Order order
 Promise<List<Receipt>> processOrders(List<Order> orders) {
     return Promise.allOf(orders.stream()
                                .map(this::processOrder)
-                               .toList());
+                               .toList())
+                  .flatMap(results -> Result.allOf(results).async());
 }
 ```
+
+`Promise.allOf` never fails: it resolves with `List<Result<Receipt>>`, one outcome per order. `Result.allOf` turns that list into `Result<List<Receipt>>`, failing with the cause of every failed order if any order failed, and `async()` lifts it back into the `Promise`.
 
 Use parallel when operations are independent.
 

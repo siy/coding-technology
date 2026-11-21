@@ -114,8 +114,7 @@ public Promise<List<User>> loadUsers(List<UserId> ids) {
 
     return Promise.allOf(promises)
         .map(results -> results.stream()
-            .filter(Result::isSuccess)
-            .map(Result::value)
+            .flatMap(Result::stream)
             .toList()
         );
 }

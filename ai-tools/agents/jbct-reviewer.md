@@ -78,7 +78,7 @@ For each step in a composition chain:
   absorption itself is not. Never flag a `.recover` that carries the reasoning.
 - **Is the absorbed path tested?** When a failure is absorbed it is invisible in the outcome, which
   is exactly the case where the book's rule calls for an interaction assertion rather than a result
-  assertion.
+  assertion. The comment records why; the test is what can prove the claim wrong, since a comment never fails when violated.
 
 ### Symmetry Checks
 

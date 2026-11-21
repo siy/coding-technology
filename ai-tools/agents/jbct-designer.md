@@ -216,7 +216,7 @@ For each step in the use case:
 2. **Input**: Value objects from previous step
 3. **Output**: one of four shapes: `T` (sync, cannot fail), `Option<T>` (sync, may be absent), `Result<T>` (sync, can fail), `Promise<T>` (async, can fail). The only composition is `Result<Option<T>>` / `Promise<Option<T>>`; `Promise<Result<T>>`, `Result<Result<T>>`, `Option<Option<T>>` and `Option<List<T>>` are forbidden. `Promise` marks leaving the process; CPU-bound work returns `Result`. A step that cannot fail returns plain `T`, never a `Promise<T>` of only `.success`.
 4. **Pattern**: Leaf, Sequencer, Fork-Join, etc.
-5. **Recovery**: for each step that changes state, BER (compensate by inverse), FER (degrade forward), design-out, or none. An absorbed failure (`.recover(...)`, a swallowing `.onFailure`) needs a stated reason; silence is not an answer.
+5. **Recovery**: for each step that changes state, BER (compensate by inverse), FER (degrade forward), design-out, or none. An absorbed failure (`.recover(...)`, a swallowing `.onFailure`) needs a stated reason; silence is not an answer. The comment records why; a test pins the absorbed behaviour, since a comment never fails when violated.
 6. **Names**: a step interface names intent (`LoadUser`), a leaf names mechanism; predicates take `is`/`has`/`can`; validated inputs take `Valid` (not `Validated`); an error name states what failed (`AccountLocked`, `DatabaseFailure`).
 
 Example:
@@ -360,21 +360,24 @@ Async: `Promise.allOf(Collection<Promise<T>>)` returns `Promise<List<Result<T>>>
 
 ## Zone-Based Architecture
 
-Verify design respects zone boundaries:
+Verify design respects zone boundaries. Dependencies point inward: config -> adapter -> use case -> domain.
 
-**Zone A (Entry):**
-- Controllers, handlers, main
+**Config (outermost ring, outside the zones):**
+- main, config loading, wiring: assembles adapters and use cases, no business logic
+
+**Adapter zone (inbound):**
+- Controllers, handlers
 - Business action verbs, no business logic
-- Calls Zone B
+- Calls the Domain zone
 
-**Zone B (Domain):**
+**Domain zone:**
 - Use cases (orchestration only: they compose steps), value objects, domain services
 - Business logic, pure functions where possible
 - No direct I/O: steps are interfaces
 
-**Zone C (Infrastructure):**
-- All I/O happens here: database, HTTP, messaging, config loading
-- Adapters implement the step interfaces
+**Adapter zone (outbound):**
+- All I/O happens here: database access, HTTP clients, messaging
+- Adapters implement the step interfaces; the databases and APIs themselves are the External zone
 
 Separately, the abstraction levels Zone 1/2/3 keep a function at one level: Zone 2 names the intent (step interfaces), Zone 3 the mechanism (leaves).
 

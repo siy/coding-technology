@@ -362,19 +362,19 @@ Async: `Promise.allOf(Collection<Promise<T>>)` returns `Promise<List<Result<T>>>
 
 Verify design respects zone boundaries:
 
-**Zone A (Entry):**
+**Adapter zone (inbound):**
 - Controllers, handlers, main
 - Business action verbs, no business logic
-- Calls Zone B
+- Calls the Domain zone
 
-**Zone B (Domain):**
+**Domain zone:**
 - Use cases (orchestration only: they compose steps), value objects, domain services
 - Business logic, pure functions where possible
 - No direct I/O: steps are interfaces
 
-**Zone C (Infrastructure):**
-- All I/O happens here: database, HTTP, messaging, config loading
-- Adapters implement the step interfaces
+**Adapter zone (outbound):**
+- All I/O happens here: database access, HTTP clients, messaging, config loading
+- Adapters implement the step interfaces; the databases and APIs themselves are the External zone
 
 Separately, the abstraction levels Zone 1/2/3 keep a function at one level: Zone 2 names the intent (step interfaces), Zone 3 the mechanism (leaves).
 

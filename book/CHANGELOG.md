@@ -35,6 +35,18 @@ repository root `CHANGELOG.md`.
   both and the override returns `origin().isTransient()` as well as `origin().isTerminal()`.
 
 ### Fixed
+- *Basic Patterns*, "Async Iteration": the parallel example declared `Promise<List<Receipt>>` and returned
+  `Promise.allOf(...)` directly, which does not compile: `Promise.allOf` returns `Promise<List<Result<T>>>` and never
+  fails. The example now ends `.flatMap(results -> Result.allOf(results).async())`, and a sentence states both types.
+  Source: pragmatica `release-1.0.0-rc6` `54de803dbc`, `core/src/main/java/org/pragmatica/lang/Promise.java:1966`,
+  `Result.java:1497`, `Result.java:442` (`async()`).
+- *Systematic Application*, Checkpoint 4 "Zone Placement": the block named its zones Zone A (Entry), Zone B (Domain)
+  and Zone C (Infrastructure), a third naming that matched neither of the book's two zone models. It now uses the
+  architectural Three Zones (Adapter inbound, Domain, Adapter outbound; databases and APIs are the External zone) and
+  says the numbered Zone 1 / 2 / 3 of *Basic Patterns* is the other model. The *Appendix C* glossary entries were already
+  right and are unchanged: they agree with *Basic Patterns* ("The Three-Zone Framework"), *Diagrams* ("Three Zones"),
+  *Appendix D* and the jbct linter's Zone 2 / Zone 3 rules (`release-1.0.0-rc6` `54de803dbc`,
+  `jbct/jbct-lint/src/main/java/org/pragmatica/jbct/lint/cst/rules/CstShapeZoneRule.java:75`).
 - `Promise.all()` was described as fail-fast in six places (*Advanced Patterns* twice, *Pragmatica Core Essentials*,
   *Appendix A*, *Appendix C* glossary twice, *Chapter Summaries*). It waits for every input and, if any fail,
   accumulates all failures into a `CompositeCause`, as `Result.all()` does; `Promise.allOrCancel()` and

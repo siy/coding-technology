@@ -512,8 +512,7 @@ function buildLandingPage(cfg) {
   } else if (fs.existsSync(srcPath)) {
     raw = fs.readFileSync(srcPath, 'utf-8');
   } else {
-    console.warn(`WARN: ${cfg.src} not found — rendering placeholder for /${cfg.out}`);
-    raw = `# ${cfg.fallbackTitle}\n\n<div class="placeholder-note">Content pending.</div>\n`;
+    throw new Error(`landing page /${cfg.out}: source ${cfg.src} not found`);
   }
   verifySourcePins(cfg.src, raw);
   raw = raw.replace(PIN_TOKEN, PINNED_VERSION);

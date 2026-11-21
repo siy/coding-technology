@@ -187,7 +187,7 @@ These are the architectural Three Zones (External, Adapter, Domain; the database
 | M3 | Side effects only in terminal ops? | Move to `.onSuccess()/.onFailure()` |
 | M4 | Logging mixed with logic? | Move logging to appropriate layer |
 | M5 | `orElseThrow()` to get a value out of an `Optional`? | Stay in the chain: `Option.from(optional)`, then `.toResult(cause)` or `.async(cause)` |
-| M6 | Can a mapper throw - `getFirst()`, `getLast()`, `get(i)`, `get()`, `iterator().next()`, `orElseThrow`, `throw`, or a method reference to one (`Optional::orElseThrow`)? | Make the mapper total, or return a typed failure |
+| M6 | Can a mapper throw—`getFirst()`, `getLast()`, `get(i)`, `get()`, `iterator().next()`, `orElseThrow`, `throw`, or a method reference to one (`Optional::orElseThrow`)? | Make the mapper total, or return a typed failure |
 | M7 | Does a failure translator (a `mapError` mapper, or an exception mapper passed to `lift`) ignore its argument (`_ -> FAILURE`, a method returning a constant) or keep only its text (`e.message()`, `t.getMessage()`)? | Carry the cause: a `Cause.Wrapped` record's `FACTORY`, or `Causes.cause(text, Option.some(cause))`; a `Throwable` through `Causes.fromThrowable(t)`; where the failure is known before any cause exists, pass it to the source (`Verify.ensure(value, predicate, cause)`) |
 
 ### Pattern Separation

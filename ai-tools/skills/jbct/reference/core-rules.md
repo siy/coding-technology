@@ -154,7 +154,7 @@ public Promise<User> loadUser(UserId id) { return ...; }
 
 | Type | Why Forbidden |
 |------|---------------|
-| `Promise<Result<T>>` | `Promise` already carries failures - double error channel |
+| `Promise<Result<T>>` | `Promise` already carries failures—double error channel |
 | `Result<Result<T>>` | Nested failures create unwrapping ceremony |
 | `Option<Option<T>>` | Nested optionality is meaningless |
 | `Promise<Option<Result<T>>>` | Triple nesting—architectural smell |

@@ -286,7 +286,7 @@ function parseSpine(course) {
   const parts = [];
   let current = null;
   // Spine lines the parser accounted for, by line number. verifyClosure() counts the
-  // `- [` lines itself, so a line the regex below fails to match is reported, not dropped.
+  // bullet lines that carry a link itself, so a line the regex below fails to match is reported, not dropped.
   course.spineAccounted = new Map();
 
   for (const [idx, line] of lines.entries()) {
@@ -1382,8 +1382,49 @@ const ARTICLE_EXCLUDED = {
   'legacy-adoption-strategy.md': 'scheduled, unpublished (PUBLISHING_SCHEDULE.md #10)',
 };
 
+// website/content/*.md that is deliberately not a page. Empty today: every file there is a
+// LANDING_PAGES source. Same contract as ARTICLE_EXCLUDED, entries need a reason and go stale
+// the moment the file is published or deleted.
+const CONTENT_EXCLUDED = {};
+
+// Top-level *.md files in a book source directory that are neither a spine entry nor published
+// under another path, each with its reason, keyed by directory. A chapter missing from root.md
+// fails the build unless it is named here. root.md and the appendix pages in LANDING_PAGES are
+// published, so they are not listed. Non-.md files (scripts, covers, metadata) are not enumerated.
+const BOOK_SOURCE_EXCLUDED = {
+  'book': {
+    'CHANGELOG.md': 'the book\'s version history, stamped into the PDF/EPUB title page; the site redirects /book/CHANGELOG.html to the course',
+    'chapter-summaries.md': 'pre-spine chapter recap, not in root.md; the site redirects /book/chapter-summaries.html to the course',
+    'diagrams.md': 'pre-spine diagram appendix, not in root.md; the site redirects /book/diagrams.html to the course',
+    'index.md': 'the old free-edition contents page, replaced by the course TOC built from root.md; /book/index.html redirects to the course',
+    'jbct-book-feedback-java25.md': 'a reader\'s review notes on the book, an internal working record',
+    'LEANPUB_SETUP.md': 'Leanpub upload-mode setup notes for the maintainers',
+    'PLANNED-CHANGES.md': 'the queued-changes backlog for the book, an internal working record',
+    'restructuring-map.md': 'maps the retired series content to chapters, an internal working record',
+  },
+  'book-pfd': {
+    'CHANGELOG.md': 'the book\'s version history, stamped into the PDF/EPUB title page; not published on the site',
+  },
+  'book-arch': {
+    'CHANGELOG.md': 'the book\'s version history, stamped into the PDF/EPUB title page; not published on the site',
+  },
+};
+
 // Enumerates sources from the filesystem and compares them with the ledger of what was
-// emitted. It reads the spine's `- [` lines itself instead of trusting parseSpine's regex.
+// emitted. It reads each spine's bullet lines itself instead of trusting parseSpine's regex.
+//
+// Source kinds this closes: articles/*.md; website/content/*.md; the top-level *.md files of
+// book/, book-pfd/ and book-arch/; every markdown bullet that links in each root.md; the
+// website/course/<course>/ layer files; the website/next-step entries; and the recorded outputs.
+// Source kinds it does not close: *.md at the repository root outside LEGACY_PAGES, book-aether/
+// (the build does not read it), and non-.md files in the book directories.
+const CLOSED_KINDS = 'articles/*.md, website/content/*.md, book chapter *.md, root.md spine bullets, ' +
+                     'course layers, next-step entries';
+const OPEN_KINDS = 'repository-root *.md outside LEGACY_PAGES, book-aether/, non-.md book files';
+
+// Any markdown list item that carries a link: `-`, `*` or `+`, or a numbered `1.`/`1)`, at any indent.
+const SPINE_BULLET = /^\s*(?:[-*+]|\d+[.)])\s+.*\]\([^)]*\)/;
+
 function verifyClosure() {
   const problems = [];
   const publishedFiles = src => [...(LEDGER.get(src) || [])];
@@ -1413,13 +1454,32 @@ function verifyClosure() {
     if (!articleFiles.includes(name)) problems.push(`ARTICLE_EXCLUDED names articles/${name}, which does not exist`);
   });
 
+  // website/content: each file is a published page or named in CONTENT_EXCLUDED.
+  const contentFiles = fs.readdirSync(path.join(__dirname, 'content'), { withFileTypes: true })
+    .filter(e => e.isFile() && e.name.endsWith('.md')).map(e => e.name);
+  contentFiles.forEach(name => {
+    const src = `website/content/${name}`;
+    const excluded = Object.prototype.hasOwnProperty.call(CONTENT_EXCLUDED, name);
+    if (!isPublished(src) && !excluded) {
+      problems.push(`${src}: neither published (not in LANDING_PAGES) nor listed in CONTENT_EXCLUDED`);
+    }
+    if (isPublished(src) && excluded) problems.push(`${src}: published but still listed in CONTENT_EXCLUDED`);
+  });
+  Object.keys(CONTENT_EXCLUDED).forEach(name => {
+    if (!contentFiles.includes(name)) problems.push(`CONTENT_EXCLUDED names website/content/${name}, which does not exist`);
+  });
+
   COURSES.forEach(course => {
     const spineRel = repoRel(path.join(course.bookDir, 'root.md'));
 
-    // Spine: every `- [` line is either a lesson that was emitted or a named non-lesson entry.
+    // Spine: every bullet that links is either a lesson that was emitted or a named non-lesson
+    // entry. Counted here, not by the parser, so a `* [` or `+ [` line the parser's regex does
+    // not match is reported instead of dropped. Link targets feed the chapter check below.
+    const spineTargets = new Set();
     const spineLines = fs.readFileSync(path.join(course.bookDir, 'root.md'), 'utf-8').split(/\r?\n/);
     spineLines.forEach((line, idx) => {
-      if (!/^\s*- \[/.test(line)) return;
+      if (!SPINE_BULLET.test(line)) return;
+      for (const m of line.matchAll(/\]\(([^)\s#]+)(?:#[^)]*)?\)/g)) spineTargets.add(m[1]);
       const lineNo = idx + 1;
       const kind = course.spineAccounted.get(lineNo);
       if (!kind) {
@@ -1429,6 +1489,27 @@ function verifyClosure() {
         const page = path.join(DIST_DIR, ...courseOutSegs(course), slug, 'index.html');
         if (!fs.existsSync(page)) problems.push(`${spineRel}:${lineNo}: lesson ${slug} has no page at ${repoRel(page)}`);
       }
+    });
+
+    // Book chapters: each top-level .md in the book directory is a spine entry, a published
+    // page, or named in BOOK_SOURCE_EXCLUDED for this book.
+    const bookName = path.basename(course.bookDir);
+    const excludedHere = BOOK_SOURCE_EXCLUDED[bookName] || {};
+    const bookFiles = fs.readdirSync(course.bookDir, { withFileTypes: true })
+      .filter(e => e.isFile() && e.name.endsWith('.md')).map(e => e.name);
+    bookFiles.forEach(name => {
+      const src = `${bookName}/${name}`;
+      const inSpine = spineTargets.has(name);
+      const excluded = Object.prototype.hasOwnProperty.call(excludedHere, name);
+      if (!inSpine && !isPublished(src) && !excluded) {
+        problems.push(`${src}: not in ${spineRel}, not published, and not listed in BOOK_SOURCE_EXCLUDED`);
+      }
+      if ((inSpine || isPublished(src)) && excluded) {
+        problems.push(`${src}: ${inSpine ? 'in the spine' : 'published'} but still listed in BOOK_SOURCE_EXCLUDED`);
+      }
+    });
+    Object.keys(excludedHere).forEach(name => {
+      if (!bookFiles.includes(name)) problems.push(`BOOK_SOURCE_EXCLUDED names ${bookName}/${name}, which does not exist`);
     });
 
     // Course layers: each file under the layer directory belongs to a published lesson.
@@ -1455,8 +1536,13 @@ function verifyClosure() {
     throw new Error(`source closure failed — ${problems.length} unaccounted:\n  ` + problems.join('\n  '));
   }
   const spineCount = COURSES.reduce((n, c) => n + c.spineAccounted.size, 0);
+  const bookCount = COURSES.reduce((n, c) => n + fs.readdirSync(c.bookDir).filter(f => f.endsWith('.md')).length, 0);
+  const bookExcluded = Object.values(BOOK_SOURCE_EXCLUDED).reduce((n, m) => n + Object.keys(m).length, 0);
   console.log(`✓ Source closure: ${articleFiles.length} articles (${Object.keys(ARTICLE_EXCLUDED).length} excluded), ` +
-              `${spineCount} spine entries, course layers and next-step all accounted for.`);
+              `${contentFiles.length} content files (${Object.keys(CONTENT_EXCLUDED).length} excluded), ` +
+              `${spineCount} spine entries, ${bookCount} book chapter files (${bookExcluded} excluded), ` +
+              `course layers and next-step all accounted for.\n` +
+              `  Closed: ${CLOSED_KINDS}. Not checked: ${OPEN_KINDS}.`);
 }
 
 // ---------- Main build ----------

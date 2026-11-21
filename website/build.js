@@ -1417,10 +1417,12 @@ const BOOK_SOURCE_EXCLUDED = {
 // book/, book-pfd/ and book-arch/; every markdown bullet that links in each root.md; the
 // website/course/<course>/ layer files; the website/next-step entries; and the recorded outputs.
 // Source kinds it does not close: *.md at the repository root outside LEGACY_PAGES, book-aether/
-// (the build does not read it), and non-.md files in the book directories.
+// (the build does not read it), non-.md files in the book directories, and subdirectories or
+// non-lowercase .md names inside the closed directories (the build reads none of them).
 const CLOSED_KINDS = 'articles/*.md, website/content/*.md, book chapter *.md, root.md spine bullets, ' +
                      'course layers, next-step entries';
-const OPEN_KINDS = 'repository-root *.md outside LEGACY_PAGES, book-aether/, non-.md book files';
+const OPEN_KINDS = 'repository-root *.md outside LEGACY_PAGES, book-aether/, non-.md book files, ' +
+                   'subdirectories and non-lowercase .md names in the closed directories (the build reads none)';
 
 // Any markdown list item that carries a link: `-`, `*` or `+`, or a numbered `1.`/`1)`, at any indent.
 const SPINE_BULLET = /^\s*(?:[-*+]|\d+[.)])\s+.*\]\([^)]*\)/;

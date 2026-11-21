@@ -575,7 +575,7 @@ Promise<List<Receipt>> processOrders(List<Order> orders) {
 }
 ```
 
-`Promise.allOf` never fails: it resolves with `List<Result<Receipt>>`, one outcome per order. `Result.allOf` turns that list into `Result<List<Receipt>>`, failing with every order's cause if any order failed, and `async()` lifts it back into the `Promise`.
+`Promise.allOf` never fails: it resolves with `List<Result<Receipt>>`, one outcome per order. `Result.allOf` turns that list into `Result<List<Receipt>>`, failing with the cause of every failed order if any order failed, and `async()` lifts it back into the `Promise`.
 
 Use parallel when operations are independent.
 

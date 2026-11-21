@@ -123,7 +123,7 @@ switch (type) { case A -> ...; case B -> ...; }
 
 **Iteration:** Process collections
 ```java
-Promise.allOf(items.map(this::process))
+Promise.allOf(items.stream().map(this::process).toList())
 ```
 
 **Remember:**

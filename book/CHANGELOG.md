@@ -10,6 +10,7 @@ repository root `CHANGELOG.md`.
 ## [Unreleased]
 
 ### Changed
+- *Null Policy & Error Recovery*, "The Recovery Triple": the paragraph that requires a comment at each absorbed failure now says the comment records the intent and cannot be proven wrong, and that the behaviour it claims is pinned by a test (a failing notification leaves the purchase successful), the test *Testing Philosophy* already requires for each absorbed failure. The `jbct` skill's synced copy and the `jbct-coder`, `jbct-designer` and `jbct-reviewer` agents carry the same sentence. Proposed wording, owner to confirm.
 - *Parse, Don't Validate*, "Naming Conventions" and "Key Takeaways": every record has a type-named static factory, with
   no exceptions. A record with any invariant has a fallible factory returning `Result<Self>`; a record without
   invariants returns `Self`; the factory is the only construction path from outside the record. Examples across 15 chapters, Appendix B and
@@ -40,10 +41,13 @@ repository root `CHANGELOG.md`.
   fails. The example now ends `.flatMap(results -> Result.allOf(results).async())`, and a sentence states both types.
   Source: pragmatica `release-1.0.0-rc6` `54de803dbc`, `core/src/main/java/org/pragmatica/lang/Promise.java:1966`,
   `Result.java:1497`, `Result.java:442` (`async()`).
+  The sentence now says the combined result fails with the cause of every failed order, since `Result.allOf`
+  composites only failures. *Chapter Summaries* (Iteration) had `Promise.allOf(items.map(this::process))`, which does not
+  compile (a `List` has no `map`); it now reads `Promise.allOf(items.stream().map(this::process).toList())`.
 - *Systematic Application*, Checkpoint 4 "Zone Placement": the block named its zones Zone A (Entry), Zone B (Domain)
   and Zone C (Infrastructure), a third naming that matched neither of the book's two zone models. It now uses the
   architectural Three Zones (Adapter inbound, Domain, Adapter outbound; databases and APIs are the External zone) and
-  says the numbered Zone 1 / 2 / 3 of *Basic Patterns* is the other model. The *Appendix C* glossary entries were already
+  says the numbered Zone 1 / 2 / 3 of *Basic Patterns* is the other model. `main` and config loading, which the block listed under the Adapter zone, now sit in the outermost config ring that D6 defines (config -> adapter -> use case -> domain), outside the zones. The *Appendix C* glossary entries were already
   right and are unchanged: they agree with *Basic Patterns* ("The Three-Zone Framework"), *Diagrams* ("Three Zones"),
   *Appendix D* and the jbct linter's Zone 2 / Zone 3 rules (`release-1.0.0-rc6` `54de803dbc`,
   `jbct/jbct-lint/src/main/java/org/pragmatica/jbct/lint/cst/rules/CstShapeZoneRule.java:75`).

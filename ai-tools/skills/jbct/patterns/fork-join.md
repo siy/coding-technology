@@ -327,7 +327,7 @@ Promise.all(step1, step2).map(combine);
 ### ❌ Ignoring Partial Results
 
 ```java
-// DON'T - If one fails, you lose all results
+// DON'T - If one fails, the whole fails (all causes accumulated in a CompositeCause) and you get no partial results
 Promise.all(fetchA, fetchB)
     .map(combine);
 

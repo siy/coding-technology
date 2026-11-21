@@ -249,10 +249,23 @@ function preprocessGlossaryAnchors(markdown) {
   );
 }
 
-function writePage(outPath, html, canonicalUrl) {
+// Ledger of what the build published: repo-relative source path -> output files. Every page
+// names the sources it consumed, so verifyClosure() can compare this against what the
+// filesystem offers rather than against what the build happened to look at.
+const LEDGER = new Map();
+
+function repoRel(absPath) {
+  return path.relative(ROOT_DIR, absPath).split(path.sep).join('/');
+}
+
+function writePage(outPath, html, canonicalUrl, sources = []) {
   ensureDir(path.dirname(outPath));
   fs.writeFileSync(outPath, html);
   if (canonicalUrl) SITEMAP_URLS.push(canonicalUrl);
+  sources.forEach(src => {
+    if (!LEDGER.has(src)) LEDGER.set(src, new Set());
+    LEDGER.get(src).add(outPath);
+  });
 }
 
 function walk(dir) {
@@ -272,8 +285,12 @@ function parseSpine(course) {
   const lines = raw.split(/\r?\n/);
   const parts = [];
   let current = null;
+  // Spine lines the parser accounted for, by line number. verifyClosure() counts the
+  // `- [` lines itself, so a line the regex below fails to match is reported, not dropped.
+  course.spineAccounted = new Map();
 
-  for (const line of lines) {
+  for (const [idx, line] of lines.entries()) {
+    const lineNo = idx + 1;
     const headMatch = line.match(/^## (.+?)\s*$/);
     if (headMatch) {
       current = { label: headMatch[1].trim(), lessons: [] };
@@ -283,8 +300,11 @@ function parseSpine(course) {
     const itemMatch = line.match(/^- \[(.+?)\]\(([a-z0-9-]+)\.md\)/);
     if (itemMatch && current) {
       const slug = itemMatch[2].trim();
-      if (!course.nonLessonSlugs.has(slug)) {
+      if (course.nonLessonSlugs.has(slug)) {
+        course.spineAccounted.set(lineNo, `non-lesson ${slug}`);
+      } else {
         current.lessons.push({ title: itemMatch[1].trim(), slug });
+        course.spineAccounted.set(lineNo, `lesson ${slug}`);
       }
     }
   }
@@ -335,7 +355,7 @@ function rewriteBookLinks(markdown, course, byBook, lessonSlug) {
 
 // ---------- Course layer (course/jbct/<slug>.md) ----------
 
-function parseCourseLayer(raw) {
+function parseCourseLayer(raw, label) {
   const sections = {};
   // Capture each section's full body: everything up to the next "## " header or the
   // true end of input. (A bare `$` under /m matches every line-end and truncates
@@ -343,6 +363,9 @@ function parseCourseLayer(raw) {
   const re = /^## (blurb|learn|note|exercise)\s*\r?\n([\s\S]*?)(?=\r?\n## |$(?![\s\S]))/gm;
   let m;
   while ((m = re.exec(raw))) sections[m[1]] = m[2].trim();
+  // The blurb feeds the TOC entry and the page description, so a layer without one
+  // publishes a page with no summary under a green build.
+  if (!sections.blurb) throw new Error(`course layer ${label}: no non-empty "## blurb" section`);
   return sections;
 }
 
@@ -516,7 +539,8 @@ function buildLandingPage(cfg) {
   verifySourcePins(cfg.src, raw);
   raw = raw.replace(PIN_TOKEN, PINNED_VERSION);
   const { body } = stripFrontMatter(raw);
-  const title = getTitle(body) || cfg.fallbackTitle;
+  const title = getTitle(body);
+  if (!title) throw new Error(`landing page /${cfg.out}: source ${cfg.src} has no H1 title`);
   const description = cfg.description || extractFirstParagraph(body);
   const renderSource = cfg.glossary ? preprocessGlossaryAnchors(body) : body;
   const contentHtml = render(renderSource);
@@ -540,20 +564,20 @@ function buildLandingPage(cfg) {
     .replace(/{{NAV_GLOSSARY}}/g, navAttr(cfg.nav, 'glossary'))
     .replace(/{{NAV_ARTICLES}}/g, navAttr(cfg.nav, 'articles'));
 
-  writePage(outPath, html, canonicalUrl);
+  writePage(outPath, html, canonicalUrl, [cfg.src]);
 }
 
 const LANDING_PAGES = [
   {
-    src: 'website/content/method.md', out: 'method/index.html', fallbackTitle: 'Method',
+    src: 'website/content/method.md', out: 'method/index.html',
     crumb: crumbTop('The Method'), nav: 'method', related: []
   },
   {
-    src: 'website/content/java.md', out: 'java/index.html', fallbackTitle: 'Java',
+    src: 'website/content/java.md', out: 'java/index.html',
     crumb: crumbTop('The Java Realization'), nav: 'java', related: []
   },
   {
-    src: 'website/content/pfd.md', out: 'method/pfd/index.html', fallbackTitle: 'Process-First Design',
+    src: 'website/content/pfd.md', out: 'method/pfd/index.html',
     crumb: crumbSub('/method/', 'The Method', 'Process-First Design'), nav: 'method',
     related: [
       { href: '/method/pfd/course/', label: 'PFD course', note: 'start learning' },
@@ -563,7 +587,7 @@ const LANDING_PAGES = [
     ]
   },
   {
-    src: 'website/content/architecture-synthesis.md', out: 'method/architecture-synthesis/index.html', fallbackTitle: 'Architecture Synthesis',
+    src: 'website/content/architecture-synthesis.md', out: 'method/architecture-synthesis/index.html',
     crumb: crumbSub('/method/', 'The Method', 'Architecture Synthesis'), nav: 'method',
     related: [
       { href: '/method/architecture-synthesis/course/', label: 'Architecture Synthesis course', note: 'start learning' },
@@ -574,7 +598,7 @@ const LANDING_PAGES = [
     ]
   },
   {
-    src: 'website/content/counterexamples.md', out: 'method/counterexamples/index.html', fallbackTitle: 'Counterexamples',
+    src: 'website/content/counterexamples.md', out: 'method/counterexamples/index.html',
     crumb: crumbSub('/method/', 'The Method', 'Counterexamples wanted'), nav: 'method',
     related: [
       { href: '/method/', label: 'The Method', note: 'parent' },
@@ -582,7 +606,7 @@ const LANDING_PAGES = [
     ]
   },
   {
-    src: 'website/content/jbct.md', out: 'java/jbct/index.html', fallbackTitle: 'Java Backend Coding Technology',
+    src: 'website/content/jbct.md', out: 'java/jbct/index.html',
     crumb: crumbSub('/java/', 'The Java Realization', 'Java Backend Coding Technology'), nav: 'java',
     related: [
       { href: '/java/', label: 'The Java Realization', note: 'parent' },
@@ -592,7 +616,7 @@ const LANDING_PAGES = [
     ]
   },
   {
-    src: 'website/content/jbct-tools.md', out: 'java/jbct/tools/index.html', fallbackTitle: 'JBCT Tools',
+    src: 'website/content/jbct-tools.md', out: 'java/jbct/tools/index.html',
     crumb: crumbDeep([{ href: '/java/', label: 'The Java Realization' }, { href: '/java/jbct/', label: 'JBCT' }], 'Tools'),
     nav: 'java',
     description: 'The jbct CLI and Maven plugin: format and lint Java backend code against the JBCT rules, with install, commands, exit codes, configuration and suppression.',
@@ -602,7 +626,7 @@ const LANDING_PAGES = [
     ]
   },
   {
-    src: 'website/data/jbct-rules.json', out: 'java/jbct/rules/index.html', fallbackTitle: 'JBCT Rules',
+    src: 'website/data/jbct-rules.json', out: 'java/jbct/rules/index.html',
     crumb: crumbDeep([{ href: '/java/', label: 'The Java Realization' }, { href: '/java/jbct/', label: 'JBCT' }], 'Rules'),
     nav: 'java', generate: () => jbctRulesMarkdown(),
     description: 'Every rule the JBCT linter checks, with its default severity, scoring category, and the course section that explains it.',
@@ -612,7 +636,7 @@ const LANDING_PAGES = [
     ]
   },
   {
-    src: 'website/content/pragmatica.md', out: 'java/pragmatica/index.html', fallbackTitle: 'Pragmatica',
+    src: 'website/content/pragmatica.md', out: 'java/pragmatica/index.html',
     crumb: crumbSub('/java/', 'The Java Realization', 'Pragmatica core library'), nav: 'java',
     related: [
       { href: '/java/', label: 'The Java Realization', note: 'parent' },
@@ -620,7 +644,7 @@ const LANDING_PAGES = [
     ]
   },
   {
-    src: 'website/content/aether.md', out: 'java/aether/index.html', fallbackTitle: 'Aether',
+    src: 'website/content/aether.md', out: 'java/aether/index.html',
     crumb: crumbSub('/java/', 'The Java Realization', 'Aether runtime'), nav: 'java',
     related: [
       { href: '/java/', label: 'The Java Realization', note: 'parent' },
@@ -628,13 +652,13 @@ const LANDING_PAGES = [
     ]
   },
   {
-    src: 'website/content/glossary.md', out: 'method/glossary/index.html', fallbackTitle: 'Series Glossary',
+    src: 'website/content/glossary.md', out: 'method/glossary/index.html',
     crumb: crumbSub('/method/', 'The Method', 'Glossary'), nav: 'glossary', glossary: true,
     description: 'One glossary for the whole series: Process-First Design, Architecture Synthesis, and Java Backend Coding Technology terms, cross-referenced and defined once.',
     related: []
   },
   {
-    src: 'book/appendix-a-api-reference.md', out: 'java/jbct/reference/index.html', fallbackTitle: 'API Reference',
+    src: 'book/appendix-a-api-reference.md', out: 'java/jbct/reference/index.html',
     crumb: crumbDeep([{ href: '/java/', label: 'The Java Realization' }, { href: '/java/jbct/course/', label: 'JBCT course' }], 'Reference'),
     nav: 'java',
     description: 'Complete API reference for Pragmatica Core: Result, Option, Promise, and the full method surface used throughout the JBCT course.',
@@ -644,7 +668,7 @@ const LANDING_PAGES = [
     ]
   },
   {
-    src: 'book-arch/appendix-reference-cards.md', out: 'method/architecture-synthesis/reference/index.html', fallbackTitle: 'Reference Cards',
+    src: 'book-arch/appendix-reference-cards.md', out: 'method/architecture-synthesis/reference/index.html',
     crumb: crumbDeep([{ href: '/method/', label: 'The Method' }, { href: '/method/architecture-synthesis/course/', label: 'Architecture Synthesis course' }], 'Reference cards'),
     nav: 'method',
     description: 'The Architecture Synthesis reference cards: the nine questions, the ledger of axis values and costs, and the derivation rules — the whole method as a deck.',
@@ -654,7 +678,7 @@ const LANDING_PAGES = [
     ]
   },
   {
-    src: 'book-pfd/appendix-reference-cards.md', out: 'method/pfd/reference/index.html', fallbackTitle: 'PFD Reference Cards',
+    src: 'book-pfd/appendix-reference-cards.md', out: 'method/pfd/reference/index.html',
     crumb: crumbDeep([{ href: '/method/', label: 'The Method' }, { href: '/method/pfd/course/', label: 'PFD course' }], 'Reference cards'),
     nav: 'method',
     description: 'The Process-First Design reference cards: the shapes, the patterns, the telescope, the change driver and its register, where data comes from, and the recovery triple — the whole vocabulary as a deck.',
@@ -664,7 +688,7 @@ const LANDING_PAGES = [
     ]
   },
   {
-    src: 'book-pfd/appendix-worksheet.md', out: 'method/pfd/worksheet/index.html', fallbackTitle: 'The PFD Design Worksheet',
+    src: 'book-pfd/appendix-worksheet.md', out: 'method/pfd/worksheet/index.html',
     crumb: crumbDeep([{ href: '/method/', label: 'The Method' }, { href: '/method/pfd/course/', label: 'PFD course' }], 'Worksheet'),
     nav: 'method',
     description: 'The Process-First Design worksheet: take one operation, specify its six properties, attribute it to a change driver, and let the data and the altitudes precipitate from the register.',
@@ -674,7 +698,7 @@ const LANDING_PAGES = [
     ]
   },
   {
-    src: 'book-arch/appendix-worksheet.md', out: 'method/architecture-synthesis/worksheet/index.html', fallbackTitle: 'The Derivation Worksheet',
+    src: 'book-arch/appendix-worksheet.md', out: 'method/architecture-synthesis/worksheet/index.html',
     crumb: crumbDeep([{ href: '/method/', label: 'The Method' }, { href: '/method/architecture-synthesis/course/', label: 'Architecture Synthesis course' }], 'Worksheet'),
     nav: 'method',
     description: 'The Architecture Synthesis derivation worksheet: the blank two-part table you fill to derive an architecture from answers and verify it against its own budget.',
@@ -684,7 +708,7 @@ const LANDING_PAGES = [
     ]
   },
   {
-    src: 'book/appendix-d-worksheet.md', out: 'java/jbct/worksheet/index.html', fallbackTitle: 'The JBCT Use Case Worksheet',
+    src: 'book/appendix-d-worksheet.md', out: 'java/jbct/worksheet/index.html',
     crumb: crumbDeep([{ href: '/java/', label: 'The Java Realization' }, { href: '/java/jbct/course/', label: 'JBCT course' }], 'Worksheet'),
     nav: 'java',
     description: 'The JBCT use case worksheet: specify a process by its six properties, parse the input, choose a return kind per step, place each step in a zone and a pattern, name the recovery response, and check the four composition test obligations.',
@@ -694,7 +718,7 @@ const LANDING_PAGES = [
     ]
   },
   {
-    src: 'website/content/articles.md', out: 'articles/index.html', fallbackTitle: 'Articles',
+    src: 'website/content/articles.md', out: 'articles/index.html',
     crumb: crumbTop('Articles'), nav: 'articles',
     description: 'Shorter pieces from Pragmatica Labs: each takes a single argument from the books and works it out at article length. The canonical copies live here.',
     related: [
@@ -704,91 +728,76 @@ const LANDING_PAGES = [
   },
   {
     src: 'articles/engineering-is-the-checkable-fraction.md', out: 'articles/engineering-is-the-checkable-fraction/index.html',
-    fallbackTitle: 'Engineering Is the Checkable Fraction of Your Practice',
     crumb: crumbSub('/articles/', 'Articles', 'The Checkable Fraction'), nav: 'articles',
     related: [{ href: '/articles/', label: 'All articles', note: 'back to the list' }]
   },
   {
     src: 'articles/keep-the-context-map.md', out: 'articles/keep-the-context-map/index.html',
-    fallbackTitle: 'Keep the Context Map. Replace the Aggregates.',
     crumb: crumbSub('/articles/', 'Articles', 'Keep the Context Map'), nav: 'articles',
     related: [{ href: '/articles/', label: 'All articles', note: 'back to the list' }]
   },
   {
     src: 'articles/every-test-can-name-why-it-exists.md', out: 'articles/every-test-can-name-why-it-exists/index.html',
-    fallbackTitle: 'Every Test Can Name Why It Exists',
     crumb: crumbSub('/articles/', 'Articles', 'Every Test Can Name Why It Exists'), nav: 'articles',
     related: [{ href: '/articles/', label: 'All articles', note: 'back to the list' }]
   },
   {
     src: 'articles/pattern-based-code-review-article-v2.md', out: 'articles/pattern-based-code-review/index.html',
-    fallbackTitle: 'From Subjective Opinions to Systematic Analysis: Pattern-Based Code Review',
     crumb: crumbSub('/articles/', 'Articles', 'Pattern-Based Code Review'), nav: 'articles',
     related: [{ href: '/articles/', label: 'All articles', note: 'back to the list' }]
   },
   {
     src: 'articles/jbdt-process-first-methodology.md', out: 'articles/jbdt-process-first-methodology/index.html',
-    fallbackTitle: 'Java Backend Design Technology: A Process-First Methodology',
     crumb: crumbSub('/articles/', 'Articles', 'Java Backend Design Technology'), nav: 'articles',
     related: [{ href: '/articles/', label: 'All articles', note: 'back to the list' }]
   },
   {
     src: 'articles/no-framework-no-pain.md', out: 'articles/no-framework-no-pain/index.html',
-    fallbackTitle: 'No Framework, No Pain: Writing Aether Slices',
     crumb: crumbSub('/articles/', 'Articles', 'No Framework, No Pain'), nav: 'articles',
     related: [{ href: '/articles/', label: 'All articles', note: 'back to the list' }]
   },
   {
     src: 'articles/aether-let-java-be-java.md', out: 'articles/aether-let-java-be-java/index.html',
-    fallbackTitle: 'Pragmatica Aether: Let Java Be Java',
     crumb: crumbSub('/articles/', 'Articles', 'Let Java Be Java'), nav: 'articles',
     related: [{ href: '/articles/', label: 'All articles', note: 'back to the list' }]
   },
   {
     src: 'articles/interface-factory-pattern.md', out: 'articles/interface-factory-pattern/index.html',
-    fallbackTitle: 'Why Interface + Factory? The Java Pattern That Makes Everything Replaceable',
     crumb: crumbSub('/articles/', 'Articles', 'Interface + Factory'), nav: 'articles',
     related: [{ href: '/articles/', label: 'All articles', note: 'back to the list' }]
   },
   {
     src: 'articles/fail-safe-legacy.md', out: 'articles/fail-safe-legacy/index.html',
-    fallbackTitle: 'Fail-Safe Your Legacy Java in One Sprint',
     crumb: crumbSub('/articles/', 'Articles', 'Fail-Safe Your Legacy Java'), nav: 'articles',
     related: [{ href: '/articles/', label: 'All articles', note: 'back to the list' }]
   },
   {
     src: 'articles/slices.md', out: 'articles/slices/index.html',
-    fallbackTitle: 'Slices: The Right Size for Microservices',
     crumb: crumbSub('/articles/', 'Articles', 'Slices'), nav: 'articles',
     related: [{ href: '/articles/', label: 'All articles', note: 'back to the list' }]
   },
   {
     src: 'articles/six-patterns-that-cover-everything.md', out: 'articles/six-patterns-that-cover-everything/index.html',
-    fallbackTitle: 'The Six Patterns That Cover Everything',
     crumb: crumbSub('/articles/', 'Articles', 'The Six Patterns'), nav: 'articles',
     related: [{ href: '/articles/', label: 'All articles', note: 'back to the list' }]
   },
   {
     src: 'articles/underlying-process.md', out: 'articles/underlying-process/index.html',
-    fallbackTitle: 'The Underlying Process of Request Processing',
     crumb: crumbSub('/articles/', 'Articles', 'The Underlying Process'), nav: 'articles',
     related: [{ href: '/articles/', label: 'All articles', note: 'back to the list' }]
   },
   {
     src: 'articles/softwares-second-free-lunch.md', out: 'articles/softwares-second-free-lunch/index.html',
-    fallbackTitle: "Software's Second Free Lunch",
     crumb: crumbSub('/articles/', 'Articles', 'The Second Free Lunch'), nav: 'articles',
     related: [{ href: '/articles/', label: 'All articles', note: 'back to the list' }]
   },
   {
     src: 'articles/your-backlog-is-a-cache-of-beliefs.md', out: 'articles/your-backlog-is-a-cache-of-beliefs/index.html',
-    fallbackTitle: 'Read-Point Planning: Your Backlog Is a Cache of Beliefs',
     crumb: crumbSub('/articles/', 'Articles', 'Read-Point Planning'), nav: 'articles',
     related: [{ href: '/articles/', label: 'All articles', note: 'back to the list' }]
   },
   {
     src: 'articles/design-metaprinciples.md', out: 'articles/design-metaprinciples/index.html',
-    fallbackTitle: 'Design Metaprinciples: Less Art, More Engineering',
     crumb: crumbSub('/articles/', 'Articles', 'Design Metaprinciples'), nav: 'articles',
     related: [{ href: '/articles/', label: 'All articles', note: 'back to the list' }]
   }
@@ -810,7 +819,7 @@ function buildCourseToc(course, parts, flat) {
       if (!fs.existsSync(layerPath)) {
         throw new Error(`${course.id} TOC: course layer for lesson ${lesson.slug} not found at ${layerPath}`);
       }
-      const blurb = parseCourseLayer(fs.readFileSync(layerPath, 'utf-8')).blurb || '';
+      const blurb = parseCourseLayer(fs.readFileSync(layerPath, 'utf-8'), repoRel(layerPath)).blurb;
       return `<li><a href="${course.urlBase}${lesson.slug}/"><span class="num">${i + 1}</span><span class="title">${escapeHtml(lesson.title)}</span>${blurb ? `<div class="blurb">${escapeHtml(blurb)}</div>` : ''}</a></li>`;
     }).join('\n      ');
     return `<div class="part-block">
@@ -837,7 +846,8 @@ function buildCourseToc(course, parts, flat) {
     .replace('{{INTRO}}', escapeHtml(course.tocIntro))
     .replace('{{PARTS}}', partsHtml);
 
-  writePage(path.join(DIST_DIR, ...courseOutSegs(course), 'index.html'), html, SITE_URL + course.urlBase);
+  writePage(path.join(DIST_DIR, ...courseOutSegs(course), 'index.html'), html, SITE_URL + course.urlBase,
+    [repoRel(path.join(course.bookDir, 'root.md'))]);
 }
 
 // ---------- Lesson pages ----------
@@ -857,11 +867,10 @@ function buildLessonPages(course, flat) {
     const rewritten = rewriteBookLinks(strippedBody, course, courseByBookDir, lesson.slug);
     const bodyHtml = render(rewritten);
 
+    // No existence guard here: buildCourseToc has already read this same layer for the
+    // same course and thrown if it is missing, so a guard here could never fire.
     const layerPath = path.join(course.layerDir, `${lesson.slug}.md`);
-    if (!fs.existsSync(layerPath)) {
-      throw new Error(`${course.id} lesson ${lesson.slug}: course layer not found at ${layerPath}`);
-    }
-    const sections = parseCourseLayer(fs.readFileSync(layerPath, 'utf-8'));
+    const sections = parseCourseLayer(fs.readFileSync(layerPath, 'utf-8'), repoRel(layerPath));
 
     const learnBox = sections.learn
       ? `<div class="learn">\n    <h2>In this lesson</h2>\n    ${render(sections.learn)}\n  </div>`
@@ -877,7 +886,7 @@ function buildLessonPages(course, flat) {
     <div class="body">${render(ex.body)}</div>
   </div>`;
     }
-    const description = sections.blurb || extractFirstParagraph(chapterBody) || `${title} — ${course.titleSuffix}.`;
+    const description = sections.blurb;
 
     const latticeSvg = buildLatticeSVG(lesson.partSlugs, lesson.posInPart);
 
@@ -928,7 +937,8 @@ function buildLessonPages(course, flat) {
       .replace('{{SLUG_JSON}}', JSON.stringify(lesson.slug))
       .replace('{{PART_SLUGS_JSON}}', JSON.stringify(lesson.partSlugs));
 
-    writePage(path.join(DIST_DIR, ...courseOutSegs(course), lesson.slug, 'index.html'), html, canonicalUrl);
+    writePage(path.join(DIST_DIR, ...courseOutSegs(course), lesson.slug, 'index.html'), html, canonicalUrl,
+      [repoRel(chapterPath), repoRel(layerPath)]);
   });
 }
 
@@ -982,7 +992,7 @@ function buildLegacyPages() {
       .replace(/{{NAV_CONTEXT}}/g, '')
       .replace('{{CONTENT}}', () => htmlContent);
 
-    writePage(path.join(DIST_DIR, page.out), html, canonicalUrl);
+    writePage(path.join(DIST_DIR, page.out), html, canonicalUrl, [page.src]);
   });
 }
 
@@ -1122,6 +1132,18 @@ function copyImages() {
 
 // ---------- next_step playground ----------
 
+// What website/next-step holds back from dist, each with its reason. The copy loop and
+// verifyClosure() both read this list, so an entry can be neither skipped silently nor stale.
+const NEXT_STEP_EXCLUDED = [
+  { match: name => name.endsWith('.test.js'), what: '*.test.js', reason: 'test files; the page ships the engine, not its tests' },
+  { match: name => name === 'package.json', what: 'package.json', reason: 'ES-module type marker for node --test, not a page asset' },
+  { match: name => name === 'corpus', what: 'corpus/', reason: 'golden-derivation answer sheets; generateProfiles() inlines the three it needs into profiles.js' }
+];
+
+function nextStepExclusion(name) {
+  return NEXT_STEP_EXCLUDED.find(rule => rule.match(name));
+}
+
 // The entry gate runs client-side: the page and its modules are copied verbatim,
 // with no bundling step and no dependencies. Tests and the type marker stay behind.
 function copyNextStep() {
@@ -1132,11 +1154,9 @@ function copyNextStep() {
   }
   ensureDir(dest);
   fs.readdirSync(source, { withFileTypes: true })
-    // Tests, the type marker, and the golden-derivation corpus stay behind: the page
-    // ships the engine, not its test fixtures.
-    .filter(entry => entry.isFile()
-      && !entry.name.endsWith('.test.js')
-      && entry.name !== 'package.json')
+    // The page ships the engine, not its test fixtures: NEXT_STEP_EXCLUDED names what
+    // stays behind, and verifyClosure() fails on anything that is neither shipped nor named.
+    .filter(entry => entry.isFile() && !nextStepExclusion(entry.name))
     .forEach(entry => {
       const file = entry.name;
       const from = path.join(source, file);
@@ -1325,6 +1345,108 @@ function verifyNoLeakedPinToken() {
               `(${files.length} pages checked, no leaked tokens).`);
 }
 
+// ---------- Closure: every source the site can see is published or explicitly excluded ----------
+
+// Articles under articles/*.md that are tracked but deliberately not on the site, each with
+// its reason. The closure check fails on an article that is neither registered in
+// LANDING_PAGES nor listed here, and on a listed entry that is absent or already published,
+// so this list cannot rot in either direction. Registering an article means adding it to
+// LANDING_PAGES and deleting its entry here.
+const ARTICLE_EXCLUDED = {
+  'PUBLISHING_SCHEDULE.md': 'the publishing schedule, not an article',
+  'interface-factory-pattern-linkedin.md': 'LinkedIn variant of interface-factory-pattern.md',
+  'architecture-derived-blind-test.md': 'front matter says published: false',
+  'beyond-functions-anatomy.md': 'front matter says published: false',
+  'errors-as-values.md': 'scheduled, unpublished (PUBLISHING_SCHEDULE.md #2)',
+  'four-return-types.md': 'scheduled, unpublished (PUBLISHING_SCHEDULE.md #3)',
+  'parse-dont-validate.md': 'scheduled, unpublished (PUBLISHING_SCHEDULE.md #4)',
+  'value-objects-cookbook.md': 'scheduled, unpublished (PUBLISHING_SCHEDULE.md #5)',
+  'single-level-of-abstraction.md': 'scheduled, unpublished (PUBLISHING_SCHEDULE.md #6)',
+  'patterns-as-business-vocabulary.md': 'scheduled, unpublished (PUBLISHING_SCHEDULE.md #7)',
+  'result-option-pattern.md': 'scheduled, unpublished (PUBLISHING_SCHEDULE.md #9)',
+  'legacy-adoption-strategy.md': 'scheduled, unpublished (PUBLISHING_SCHEDULE.md #10)',
+  'architecture-derived-not-chosen.md': 'tracked, not registered for the site, no schedule entry (as of this check)',
+  'less-art-more-engineering-revisited.md': 'tracked, not registered for the site, no schedule entry (as of this check)',
+  'revisiting-fluent-builder-pattern.md': 'tracked, not registered for the site, no schedule entry (as of this check)'
+};
+
+// Enumerates sources from the filesystem and compares them with the ledger of what was
+// emitted. It reads the spine's `- [` lines itself instead of trusting parseSpine's regex.
+function verifyClosure() {
+  const problems = [];
+  const publishedFiles = src => [...(LEDGER.get(src) || [])];
+  const isPublished = src => {
+    const outs = publishedFiles(src);
+    return outs.length > 0 && outs.every(out => fs.existsSync(out));
+  };
+
+  // Every emitted page must exist on disk (a ledger entry is a claim, the file is the fact).
+  LEDGER.forEach((outs, src) => outs.forEach(out => {
+    if (!fs.existsSync(out)) problems.push(`${src}: recorded output ${repoRel(out)} is not on disk`);
+  }));
+
+  // Articles: published or named in ARTICLE_EXCLUDED.
+  const articlesDir = path.join(ROOT_DIR, 'articles');
+  const articleFiles = fs.readdirSync(articlesDir, { withFileTypes: true })
+    .filter(e => e.isFile() && e.name.endsWith('.md')).map(e => e.name);
+  articleFiles.forEach(name => {
+    const src = `articles/${name}`;
+    const excluded = Object.prototype.hasOwnProperty.call(ARTICLE_EXCLUDED, name);
+    if (!isPublished(src) && !excluded) {
+      problems.push(`${src}: neither published (not in LANDING_PAGES) nor listed in ARTICLE_EXCLUDED`);
+    }
+    if (isPublished(src) && excluded) problems.push(`${src}: published but still listed in ARTICLE_EXCLUDED`);
+  });
+  Object.keys(ARTICLE_EXCLUDED).forEach(name => {
+    if (!articleFiles.includes(name)) problems.push(`ARTICLE_EXCLUDED names articles/${name}, which does not exist`);
+  });
+
+  COURSES.forEach(course => {
+    const spineRel = repoRel(path.join(course.bookDir, 'root.md'));
+
+    // Spine: every `- [` line is either a lesson that was emitted or a named non-lesson entry.
+    const spineLines = fs.readFileSync(path.join(course.bookDir, 'root.md'), 'utf-8').split(/\r?\n/);
+    spineLines.forEach((line, idx) => {
+      if (!/^\s*- \[/.test(line)) return;
+      const lineNo = idx + 1;
+      const kind = course.spineAccounted.get(lineNo);
+      if (!kind) {
+        problems.push(`${spineRel}:${lineNo}: spine entry not accounted for by the parser: ${line.trim()}`);
+      } else if (kind.startsWith('lesson ')) {
+        const slug = kind.slice(7);
+        const page = path.join(DIST_DIR, ...courseOutSegs(course), slug, 'index.html');
+        if (!fs.existsSync(page)) problems.push(`${spineRel}:${lineNo}: lesson ${slug} has no page at ${repoRel(page)}`);
+      }
+    });
+
+    // Course layers: each file under the layer directory belongs to a published lesson.
+    fs.readdirSync(course.layerDir, { withFileTypes: true }).forEach(entry => {
+      const src = repoRel(path.join(course.layerDir, entry.name));
+      if (!entry.isFile() || !entry.name.endsWith('.md')) {
+        problems.push(`${src}: unexpected entry in the course layer directory`);
+      } else if (!isPublished(src)) {
+        problems.push(`${src}: course layer belongs to no published lesson of ${course.id}`);
+      }
+    });
+  });
+
+  // next-step: every top-level entry is shipped or named in NEXT_STEP_EXCLUDED.
+  const nextStepDir = path.join(__dirname, 'next-step');
+  const shipped = path.join(DIST_DIR, 'method', 'architecture-synthesis', 'next-step');
+  fs.readdirSync(nextStepDir).forEach(name => {
+    if (!nextStepExclusion(name) && !fs.existsSync(path.join(shipped, name))) {
+      problems.push(`website/next-step/${name}: neither shipped to dist nor listed in NEXT_STEP_EXCLUDED`);
+    }
+  });
+
+  if (problems.length > 0) {
+    throw new Error(`source closure failed — ${problems.length} unaccounted:\n  ` + problems.join('\n  '));
+  }
+  const spineCount = COURSES.reduce((n, c) => n + c.spineAccounted.size, 0);
+  console.log(`✓ Source closure: ${articleFiles.length} articles (${Object.keys(ARTICLE_EXCLUDED).length} excluded), ` +
+              `${spineCount} spine entries, course layers and next-step all accounted for.`);
+}
+
 // ---------- Main build ----------
 
 function build() {
@@ -1355,6 +1477,8 @@ function build() {
   copyStyles();
   copyImages();
   copyNextStep();
+
+  verifyClosure();
 
   generateSitemap();
 

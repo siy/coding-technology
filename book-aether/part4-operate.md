@@ -73,7 +73,7 @@ aether scale org.example:orders:1.0.0-SNAPSHOT -n 8 --placement WORKER_PREFERRED
 aether cluster scale hetzner worker --count 3
 ```
 
-The blueprint carries the bounds and thresholds (`instances`, `minInstances`, `maxInstances`,
+The blueprint carries the bounds and thresholds (`instances`, `minAvailable`, `maxInstances`,
 `scaleUpThreshold`, `scaleDownThreshold`); `--placement` chooses `CORE_ONLY`, `WORKER_PREFERRED`,
 or `WORKER_ONLY`. Core nodes stay odd and at least three — that is the majority rule at the end of
 this part, wearing its operational face.

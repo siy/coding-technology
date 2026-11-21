@@ -189,10 +189,13 @@ keyless events route round-robin.
 | `retention_value` | the retention kind's built-in bound | bound for the chosen retention |
 | `auto_offset_reset` | `"earliest"` | the only accepted value; `"latest"` is rejected |
 | `max_event_size` | `1048576` | bytes |
-| `compression` | `NONE` | payload compression |
+| `compression` | `NONE` | the only accepted value; segments are written uncompressed and any other value is refused |
 
-Consumer-group overrides live under `[streams.<name>.consumers.<group>]` (error strategy
-`RETRY` \| `SKIP` \| `STALL`, `maxRetries`, `deadLetterStream`, checkpoint interval).
+A `[streams.<name>.consumers.<group>]` section parses, but no per-consumer setting reaches
+the running consumer, which always runs with the built-in consumer defaults. Deploy
+validation and stream activation therefore refuse any consumer key (`batch_size`,
+`processing`, `on_failure`, `checkpoint_interval`, `max_retries`, `dead_letter`,
+`read_preference`) set to a value other than its default.
 
 ## Durable entity
 
@@ -270,8 +273,10 @@ Recognized surface, per the route-config loader:
 
 ## Configuration layering
 
-Most-specific wins: blueprint `resources.toml` (global) < `aether.toml` (node) <
-`slices/<Slice>.toml` (slice). `${secrets:...}` references resolve at load.
+First-wins per key, top layer first: operator overrides (management API, held in the
+consensus store) > `aether.toml` (node) > the slice's own `META-INF/resources.toml`
+(its defaults). `slices/<Name>.toml` is blueprint-generator input, not a configuration
+layer. `${secrets:...}` references resolve at load.
 
 ## CLI and management API
 

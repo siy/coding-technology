@@ -463,8 +463,12 @@ The request id and depth carry the trace across the hop; the budget itself does 
 the receiving node applies its own limit. The send passes the caller's wait along with the frame.
 If the peer is momentarily disconnected, the transport may buffer the frame, and it drops it on
 reconnect once that wait has passed, rather than delivering work whose caller has already given
-up. The invoker does not read the transport's write outcome, so a frame the transport refused
-shows up to the caller as a timeout, not as a send error.
+up. The invoker reads the transport's write outcome. A refused write proves the request never
+left the node, so the call fails at once rather than waiting out its timer, and the invoker
+re-routes it to another instance, excluding every node that refused it, up to
+`timeouts.invocation.max_retries` times (3 by default) and only while the caller's deadline holds.
+A frame reported sent, or buffered for a dead connection, may still be delivered, so that call
+keeps waiting and is never sent again.
 
 **Dispatch on the target.** On the receiving node the message router delivers `InvokeRequest` to
 `InvocationHandler.onInvokeRequest`, which restores the request id, depth and sampling flag as
@@ -495,6 +499,7 @@ worth knowing exactly:
 | What happened | What the caller's `Promise` fails with |
 |---|---|
 | No reachable endpoint at selection | `No endpoint found for slice/method` |
+| Every instance tried refused the write at the transport | `NoInstanceAccepted`, "No instance of … accepted the request" |
 | No response within the caller's wait (at the defaults this needs a lost frame or an unresponsive node, because the callee's own limit is shorter) | `CoreError.Timeout`, "Promise timed out after N ms" |
 | Target node removed or decommissioned by membership | "Target node … departed", at once, without waiting for the timer |
 | The callee's method failed | `RemoteInvocationError`, "Remote invocation failed: " plus the client message |
@@ -507,7 +512,8 @@ Three of these rows deserve a sentence each. A timeout means the outcome is unkn
 call failed: the callee may never have received it, may still be running it, or may have finished
 with the answer lost. A response that arrives after the timer fires finds no pending entry and is
 logged and dropped. The departure row is a fast failure, not a retry; the slice-to-slice call path
-above sends each request once, to one node, and retries nothing. The automatic re-send
+above sends each request at most once and re-sends nothing: it moves to another node only a
+request that never left. The automatic re-send
 of an HTTP request happens earlier, at the HTTP entry node, before any slice is called, and only for a
 request that is safe to re-send. If an operation must survive these, make it
 safe to repeat and declare the retry where Module C puts cross-cutting behavior.

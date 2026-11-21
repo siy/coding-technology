@@ -44,7 +44,7 @@ Before reporting completion, you MUST:
    type is the contract). If you *absorbed* a failure with `.recover(...)` or a swallowing
    `.onFailure(...)`, name the strategy at the site — **BER** (compensate by inverse), **FER**
    (degrade forward), or **design-out** — with the guarantee it earns and the mechanism behind it.
-   **A stated justification is a complete answer; silence is not.** Do not add retries, outboxes,
+   **A stated justification is a complete answer; silence is not.** The comment records why; a test pins the absorbed behaviour (a failing notification does not fail the purchase), because a comment never fails when violated. Do not add retries, outboxes,
    or fallback machinery nobody asked for to avoid writing the sentence — the point is that the
    dropped failure is deliberate and legible, not that it is impossible.
 7. **Neighbor-skeleton check** — for every new member, locate the most similar existing member

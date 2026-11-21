@@ -22,9 +22,9 @@ Every function implements exactly one pattern from a fixed catalog: Leaf, Sequen
 This rule has a mechanical benefit: it makes refactoring deterministic. When a function grows beyond one pattern, you extract the second pattern into its own function. There's no subjective judgment about "is this too complex?" — if you're doing two patterns, split it.
 
 **Why by criteria:**
-- **Mental Overhead**: One pattern per function means immediate recognition - no mental model switching (+2)
+- **Mental Overhead**: One pattern per function means immediate recognition—no mental model switching (+2)
 - **Complexity**: Mechanical refactoring rule eliminates subjective debates about "too complex" (+2)
-- **Design Impact**: Forces proper abstraction layers - no mixing orchestration with computation (+2)
+- **Design Impact**: Forces proper abstraction layers—no mixing orchestration with computation (+2)
 
 ### The Pain of Mixed Patterns
 
@@ -122,10 +122,10 @@ If you're writing a Sequencer and realize step 3 needs to do a Fork-Join interna
 - Method references (e.g., `Email::email`, `this::processUser`)
 - Single method calls with parameter forwarding (e.g., `param -> someMethod(outerParam, param)`)
 
-**Why?** Lambdas are composition points, not implementation locations. When you bury logic inside a lambda, you hide abstraction levels and make the code harder to read, test, and reuse. Extract complex logic to named functions - the name documents intent, the function becomes testable in isolation, and the composition chain stays flat and readable.
+**Why?** Lambdas are composition points, not implementation locations. When you bury logic inside a lambda, you hide abstraction levels and make the code harder to read, test, and reuse. Extract complex logic to named functions—the name documents intent, the function becomes testable in isolation, and the composition chain stays flat and readable.
 
 **Why by criteria:**
-- **Mental Overhead**: Flat composition chains scan linearly - no descending into nested logic (+2)
+- **Mental Overhead**: Flat composition chains scan linearly—no descending into nested logic (+2)
 - **Business/Technical Ratio**: Named functions document intent; anonymous lambdas hide it (+2)
 - **Complexity**: Each function testable in isolation; buried lambda logic requires testing through container (+2)
 
@@ -235,16 +235,16 @@ private Result<Discount> applyApplicableDiscount(User user) {
 
 Maintaining "single level of abstraction" becomes mechanical when you think of your codebase in three distinct zones, each with its own vocabulary:
 
-**Zone 1 (Use Case Level)** - High-level business goals:
+**Zone 1 (Use Case Level)**—High-level business goals:
 - `RegisterUser.execute()`, `ProcessOrder.execute()`, `LoadDashboard.execute()`
-- One Zone 1 function per use case - the entry point
+- One Zone 1 function per use case—the entry point
 
-**Zone 2 (Orchestration Level)** - Coordinating steps that break down the goal:
+**Zone 2 (Orchestration Level)**—Coordinating steps that break down the goal:
 - Step interfaces in Sequencer/Fork-Join patterns
 - Names the **intent** — what the workflow needs to happen
 - Examples: `ValidateInput.apply()`, `ProcessPayment.apply()`, `HandleNotification.apply()`
 
-**Zone 3 (Implementation Level)** - Concrete technical operations:
+**Zone 3 (Implementation Level)**—Concrete technical operations:
 - Business and adapter leaves
 - Names the **mechanism** — how it is actually done
 - Examples: `hashPassword()`, `parseJson()`, `fetchFromDatabase()`, `calculateTax()`
@@ -254,7 +254,7 @@ Conventions* later in this chapter. The zone is the constraint; no list of verbs
 
 **The key insight:** Functions at each zone should only call functions from the same zone or one level down. Zone 2 functions call other Zone 2 steps or Zone 3 leaves. Zone 3 leaves perform atomic operations. This creates natural layering.
 
-**Example - Maintaining zone consistency:**
+**Example—Maintaining zone consistency:**
 
 ```java
 // GOOD - All steps at Zone 2 (orchestration level)
@@ -321,12 +321,12 @@ Advanced patterns (Sequencer, Fork-Join, Aspects) covered in [Advanced Patterns]
 
 ## Pattern: Leaf
 
-**Definition:** A **Leaf** (an atomic operation with no substeps) is the smallest unit of processing - a function that does one thing and has no internal steps. It's either a business leaf (pure computation) or an adapter leaf (I/O or side effects).
+**Definition:** A **Leaf** (an atomic operation with no substeps) is the smallest unit of processing—a function that does one thing and has no internal steps. It's either a business leaf (pure computation) or an adapter leaf (I/O or side effects).
 
 **Rationale (by criteria):**
-- **Mental Overhead**: Atomic operations have no internal steps to track - immediate comprehension (+2)
+- **Mental Overhead**: Atomic operations have no internal steps to track—immediate comprehension (+2)
 - **Business/Technical Ratio**: Business leaves are pure domain logic; adapter leaves isolate technical concerns (+2)
-- **Complexity**: One operation per leaf - no hidden interactions (+2)
+- **Complexity**: One operation per leaf—no hidden interactions (+2)
 - **Reliability**: Pure business leaves are deterministic and easily testable (+1)
 
 ### Business Leaves
@@ -394,13 +394,13 @@ The adapter catches `SQLException` and wraps it in `RepositoryError.DatabaseFail
 
 ### Thread Safety
 
-Leaf operations are **thread-safe through confinement** - each invocation operates independently with its own local state. Mutable local variables (accumulators, builders, working objects) are safe within a leaf because they never escape the function scope. Input parameters must be treated as read-only.
+Leaf operations are **thread-safe through confinement**—each invocation operates independently with its own local state. Mutable local variables (accumulators, builders, working objects) are safe within a leaf because they never escape the function scope. Input parameters must be treated as read-only.
 
 ### Placement Rules
 
 **If a leaf is only used by one caller**, keep it nearby (same file, same package).
 
-**If it's reused**, move it immediately to the nearest `shared` package. Don't defer - tech debt accumulates when shared code stays in wrong locations.
+**If it's reused**, move it immediately to the nearest `shared` package. Don't defer—tech debt accumulates when shared code stays in wrong locations.
 
 ---
 
@@ -409,9 +409,9 @@ Leaf operations are **thread-safe through confinement** - each invocation operat
 **Definition:** Condition represents branching logic based on data. The key: express conditions as values, not control-flow side effects. Keep branches at the same abstraction level.
 
 **Rationale (by criteria):**
-- **Mental Overhead**: Conditions as expressions - evaluates to single value, not control flow scatter (+2)
+- **Mental Overhead**: Conditions as expressions—evaluates to single value, not control flow scatter (+2)
 - **Business/Technical Ratio**: Branch logic mirrors domain rules, not imperative jumps (+2)
-- **Complexity**: Same abstraction level per branch - prevents tangled logic (+2)
+- **Complexity**: Same abstraction level per branch—prevents tangled logic (+2)
 - **Reliability**: Type-checked branches ensure all cases return compatible types (+2)
 
 ### Simple Conditional
@@ -509,7 +509,7 @@ return fetchUser(userId)
 - **Mental Overhead**: Declarative combinators state intent; imperative loops require tracing (+2)
 - **Business/Technical Ratio**: map/filter express business logic; loops are iteration mechanics (+2)
 - **Complexity**: Functional composition eliminates index management and loop state (+2)
-- **Reliability**: Pure transformations have no side effects - deterministic and testable (+2)
+- **Reliability**: Pure transformations have no side effects—deterministic and testable (+2)
 
 ### Mapping Collections
 
@@ -735,7 +735,7 @@ sendJSONRequest(data);
 setRESTAPIURL(url);
 ```
 
-**Edge case - two-letter acronyms:** Use lowercase for better flow:
+**Edge case—two-letter acronyms:** Use lowercase for better flow:
 
 ```java
 // DO
@@ -753,7 +753,7 @@ IDGenerator
 
 ### Test Naming
 
-Follow the pattern: `method_[scenario_]expectation` - at least two underscore-separated segments. The scenario segment is optional; include it when the expectation alone would not identify the case.
+Follow the pattern: `method_[scenario_]expectation`—at least two underscore-separated segments. The scenario segment is optional; include it when the expectation alone would not identify the case.
 
 ```java
 void validate_rejectsEmpty()
@@ -766,12 +766,12 @@ void execute_fails_whenEmailAlreadyExists()
 
 ## Key Takeaways
 
-1. **Single Pattern Per Function** - One pattern per function, extract if you see two
-2. **Single Level of Abstraction** - No complex logic in lambdas, only method references or simple forwarding
-3. **Leaf** - Atomic unit: pure computation (business) or I/O (adapter)
-4. **Condition** - Branching as values, same type from all branches
-5. **Iteration** - Functional combinators over collections, pure transformations
-6. **Zone-based naming** - Use appropriate verbs for each abstraction level
+1. **Single Pattern Per Function**—One pattern per function, extract if you see two
+2. **Single Level of Abstraction**—No complex logic in lambdas, only method references or simple forwarding
+3. **Leaf**—Atomic unit: pure computation (business) or I/O (adapter)
+4. **Condition**—Branching as values, same type from all branches
+5. **Iteration**—Functional combinators over collections, pure transformations
+6. **Zone-based naming**—Use appropriate verbs for each abstraction level
 
 ---
 
@@ -785,4 +785,4 @@ See [Appendix B](appendix-b-exercises.md) for exercises on:
 
 ## What's Next
 
-[Advanced Patterns](advanced-patterns.md) covers advanced patterns - Sequencer, Fork-Join, and Aspects - that compose these basic patterns into sophisticated workflows.
+[Advanced Patterns](advanced-patterns.md) covers advanced patterns—Sequencer, Fork-Join, and Aspects—that compose these basic patterns into sophisticated workflows.

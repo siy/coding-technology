@@ -19,13 +19,13 @@ This book is the Java layer of a series that derives software systems from busin
 
 ## Code in a New Era
 
-Software development is changing faster than ever. AI-powered code generation tools have moved from experimental novelty to daily workflow staple in just a few years. We now write code alongside - and increasingly with - intelligent assistants that can generate entire functions, refactor modules, and suggest architectural patterns. This shift creates new challenges that traditional coding practices weren't designed to handle.
+Software development is changing faster than ever. AI-powered code generation tools have moved from experimental novelty to daily workflow staple in just a few years. We now write code alongside—and increasingly with—intelligent assistants that can generate entire functions, refactor modules, and suggest architectural patterns. This shift creates new challenges that traditional coding practices weren't designed to handle.
 
-Historically, code has carried a heavy burden of personal style. Every developer brings preferences about naming, structure, error handling, and abstraction. Teams spend countless hours in code review debating subjective choices. Style guides help, but they can't capture the deeper structural decisions that make code readable or maintainable. When AI generates code, it inherits these same inconsistencies - we just don't know whose preferences it's channeling or why it made particular choices.
+Historically, code has carried a heavy burden of personal style. Every developer brings preferences about naming, structure, error handling, and abstraction. Teams spend countless hours in code review debating subjective choices. Style guides help, but they can't capture the deeper structural decisions that make code readable or maintainable. When AI generates code, it inherits these same inconsistencies—we just don't know whose preferences it's channeling or why it made particular choices.
 
 This creates a context problem. When you read AI-generated code, you're reverse-engineering decisions made by a model trained on millions of examples with conflicting styles. When AI reads your code to suggest changes, it must infer your intentions from structure that may not clearly express them. The cognitive overhead compounds: developers burn mental cycles translating between their mental model, the code's structure, and what the AI "thinks" the code means.
 
-Meanwhile, technical debt accumulates silently. Small deviations from good structure - a validation check here, an exception there, a bit of mixed abstraction levels - seem harmless in isolation. But they compound. Refactoring becomes risky. Testing becomes difficult. The codebase becomes a collection of special cases rather than a coherent system.
+Meanwhile, technical debt accumulates silently. Small deviations from good structure—a validation check here, an exception there, a bit of mixed abstraction levels—seem harmless in isolation. But they compound. Refactoring becomes risky. Testing becomes difficult. The codebase becomes a collection of special cases rather than a coherent system.
 
 > Traditional approaches don't provide clear, mechanical rules for when to refactor or how to structure new code, so these decisions remain subjective and inconsistent.
 
@@ -51,7 +51,7 @@ The benefits compound:
 
 **Hide the machinery, keep the meaning** is the property those last two add up to, and it deserves its own name. Technical noise is pushed to the edges *and* the business facts survive in the types: a return type states whether a step can fail, an `Option` parameter states that the domain allows absence, `Promise.all` states that steps are independent, a sealed error type states the complete failure catalog. The code executes and testifies at once — and because the testimony lives in types, the compiler keeps it true. The full inventory is a table in [From Process to Patterns](from-process-to-patterns.md), and it is why JBCT code stays legible to humans and AI assistants alike after its authors have moved on.
 
-**Deterministic code generation** becomes possible when the mapping from requirements to code is mechanical. Given a use case specification - inputs, outputs, validation rules, steps - there's essentially one correct structure. Different developers (or AI assistants) should produce nearly identical implementations.
+**Deterministic code generation** becomes possible when the mapping from requirements to code is mechanical. Given a use case specification—inputs, outputs, validation rules, steps—there's essentially one correct structure. Different developers (or AI assistants) should produce nearly identical implementations.
 
 **The normalization boundary.** "Nearly identical" has a precise scope, and stating the scope is what makes the claim testable. JBCT derives the package hierarchy (the telescope rule), the Java types, the step contracts and return types, the pattern for each composition, the failure representation, the placement of shared code, the concurrency structure, and the testing obligations. JBCT does not normalize algorithms inside atomic leaves, framework-specific adapter internals, module promotion (content-invariant along derived boundaries — [Project Structure](project-structure.md) has the full treatment), the test-input supply vehicle, or test-data representation. Variation below this line is style; variation above it is a defect. A newly discovered variation receives an explicit ruling: closed by a rule, or placed below the line. The boundary comes from measurement rather than taste — inspecting independent implementations of one design found their skeletons identical, and what differed became the first rulings.
 
@@ -63,17 +63,17 @@ The benefits compound:
 
 ## The Five Evaluation Criteria
 
-Before diving into patterns, understand how we evaluate every decision in JBCT. Traditional "best practices" rely on subjective "readability" - but what does that mean? JBCT uses five named criteria:
+Before diving into patterns, understand how we evaluate every decision in JBCT. Traditional "best practices" rely on subjective "readability"—but what does that mean? JBCT uses five named criteria:
 
-1. **Mental Overhead** - "Don't forget to..." and "Keep in mind..." items you must track. Lower is better.
+1. **Mental Overhead**—"Don't forget to..." and "Keep in mind..." items you must track. Lower is better.
 
-2. **Business/Technical Ratio** - Domain concepts vs framework/infrastructure noise. Higher domain visibility is better.
+2. **Business/Technical Ratio**—Domain concepts vs framework/infrastructure noise. Higher domain visibility is better.
 
-3. **Design Impact** - Does an approach enforce good patterns or allow bad ones? Improves consistency or breaks it?
+3. **Design Impact**—Does an approach enforce good patterns or allow bad ones? Improves consistency or breaks it?
 
-4. **Reliability** - Does the compiler catch mistakes, or must you remember? Type safety eliminates bug classes.
+4. **Reliability**—Does the compiler catch mistakes, or must you remember? Type safety eliminates bug classes.
 
-5. **Complexity** - Number of elements, connections, and hidden coupling. Fewer moving parts are better.
+5. **Complexity**—Number of elements, connections, and hidden coupling. Fewer moving parts are better.
 
 These are not preferences. They are not measurements either, and the difference matters: each criterion is a named dimension with a stated direction, and the marks below are ordinal notation for *better on this dimension*, not quantities. They share no unit, so they are not summed. What the rubric buys is that a disagreement has to name a dimension and a direction instead of resting on taste, and that a comparison which is close on every dimension is allowed to say so. When we say "don't use business exceptions," this is the comparison:
 - **Mental Overhead**: Checked exceptions pollute signatures; unchecked are invisible (+2 for Result)
@@ -87,7 +87,7 @@ These are not preferences. They are not measurements either, and the difference 
 **Analysis using the five criteria:**
 
 1. **Mental Overhead:**
-   - `@Transactional`: Invisible behavior - must remember that methods run in transactions, requires understanding proxy mechanics
+   - `@Transactional`: Invisible behavior—must remember that methods run in transactions, requires understanding proxy mechanics
    - Explicit: Transaction boundaries are visible in code
    - **Score: +2 for explicit**
 
@@ -146,7 +146,7 @@ public void saveUser(User user) {
 
 Why care? **Pure functions are predictable**: same inputs always produce same output. They're easy to test (no mocking needed) and safe to run anywhere, anytime.
 
-**Impure functions are necessary** - your app must interact with the world - but they're **unpredictable**: network might fail, disk might be full, database might be down.
+**Impure functions are necessary**—your app must interact with the world—but they're **unpredictable**: network might fail, disk might be full, database might be down.
 
 JBCT's approach: **push side effects to the edges**. Keep business logic pure. Isolate impure operations in adapter leaves. This makes your core logic easy to test and reason about.
 
@@ -227,7 +227,7 @@ The JBCT patterns—Leaf, Sequencer, Fork-Join, Condition, Iteration, Aspects—
 
 In JBCT, we use types that wrap values and control how operations are applied to them.
 
-> **Note:** In functional programming, these are called *monads*. This book uses both terms - "Smart Wrapper" for intuition, "monad" for precision.
+> **Note:** In functional programming, these are called *monads*. This book uses both terms—"Smart Wrapper" for intuition, "monad" for precision.
 
 **A monad controls when and if your operations run.**
 
@@ -283,7 +283,7 @@ If you're coming from Haskell or Scala, adjust your expectations: this is practi
 
 ### Immutability
 
-All input data passed to operations must be treated as immutable and read-only. This isn't about dogmatic functional purity - it's about maintaining safety guarantees that make concurrent code predictable.
+All input data passed to operations must be treated as immutable and read-only. This isn't about dogmatic functional purity—it's about maintaining safety guarantees that make concurrent code predictable.
 
 **What MUST be immutable:**
 - Data passed between parallel operations (Fork-Join pattern)
@@ -319,12 +319,12 @@ All input data passed to operations must be treated as immutable and read-only. 
 
 ## Key Takeaways
 
-1. **JBCT unifies code** - Making code predictable across teams and AI collaboration
-2. **Five criteria** guide all decisions - Mental overhead, business/technical ratio, design impact, reliability, complexity
-3. **Side effects at edges** - Keep business logic pure, isolate I/O in adapters
-4. **Composition over imperative** - Chain operations, let structure handle errors
-5. **Monads invert control** - You describe transformations, the monad handles execution
-6. **Hide the machinery, keep the meaning** - Technical noise at the edges, business facts preserved in types; the code executes and testifies at once
+1. **JBCT unifies code**—Making code predictable across teams and AI collaboration
+2. **Five criteria** guide all decisions—Mental overhead, business/technical ratio, design impact, reliability, complexity
+3. **Side effects at edges**—Keep business logic pure, isolate I/O in adapters
+4. **Composition over imperative**—Chain operations, let structure handle errors
+5. **Monads invert control**—You describe transformations, the monad handles execution
+6. **Hide the machinery, keep the meaning**—Technical noise at the edges, business facts preserved in types; the code executes and testifies at once
 
 ---
 

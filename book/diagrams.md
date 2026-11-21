@@ -190,7 +190,7 @@ flowchart LR
     end
 ```
 
-**Lifting (Safe - adds information):**
+**Lifting (Safe—adds information):**
 - `Option` → `Result`: `.toResult(cause)`
 - `Option` → `Promise`: `.async(cause)`
 - `Result` → `Promise`: `.async()`

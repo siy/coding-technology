@@ -30,7 +30,7 @@ The benefits compound:
 
 **Hide the machinery, keep the meaning** is the property those last two add up to, and it deserves its own name. Technical noise is pushed to the edges *and* the business facts survive in the types: a return type states whether a step can fail, an `Option` parameter states that the domain allows absence, `Promise.all` states that steps are independent, a sealed error type states the complete failure catalog. The code executes and testifies at once — and because the testimony lives in types, the compiler keeps it true. The full inventory is a table in [From Process to Patterns](https://pragmatica.dev/java/jbct/course/from-process-to-patterns/), and it is why JBCT code stays legible to humans and AI assistants alike after its authors have moved on.
 
-**Deterministic code generation** becomes possible when the mapping from requirements to code is mechanical. Given a use case specification - inputs, outputs, validation rules, steps - there's essentially one correct structure. Different developers (or AI assistants) should produce nearly identical implementations.
+**Deterministic code generation** becomes possible when the mapping from requirements to code is mechanical. Given a use case specification—inputs, outputs, validation rules, steps—there's essentially one correct structure. Different developers (or AI assistants) should produce nearly identical implementations.
 
 **The normalization boundary.** "Nearly identical" has a precise scope, and stating the scope is what makes the claim testable. JBCT derives the package hierarchy (the telescope rule), the Java types, the step contracts and return types, the pattern for each composition, the failure representation, the placement of shared code, the concurrency structure, and the testing obligations. JBCT does not normalize algorithms inside atomic leaves, framework-specific adapter internals, module promotion (content-invariant along derived boundaries — [Project Structure](https://pragmatica.dev/java/jbct/course/project-structure/) has the full treatment), the test-input supply vehicle, or test-data representation. Variation below this line is style; variation above it is a defect. A newly discovered variation receives an explicit ruling: closed by a rule, or placed below the line. The boundary comes from measurement rather than taste — inspecting independent implementations of one design found their skeletons identical, and what differed became the first rulings.
 
@@ -113,7 +113,7 @@ Every function in JBCT returns one of four semantic shapes: `T`, `Option<T>`, `R
 **Why by criteria:**
 - **Mental Overhead**: Hidden error channels (exceptions), hidden optionality (null), hidden asynchrony (blocking I/O) force remembering behavior not in signatures. Explicit types eliminate this (+3).
 - **Reliability**: Compiler verifies error handling, null safety, and async boundaries when encoded in types (+3).
-- **Complexity**: Four types cover all scenarios - no guessing about combinations (+2).
+- **Complexity**: Four types cover all scenarios—no guessing about combinations (+2).
 <!-- /book:four-return-shapes -->
 
 ```java
@@ -157,8 +157,8 @@ public Promise<User> loadUser(UserId id) { return ...; }
 | `Promise<Result<T>>` | `Promise` already carries failures - double error channel |
 | `Result<Result<T>>` | Nested failures create unwrapping ceremony |
 | `Option<Option<T>>` | Nested optionality is meaningless |
-| `Promise<Option<Result<T>>>` | Triple nesting - architectural smell |
-| `Option<List<T>>` | A collection already carries emptiness as a value - a second absence channel says it twice |
+| `Promise<Option<Result<T>>>` | Triple nesting—architectural smell |
+| `Option<List<T>>` | A collection already carries emptiness as a value—a second absence channel says it twice |
 
 **Rule:** Each concern (optionality, failure, asynchrony) appears at most once in a return type; emptiness is the collection's own concern, already carried as a value.
 <!-- /book:return-type-matrix -->

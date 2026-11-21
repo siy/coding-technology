@@ -98,7 +98,7 @@ private Result<User> checkAccountStatus(User user) {
 
 Every failure is a `Cause`, and `Cause` has exactly one abstract member: `message()`. The construction idiom satisfies it structurally, so no error type ever hand-writes prose in a method body.
 
-A use case's failures form a sealed interface with two kinds of members. A **data-carrying failure** is a record: its components are the error's data, in declaration order, with a trailing `String message` component whose generated accessor *is* the `message()` implementation. Its `FACTORY`, built from a message template and the canonical constructor reference, is the construction path, and the record's type-named static factory (`accountLocked(userId)`, like every record's) delegates to it with the non-message components. **Fixed-text failures** share one enum in a prescribed shape - a single `message` field, a constructor, a field-returning accessor - with each failure declared as one constant carrying its text.
+A use case's failures form a sealed interface with two kinds of members. A **data-carrying failure** is a record: its components are the error's data, in declaration order, with a trailing `String message` component whose generated accessor *is* the `message()` implementation. Its `FACTORY`, built from a message template and the canonical constructor reference, is the construction path, and the record's type-named static factory (`accountLocked(userId)`, like every record's) delegates to it with the non-message components. **Fixed-text failures** share one enum in a prescribed shape—a single `message` field, a constructor, a field-returning accessor—with each failure declared as one constant carrying its text.
 
 ```java
 public sealed interface LoginError extends Cause {
@@ -132,15 +132,15 @@ LoginError.General.INVALID_CREDENTIALS.result();              // fixed text
 
 Three rules govern the shape:
 
-- **Every value the template formats is a component.** The factory's parameters are exactly the non-message components, so the data an error mentions stays typed - renderable at the boundary, countable in telemetry, never trapped in prose. The `message` component comes last, which is what lets the constructor reference serve as the factory argument. Zero data is a property, not an omission: `INVALID_CREDENTIALS` deliberately says nothing about which credential failed.
-- **One discriminable case per failure** - its own record type or its own enum constant. Qualified enum constant case labels (`case General.INVALID_CREDENTIALS ->`) discriminate constants in a switch over the sealed interface, and listing every constant preserves exhaustiveness: adding a constant breaks every switch, exactly as adding a record does.
+- **Every value the template formats is a component.** The factory's parameters are exactly the non-message components, so the data an error mentions stays typed—renderable at the boundary, countable in telemetry, never trapped in prose. The `message` component comes last, which is what lets the constructor reference serve as the factory argument. Zero data is a property, not an omission: `INVALID_CREDENTIALS` deliberately says nothing about which credential failed.
+- **One discriminable case per failure**—its own record type or its own enum constant. Qualified enum constant case labels (`case General.INVALID_CREDENTIALS ->`) discriminate constants in a switch over the sealed interface, and listing every constant preserves exhaustiveness: adding a constant breaks every switch, exactly as adding a record does.
 - **The `FACTORY` is the only constructor call site, inside the record's own body as well.** `new AccountLocked(id, "hand-typed prose")` compiles and silently decouples the stored message from the declared template; routed through the factory, template and data cannot disagree. The type-named factory delegates to `FACTORY`, so the one rule that every record is built through a factory named for its type holds here too.
 
 ---
 
 ## Wrapped and Terminal Causes
 
-Two mixins nested in `Cause` remove the remaining overrides. A failure wrapping an underlying cause implements `Cause.Wrapped` with an `origin` component; the mixin derives `source()` from it. The component cannot be named `source` - the record accessor's return type would clash with `Cause.source()`, and `origin` is the name that avoids the trap. A failure no retry can change implements `Cause.Terminal`, which retry facilities consult to stop immediately.
+Two mixins nested in `Cause` remove the remaining overrides. A failure wrapping an underlying cause implements `Cause.Wrapped` with an `origin` component; the mixin derives `source()` from it. The component cannot be named `source`—the record accessor's return type would clash with `Cause.source()`, and `origin` is the name that avoids the trap. A failure no retry can change implements `Cause.Terminal`, which retry facilities consult to stop immediately.
 
 ```java
 record PaymentFailed(Cause origin, String message) implements TransferError, Cause.Wrapped {
@@ -185,13 +185,13 @@ No default arm: the compiler proves the failure catalog covered, and a new failu
 
 ## When a Bare Cause Is Enough
 
-`Causes.cause("Age must be 0-150")` remains the sanctioned form where no caller can act on the distinction - value-object validation whose failures all land in the same composite. The line is behavioral: when a caller would branch on the failure, render it separately, or count it, it is worth a type. The single-argument template overloads (`Causes.forOneValue(String)` and friends) belong to this same ad-hoc tier; in domain code a parameterized failure is worth naming, because the template form bakes its data into prose and discards it.
+`Causes.cause("Age must be 0-150")` remains the sanctioned form where no caller can act on the distinction—value-object validation whose failures all land in the same composite. The line is behavioral: when a caller would branch on the failure, render it separately, or count it, it is worth a type. The single-argument template overloads (`Causes.forOneValue(String)` and friends) belong to this same ad-hoc tier; in domain code a parameterized failure is worth naming, because the template form bakes its data into prose and discards it.
 
 ---
 
 ## When Fixed Text Acquires Data
 
-A failure often starts as fixed text and later needs data. The migration is one motion - remove the constant, add the record - and the compiler walks through the rest: every switch that listed the constant stops being exhaustive, every constant assertion becomes a missing symbol, and each site is rewritten from `case General.SESSION_EXPIRED ->` to `case SessionExpired e ->`. No site can be missed. The constant's name becomes the record's name in type case, so history and search survive the move; and because user text is produced at the boundary, the migration changes no external contract.
+A failure often starts as fixed text and later needs data. The migration is one motion—remove the constant, add the record—and the compiler walks through the rest: every switch that listed the constant stops being exhaustive, every constant assertion becomes a missing symbol, and each site is rewritten from `case General.SESSION_EXPIRED ->` to `case SessionExpired e ->`. No site can be missed. The constant's name becomes the record's name in type case, so history and search survive the move; and because user text is produced at the boundary, the migration changes no external contract.
 
 ---
 
@@ -284,7 +284,7 @@ class JpaUserRepository implements UserRepository {
 }
 ```
 
-Business logic never sees foreign exceptions - only domain errors.
+Business logic never sees foreign exceptions—only domain errors.
 
 ---
 
@@ -357,7 +357,7 @@ public static Result<Option<ReferralCode>> referralCode(String raw) {
 
 ## Testing Errors
 
-Assert on the failure's identity, never on `message()` text - a test matching message strings couples itself to prose and survives mutants that change which failure occurred. Fixed-text failures assert constant equality; data-carrying failures assert type and components.
+Assert on the failure's identity, never on `message()` text—a test matching message strings couples itself to prose and survives mutants that change which failure occurred. Fixed-text failures assert constant equality; data-carrying failures assert type and components.
 
 ```java
 // Test failure identity
@@ -397,14 +397,14 @@ void execute_succeeds() {
 
 ## Key Takeaways
 
-1. **No business exceptions** - Errors are values, not thrown
-2. **Records with data, one enum for fixed text** - `message` is a trailing component, never a hand-written body
-3. **FACTORY constructs** - Template and data cannot disagree; direct `new` bypasses the guarantee
-4. **Result.all()** - Accumulates all failures, not just first
-5. **Adapters convert** - Exceptions → Cause at boundaries
-6. **Render at the boundary** - The exhaustive switch composes user text from components
-7. **Never nest** - `Promise<Result<T>>` is forbidden
-8. **Test identity, not prose** - Constant equality and components, never `message()` text
+1. **No business exceptions**—Errors are values, not thrown
+2. **Records with data, one enum for fixed text**—`message` is a trailing component, never a hand-written body
+3. **FACTORY constructs**—Template and data cannot disagree; direct `new` bypasses the guarantee
+4. **Result.all()**—Accumulates all failures, not just first
+5. **Adapters convert**—Exceptions → Cause at boundaries
+6. **Render at the boundary**—The exhaustive switch composes user text from components
+7. **Never nest**—`Promise<Result<T>>` is forbidden
+8. **Test identity, not prose**—Constant equality and components, never `message()` text
 
 ---
 
@@ -418,4 +418,4 @@ See [Appendix B](appendix-b-exercises.md) for exercises on:
 
 ## What's Next
 
-[Null Policy & Error Recovery](null-policy-recovery.md) covers null policy - when null is acceptable and how to recover from errors with fallback values.
+[Null Policy & Error Recovery](null-policy-recovery.md) covers null policy—when null is acceptable and how to recover from errors with fallback values.

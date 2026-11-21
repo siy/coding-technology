@@ -3,21 +3,21 @@
 This appendix contains exercises for each part of the book, organized by difficulty level. Each exercise includes a solution with explanation.
 
 **Difficulty Levels:**
-- [Beginner] Beginner - Direct application of concepts
-- [Intermediate] Intermediate - Combining multiple concepts
-- [Advanced] Advanced - Design decisions and trade-offs
+- [Beginner] Beginner—Direct application of concepts
+- [Intermediate] Intermediate—Combining multiple concepts
+- [Advanced] Advanced—Design decisions and trade-offs
 
 ---
 
 ## Observation Exercises
 
-These warm-ups require no code changes - just observation. Before working through the implementation exercises below, spend a few minutes with your current codebase:
+These warm-ups require no code changes—just observation. Before working through the implementation exercises below, spend a few minutes with your current codebase:
 
 - Find one place that uses `orElse(null)` with `Optional`. Consider how `Option` would make that type-safe.
 - Find one method that throws exceptions for business failures. Think about how `Result<T>` would make those failures explicit in the type signature.
-- Find one async operation using `CompletableFuture`. Notice the complexity of error handling - `Promise<T>` simplifies that pattern.
+- Find one async operation using `CompletableFuture`. Notice the complexity of error handling—`Promise<T>` simplifies that pattern.
 
-Don't change anything yet - just observe the patterns. The implementation exercises that follow will show you how to refactor them.
+Don't change anything yet—just observe the patterns. The implementation exercises that follow will show you how to refactor them.
 
 ---
 
@@ -37,12 +37,12 @@ For each scenario, identify the correct return type (T, Option, Result, Promise)
 <details>
 <summary>Solution</summary>
 
-1. **T** - Pure calculation, cannot fail
-2. **Option** - Absence is normal, not an error
-3. **Result** - Parsing can fail with a reason
-4. **Promise** - Remote I/O, can fail asynchronously
-5. **Result** - Validation can fail with a reason
-6. **Option** - Cache miss is normal, not an error
+1. **T**—Pure calculation, cannot fail
+2. **Option**—Absence is normal, not an error
+3. **Result**—Parsing can fail with a reason
+4. **Promise**—Remote I/O, can fail asynchronously
+5. **Result**—Validation can fail with a reason
+6. **Option**—Cache miss is normal, not an error
 
 </details>
 
@@ -191,11 +191,11 @@ Result.all(success, failure).map((a, b) -> a + b)
 <details>
 <summary>Solution</summary>
 
-1. `20` - maps 10 to 20, or() returns value
-2. `0` - failure skips map, or() returns fallback
-3. `Result.success(10)` - predicate passes
-4. `Result.failure(Cause("not negative"))` - predicate fails
-5. `Result.failure(Cause("error"))` - all() accumulates failure from second
+1. `20`—maps 10 to 20, or() returns value
+2. `0`—failure skips map, or() returns fallback
+3. `Result.success(10)`—predicate passes
+4. `Result.failure(Cause("not negative"))`—predicate fails
+5. `Result.failure(Cause("error"))`—all() accumulates failure from second
 
 </details>
 
@@ -476,10 +476,10 @@ return Promise.lift(t -> DatabaseError.FACTORY.apply(Causes.fromThrowable(t)),
 <details>
 <summary>Solution</summary>
 
-- **A: Sequencer** - Linear chain of dependent steps
-- **B: Fork-Join** - Parallel independent operations combined
-- **C: Condition** - Routing based on discriminator
-- **D: Leaf** - Adapter wrapping external I/O
+- **A: Sequencer**—Linear chain of dependent steps
+- **B: Fork-Join**—Parallel independent operations combined
+- **C: Condition**—Routing based on discriminator
+- **D: Leaf**—Adapter wrapping external I/O
 
 </details>
 
@@ -490,7 +490,7 @@ return Promise.lift(t -> DatabaseError.FACTORY.apply(Causes.fromThrowable(t)),
 Implement a dashboard loader that fetches three pieces of data in parallel:
 - User profile (required)
 - Recent orders (required)
-- Recommendations (optional - use empty list on failure)
+- Recommendations (optional—use empty list on failure)
 
 ```java
 public interface LoadDashboard {
@@ -1153,9 +1153,9 @@ src/main/java/com/example/user/
 ```
 
 **Notes:**
-- `RegisterUserImpl` is not needed - factory method in interface creates implementation
+- `RegisterUserImpl` is not needed—factory method in interface creates implementation
 - `ValidRegistration` is nested in `RegisterUser` as `ValidRequest` record
-- `UserRepository` doesn't exist separately - it's a step interface inside use case
+- `UserRepository` doesn't exist separately—it's a step interface inside use case
 
 </details>
 
@@ -1196,12 +1196,12 @@ public class UserService {
 
 **Violations found:**
 
-1. **Primitive obsession** - Using raw `String` for email and password instead of value objects
-2. **Validation in wrong place** - Controller or service validating instead of value object factory
-3. **Exceptions for business errors** - EmailExistsException should be a Cause in Result
-4. **Mutable entity** - Using setters instead of immutable record
-5. **Field injection** - Using @Autowired instead of constructor injection
-6. **Missing use case interface** - Business logic directly in service
+1. **Primitive obsession**—Using raw `String` for email and password instead of value objects
+2. **Validation in wrong place**—Controller or service validating instead of value object factory
+3. **Exceptions for business errors**—EmailExistsException should be a Cause in Result
+4. **Mutable entity**—Using setters instead of immutable record
+5. **Field injection**—Using @Autowired instead of constructor injection
+6. **Missing use case interface**—Business logic directly in service
 
 **Refactored:**
 

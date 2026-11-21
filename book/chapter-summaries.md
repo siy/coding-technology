@@ -9,7 +9,7 @@ Key takeaways from each chapter for quick review.
 ### Introduction - Code Unification
 
 **Key Takeaways:**
-- JBCT's goal is code unification - making code predictable across teams and AI collaboration
+- JBCT's goal is code unification—making code predictable across teams and AI collaboration
 - Functional programming is a tool, not the focus
 - Unified code enables faster onboarding, easier maintenance, and better AI assistance
 - The methodology addresses three problems: scattered validation, hidden control flow, inconsistent patterns
@@ -22,10 +22,10 @@ Key takeaways from each chapter for quick review.
 ### The Four Return Types
 
 **Key Takeaways:**
-- **T** - Pure value, cannot fail, always present
-- `Option<T>` - Value may be absent (cache miss, optional field)
-- `Result<T>` - Synchronous operation may fail with typed error
-- `Promise<T>` - Asynchronous operation may fail
+- **T**—Pure value, cannot fail, always present
+- `Option<T>`—Value may be absent (cache miss, optional field)
+- `Result<T>`—Synchronous operation may fail with typed error
+- `Promise<T>`—Asynchronous operation may fail
 
 **Decision Rule:**
 ```
@@ -36,7 +36,7 @@ Can fail? → NO  → Optional? → NO  → T
 ```
 
 **Remember:**
-> "Choose the type that represents exactly what can happen - no more, no less."
+> "Choose the type that represents exactly what can happen—no more, no less."
 
 ---
 
@@ -60,7 +60,7 @@ Can fail? → NO  → Optional? → NO  → T
 **Key Takeaways:**
 - Create types that make invalid states unrepresentable
 - Validation happens in factory methods, returns `Result<T>`
-- Once parsed, data is trusted - no re-validation needed
+- Once parsed, data is trusted—no re-validation needed
 - Value objects are immutable records with private/package constructors
 
 **Pattern:**
@@ -101,7 +101,7 @@ public record Email(String value) {
 - Recovery strategies: fallback value, alternative source, re-throw
 
 **Remember:**
-> "Null is not a value - it's the absence of a decision."
+> "Null is not a value—it's the absence of a decision."
 
 ---
 
@@ -189,7 +189,7 @@ withRetry(withTimeout(operation))
 - Stubs are simple lambdas: `id -> Promise.success(value)`
 - Test each step failure independently
 - Async tests need `.await()` before assertions
-- Name test methods: `method_[scenario_]expectation` - at least two underscore-separated segments (e.g. `validate_rejectsEmpty`, or the fuller `register_succeeds_forNewEmail`)
+- Name test methods: `method_[scenario_]expectation`—at least two underscore-separated segments (e.g. `validate_rejectsEmpty`, or the fuller `register_succeeds_forNewEmail`)
 
 **Remember:**
 > "Stubs are just lambdas. Keep them simple."
@@ -226,12 +226,12 @@ withRetry(withTimeout(operation))
 
 ### Focused Examples
 
-**PublishArticle - Condition Pattern:**
+**PublishArticle—Condition Pattern:**
 - Route by author tier (PREMIUM, STANDARD, NEW)
 - Each branch has different workflow
 - Switch expression returns same type from all branches
 
-**TransferFunds - Aspects Pattern:**
+**TransferFunds—Aspects Pattern:**
 - Retry for transient failures
 - Timeout for slow operations
 - Audit for compliance logging

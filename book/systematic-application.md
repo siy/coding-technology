@@ -13,7 +13,7 @@
 
 ## The Checkpoint Approach
 
-JBCT application works through **checkpoints** - specific moments during coding where you pause and verify compliance. Each checkpoint has:
+JBCT application works through **checkpoints**—specific moments during coding where you pause and verify compliance. Each checkpoint has:
 - **Trigger**: When to apply this checkpoint
 - **Rules**: What to check
 - **Fixes**: How to correct violations
@@ -151,7 +151,7 @@ public record Config(DbUrl url, DbPassword pass) {
 | D3 | Are primitives used for domain concepts? | Extract value objects |
 | D4 | Does naming match the zone? | Adjust naming style |
 | D5 | Step or use-case implementation with a non-final field or a `setX(...)` method? | Pass dependencies to the factory; keep every field final |
-| D6 | Does an import point outward - domain importing a use case, adapter or config; a use case importing an adapter or config; an adapter importing config; or domain importing a framework (e.g. Spring, Jackson, jOOQ, JPA)? | Depend only inward: config -> adapter -> use case -> domain |
+| D6 | Does an import point outward—domain importing a use case, adapter or config; a use case importing an adapter or config; an adapter importing config; or domain importing a framework (e.g. Spring, Jackson, jOOQ, JPA)? | Depend only inward: config -> adapter -> use case -> domain |
 | D7 | `lift(...)` called outside an adapter? | Convert foreign exceptions at the adapter boundary; business code receives typed causes |
 
 ### Zone Placement
@@ -257,10 +257,10 @@ public Result<Integer> refresh() {
 - [ ] Every monadic chain checked against M1-M7
 - [ ] Every log statement checked against G1-G5
 - [ ] No FQCNs in code (use imports)
-- [ ] Pragmatica factories statically imported - `success(...)`, `failure(...)`, `some(...)`, `none()`, `option(...)`, `cause(...)`, `promise(...)`, `resolved(...)`, `failed(...)` rather than `Result.success(...)`. (The examples in this book qualify these calls so that each snippet reads on its own, without its import list.)
-- [ ] No parameter reassigned (`p = ...`, `p += ...`, `p++`) - introduce a local instead
-- [ ] No local variable that exists only to be returned on the next line - return the expression
-- [ ] No `if`/`else` whose branches each hold a single `return` - return one conditional expression
+- [ ] Pragmatica factories statically imported—`success(...)`, `failure(...)`, `some(...)`, `none()`, `option(...)`, `cause(...)`, `promise(...)`, `resolved(...)`, `failed(...)` rather than `Result.success(...)`. (The examples in this book qualify these calls so that each snippet reads on its own, without its import list.)
+- [ ] No parameter reassigned (`p = ...`, `p += ...`, `p++`)—introduce a local instead
+- [ ] No local variable that exists only to be returned on the next line—return the expression
+- [ ] No `if`/`else` whose branches each hold a single `return`—return one conditional expression
 - [ ] Test names follow `method_[scenario_]expectation` (two or more segments)
 
 ---
@@ -299,7 +299,7 @@ static GenerationCache generationCache(WorkConfig config) {
 }
 ```
 
-The local record is named in lowercase camelCase - `generationCache`, the same convention as a local variable - because it is an implementation detail of the factory, not part of the type vocabulary. Records declared at top level or in a type body keep PascalCase.
+The local record is named in lowercase camelCase—`generationCache`, the same convention as a local variable—because it is an implementation detail of the factory, not part of the type vocabulary. Records declared at top level or in a type body keep PascalCase.
 
 **Lambda pattern** (functional interface, no state):
 ```java
@@ -336,22 +336,22 @@ static Step validate(Validator validator) {
 
 ### When Reviewing Existing Code
 
-1. **Scan for lambdas** (`->`) - apply Checkpoint 1
-2. **Scan for return types** - apply Checkpoint 2
-3. **Scan for factories** - apply Checkpoint 3
-4. **Scan for classes that do several things** - apply Checkpoint 4
-5. **Scan for logging** - apply Checkpoint 6
-6. **Final verification** - apply Checkpoint 7
+1. **Scan for lambdas** (`->`)—apply Checkpoint 1
+2. **Scan for return types**—apply Checkpoint 2
+3. **Scan for factories**—apply Checkpoint 3
+4. **Scan for classes that do several things**—apply Checkpoint 4
+5. **Scan for logging**—apply Checkpoint 6
+6. **Final verification**—apply Checkpoint 7
 
 ---
 
 ## Key Takeaways
 
-1. **8 checkpoints** - Cover all aspects of JBCT
-2. **Apply systematically** - Violations caught early, not in review
-3. **Quick reference tables** - For immediate lookup
-4. **Order matters** - Design -> Signature -> Implementation -> Polish
-5. **100% compliance** - Achievable through systematic verification
+1. **8 checkpoints**—Cover all aspects of JBCT
+2. **Apply systematically**—Violations caught early, not in review
+3. **Quick reference tables**—For immediate lookup
+4. **Order matters**—Design -> Signature -> Implementation -> Polish
+5. **100% compliance**—Achievable through systematic verification
 
 ---
 

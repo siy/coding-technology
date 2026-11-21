@@ -964,7 +964,7 @@ items the volume rule wins. Neither fact is visible from any single row.
 ### The one test that belongs at the composition
 
 The table cannot see whether the calculated price is the price actually charged. That is a
-fact about the chain, so it needs exactly one test in `PlaceOrderTest` -- and it needs an
+fact about the chain, so it needs exactly one test in `PlaceOrderTest`—and it needs an
 **interaction assertion**: the amount that matters is the one the payment stub received, not
 the `total` the response carries, so the test captures what was charged:
 
@@ -992,7 +992,7 @@ void execute_chargesTheCalculatedTotal() {
 
 **One composition test, fifteen isolated vectors.** Run the arithmetic the other way and
 the cost is obvious: each composition vector needs six stubs, a request with lines and an
-address, and an `await()` -- roughly fourteen lines against one row in a table. Fifteen of
+address, and an `await()`—roughly fourteen lines against one row in a table. Fifteen of
 those is about two hundred lines that assemble the whole use case to check a multiplication,
 and every failure reports "PlaceOrder failed" rather than naming the rule that broke.
 
@@ -1003,7 +1003,7 @@ Every stub above is an assumption about a boundary. `checkInventory` returning
 in the use case tests checks it. **That is what adapter contract tests are for, and a suite
 without them is a suite whose stubs nobody has verified.**
 
-Adapters get success and error modes -- not thirty repetitions of the happy path:
+Adapters get success and error modes—not thirty repetitions of the happy path:
 
 ```java
 class InventoryCheckerTest {
@@ -1210,11 +1210,11 @@ The `recover()` method enables clean compensation logic without try-catch.
 
 PlaceOrder demonstrates:
 
-- **Fork-Join for validation** - All fields validated in parallel, errors accumulated
-- **Fork-Join for I/O** - Inventory checked for all items in parallel
-- **Sequencer with compensation** - Reserve -> Pay -> Create with rollback on failure
-- **Error type hierarchy** - Grouped enum for fixed messages, records for data-carrying errors
-- **Best-effort operations** - Notification doesn't fail the order
-- **Adapter isolation** - All external calls wrapped in Promise.lift
+- **Fork-Join for validation**—All fields validated in parallel, errors accumulated
+- **Fork-Join for I/O**—Inventory checked for all items in parallel
+- **Sequencer with compensation**—Reserve -> Pay -> Create with rollback on failure
+- **Error type hierarchy**—Grouped enum for fixed messages, records for data-carrying errors
+- **Best-effort operations**—Notification doesn't fail the order
+- **Adapter isolation**—All external calls wrapped in Promise.lift
 
 The pattern composition remains simple despite the complex business requirements. Each step is independently testable, and the compensation logic is explicit rather than hidden in catch blocks.

@@ -417,7 +417,7 @@ CheckEmail checkEmail = req -> Promise.success(req);
 
 **Q: Is JBCT only for microservices?**
 
-A: No. JBCT works for any backend Java application - monoliths, microservices, serverless functions. The patterns are about code organization, not deployment topology.
+A: No. JBCT works for any backend Java application—monoliths, microservices, serverless functions. The patterns are about code organization, not deployment topology.
 
 **Q: Does JBCT require Spring Boot?**
 
@@ -599,10 +599,10 @@ if (condition) {
 
 When debugging JBCT code:
 
-1. **Add logging at chain points** - Use onSuccess/onFailure for visibility
-2. **Extract to named methods** - Easier breakpoints and stack traces
-3. **Check for common mistakes** - Nested results, ignored returns, thrown exceptions
-4. **Use explicit types** - Helps IDE and compiler catch errors
-5. **Test both success and failure** - Always assert on Result/Promise
+1. **Add logging at chain points**—Use onSuccess/onFailure for visibility
+2. **Extract to named methods**—Easier breakpoints and stack traces
+3. **Check for common mistakes**—Nested results, ignored returns, thrown exceptions
+4. **Use explicit types**—Helps IDE and compiler catch errors
+5. **Test both success and failure**—Always assert on Result/Promise
 
 The functional style may feel unfamiliar initially, but debugging becomes easier once you internalize the patterns. The explicit error handling means fewer surprises at runtime.

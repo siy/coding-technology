@@ -379,7 +379,7 @@ class RegisterUserIntegrationTest {
 ## Test Naming
 
 <!-- book:test-naming -->
-Follow the pattern: `method_[scenario_]expectation` - at least two underscore-separated segments. The scenario segment is optional; include it when the expectation alone would not identify the case.
+Follow the pattern: `method_[scenario_]expectation`—at least two underscore-separated segments. The scenario segment is optional; include it when the expectation alone would not identify the case.
 
 ```java
 void validate_rejectsEmpty()

@@ -312,7 +312,7 @@ function flattenSpine(parts) {
 
 // ---------- Book-chapter link rewriting ----------
 
-function rewriteBookLinks(markdown, course, byBook) {
+function rewriteBookLinks(markdown, course, byBook, lessonSlug) {
   return markdown.replace(/\]\(([^)#\s]+\.md)((?:#[^)]*)?)\)/g, (match, target, anchor) => {
     let clean = target.replace(/^\.\//, '');
     let cc = course;
@@ -329,8 +329,7 @@ function rewriteBookLinks(markdown, course, byBook) {
     if (cc.referenceSlug && slug === cc.referenceSlug) return `](${cc.referenceUrlBase}${anchor || ''})`;
     if (cc.tocFileSlug && slug === cc.tocFileSlug) return `](${cc.urlBase})`;
     if (cc.lessonSlugSet && cc.lessonSlugSet.has(slug)) return `](${cc.urlBase}${slug}/${anchor || ''})`;
-    console.warn(`  WARN: unrecognized book-internal link target "${target}" in ${course.id} — left unresolved`);
-    return match;
+    throw new Error(`${course.id} book/${lessonSlug}.md: unrecognized book-internal link target "${target}"`);
   });
 }
 
@@ -808,13 +807,10 @@ function buildCourseToc(course, parts, flat) {
     const svg = buildLatticeSVG(slugs, -1);
     const items = part.lessons.map((lesson, i) => {
       const layerPath = path.join(course.layerDir, `${lesson.slug}.md`);
-      let blurb = '';
-      if (fs.existsSync(layerPath)) {
-        const sections = parseCourseLayer(fs.readFileSync(layerPath, 'utf-8'));
-        blurb = sections.blurb || '';
-      } else {
-        console.warn(`  WARN: ${course.id} course layer ${lesson.slug}.md not found — TOC blurb omitted`);
+      if (!fs.existsSync(layerPath)) {
+        throw new Error(`${course.id} TOC: course layer for lesson ${lesson.slug} not found at ${layerPath}`);
       }
+      const blurb = parseCourseLayer(fs.readFileSync(layerPath, 'utf-8')).blurb || '';
       return `<li><a href="${course.urlBase}${lesson.slug}/"><span class="num">${i + 1}</span><span class="title">${escapeHtml(lesson.title)}</span>${blurb ? `<div class="blurb">${escapeHtml(blurb)}</div>` : ''}</a></li>`;
     }).join('\n      ');
     return `<div class="part-block">
@@ -852,23 +848,20 @@ function buildLessonPages(course, flat) {
   flat.forEach((lesson, i) => {
     const chapterPath = path.join(course.bookDir, `${lesson.slug}.md`);
     if (!fs.existsSync(chapterPath)) {
-      console.warn(`  WARN: ${course.id} book/${lesson.slug}.md not found — skipping lesson`);
-      return;
+      throw new Error(`${course.id} lesson ${lesson.slug}: chapter source not found at ${chapterPath}`);
     }
     const rawChapter = fs.readFileSync(chapterPath, 'utf-8');
     const { body: chapterBody } = stripFrontMatter(rawChapter);
     const { title: h1Title, body: strippedBody } = stripLeadingH1(chapterBody);
     const title = h1Title || lesson.specTitle;
-    const rewritten = rewriteBookLinks(strippedBody, course, courseByBookDir);
+    const rewritten = rewriteBookLinks(strippedBody, course, courseByBookDir, lesson.slug);
     const bodyHtml = render(rewritten);
 
     const layerPath = path.join(course.layerDir, `${lesson.slug}.md`);
-    let sections = {};
-    if (fs.existsSync(layerPath)) {
-      sections = parseCourseLayer(fs.readFileSync(layerPath, 'utf-8'));
-    } else {
-      console.warn(`  WARN: ${course.id} course layer ${lesson.slug}.md not found — lesson rendered without course-layer blocks`);
+    if (!fs.existsSync(layerPath)) {
+      throw new Error(`${course.id} lesson ${lesson.slug}: course layer not found at ${layerPath}`);
     }
+    const sections = parseCourseLayer(fs.readFileSync(layerPath, 'utf-8'));
 
     const learnBox = sections.learn
       ? `<div class="learn">\n    <h2>In this lesson</h2>\n    ${render(sections.learn)}\n  </div>`
@@ -960,8 +953,7 @@ function buildLegacyPages() {
   LEGACY_PAGES.forEach(page => {
     const sourcePath = path.join(ROOT_DIR, page.src);
     if (!fs.existsSync(sourcePath)) {
-      console.warn(`WARN: ${page.src} not found, skipping legacy page`);
-      return;
+      throw new Error(`legacy page ${page.out || page.src}: source ${page.src} not found at ${sourcePath}`);
     }
     const raw = fs.readFileSync(sourcePath, 'utf-8');
     const { body } = stripFrontMatter(raw);
@@ -1120,8 +1112,7 @@ function copyImages() {
   const imageSource = path.join(__dirname, 'image');
   const imageDest = path.join(DIST_DIR, 'image');
   if (!fs.existsSync(imageSource)) {
-    console.warn('WARN: image directory not found');
-    return;
+    throw new Error(`image directory not found at ${imageSource}`);
   }
   ensureDir(imageDest);
   fs.readdirSync(imageSource).forEach(file => {
@@ -1137,8 +1128,7 @@ function copyNextStep() {
   const source = path.join(__dirname, 'next-step');
   const dest = path.join(DIST_DIR, 'method', 'architecture-synthesis', 'next-step');
   if (!fs.existsSync(source)) {
-    console.warn('WARN: next-step directory not found');
-    return;
+    throw new Error(`next-step directory not found at ${source}`);
   }
   ensureDir(dest);
   fs.readdirSync(source, { withFileTypes: true })

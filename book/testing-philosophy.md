@@ -114,7 +114,7 @@ Count the space instead, and let it choose the shape of the tests:
 | The space | Write | Because |
 |---|---|---|
 | Small and enumerable (a status enum, a three-way branch) | examples | the space *is* the examples |
-| A finite grid (an enum against an enum, banded ranges) | a table -- `@ParameterizedTest` with one row per cell | the cell count is known, so a missing row is a visible hole |
+| A finite grid (an enum against an enum, banded ranges) | a table—`@ParameterizedTest` with one row per cell | the cell count is known, so a missing row is a visible hole |
 | Unbounded (any string, any `BigDecimal`, any timestamp) | state the invariant | examples sample an infinite space arbitrarily, and four are as arbitrary as one |
 
 `Email` is the third kind. Four strings do not cover the space of malformed addresses; they

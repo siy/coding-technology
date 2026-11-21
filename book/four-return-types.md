@@ -205,7 +205,7 @@ Each type represents one orthogonal concern:
 
 | Type | Why Forbidden |
 |------|---------------|
-| `Promise<Result<T>>` | `Promise` already carries failures - double error channel |
+| `Promise<Result<T>>` | `Promise` already carries failures—double error channel |
 | `Result<Result<T>>` | Nested failures create unwrapping ceremony |
 | `Option<Option<T>>` | Nested optionality is meaningless |
 | `Promise<Option<Result<T>>>` | Triple nesting—architectural smell |
@@ -225,7 +225,7 @@ You could, but you'd hit these problems:
 |---------------|---------|---------------|
 | `return null` | Hidden optionality → NPE at runtime | `Option<T>` explicit in type |
 | `Optional<T>` | Can't represent failures | `Result<T>` for typed errors |
-| `try-catch` | Invisible control flow | `Result<T>` - errors as values |
+| `try-catch` | Invisible control flow | `Result<T>`—errors as values |
 | `CompletableFuture<T>` | Complex error handling | `Promise<T>` consistent patterns |
 
 **Key differences:**

@@ -12,7 +12,7 @@ Every function in JBCT returns one of four semantic shapes: `T`, `Option<T>`, `R
 **Why by criteria:**
 - **Mental Overhead**: Hidden error channels (exceptions), hidden optionality (null), hidden asynchrony (blocking I/O) force remembering behavior not in signatures. Explicit types eliminate this (+3).
 - **Reliability**: Compiler verifies error handling, null safety, and async boundaries when encoded in types (+3).
-- **Complexity**: Four types cover all scenarios - no guessing about combinations (+2).
+- **Complexity**: Four types cover all scenarios—no guessing about combinations (+2).
 <!-- /book:four-return-shapes -->
 
 ```
@@ -52,8 +52,8 @@ Can this operation fail?
 | `Promise<Result<T>>` | `Promise` already carries failures - double error channel |
 | `Result<Result<T>>` | Nested failures create unwrapping ceremony |
 | `Option<Option<T>>` | Nested optionality is meaningless |
-| `Promise<Option<Result<T>>>` | Triple nesting - architectural smell |
-| `Option<List<T>>` | A collection already carries emptiness as a value - a second absence channel says it twice |
+| `Promise<Option<Result<T>>>` | Triple nesting—architectural smell |
+| `Option<List<T>>` | A collection already carries emptiness as a value—a second absence channel says it twice |
 
 **Rule:** Each concern (optionality, failure, asynchrony) appears at most once in a return type; emptiness is the collection's own concern, already carried as a value.
 <!-- /book:return-type-matrix -->
@@ -88,7 +88,7 @@ All failures as sealed `Cause` types.
 <!-- book:typed-errors -->
 Every failure is a `Cause`, and `Cause` has exactly one abstract member: `message()`. The construction idiom satisfies it structurally, so no error type ever hand-writes prose in a method body.
 
-A use case's failures form a sealed interface with two kinds of members. A **data-carrying failure** is a record: its components are the error's data, in declaration order, with a trailing `String message` component whose generated accessor *is* the `message()` implementation. Its `FACTORY`, built from a message template and the canonical constructor reference, is the construction path, and the record's type-named static factory (`accountLocked(userId)`, like every record's) delegates to it with the non-message components. **Fixed-text failures** share one enum in a prescribed shape - a single `message` field, a constructor, a field-returning accessor - with each failure declared as one constant carrying its text.
+A use case's failures form a sealed interface with two kinds of members. A **data-carrying failure** is a record: its components are the error's data, in declaration order, with a trailing `String message` component whose generated accessor *is* the `message()` implementation. Its `FACTORY`, built from a message template and the canonical constructor reference, is the construction path, and the record's type-named static factory (`accountLocked(userId)`, like every record's) delegates to it with the non-message components. **Fixed-text failures** share one enum in a prescribed shape—a single `message` field, a constructor, a field-returning accessor—with each failure declared as one constant carrying its text.
 
 ```java
 public sealed interface LoginError extends Cause {
@@ -122,13 +122,13 @@ LoginError.General.INVALID_CREDENTIALS.result();              // fixed text
 
 Three rules govern the shape:
 
-- **Every value the template formats is a component.** The factory's parameters are exactly the non-message components, so the data an error mentions stays typed - renderable at the boundary, countable in telemetry, never trapped in prose. The `message` component comes last, which is what lets the constructor reference serve as the factory argument. Zero data is a property, not an omission: `INVALID_CREDENTIALS` deliberately says nothing about which credential failed.
-- **One discriminable case per failure** - its own record type or its own enum constant. Qualified enum constant case labels (`case General.INVALID_CREDENTIALS ->`) discriminate constants in a switch over the sealed interface, and listing every constant preserves exhaustiveness: adding a constant breaks every switch, exactly as adding a record does.
+- **Every value the template formats is a component.** The factory's parameters are exactly the non-message components, so the data an error mentions stays typed—renderable at the boundary, countable in telemetry, never trapped in prose. The `message` component comes last, which is what lets the constructor reference serve as the factory argument. Zero data is a property, not an omission: `INVALID_CREDENTIALS` deliberately says nothing about which credential failed.
+- **One discriminable case per failure**—its own record type or its own enum constant. Qualified enum constant case labels (`case General.INVALID_CREDENTIALS ->`) discriminate constants in a switch over the sealed interface, and listing every constant preserves exhaustiveness: adding a constant breaks every switch, exactly as adding a record does.
 - **The `FACTORY` is the only constructor call site, inside the record's own body as well.** `new AccountLocked(id, "hand-typed prose")` compiles and silently decouples the stored message from the declared template; routed through the factory, template and data cannot disagree. The type-named factory delegates to `FACTORY`, so the one rule that every record is built through a factory named for its type holds here too.
 <!-- /book:typed-errors -->
 
 <!-- book:wrapped-terminal-causes -->
-Two mixins nested in `Cause` remove the remaining overrides. A failure wrapping an underlying cause implements `Cause.Wrapped` with an `origin` component; the mixin derives `source()` from it. The component cannot be named `source` - the record accessor's return type would clash with `Cause.source()`, and `origin` is the name that avoids the trap. A failure no retry can change implements `Cause.Terminal`, which retry facilities consult to stop immediately.
+Two mixins nested in `Cause` remove the remaining overrides. A failure wrapping an underlying cause implements `Cause.Wrapped` with an `origin` component; the mixin derives `source()` from it. The component cannot be named `source`—the record accessor's return type would clash with `Cause.source()`, and `origin` is the name that avoids the trap. A failure no retry can change implements `Cause.Terminal`, which retry facilities consult to stop immediately.
 
 ```java
 record PaymentFailed(Cause origin, String message) implements TransferError, Cause.Wrapped {
@@ -154,7 +154,7 @@ Carrying the cause does not carry its retry classification. At Pragmatica 1.0.0-
 <!-- /book:wrapped-terminal-causes -->
 
 <!-- book:bare-cause -->
-`Causes.cause("Age must be 0-150")` remains the sanctioned form where no caller can act on the distinction - value-object validation whose failures all land in the same composite. The line is behavioral: when a caller would branch on the failure, render it separately, or count it, it is worth a type. The single-argument template overloads (`Causes.forOneValue(String)` and friends) belong to this same ad-hoc tier; in domain code a parameterized failure is worth naming, because the template form bakes its data into prose and discards it.
+`Causes.cause("Age must be 0-150")` remains the sanctioned form where no caller can act on the distinction—value-object validation whose failures all land in the same composite. The line is behavioral: when a caller would branch on the failure, render it separately, or count it, it is worth a type. The single-argument template overloads (`Causes.forOneValue(String)` and friends) belong to this same ad-hoc tier; in domain code a parameterized failure is worth naming, because the template form bakes its data into prose and discards it.
 <!-- /book:bare-cause -->
 
 At `lift` boundaries, apply the factory to the converted throwable: `t -> RepositoryError.DatabaseFailure.FACTORY.apply(Causes.fromThrowable(t))`

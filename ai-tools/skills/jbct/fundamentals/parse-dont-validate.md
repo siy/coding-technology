@@ -47,7 +47,7 @@ Result<Email> result = Email.email(input);
 // If this is a Success, the Email is valid. Guaranteed.
 ```
 
-The static factory `email()`, which returns `Result<Email>`, is the only intended way to get an `Email`. If you have an `Email` that came through it, it's valid - no separate check needed.
+The static factory `email()`, which returns `Result<Email>`, is the only intended way to get an `Email`. If you have an `Email` that came through it, it's valid—no separate check needed.
 
 > **Note:** As of current Java versions, records do not support declaring the canonical constructor as private. Rely on team discipline and code review to ensure value objects are only constructed through their factory methods. Direct `new Email(...)` calls stand out immediately and are easy to catch.
 
@@ -276,7 +276,7 @@ public record ReferralCode(String value) {
 ```
 
 The `Verify.ensureOption()` method (Pragmatica Core 0.9.0+) handles this pattern elegantly:
-- If the `Option` is empty, succeeds with `Option.none()` - no validation needed
+- If the `Option` is empty, succeeds with `Option.none()`—no validation needed
 - If present and valid, succeeds with `Option.some(value)`
 - If present and invalid, fails with the provided cause
 

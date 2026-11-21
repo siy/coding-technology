@@ -25,7 +25,7 @@ A structural pattern for cross-cutting concerns like retry, timeout, logging, an
 ## B
 
 **Bifurcation**
-Handling both success and failure cases. Methods like `fold()` and `apply()` accept two handlers - one for each outcome.
+Handling both success and failure cases. Methods like `fold()` and `apply()` accept two handlers—one for each outcome.
 
 ---
 
@@ -97,7 +97,7 @@ Early return on invalid input. In JBCT, replaced by parse-don't-validate: valida
 ## H
 
 **Happy Path**
-The execution path when all operations succeed. In JBCT, the happy path is the default - failures are handled explicitly.
+The execution path when all operations succeed. In JBCT, the happy path is the default—failures are handled explicitly.
 
 **Hide the Machinery, Keep the Meaning**
 JBCT's twin property: technical detail is pushed to adapters and Aspects (the machinery hidden), while business facts are preserved in types and combinators (the meaning kept) — return types state fallibility and absence, `Option` parameters state domain optionality, `flatMap` states dependency, `all()` states independence, sealed `Cause` hierarchies state the failure catalog, `*State` sums state the lifecycle. The code reads twice: as Java by the compiler, as the business process by the reader. The inventory table is in From Process to Patterns.
@@ -134,7 +134,7 @@ Converting a value or operation to a monadic context. `Result.lift()` wraps thro
 ## M
 
 **map**
-Transform the success value while preserving the container. Does not flatten nested containers - use `flatMap()` when the mapper returns a monadic type.
+Transform the success value while preserving the container. Does not flatten nested containers—use `flatMap()` when the mapper returns a monadic type.
 
 **Monad**
 A design pattern for chaining operations that may have side effects. Option, Result, and Promise are all monads. The key operation is `flatMap()`.

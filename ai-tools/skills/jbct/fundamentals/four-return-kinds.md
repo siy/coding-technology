@@ -6,7 +6,7 @@ Every function in JBCT returns one of four semantic shapes: `T`, `Option<T>`, `R
 **Why by criteria:**
 - **Mental Overhead**: Hidden error channels (exceptions), hidden optionality (null), hidden asynchrony (blocking I/O) force remembering behavior not in signatures. Explicit types eliminate this (+3).
 - **Reliability**: Compiler verifies error handling, null safety, and async boundaries when encoded in types (+3).
-- **Complexity**: Four types cover all scenarios - no guessing about combinations (+2).
+- **Complexity**: Four types cover all scenarios—no guessing about combinations (+2).
 <!-- /book:four-return-shapes -->
 
 ## The Four Kinds
@@ -99,7 +99,7 @@ result.async()
 ### 4. `Promise<T>` - Asynchronous
 
 <!-- book:promise-boundary -->
-Use this for any operation that leaves the process: I/O, external service calls, inter-process communication. `Promise<T>` is semantically equivalent to `Result<T>` but asynchronous - failures are carried in the Promise itself, not nested inside it.
+Use this for any operation that leaves the process: I/O, external service calls, inter-process communication. `Promise<T>` is semantically equivalent to `Result<T>` but asynchronous—failures are carried in the Promise itself, not nested inside it.
 
 ```java
 public interface AccountRepository {
@@ -117,7 +117,7 @@ The signature `Promise<Account>` tells you: this completes later (async), might 
 
 Promise resolution is **thread-safe** and happens **exactly once**:
 
-- Multiple threads can attempt resolution - only the first succeeds
+- Multiple threads can attempt resolution—only the first succeeds
 - Resolution serves as synchronization point
 - Transformations execute after resolution
 - Side effects execute independently
@@ -172,8 +172,8 @@ A long-running computation is not on this list. CPU-bound work returns `Result<T
 | `Promise<Result<T>>` | `Promise` already carries failures - double error channel |
 | `Result<Result<T>>` | Nested failures create unwrapping ceremony |
 | `Option<Option<T>>` | Nested optionality is meaningless |
-| `Promise<Option<Result<T>>>` | Triple nesting - architectural smell |
-| `Option<List<T>>` | A collection already carries emptiness as a value - a second absence channel says it twice |
+| `Promise<Option<Result<T>>>` | Triple nesting—architectural smell |
+| `Option<List<T>>` | A collection already carries emptiness as a value—a second absence channel says it twice |
 
 **Rule:** Each concern (optionality, failure, asynchrony) appears at most once in a return type; emptiness is the collection's own concern, already carried as a value.
 <!-- /book:return-type-matrix -->

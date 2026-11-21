@@ -16,10 +16,10 @@
 
 Most Java code validates data after construction. You create an object with raw values, then call a `validate()` method that might throw exceptions or return error lists. This approach is backwards.
 
-**The principle:** Make invalid states unrepresentable. If construction succeeds, the object is valid by definition. Validation is parsing - converting untyped or weakly-typed input into strongly typed domain objects that enforce invariants at the type level.
+**The principle:** Make invalid states unrepresentable. If construction succeeds, the object is valid by definition. Validation is parsing—converting untyped or weakly-typed input into strongly typed domain objects that enforce invariants at the type level.
 
 **Why by criteria:**
-- **Mental Overhead**: No "remember to validate" - type system guarantees validity (+2)
+- **Mental Overhead**: No "remember to validate"—type system guarantees validity (+2)
 - **Reliability**: Compiler enforces that invalid objects cannot be constructed (+3)
 - **Design Impact**: Business invariants concentrated in factories, not scattered (+2)
 - **Complexity**: Single validation point per type eliminates redundant checks (+1)
@@ -80,7 +80,7 @@ Result<Email> result = Email.email(input);
 // If this is a Success, the Email is valid. Guaranteed.
 ```
 
-The static factory `email()`, which returns `Result<Email>`, is the only intended way to get an `Email`. If you have an `Email` that came through it, it's valid - no separate check needed.
+The static factory `email()`, which returns `Result<Email>`, is the only intended way to get an `Email`. If you have an `Email` that came through it, it's valid—no separate check needed.
 
 > **Note:** As of current Java versions, records do not support declaring the canonical constructor as private. Rely on team discipline and code review to ensure value objects are only constructed through their factory methods. Direct `new Email(...)` calls stand out immediately and are easy to catch.
 
@@ -153,7 +153,7 @@ public record ReferralCode(String value) {
 ```
 
 The `Verify.ensureOption()` method (Pragmatica Core 0.9.0+) handles this pattern elegantly:
-- If the `Option` is empty, succeeds with `Option.none()` - no validation needed
+- If the `Option` is empty, succeeds with `Option.none()`—no validation needed
 - If present and valid, succeeds with `Option.some(value)`
 - If present and invalid, fails with the provided cause
 
@@ -370,7 +370,7 @@ public record Age(int value) {
 
 **Don't refactor everything at once.** Adopt incrementally at boundaries.
 
-**1. New features first** - Use parse-don't-validate for all new code
+**1. New features first**—Use parse-don't-validate for all new code
 
 **2. Keep existing validation at controller boundaries:**
 ```java
@@ -400,13 +400,13 @@ public ResponseEntity<?> register(@RequestBody RegisterUser.Request raw) {
 
 ## Key Takeaways
 
-1. **Validation IS construction** - If an instance exists, it's valid
-2. **Fallible factories return `Result<T>`** - Success means valid object
-3. **Every record has a type-named factory** - `Result<Self>` if the record has any invariant, `Self` if it has none; the factory is the only construction path from outside the record (a local record inside a factory method is outside the rule)
-4. **`Result.all()` accumulates errors** - Show all problems at once
-5. **Normalization in factories** - Trim, lowercase, etc. happen once
-6. **`Result<Option<T>>`** - For optional values that must validate when present
-7. **Adopt incrementally** - Start at boundaries, work inward
+1. **Validation IS construction**—If an instance exists, it's valid
+2. **Fallible factories return `Result<T>`**—Success means valid object
+3. **Every record has a type-named factory**—`Result<Self>` if the record has any invariant, `Self` if it has none; the factory is the only construction path from outside the record (a local record inside a factory method is outside the rule)
+4. **`Result.all()` accumulates errors**—Show all problems at once
+5. **Normalization in factories**—Trim, lowercase, etc. happen once
+6. **`Result<Option<T>>`**—For optional values that must validate when present
+7. **Adopt incrementally**—Start at boundaries, work inward
 
 ---
 
@@ -421,4 +421,4 @@ See [Appendix B](appendix-b-exercises.md) for exercises on:
 
 ## What's Next
 
-[Error Handling & Composition](error-handling.md) covers error handling - how to define typed errors, compose them, and handle failures cleanly without exceptions.
+[Error Handling & Composition](error-handling.md) covers error handling—how to define typed errors, compose them, and handle failures cleanly without exceptions.

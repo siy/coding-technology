@@ -38,10 +38,10 @@ public Result<User> registerUser(String email, String password) {
 
 ### What JBCT Adds
 
-- **Four tracks, not two** - T, Option, Result, Promise for different semantics
-- **Structural patterns** - Named patterns (Sequencer, Fork-Join) beyond just chaining
-- **Aggregation** - Result.all() for parallel validation
-- **Async integration** - Promise extends the model to async operations
+- **Four tracks, not two**—T, Option, Result, Promise for different semantics
+- **Structural patterns**—Named patterns (Sequencer, Fork-Join) beyond just chaining
+- **Aggregation**—Result.all() for parallel validation
+- **Async integration**—Promise extends the model to async operations
 
 ### Key Difference
 
@@ -93,13 +93,13 @@ String message = Match(result).of(
 
 ### Key Differences
 
-1. **vavr is a library, JBCT is a methodology** - vavr provides types, JBCT provides patterns, structure, and practices.
+1. **vavr is a library, JBCT is a methodology**—vavr provides types, JBCT provides patterns, structure, and practices.
 
-2. **Error typing** - vavr's Either has generic left type. Pragmatica Core's Result always uses Cause, providing consistent error handling.
+2. **Error typing**—vavr's Either has generic left type. Pragmatica Core's Result always uses Cause, providing consistent error handling.
 
-3. **Async story** - vavr doesn't provide async primitives. JBCT's Promise integrates error handling with async operations.
+3. **Async story**—vavr doesn't provide async primitives. JBCT's Promise integrates error handling with async operations.
 
-4. **Simplicity** - vavr includes many FP features (persistent collections, pattern matching DSL, streams). Pragmatica Core focuses on the minimum needed for JBCT.
+4. **Simplicity**—vavr includes many FP features (persistent collections, pattern matching DSL, streams). Pragmatica Core focuses on the minimum needed for JBCT.
 
 ### When to Use vavr
 
@@ -189,7 +189,7 @@ JBCT:
 
 ## Exercises
 
-1. **Find your composition style:** Take one method in your codebase that orchestrates several steps. Count the distinct ways it signals failure - return codes, exceptions, nulls, logged-and-swallowed. How many are there?
+1. **Find your composition style:** Take one method in your codebase that orchestrates several steps. Count the distinct ways it signals failure—return codes, exceptions, nulls, logged-and-swallowed. How many are there?
 
 2. **Compare error handling:** Take one exception-based method in your codebase. Rewrite it using ROP style with Result. What errors were implicit?
 
@@ -201,7 +201,7 @@ JBCT:
 
 ## Summary
 
-JBCT is not revolutionary - it combines proven ideas:
+JBCT is not revolutionary—it combines proven ideas:
 
 | Idea | Source |
 |------|--------|
@@ -210,9 +210,9 @@ JBCT is not revolutionary - it combines proven ideas:
 | Parse don't validate | Type-driven design |
 
 What JBCT adds:
-- **Unified methodology** - Architecture + implementation + testing
-- **Structural patterns** - Named, composable patterns
-- **Team practices** - Migration path, code review guidelines
-- **AI optimization** - Predictable code for AI collaboration
+- **Unified methodology**—Architecture + implementation + testing
+- **Structural patterns**—Named, composable patterns
+- **Team practices**—Migration path, code review guidelines
+- **AI optimization**—Predictable code for AI collaboration
 
-The goal isn't originality - it's unification.
+The goal isn't originality—it's unification.

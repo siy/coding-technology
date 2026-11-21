@@ -16,7 +16,7 @@ Every function in JBCT returns one of four semantic shapes: `T`, `Option<T>`, `R
 **Why by criteria:**
 - **Mental Overhead**: Hidden error channels (exceptions), hidden optionality (null), hidden asynchrony (blocking I/O) force remembering behavior not in signatures. Explicit types eliminate this (+3).
 - **Reliability**: Compiler verifies error handling, null safety, and async boundaries when encoded in types (+3).
-- **Complexity**: Four types cover all scenarios - no guessing about combinations (+2).
+- **Complexity**: Four types cover all scenarios—no guessing about combinations (+2).
 
 ---
 
@@ -115,7 +115,7 @@ The signature `Result<Email>` tells you: this might fail (invalid format), compl
 
 ## `Promise<T>` - Asynchronous, Can Fail
 
-Use this for any operation that leaves the process: I/O, external service calls, inter-process communication. `Promise<T>` is semantically equivalent to `Result<T>` but asynchronous - failures are carried in the Promise itself, not nested inside it.
+Use this for any operation that leaves the process: I/O, external service calls, inter-process communication. `Promise<T>` is semantically equivalent to `Result<T>` but asynchronous—failures are carried in the Promise itself, not nested inside it.
 
 ```java
 public interface AccountRepository {
@@ -133,7 +133,7 @@ The signature `Promise<Account>` tells you: this completes later (async), might 
 
 Promise resolution is **thread-safe** and happens **exactly once**:
 
-- Multiple threads can attempt resolution - only the first succeeds
+- Multiple threads can attempt resolution—only the first succeeds
 - Resolution serves as synchronization point
 - Transformations execute after resolution
 - Side effects execute independently
@@ -208,8 +208,8 @@ Each type represents one orthogonal concern:
 | `Promise<Result<T>>` | `Promise` already carries failures - double error channel |
 | `Result<Result<T>>` | Nested failures create unwrapping ceremony |
 | `Option<Option<T>>` | Nested optionality is meaningless |
-| `Promise<Option<Result<T>>>` | Triple nesting - architectural smell |
-| `Option<List<T>>` | A collection already carries emptiness as a value - a second absence channel says it twice |
+| `Promise<Option<Result<T>>>` | Triple nesting—architectural smell |
+| `Option<List<T>>` | A collection already carries emptiness as a value—a second absence channel says it twice |
 
 **Rule:** Each concern (optionality, failure, asynchrony) appears at most once in a return type; emptiness is the collection's own concern, already carried as a value.
 
@@ -268,7 +268,7 @@ public Promise<Response> execute(Request request) {
 
 ### Forbidden Nesting: `Promise<Result<T>>`
 
-**`Promise<Result<T>>` is forbidden.** `Promise<T>` already carries failures - nesting `Result` inside creates two error channels.
+**`Promise<Result<T>>` is forbidden.** `Promise<T>` already carries failures—nesting `Result` inside creates two error channels.
 
 **Wrong:**
 ```java
@@ -360,11 +360,11 @@ Promise.promise()           // Unresolved
 
 ## Key Takeaways
 
-1. **Four types cover all cases** - T, Option, Result, Promise
-2. **Signatures tell everything** - failure modes, optionality, synchrony
-3. **Lift up, never nest** - Convert to higher types, never `Promise<Result<T>>`
-4. **Consistent composition** - Same map/flatMap across all types
-5. **Use Cause methods** - Prefer `cause.result()` over `Result.failure(cause)`
+1. **Four types cover all cases**—T, Option, Result, Promise
+2. **Signatures tell everything**—failure modes, optionality, synchrony
+3. **Lift up, never nest**—Convert to higher types, never `Promise<Result<T>>`
+4. **Consistent composition**—Same map/flatMap across all types
+5. **Use Cause methods**—Prefer `cause.result()` over `Result.failure(cause)`
 
 ### When `void` Is the Right Return Type
 
@@ -402,4 +402,4 @@ See [Appendix B](appendix-b-exercises.md) for exercises on:
 
 ## What's Next
 
-[Pragmatica Core Essentials](pragmatica-core-essentials.md) covers Pragmatica Core - the library that provides these four types. You'll learn the API in depth and see common usage patterns.
+[Pragmatica Core Essentials](pragmatica-core-essentials.md) covers Pragmatica Core—the library that provides these four types. You'll learn the API in depth and see common usage patterns.

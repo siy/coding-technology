@@ -408,12 +408,12 @@ void execute_fails_whenEmailAlreadyExists() {
 
 ## Key Takeaways
 
-1. **Use case interface** - Contains factory, step interfaces, types
-2. **Sequencer for main flow** - Chain steps with flatMap
-3. **Fork-Join for validation** - Accumulate errors with Result.all()
-4. **Value objects as Leaves** - Parse-don't-validate
-5. **Adapters implement step interfaces** - JOOQ, HTTP clients
-6. **Tests use stubs** - Only adapters stubbed
+1. **Use case interface**—Contains factory, step interfaces, types
+2. **Sequencer for main flow**—Chain steps with flatMap
+3. **Fork-Join for validation**—Accumulate errors with Result.all()
+4. **Value objects as Leaves**—Parse-don't-validate
+5. **Adapters implement step interfaces**—JOOQ, HTTP clients
+6. **Tests use stubs**—Only adapters stubbed
 
 ---
 
@@ -426,4 +426,4 @@ See [Appendix B](appendix-b-exercises.md) for exercises on:
 
 ## What's Next
 
-[Complete Example - PlaceOrder](placeorder-example.md) presents another complete example - PlaceOrder - demonstrating more complex patterns including Fork-Join for parallel data fetching.
+[Complete Example - PlaceOrder](placeorder-example.md) presents another complete example—PlaceOrder—demonstrating more complex patterns including Fork-Join for parallel data fetching.

@@ -438,4 +438,4 @@ class EmailProperties {
 }
 ```
 
-The assertion is the invariant itself, applied to every generated input: whatever the parser accepts, reparsing the accepted value succeeds and yields an equal instance. Rejected inputs pass vacuously - the property quantifies over accepted values. On failure jqwik reports the seed, which satisfies the reproducibility clause; enumerated boundary examples stay in the ordinary example tests beside this property.
+The assertion is the invariant itself, applied to every generated input: whatever the parser accepts, reparsing the accepted value succeeds and yields an equal instance. Rejected inputs pass vacuously—the property quantifies over accepted values. On failure jqwik reports the seed, which satisfies the reproducibility clause; enumerated boundary examples stay in the ordinary example tests beside this property.

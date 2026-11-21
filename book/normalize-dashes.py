@@ -8,7 +8,7 @@ the em-dash and would fuse the words), table cells containing code, list markers
 numeric/math operands, CLI flags, compound words.
 Scope: book/*.md minus changelog/working documents (published history, not chapters).
 Idempotent. `--check` exits 1 if any target remains.
-Usage: normalize-dashes.py [--check] [files...]   (default: book/*.md beside this script's repo)
+Usage: normalize-dashes.py [--check] [files...]   (default: the book/*.md files beside this script)
 """
 import re, sys, glob, os
 
@@ -96,7 +96,7 @@ def main(argv):
     check = '--check' in argv
     files = [a for a in argv if not a.startswith('--')]
     if not files:
-        root = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'book')
+        root = os.path.dirname(os.path.abspath(__file__))
         files = sorted(glob.glob(os.path.join(root, '*.md')))
     files = [f for f in files if os.path.basename(f) not in EXCLUDE]
     total_lines = total_files = 0

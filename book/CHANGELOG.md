@@ -10,7 +10,7 @@ repository root `CHANGELOG.md`.
 ## [Unreleased]
 
 ### Changed
-- Dashes in prose normalized to unspaced em-dashes (406 lines across 25 files); code, lists and tables unchanged; script `book/normalize-dashes.py`.
+- Dashes in prose normalized to unspaced em-dashes (406 lines across 25 files); code, lists and tables unchanged; script `book/normalize-dashes.py`. Headings and link text keep their hyphens on purpose: a heading's anchor is a URL, and the slugger drops `—`, so an em-dash would move the anchor and break inbound links. Course blurb `reviewed-at` stamps moved without a re-read, because a punctuation-only change cannot alter what a blurb claims.
 - *Parse, Don't Validate*, "Naming Conventions" and "Key Takeaways": every record has a type-named static factory, with
   no exceptions. A record with any invariant has a fallible factory returning `Result<Self>`; a record without
   invariants returns `Self`; the factory is the only construction path from outside the record. Examples across 15 chapters, Appendix B and

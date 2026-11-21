@@ -800,6 +800,21 @@ const LANDING_PAGES = [
     src: 'articles/design-metaprinciples.md', out: 'articles/design-metaprinciples/index.html',
     crumb: crumbSub('/articles/', 'Articles', 'Design Metaprinciples'), nav: 'articles',
     related: [{ href: '/articles/', label: 'All articles', note: 'back to the list' }]
+  },
+  {
+    src: 'articles/architecture-derived-not-chosen.md', out: 'articles/architecture-derived-not-chosen/index.html',
+    crumb: crumbSub('/articles/', 'Articles', 'How Architecture Emerges'), nav: 'articles',
+    related: [{ href: '/articles/', label: 'All articles', note: 'back to the list' }]
+  },
+  {
+    src: 'articles/less-art-more-engineering-revisited.md', out: 'articles/less-art-more-engineering-revisited/index.html',
+    crumb: crumbSub('/articles/', 'Articles', 'It Wasn\'t Measurement'), nav: 'articles',
+    related: [{ href: '/articles/', label: 'All articles', note: 'back to the list' }]
+  },
+  {
+    src: 'articles/revisiting-fluent-builder-pattern.md', out: 'articles/revisiting-fluent-builder-pattern/index.html',
+    crumb: crumbSub('/articles/', 'Articles', 'Revisiting Fluent Builder'), nav: 'articles',
+    related: [{ href: '/articles/', label: 'All articles', note: 'back to the list' }]
   }
 ];
 
@@ -1365,9 +1380,6 @@ const ARTICLE_EXCLUDED = {
   'patterns-as-business-vocabulary.md': 'scheduled, unpublished (PUBLISHING_SCHEDULE.md #7)',
   'result-option-pattern.md': 'scheduled, unpublished (PUBLISHING_SCHEDULE.md #9)',
   'legacy-adoption-strategy.md': 'scheduled, unpublished (PUBLISHING_SCHEDULE.md #10)',
-  'architecture-derived-not-chosen.md': 'tracked, not registered for the site, no schedule entry (as of this check)',
-  'less-art-more-engineering-revisited.md': 'tracked, not registered for the site, no schedule entry (as of this check)',
-  'revisiting-fluent-builder-pattern.md': 'tracked, not registered for the site, no schedule entry (as of this check)'
 };
 
 // Enumerates sources from the filesystem and compares them with the ledger of what was

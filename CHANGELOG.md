@@ -38,6 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `README.md`, matching the other copy (`articles/no-framework-no-pain.md`).
 
 ### Added
+- **Three tracked articles registered on the site** (`website/build.js` `LANDING_PAGES`, `website/content/articles.md`): `architecture-derived-not-chosen.md` ("How Architecture Emerges"), `less-art-more-engineering-revisited.md` and `revisiting-fluent-builder-pattern.md` were committed for shipping but never published on pragmatica.dev; the source-closure check listed them. Text unchanged. 87 -> 90 pages checked.
 - **Read-size gate for skill and agent files** (`ai-tools/check-drift.sh` step 7b): every file under `ai-tools/skills/` and `ai-tools/agents/` must fit the subagent read guard's 24,576-byte limit, above which an unbounded Read is refused. It prints the examined count and fails on an examined-nothing run. `project-structure/organization.md` was 24,391 bytes when it was added.
 - **Prefer `all()` over `allOrCancel()`** (`skills/jbct/patterns/fork-join.md`, `skills/jbct/SKILL.md`, `agents/jbct-coder.md`, `agents/jbct-reviewer.md`) — mirrors the JBCT book rule; the reviewer gains a "Fail-fast join without reason" search for `allOrCancel(`/`allOfOrCancel(`.
 - **Series glossary entry *Residual*** (`website/content/glossary.md`) — mirrors the PFD 3.0.1 glossary entry

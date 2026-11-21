@@ -10,6 +10,15 @@ Principles shape a design; metaprinciples shape how the principles are chosen. F
 of every design decision (how many ways, where to cut, what may I claim, how much, how to enforce),
 each explained with one ordinary thing: a train.
 
+**[Less Art, More Engineering: It Wasn't Measurement](/articles/less-art-more-engineering-revisited/)**
+Reporting back on a 2023 promise: the cure for software's subjectivity turned out to be determinism,
+not measurement. A derivation two people reach from the same inputs, with the judgment concentrated
+where it belongs.
+
+**[How Architecture Emerges](/articles/architecture-derived-not-chosen/)**
+Never debate architecture again: eleven questions, six axes, and one worked derivation, from the
+answer sheet to a boring program and one database.
+
 **[Software's Second Free Lunch](/articles/softwares-second-free-lunch/)**
 Development does not scale by adding people, and AI does not fix it — it cuts the cost of a
 worker, not the coupling that caps how many can help. Borrow the trick that makes GPUs scale,
@@ -50,6 +59,10 @@ The smallest structural decision in the technology, and what it buys.
 
 **[Every Test Can Name Why It Exists](/articles/every-test-can-name-why-it-exists/)**
 Four kinds of test, each derived from a property of the code rather than chosen from a convention.
+
+**[Revisiting Fluent Builder Pattern](/articles/revisiting-fluent-builder-pattern/)**
+A staged builder when some fields have defaults: optional fields move to the end of the chain, and
+default methods finish the object in one call.
 
 ## Adoption
 

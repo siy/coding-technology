@@ -42,8 +42,10 @@ repository root `CHANGELOG.md`.
   Source: pragmatica `release-1.0.0-rc6` `54de803dbc`, `core/src/main/java/org/pragmatica/lang/Promise.java:1966`,
   `Result.java:1497`, `Result.java:442` (`async()`).
   The sentence now says the combined result fails with the cause of every failed order, since `Result.allOf`
-  composites only failures. *Chapter Summaries* (Iteration) had `Promise.allOf(items.map(this::process))`, which does not
-  compile (a `List` has no `map`); it now reads `Promise.allOf(items.stream().map(this::process).toList())`. *Advanced Patterns* (`Promise.allOf` special case) split the results with `Result::value` and `Result::cause`, which `Result` does not have; it now uses `flatMap(Result::stream)` for the successes and `fold` for the causes (compiled against core v1.0.0-rc4 and rc6).
+  composites only failures.
+- *Chapter Summaries* (Iteration) had `Promise.allOf(items.map(this::process))`, which does not
+  compile (a `List` has no `map`); it now reads `Promise.allOf(items.stream().map(this::process).toList())`.
+- *Advanced Patterns* (`Promise.allOf` special case) split the results with `Result::value` and `Result::cause`, which `Result` does not have; it now uses `flatMap(Result::stream)` for the successes and `fold` for the causes (compiled against core v1.0.0-rc4 and rc6).
 - *Systematic Application*, Checkpoint 4 "Zone Placement": the block named its zones Zone A (Entry), Zone B (Domain)
   and Zone C (Infrastructure), a third naming that matched neither of the book's two zone models. It now uses the
   architectural Three Zones (Adapter inbound, Domain, Adapter outbound; databases and APIs are the External zone) and

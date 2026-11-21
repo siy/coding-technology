@@ -169,6 +169,10 @@ will mark the first edition released to readers.
     a request that may have been sent is never sent again. Part VI's failure table gains the `NoInstanceAccepted` row
     (`aether/aether-invoke/.../SliceInvoker.java:197-200,698-743,883,919-927`, `SliceInvokerError.java:75-84`,
     `SliceRuntimeAssembly.java:332`).
+    Part VI's selection paragraph now says an empty first selection fails with `No endpoint found` and an empty
+    selection after a refused write ends the call with `NoInstanceAccepted`; the refused write fails the attempt, not
+    the call, which is re-routed (`SliceInvoker.java:730-744`). Part I's sentence on what the caller asks again is
+    reworded without change of meaning.
 - Retry and failover claims (verified at pragmatica `release-1.0.0-rc5` `c44325600c`, source only): the
   runtime sends each slice-to-slice call once, to an instance on a node membership still counts alive;
   it re-sends only at the HTTP entry node (a request provably not applied, or an RFC 9110 idempotent

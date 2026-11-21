@@ -446,8 +446,8 @@ for a stream consumer by default, five for a durable topic) before dead-letterin
 declared retry asks again by its own policy. A slice-to-slice call that the transport refused
 to write, which proves nothing was sent, goes to another instance instead (up to three times
 by default, `timeouts.invocation.max_retries`, and never past the call's deadline); that is a
-re-route, not a repeat. Everywhere else, every slice-to-slice call that may have been sent
-included, the caller asks again. Repetition is not
+re-route, not a repeat. Everywhere else the caller asks again, and that includes every
+slice-to-slice call that may have been sent. Repetition is not
 an edge case in a distributed system; it is the ordinary mechanics of one. A slice
 method is written to be repeated because it will be.
 

@@ -436,8 +436,9 @@ no longer considers reachable, and picks the next one round-robin, with a counte
 and method. The local node is one candidate among the others, with no preference; the invoker has a
 cache-affinity hook that could bias the pick, and nothing registers it at rc5. While a
 deployment is shifting traffic between two versions the pick is weighted instead; that belongs to
-rolling updates. If nothing is left after filtering, the call fails at once with
-`No endpoint found for slice/method`.
+rolling updates. If nothing is left after filtering on the first selection, the call fails at once with
+`No endpoint found for slice/method`; after a refused write the same empty selection ends the call
+with `NoInstanceAccepted` instead.
 
 **The same node.** When the pick lands on the calling node, no frame is sent, but the call still
 goes through bytes. The caller's codec encodes the request, the target slice's bridge receives the
@@ -464,8 +465,8 @@ the receiving node applies its own limit. The send passes the caller's wait alon
 If the peer is momentarily disconnected, the transport may buffer the frame, and it drops it on
 reconnect once that wait has passed, rather than delivering work whose caller has already given
 up. The invoker reads the transport's write outcome. A refused write proves the request never
-left the node, so the call fails at once rather than waiting out its timer, and the invoker
-re-routes it to another instance, excluding every node that refused it, up to
+left the node, so that attempt fails at once rather than waiting out its timer, and the invoker
+re-routes the call to another instance, excluding every node that refused it, up to
 `timeouts.invocation.max_retries` times (3 by default) and only while the caller's deadline holds.
 A frame reported sent, or buffered for a dead connection, may still be delivered, so that call
 keeps waiting and is never sent again.

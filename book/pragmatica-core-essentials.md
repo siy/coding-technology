@@ -12,18 +12,18 @@ Java provides `Optional` and `CompletableFuture`. Why not use them?
 
 | Type | Problem |
 |------|---------|
-| `Optional` | No error channel - you know something is missing but not why |
-| `Optional` | Not designed for validation - orElseThrow loses context |
-| `CompletableFuture` | Exceptions as control flow - checked exceptions don't compose |
-| `CompletableFuture` | Verbose API - thenApply, thenCompose, exceptionally chains |
-| `null` | Billion-dollar mistake - no type safety, NPE at runtime |
+| `Optional` | No error channel—you know something is missing but not why |
+| `Optional` | Not designed for validation—orElseThrow loses context |
+| `CompletableFuture` | Exceptions as control flow—checked exceptions don't compose |
+| `CompletableFuture` | Verbose API—thenApply, thenCompose, exceptionally chains |
+| `null` | Billion-dollar mistake—no type safety, NPE at runtime |
 
 ### What JBCT Needs
 
-1. **Four distinct return types** - Each with clear semantics
-2. **Composable error handling** - Errors as values, not exceptions
-3. **Consistent API** - Same method names across all types
-4. **Type-safe transformations** - Lift between types without losing information
+1. **Four distinct return types**—Each with clear semantics
+2. **Composable error handling**—Errors as values, not exceptions
+3. **Consistent API**—Same method names across all types
+4. **Type-safe transformations**—Lift between types without losing information
 
 Pragmatica Core provides exactly this.
 
@@ -580,12 +580,12 @@ All factory methods return `Result<T>`, following the parse-don't-validate patte
 
 Pragmatica Core provides:
 
-- **Four types with clear semantics** - Option, Result, Promise, Cause
-- **Consistent API** - Same method names across types
-- **Composable error handling** - Errors as values, not exceptions
-- **Type-safe transformations** - Lift between types without losing information
-- **Validation utilities** - Verify.Is predicates, parse wrappers
-- **Thread-safe promises** - Exactly-once resolution, safe transformations
+- **Four types with clear semantics**—Option, Result, Promise, Cause
+- **Consistent API**—Same method names across types
+- **Composable error handling**—Errors as values, not exceptions
+- **Type-safe transformations**—Lift between types without losing information
+- **Validation utilities**—Verify.Is predicates, parse wrappers
+- **Thread-safe promises**—Exactly-once resolution, safe transformations
 
 The library is intentionally minimal. It provides the building blocks for JBCT without imposing architectural decisions. Your business logic remains framework-independent.
 

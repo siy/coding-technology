@@ -210,11 +210,11 @@ private Promise<Discount> applyDiscount(Cart cart) {
 
 Use this checklist to verify parallel operations are truly independent:
 
-- [ ] **No shared mutable state** - Operations don't modify shared objects
-- [ ] **No execution order dependency** - Results same regardless of execution order
-- [ ] **Immutable inputs** - All parameters are immutable or read-only
-- [ ] **Side effects independent** - I/O operations don't conflict (different database rows, files, etc.)
-- [ ] **No hidden coupling** - No shared caches, connection pools with state, etc.
+- [ ] **No shared mutable state**—Operations don't modify shared objects
+- [ ] **No execution order dependency**—Results same regardless of execution order
+- [ ] **Immutable inputs**—All parameters are immutable or read-only
+- [ ] **Side effects independent**—I/O operations don't conflict (different database rows, files, etc.)
+- [ ] **No hidden coupling**—No shared caches, connection pools with state, etc.
 
 If any checkbox fails, use Sequencer instead of Fork-Join.
 
@@ -236,7 +236,7 @@ If any checkbox fails, use Sequencer instead of Fork-Join.
 
 ## Testing for Thread Safety
 
-Mutable test fixtures are acceptable - tests execute sequentially:
+Mutable test fixtures are acceptable—tests execute sequentially:
 
 ```java
 // SAFE: Test-scoped mutable state
@@ -263,19 +263,19 @@ Tests are sequential, so mutable fixtures don't create races.
 
 | Pattern                    | Thread Safety Model                               | Local Mutable State                     | Input Data              | Result Data         |
 |----------------------------|---------------------------------------------------|-----------------------------------------|-------------------------|---------------------|
-| **Leaf**                   | Thread confinement (single invocation)            | Safe - confined to function scope       | Must be read-only       | Must be immutable |
-| **Sequencer**              | Sequential execution (steps don't overlap)        | Safe - confined to each step            | Must be read-only       | Must be immutable |
-| **Fork-Join**              | Parallel execution (no synchronization)           | Safe - confined within each branch      | **MUST be immutable**   | Must be immutable |
-| **Iteration (Sequential)** | Single-threaded (operations execute sequentially) | Safe - accumulators OK                  | Must be read-only       | Must be immutable |
-| **Iteration (Parallel)**   | Parallel execution (no synchronization)           | Safe - confined within each operation   | **MUST be immutable**   | Must be immutable |
+| **Leaf**                   | Thread confinement (single invocation)            | Safe—confined to function scope       | Must be read-only       | Must be immutable |
+| **Sequencer**              | Sequential execution (steps don't overlap)        | Safe—confined to each step            | Must be read-only       | Must be immutable |
+| **Fork-Join**              | Parallel execution (no synchronization)           | Safe—confined within each branch      | **MUST be immutable**   | Must be immutable |
+| **Iteration (Sequential)** | Single-threaded (operations execute sequentially) | Safe—accumulators OK                  | Must be read-only       | Must be immutable |
+| **Iteration (Parallel)**   | Parallel execution (no synchronization)           | Safe—confined within each operation   | **MUST be immutable**   | Must be immutable |
 | **Condition**              | Depends on branch pattern                         | Follow pattern rules for each branch    | Must be read-only       | Must be immutable |
 | **Aspects**                | Inherits the wrapped operation's model            | Inherits                                | Inherits                | Inherits          |
 
 **Key Principles:**
-- Input data is always read-only - never mutate parameters
-- Results are always immutable - data crossing boundaries must be thread-safe
+- Input data is always read-only—never mutate parameters
+- Results are always immutable—data crossing boundaries must be thread-safe
 - Local mutable state is safe when confined to single operation (thread confinement)
-- Parallel patterns require immutable inputs - Fork-Join and parallel iteration have no synchronization
+- Parallel patterns require immutable inputs—Fork-Join and parallel iteration have no synchronization
 
 **Common Mistakes:**
 - Sharing mutable state between parallel branches
@@ -288,12 +288,12 @@ Tests are sequential, so mutable fixtures don't create races.
 
 ## Key Takeaways
 
-1. **Immutable at boundaries** - Parameters and return values always immutable
-2. **Thread confinement** - Mutable local state safe in sequential patterns
-3. **Fork-Join strictness** - All inputs must be immutable, no shared state
-4. **Promise resolution** - Exactly-once, acts as synchronization point
-5. **Independence validation** - Use checklist before parallelizing
-6. **When in doubt** - Use Sequencer; premature parallelization causes subtle bugs
+1. **Immutable at boundaries**—Parameters and return values always immutable
+2. **Thread confinement**—Mutable local state safe in sequential patterns
+3. **Fork-Join strictness**—All inputs must be immutable, no shared state
+4. **Promise resolution**—Exactly-once, acts as synchronization point
+5. **Independence validation**—Use checklist before parallelizing
+6. **When in doubt**—Use Sequencer; premature parallelization causes subtle bugs
 
 ---
 
@@ -306,4 +306,4 @@ See [Appendix B](appendix-b-exercises.md) for exercises on:
 
 ## What's Next
 
-[Testing Philosophy](testing-philosophy.md) introduces the testing philosophy - evolutionary testing and integration-first approaches that work naturally with JBCT patterns.
+[Testing Philosophy](testing-philosophy.md) introduces the testing philosophy—evolutionary testing and integration-first approaches that work naturally with JBCT patterns.

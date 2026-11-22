@@ -56,7 +56,7 @@ direction, the lift zone, use-case coupling and slice internals, none of which i
 is the only moment when both the requirements and the code are in hand, which makes this check yours.
 
 <!-- book:telescope-rule -->
-The layout above is a snapshot, not a starting point. A new codebase has no workflows or subsystems yet - only use cases, sitting flat. Structure is not designed up front; it **grows as the design discovers it**, and the package tree grows with it. JBCT calls this the **telescope rule**: the same altitudes that organize the design - use case, workflow, subsystem, system ([From Process to Patterns](https://pragmatica.dev/java/jbct/course/from-process-to-patterns/)) - organize the packages. As the design discovers a higher altitude, a package level **telescopes open** to hold it.
+The layout above is a snapshot, not a starting point. A new codebase has no workflows or subsystems yet—only use cases, sitting flat. Structure is not designed up front; it **grows as the design discovers it**, and the package tree grows with it. JBCT calls this the **telescope rule**: the same altitudes that organize the design—use case, workflow, subsystem, system ([From Process to Patterns](https://pragmatica.dev/java/jbct/course/from-process-to-patterns/))—organize the packages. As the design discovers a higher altitude, a package level **telescopes open** to hold it.
 
 The rule is mechanical, which is the point: placement stops being a matter of taste.
 
@@ -72,7 +72,7 @@ com.example.app/
 |-- domain/shared/
 ```
 
-**A workflow appears, and the tree expands.** When several use cases cohere under one change driver - a reservation policy governing hold, confirm, and release - a workflow package appears and those use cases **move under it**. A level that did not exist now sits between `usecase` and the slices it groups.
+**A workflow appears, and the tree expands.** When several use cases cohere under one change driver—a reservation policy governing hold, confirm, and release—a workflow package appears and those use cases **move under it**. A level that did not exist now sits between `usecase` and the slices it groups.
 
 ```
 com.example.app/
@@ -86,7 +86,7 @@ com.example.app/
 |-- domain/shared/                  # shared across everything
 ```
 
-**A subsystem appears, and it expands again.** When workflows cluster under a domain concern - booking, pricing - a subsystem package appears and the workflows move under it.
+**A subsystem appears, and it expands again.** When workflows cluster under a domain concern—booking, pricing—a subsystem package appears and the workflows move under it.
 
 ```
 com.example.app/
@@ -103,38 +103,38 @@ com.example.app/
 |-- domain/shared/                  # shared across everything (system altitude)
 ```
 
-The same move, one altitude up; a **system** boundary does it once more - when two products or bounded contexts must coexist, subsystems group under a system module and one more level telescopes open, with `domain.shared` as its root. Each level appears only when something earns it: one use case is not a workflow, one workflow is not a subsystem. Do not create empty levels in anticipation.
+The same move, one altitude up; a **system** boundary does it once more—when two products or bounded contexts must coexist, subsystems group under a system module and one more level telescopes open, with `domain.shared` as its root. Each level appears only when something earns it: one use case is not a workflow, one workflow is not a subsystem. Do not create empty levels in anticipation.
 
 ### Shared code lives at the lowest common ancestor
 
-This generalizes a rule you already know - *move a reused element to the nearest `shared` package* ([Null Policy & Error Recovery](https://pragmatica.dev/java/jbct/course/null-policy-recovery/)) - now that there is more than one altitude to be near. **The nearest shared package is the lowest common ancestor of the element's users.**
+This generalizes a rule you already know—*move a reused element to the nearest `shared` package* ([Null Policy & Error Recovery](https://pragmatica.dev/java/jbct/course/null-policy-recovery/))—now that there is more than one altitude to be near. **The nearest shared package is the lowest common ancestor of the element's users.**
 
 - Used by two use cases in one workflow → that workflow's `shared`.
 - Used across two workflows in a subsystem → that subsystem's `shared`.
 - Used across subsystems → `domain.shared` at the root.
 
-`domain.shared` is simply the top of this hierarchy - the system-altitude shared package - and the tiered placement (`domain/<module>/` then `domain/shared/`) is this same rule seen at two levels. Shared code **floats up, never down**: when a new user appears at a higher altitude, lift the element to the new lowest common ancestor; never push it down speculatively, and never park it in `domain.shared` "just in case." Promote on a shared *change driver*, never on resemblance: code that merely looks alike but answers to different drivers belongs apart, not in `shared` (see [From Process to Patterns](https://pragmatica.dev/java/jbct/course/from-process-to-patterns/)).
+`domain.shared` is simply the top of this hierarchy—the system-altitude shared package—and the tiered placement (`domain/<module>/` then `domain/shared/`) is this same rule seen at two levels. Shared code **floats up, never down**: when a new user appears at a higher altitude, lift the element to the new lowest common ancestor; never push it down speculatively, and never park it in `domain.shared` "just in case." Promote on a shared *change driver*, never on resemblance: code that merely looks alike but answers to different drivers belongs apart, not in `shared` (see [From Process to Patterns](https://pragmatica.dev/java/jbct/course/from-process-to-patterns/)).
 
 **The altitude of a shared element measures the blast radius of changing it.** Something that had to climb to `domain.shared` is reachable by the whole system; something in a workflow's `shared` is reachable by that workflow alone. Where shared code sits tells you how far a change to it can travel.
 
-**Worked example: a workflow's state machine.** When a workflow's use cases are transitions of a shared state machine (free -> held -> confirmed), the machine is shared logic - the state type and its legal transitions, used by every transition use case. Its users are those use cases, so its lowest common ancestor is the workflow package: the machine lives in that package's `shared`, and the use cases depend *up* on it, never sideways into one another.
+**Worked example: a workflow's state machine.** When a workflow's use cases are transitions of a shared state machine (free -> held -> confirmed), the machine is shared logic—the state type and its legal transitions, used by every transition use case. Its users are those use cases, so its lowest common ancestor is the workflow package: the machine lives in that package's `shared`, and the use cases depend *up* on it, never sideways into one another.
 
-This is the case where sharing is not premature. The minimal-sharing rule guards against *accidental* sharing; a state machine is *essential* coupling - the transitions are bound by the domain itself (a seat cannot be confirmed before it is held), so representing that bond once, in one shared machine, is correct. Not sharing it would only duplicate the machine across the use cases, where the copies drift. This is the cohesion test of [From Process to Patterns](https://pragmatica.dev/java/jbct/course/from-process-to-patterns/) seen in the package tree: the transitions share one change driver - the machine's rules - so they belong together; here the rule is just where that shared logic goes.
+This is the case where sharing is not premature. The minimal-sharing rule guards against *accidental* sharing; a state machine is *essential* coupling—the transitions are bound by the domain itself (a seat cannot be confirmed before it is held), so representing that bond once, in one shared machine, is correct. Not sharing it would only duplicate the machine across the use cases, where the copies drift. This is the cohesion test of [From Process to Patterns](https://pragmatica.dev/java/jbct/course/from-process-to-patterns/) seen in the package tree: the transitions share one change driver—the machine's rules—so they belong together; here the rule is just where that shared logic goes.
 
-**A materialized workflow lives at its workflow package.** When a workflow earns a trigger of its own ([From Process to Patterns](https://pragmatica.dev/java/jbct/course/from-process-to-patterns/)) - a schedule, an event, an orchestration call - it becomes a slice at the workflow level (`reservation/settleholds/`, beside the use cases it composes), and its factory depends on those use cases as its steps. It is a Leaf to the subsystem above, exactly as a use case is a Leaf to its workflow. Composing its own use cases is ownership, not the sideways dependency the next rule forbids.
+**A materialized workflow lives at its workflow package.** When a workflow earns a trigger of its own ([From Process to Patterns](https://pragmatica.dev/java/jbct/course/from-process-to-patterns/))—a schedule, an event, an orchestration call—it becomes a slice at the workflow level (`reservation/settleholds/`, beside the use cases it composes), and its factory depends on those use cases as its steps. It is a Leaf to the subsystem above, exactly as a use case is a Leaf to its workflow. Composing its own use cases is ownership, not the sideways dependency the next rule forbids.
 
 ### Dependencies point up the telescope
 
 The existing dependency rules still hold (use cases depend on shared domain code; adapters depend on use cases; never the reverse). The telescope adds one:
 
-**Dependencies point up the tree, never sideways.** A use case may depend on shared code at its own altitude or any ancestor's. It must **not** import from a sibling workflow's package. Two workflows that need each other interact through a use case or step interface at their common ancestor - not by reaching into one another's slices. An import that crosses sideways between workflow packages is a visible smell: the telescope makes the wrong dependency wrong on sight.
+**Dependencies point up the tree, never sideways.** A use case may depend on shared code at its own altitude or any ancestor's. It must **not** import from a sibling workflow's package. Two workflows that need each other interact through a use case or step interface at their common ancestor—not by reaching into one another's slices. An import that crosses sideways between workflow packages is a visible smell: the telescope makes the wrong dependency wrong on sight.
 
 ### The reorg is a deliberate refactor
 
-Expanding a level moves files - imports change, git records the move, parallel branches may conflict on moved files. Do the move **when the workflow is confirmed**, not on a hunch: reactively, the way the design discovers the altitude, never speculatively. It is cheap with an IDE's package-move refactor, but it is not free; batch it as one commit.
+Expanding a level moves files—imports change, git records the move, parallel branches may conflict on moved files. Do the move **when the workflow is confirmed**, not on a hunch: reactively, the way the design discovers the altitude, never speculatively. It is cheap with an IDE's package-move refactor, but it is not free; batch it as one commit.
 
 **Why this matters (by criteria):**
-- **Mental Overhead**: placement becomes an algorithm - lowest common ancestor - not a judgment call (+3)
+- **Mental Overhead**: placement becomes an algorithm—lowest common ancestor—not a judgment call (+3)
 - **Complexity**: sideways coupling between features surfaces as a sideways import (+2)
 - **Business/Technical Ratio**: the package tree mirrors the business hierarchy at every altitude (+2)
 <!-- /book:telescope-rule -->
@@ -146,14 +146,14 @@ The package tree already carries every boundary the design produced. Gradle/Mave
 
 **Module boundaries coincide with derived boundaries.** A legal cut lies on a telescope node (use case, workflow, subsystem) or on a stratum root (`usecase/`, `domain/`, `adapter/`, `config`). A module boundary anywhere else is a structure the design never produced.
 
-**Promotion is content-invariant.** Same packages, same files, same imports - only build wiring changes. No line of Java can observe the choice, which is why it sits below the normalization boundary ([Introduction](https://pragmatica.dev/java/jbct/course/introduction/)). Every vertical cut is also well-formed by construction: the lowest-common-ancestor rule already placed shared code at ancestor nodes, so dependencies point up the tree and no cut can sever one.
+**Promotion is content-invariant.** Same packages, same files, same imports—only build wiring changes. No line of Java can observe the choice, which is why it sits below the normalization boundary ([Introduction](https://pragmatica.dev/java/jbct/course/introduction/)). Every vertical cut is also well-formed by construction: the lowest-common-ancestor rule already placed shared code at ancestor nodes, so dependencies point up the tree and no cut can sever one.
 
 ### When to Promote
 
 The default is no modules: package conventions plus lint enforce direction. Promote when a driver demands compile-time enforcement:
 
 - **Deployment topology (forced).** Multiple deployment units force cuts at the deployment boundaries. The architecture makes this decision, not the build.
-- **Ownership divergence (elective).** More than one team owning different subtrees on different change cadences. Headcount alone is not a driver - one team of eight still wants a single module.
+- **Ownership divergence (elective).** More than one team owning different subtrees on different change cadences. Headcount alone is not a driver—one team of eight still wants a single module.
 - **Independent publication (elective).** A library released on its own cycle is its own module.
 - **Dependency-direction enforcement (elective).** Compile-time proof that domain code cannot import adapters.
 
@@ -163,10 +163,10 @@ A module boundary taxes every change that crosses it: build configuration, API c
 
 | Cut | Verdict |
 |-----|---------|
-| No modules | The default - one team, one deployable |
+| No modules | The default—one team, one deployable |
 | Subsystem per module | The natural promotion point: subsystems are the units of ownership and deployment, the slowest-moving boundaries |
 | Workflow per module | Only when one subsystem hosts several teams |
-| Use case per module | Never - use cases are the unit of change, and this puts the compile-time wall where churn is highest |
+| Use case per module | Never—use cases are the unit of change, and this puts the compile-time wall where churn is highest |
 
 ### The Layer Cut
 
@@ -179,7 +179,7 @@ The cuts above follow the business hierarchy. A second, orthogonal cut follows t
 :bootstrap       # Main class, configuration
 ```
 
-Its drivers are the last two above: dependency-direction enforcement and independent publication of domain types. The two cuts compose - a system with both drivers ends with subsystem-by-stratum modules.
+Its drivers are the last two above: dependency-direction enforcement and independent publication of domain types. The two cuts compose—a system with both drivers ends with subsystem-by-stratum modules.
 
 ### Module Dependencies
 
@@ -193,7 +193,7 @@ adapters       -> application, domain
 bootstrap      -> adapters, application, domain
 ```
 
-One sub-decision the vertical cut surfaces: adapters are organized by technical kind (`adapter.rest`, `adapter.persistence`), not by business subtree. A deployment-forced cut requires adapters to follow their subsystem - the adapter tree telescopes with it. An ownership-driven cut may keep one shared adapters module.
+One sub-decision the vertical cut surfaces: adapters are organized by technical kind (`adapter.rest`, `adapter.persistence`), not by business subtree. A deployment-forced cut requires adapters to follow their subsystem—the adapter tree telescopes with it. An ownership-driven cut may keep one shared adapters module.
 <!-- /book:module-promotion -->
 
 ## Placement Rules
@@ -283,8 +283,8 @@ com.example.adapter.persistence/
 **Value Object:**
 1. Public constants (named instances, shared sentinels)
 2. Constructor (if explicit)
-3. Methods - factory, accessors, and helpers (relative order not enforced; keep conversion pairs like `toJson`/`fromJson` together)
-4. Private implementation constants (validation patterns, private formatters) - conventionally at the bottom, near their use
+3. Methods—factory, accessors, and helpers (relative order not enforced; keep conversion pairs like `toJson`/`fromJson` together)
+4. Private implementation constants (validation patterns, private formatters)—conventionally at the bottom, near their use
 
 **Error Interface:**
 1. Enum variants (fixed-message errors, grouped)

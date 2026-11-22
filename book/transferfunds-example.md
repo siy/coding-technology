@@ -21,9 +21,9 @@ This focused example demonstrates **Aspects** for cross-cutting concerns in a fi
 - All transfers above threshold require additional authorization
 
 **Technical Requirements:**
-- Idempotency - same request ID must not execute twice
-- Timeout - external calls must timeout after 5 seconds
-- Retry - transient failures should retry up to 3 times
+- Idempotency—same request ID must not execute twice
+- Timeout—external calls must timeout after 5 seconds
+- Retry—transient failures should retry up to 3 times
 
 ---
 
@@ -453,12 +453,12 @@ This means:
 
 For most use cases:
 
-1. **Metrics/Logging** (outermost) - Observe everything
-2. **Timeout** - Limit total time
-3. **Circuit Breaker** - Fail fast if service unhealthy
-4. **Retry** - Retry transient failures
-5. **Rate Limit** - Control request rate
-6. **Business Logic** (innermost) - Actual operation
+1. **Metrics/Logging** (outermost)—Observe everything
+2. **Timeout**—Limit total time
+3. **Circuit Breaker**—Fail fast if service unhealthy
+4. **Retry**—Retry transient failures
+5. **Rate Limit**—Control request rate
+6. **Business Logic** (innermost)—Actual operation
 
 ### Aspect Independence
 
@@ -635,9 +635,9 @@ class TransferFundsTest {
 
 TransferFunds demonstrates:
 
-- **Aspects as higher-order functions** - Wrap step execution with cross-cutting concerns
-- **Composition order matters** - Outside-in application (retry wraps timeout wraps audit)
-- **Independent and testable** - Each aspect tested in isolation
-- **Best-effort operations** - Audit failure doesn't fail the transfer
-- **Idempotency pattern** - Prevent duplicate processing
-- **Retry with policy** - Configurable retry behavior based on error type
+- **Aspects as higher-order functions**—Wrap step execution with cross-cutting concerns
+- **Composition order matters**—Outside-in application (retry wraps timeout wraps audit)
+- **Independent and testable**—Each aspect tested in isolation
+- **Best-effort operations**—Audit failure doesn't fail the transfer
+- **Idempotency pattern**—Prevent duplicate processing
+- **Retry with policy**—Configurable retry behavior based on error type

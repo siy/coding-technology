@@ -22,7 +22,7 @@ In traditional Java, `null` has two meanings: "value not found" and "error occur
 
 **Core Rule**: JBCT code NEVER returns null. Use `Option<T>` for optional values.
 
-Traditional Java uses null for semantically different cases - "value not found" and "error occurred." This creates hidden failure modes:
+Traditional Java uses null for semantically different cases—"value not found" and "error occurred." This creates hidden failure modes:
 
 ```java
 // DON'T: Traditional Java with null
@@ -94,7 +94,7 @@ public Promise<Option<User>> loadUser(UserId id) {
 
 **Pattern**: `Option.option(nullable)` immediately converts external null to `Option.none()`.
 
-**Wire records bound by a JSON or XML mapper.** A record that Jackson populates has no compile-time guarantee that a reference component is present: a field missing from the payload leaves the component `null`. A helper method on the record is where that bites - `items().stream()` on an absent list throws `NullPointerException` at runtime, far from the payload that caused it. Keep wire records free of helpers that dereference their components, and convert the record into a domain type at the boundary, where `Option.option(...)` turns each absent component into `none()`. If a helper has to stay on the wire record, guard every component it dereferences.
+**Wire records bound by a JSON or XML mapper.** A record that Jackson populates has no compile-time guarantee that a reference component is present: a field missing from the payload leaves the component `null`. A helper method on the record is where that bites—`items().stream()` on an absent list throws `NullPointerException` at runtime, far from the payload that caused it. Keep wire records free of helpers that dereference their components, and convert the record into a domain type at the boundary, where `Option.option(...)` turns each absent component into `none()`. If a helper has to stay on the wire record, guard every component it dereferences.
 
 ### 2. Writing to Nullable Database Columns
 
@@ -251,13 +251,13 @@ public Result<User> enrichUser(User user) {
 **Why This Matters**:
 - **Mental Overhead**: No defensive null checks in business logic
 - **Reliability**: Compiler enforces null handling at boundaries
-- **Complexity**: Clear semantics - `Option.none()` vs null confusion eliminated
+- **Complexity**: Clear semantics—`Option.none()` vs null confusion eliminated
 
 ---
 
 ## Error Recovery Patterns
 
-So far we've focused on error **handling** - how to represent and propagate failures through `Result` and `Promise`. But real systems need **recovery** - providing fallback values, retrying operations, or gracefully degrading when errors occur.
+So far we've focused on error **handling**—how to represent and propagate failures through `Result` and `Promise`. But real systems need **recovery**—providing fallback values, retrying operations, or gracefully degrading when errors occur.
 
 ### Providing Fallback Values
 
@@ -318,8 +318,8 @@ public Result<Config> loadConfig(String key) {
 ```
 
 **The difference**:
-- `.or(value)` - substitute a plain value
-- `.orElse(M<T>)` - substitute with another `Result`/`Promise`/`Option`
+- `.or(value)`—substitute a plain value
+- `.orElse(M<T>)`—substitute with another `Result`/`Promise`/`Option`
 
 ### Recovering from Specific Failures
 
@@ -447,13 +447,13 @@ Which applies is a judgment — reversibility, the value of partial progress, th
 
 ## Key Takeaways
 
-1. **Null only at boundaries** - Adapters wrap external nulls in `Option`
-2. **Option.option(nullable)** - Immediate conversion at entry point
-3. **Never return null** - Use `Option<T>` for optional values
-4. **.or() for defaults** - Provide fallback values
-5. **.orElse() for alternatives** - Try another operation
-6. **.recover() for conditional** - Transform specific failures to success
-7. **The recovery triple** - when a step fails after state changed: BER (undo), FER (degrade forward), or design-out (make it impossible)
+1. **Null only at boundaries**—Adapters wrap external nulls in `Option`
+2. **Option.option(nullable)**—Immediate conversion at entry point
+3. **Never return null**—Use `Option<T>` for optional values
+4. **.or() for defaults**—Provide fallback values
+5. **.orElse() for alternatives**—Try another operation
+6. **.recover() for conditional**—Transform specific failures to success
+7. **The recovery triple**—when a step fails after state changed: BER (undo), FER (degrade forward), or design-out (make it impossible)
 
 ---
 
@@ -467,4 +467,4 @@ See [Appendix B](appendix-b-exercises.md) for exercises on:
 
 ## What's Next
 
-[Basic Patterns & Structure](basic-patterns.md) introduces the basic structural patterns - Leaf, Condition, and Iteration - that handle 80% of your daily coding needs.
+[Basic Patterns & Structure](basic-patterns.md) introduces the basic structural patterns—Leaf, Condition, and Iteration—that handle 80% of your daily coding needs.

@@ -23,7 +23,7 @@ RegisterUserTest: 42 tests
 UpdateProfileTest: 28 tests
 ```
 
-**This is not a problem - it's honest complexity.** 35 tests = 35 real scenarios.
+**This is not a problem—it's honest complexity.** 35 tests = 35 real scenarios.
 
 But we need organization to stay sane.
 
@@ -79,8 +79,8 @@ class UserLoginTest {
 ```
 
 **Benefits:**
-- IDE collapses nested classes - scan at high level
-- Clear categorization - find tests by scenario type
+- IDE collapses nested classes—scan at high level
+- Clear categorization—find tests by scenario type
 - Shared setup per category
 - Test report groups meaningfully
 
@@ -150,7 +150,7 @@ class EmailTest {
 
 **Why here?** Value objects are pure and isolated, so the only question is the space the factory
 decides over. Enumerable spaces get examples, finite grids get a table, unbounded spaces get the
-invariant stated as the assertion -- the rule from [Testing Philosophy](testing-philosophy.md).
+invariant stated as the assertion—the rule from [Testing Philosophy](testing-philosophy.md).
 The five tests above are the enumerable case; a line-coverage number would report the same figure
 for two of them.
 
@@ -178,14 +178,14 @@ static Price applyTax(Price base) {
 
 **Count decisions, not branches.** The guideline is a serviceable proxy, and it fails in
 one direction: a branch count cannot see a decision expressed as *data*. A rule that
-resolves a limit by looking up two enumerations -- seven loan types against five credit
-tiers -- is thirty-five distinct answers wrapped in three or four conditionals. By branch
+resolves a limit by looking up two enumerations—seven loan types against five credit
+tiers—is thirty-five distinct answers wrapped in three or four conditionals. By branch
 count it rates borderline. By decision count it is the most combinatorial thing in the
 system.
 
 Ask instead: **how many distinct outcomes can this reach, and over what input space?** The
 number takes thirty seconds to work out, it is available before any test exists, and it
-tells you two things a branch count cannot -- how many vectors you need, and which
+tells you two things a branch count cannot—how many vectors you need, and which
 combinations cannot occur at all. `PriceCalculator` in
 [PlaceOrder](placeorder-example.md) has eighteen nominal combinations, of which three are
 structurally impossible; the fifteen that remain go in a table, where a missing row is a
@@ -206,7 +206,7 @@ expensive to reach; it is unreachable, and the suite quietly changes its mind at
 cutoff.
 
 The fix is not a unit test for a two-branch leaf. It is that the clock is an undeclared
-dependency -- and once it is a parameter like any other step, both branches are reachable
+dependency—and once it is a parameter like any other step, both branches are reachable
 at the composition and the guideline's original answer turns out to be right after all.
 The test you could not write is how you found the hidden dependency.
 
@@ -264,7 +264,7 @@ class ProcessRepaymentTest {
 
 What is **not** on the list is as important. Do not add a failure test per step: short-circuiting
 belongs to `flatMap` and the failure's content belongs to the rule that produces it. A chain of
-nine steps does not owe nine failure tests -- the one above owes four, and the rest of its suite
+nine steps does not owe nine failure tests—the one above owes four, and the rest of its suite
 earns its place by testing behavior, not plumbing.
 
 **4. Adapters: Success + Error Modes (Contract Tests)**
@@ -311,7 +311,7 @@ the adapter's entire job, and no use case test can reach it. Worked in full for
 /--------------------------\
 ```
 
-**This is inverted from traditional pyramid** - we have MORE integration tests than unit tests.
+**This is inverted from traditional pyramid**—we have MORE integration tests than unit tests.
 
 **Why?** Because our business logic is composition. Testing fragments misses the point.
 
@@ -457,13 +457,13 @@ class UserLoginTest {
 As you add integration tests, notice which unit tests become redundant.
 
 **Question:** Does the leaf carry its own space?
-- If **NO** (a projection - its space is a subspace of the parent's vectors) -> Delete unit test
+- If **NO** (a projection—its space is a subspace of the parent's vectors) -> Delete unit test
 - If **YES** (enumerable classes of its own, or an invariant over an unbounded domain) -> Keep unit test
 
 ### Step 3: Remove Redundant Unit Tests
 
 **Keep:**
-- Leaf tests that carry their own space - enumerable-class vectors and invariant tests, boundary rows included
+- Leaf tests that carry their own space—enumerable-class vectors and invariant tests, boundary rows included
 - Value object tests (always)
 
 **Delete:**
@@ -521,7 +521,7 @@ class UserLoginIntegrationTest { /* real database */ }
 
 ### Testing Async Promise-Based Flows
 
-**Basic pattern - use `.await()`:**
+**Basic pattern—use `.await()`:**
 ```java
 @Test
 void async_succeeds() {
@@ -590,12 +590,12 @@ void forkJoin_completesAllBranches() {
 
 ## Key Takeaways
 
-1. **Organize by scenario** - Nested classes, parameterized tests
-2. **Value objects: the decision space** - Unit tests, shaped by the space the factory decides over
-3. **Complex leaves: every branch that decides** - Unit tests if 3+ branches
-4. **Use cases: the four obligations** - Success, validation, one per outward step, one per absorbed failure
-5. **Adapters: Contract tests** - Success + error modes only
-6. **Migrate incrementally** - Add integration first, then remove redundant unit tests
+1. **Organize by scenario**—Nested classes, parameterized tests
+2. **Value objects: the decision space**—Unit tests, shaped by the space the factory decides over
+3. **Complex leaves: every branch that decides**—Unit tests if 3+ branches
+4. **Use cases: the four obligations**—Success, validation, one per outward step, one per absorbed failure
+5. **Adapters: Contract tests**—Success + error modes only
+6. **Migrate incrementally**—Add integration first, then remove redundant unit tests
 
 ---
 
@@ -608,4 +608,4 @@ See [Appendix B](appendix-b-exercises.md) for exercises on:
 
 ## What's Next
 
-[Complete Example - RegisterUser](registeruser-example.md) presents the complete RegisterUser use case - from requirements to production code, demonstrating all patterns working together.
+[Complete Example - RegisterUser](registeruser-example.md) presents the complete RegisterUser use case—from requirements to production code, demonstrating all patterns working together.

@@ -29,8 +29,8 @@ These questions emerge from the patterns themselves — the structure demands sp
 **Definition:** A Sequencer chains dependent steps linearly using `map` and `flatMap`. Each step's output feeds the next step's input. This is the primary pattern for use case implementation.
 
 **Rationale (by criteria):**
-- **Mental Overhead**: Linear flow, 2-5 steps fits short-term memory capacity - predictable structure (+3)
-- **Business/Technical Ratio**: Steps mirror business process language - reads like requirements (+3)
+- **Mental Overhead**: Linear flow, 2-5 steps fits short-term memory capacity—predictable structure (+3)
+- **Business/Technical Ratio**: Steps mirror business process language—reads like requirements (+3)
 - **Complexity**: Fail-fast semantics, each step isolated and testable (+2)
 - **Design Impact**: Forces proper step decomposition, prevents monolithic functions (+2)
 
@@ -38,7 +38,7 @@ These questions emerge from the patterns themselves — the structure demands sp
 
 A Sequencer should have 2 to 5 steps. Fewer than 2, and it's probably just a Leaf. More than 5, and it needs decomposition—extract sub-sequencers or group steps.
 
-> The rule is intended to limit local complexity. It is derived from the average size of short-term memory - 7 +/- 2 elements.
+> The rule is intended to limit local complexity. It is derived from the average size of short-term memory—7 +/- 2 elements.
 
 **Domain requirements take precedence:** Some functions inherently require more steps because the domain demands it. Value object factories may need multiple validation and normalization steps to ensure invariants. Fork-Join patterns may need to aggregate 6+ independent results because that's what the domain requires. Don't artificially fit domain logic into numeric rules. The 2-5 guideline helps you recognize when to consider refactoring, but domain semantics always win.
 
@@ -106,7 +106,7 @@ Validation is synchronous (returns `Result`), so we lift it to `Promise` using `
 
 ### When to Extract Sub-Sequencers
 
-If a step grows complex internally, extract it to its own interface with a nested structure. Suppose `processPayment` actually needs to: authorize card -> capture funds -> record transaction. That's three dependent steps - a Sequencer. Extract:
+If a step grows complex internally, extract it to its own interface with a nested structure. Suppose `processPayment` actually needs to: authorize card -> capture funds -> record transaction. That's three dependent steps—a Sequencer. Extract:
 
 ```java
 // Original step interface
@@ -141,7 +141,7 @@ Now `CreditCardPaymentProcessor` is itself a Sequencer with three steps. The top
 
 ### Thread Safety
 
-Sequencer pattern is **thread-safe through sequential execution** - steps execute one after another, never in parallel. Each step is isolated and thread-confined. Mutable local state within individual steps is safe because steps don't overlap. Data passed between steps must be immutable.
+Sequencer pattern is **thread-safe through sequential execution**—steps execute one after another, never in parallel. Each step is isolated and thread-confined. Mutable local state within individual steps is safe because steps don't overlap. Data passed between steps must be immutable.
 
 ### Common Mistakes
 
@@ -210,14 +210,14 @@ private Promise<ReservationInput> fetchUserAndProduct(ValidRequest request) {
 **Definition:** Fork-Join (also known as Fan-Out-Fan-In) executes independent operations concurrently and combines their results. Use it when you have parallel work with no dependencies between branches.
 
 **Rationale (by criteria):**
-- **Mental Overhead**: Parallel execution explicit in structure - no hidden concurrency (+2)
-- **Complexity**: Independence constraint acts as design validator - forces proper data organization (+3)
+- **Mental Overhead**: Parallel execution explicit in structure—no hidden concurrency (+2)
+- **Complexity**: Independence constraint acts as design validator—forces proper data organization (+3)
 - **Reliability**: Type system prevents dependent operations from being parallelized (+2)
-- **Design Impact**: Reveals coupling issues - dependencies surface as compile errors (+3)
+- **Design Impact**: Reveals coupling issues—dependencies surface as compile errors (+3)
 
 ### Two Primary Flavors
 
-**1. Result.all(...) - Synchronous aggregation:**
+**1. Result.all(...)—Synchronous aggregation:**
 
 Not concurrent, just collects multiple Results:
 
@@ -231,7 +231,7 @@ Result<ValidRequest> validated = Result.all(Email.email(raw.email()),
 
 If all succeed, you get a tuple of values to pass to the combiner. If any fail, you get a `CompositeCause` containing all failures (not just the first).
 
-**2. Promise.all(...) - Parallel async execution:**
+**2. Promise.all(...)—Parallel async execution:**
 
 ```java
 // Running independent I/O operations in parallel
@@ -255,7 +255,7 @@ All three fetches run concurrently. The Promise resolves once every input has re
 
 ### Special Fork-Join Cases
 
-**1. `Promise.allOf(Collection<Promise<T>>)` - Resilient collection:**
+**1. `Promise.allOf(Collection<Promise<T>>)`—Resilient collection:**
 
 ```java
 // Fetching data from dynamic number of sources
@@ -279,9 +279,9 @@ private Report createReport(List<Result<HealthStatus>> results) {
 }
 ```
 
-Returns `Promise<List<Result<T>>>` - unlike `Promise.all()`, which turns any failure into a failure of the whole, `allOf()` never fails: it collects each input's own outcome, success or failure. `Promise.allOfOrCancel(...)` instead fails with the first failure and cancels the rest.
+Returns `Promise<List<Result<T>>>`—unlike `Promise.all()`, which turns any failure into a failure of the whole, `allOf()` never fails: it collects each input's own outcome, success or failure. `Promise.allOfOrCancel(...)` instead fails with the first failure and cancels the rest.
 
-**2. `any(...)` - First-success wins:**
+**2. `any(...)`—First-success wins:**
 
 It comes in two forms. `Promise.any` is a **race**: its inputs run in parallel and the first success wins. `Result.any` and `Option.any` are an **ordered fallback**: synchronous, so alternatives are tried one after another and the first success in order wins.
 
@@ -317,15 +317,15 @@ Fork-Join has a crucial constraint: **all branches must be truly independent wit
 >
 > Validate infrastructure constraints, not just type signatures.
 
-**Design Independence** - When you try to write a Fork-Join and discover hidden dependencies, it reveals design issues:
+**Design Independence**—When you try to write a Fork-Join and discover hidden dependencies, it reveals design issues:
 - Data redundancy: If branch A needs data from branch B, maybe that data should be provided upfront
 - Incorrect data organization: Dependencies signal that data is split across sources when it should be colocated
 - Missing abstraction: Hidden dependencies may indicate a missing concept
 
-**Thread Safety** - Parallel execution requires immutable inputs:
-- All input data MUST be immutable - no shared mutable state between parallel branches
-- Local mutable state is safe - thread-confined accumulators, builders within each branch are fine
-- Results must be immutable - data returned from branches will be combined
+**Thread Safety**—Parallel execution requires immutable inputs:
+- All input data MUST be immutable—no shared mutable state between parallel branches
+- Local mutable state is safe—thread-confined accumulators, builders within each branch are fine
+- Results must be immutable—data returned from branches will be combined
 
 Example design issue:
 ```java
@@ -377,13 +377,13 @@ Model the "best-effort" case explicitly with proper types.
 
 ## Pattern: Aspects (Decorators)
 
-**Definition:** Aspects are higher-order functions that wrap steps or use cases to add cross-cutting concerns - retry, timeout, logging, metrics - without changing business semantics.
+**Definition:** Aspects are higher-order functions that wrap steps or use cases to add cross-cutting concerns—retry, timeout, logging, metrics—without changing business semantics.
 
 **Rationale (by criteria):**
-- **Mental Overhead**: Cross-cutting concerns separated from business logic - each reads independently (+3)
+- **Mental Overhead**: Cross-cutting concerns separated from business logic—each reads independently (+3)
 - **Business/Technical Ratio**: Business logic stays pure; technical concerns isolated in decorators (+3)
-- **Complexity**: Composable aspects via higher-order functions - no framework magic (+2)
-- **Design Impact**: Business logic independent of retry/metrics/logging - testable separately (+3)
+- **Complexity**: Composable aspects via higher-order functions—no framework magic (+2)
+- **Design Impact**: Business logic independent of retry/metrics/logging—testable separately (+3)
 
 ### Placement
 
@@ -436,7 +436,7 @@ public interface LoginUser {
 ### Composing Multiple Aspects
 
 Order matters. Typical ordering (outermost to innermost):
-1. Metrics/Logging (outermost - observe everything)
+1. Metrics/Logging (outermost—observe everything)
 2. Timeout (global deadline)
 3. CircuitBreaker (fail-fast if system is degraded)
 4. Retry (per-attempt)
@@ -548,11 +548,11 @@ static <I, O> Fn1<I, Promise<O>> withRetry(RetryPolicy policy, Fn1<I, Promise<O>
 **Principle:** Logging belongs only at **leaves** and **external boundaries**. Composition code has zero logging.
 
 **Rationale:**
-- Leaves perform real work - they're the only places where operations can fail or produce observable effects
-- Boundaries are where we interact with external systems - the points of uncertainty
-- Everything else is composition - deterministic routing of values through the system
+- Leaves perform real work—they're the only places where operations can fail or produce observable effects
+- Boundaries are where we interact with external systems—the points of uncertainty
+- Everything else is composition—deterministic routing of values through the system
 
-**Implementation:** Wrap leaf implementations in a logging aspect at construction. The aspect owns its logger - it creates it from the name it is given - so no logger is ever passed as a parameter:
+**Implementation:** Wrap leaf implementations in a logging aspect at construction. The aspect owns its logger—it creates it from the name it is given—so no logger is ever passed as a parameter:
 
 ```java
 public interface UserRepository {
@@ -582,7 +582,7 @@ public static UserRepository withLogging(String name, UserRepository impl) {
 - Outcome (success or failure cause)
 - Correlation ID for request tracing
 
-**Anti-pattern - scattered logging in composition:**
+**Anti-pattern—scattered logging in composition:**
 ```java
 // DON'T: Logging in composition code
 return validateInput(request)
@@ -599,27 +599,27 @@ static ProcessOrder processOrder(UserRepository users) {
 
 ### Instrumentation Completeness
 
-**Principle:** Because effects live only at leaves, wrapping every leaf instruments the whole request path - completely, by construction.
+**Principle:** Because effects live only at leaves, wrapping every leaf instruments the whole request path—completely, by construction.
 
-The Logging Philosophy above is a placement rule; combined with the quarantine of effects at leaves, it becomes a guarantee. I/O, clock reads, outbound calls, message publishing - every effect exists only behind a leaf interface, and composition is pure routing. The set of leaves is therefore the complete set of points where the program touches the outside world. Wrap them all at construction and no path is left uninstrumented, because there is no effect outside a leaf to miss.
+The Logging Philosophy above is a placement rule; combined with the quarantine of effects at leaves, it becomes a guarantee. I/O, clock reads, outbound calls, message publishing—every effect exists only behind a leaf interface, and composition is pure routing. The set of leaves is therefore the complete set of points where the program touches the outside world. Wrap them all at construction and no path is left uninstrumented, because there is no effect outside a leaf to miss.
 
-**Injected dependencies wrap on the same seam.** A capability injected from another module is itself a `Promise`-returning interface, so cross-module calls are observed exactly like local leaves - no extra mechanism, the same decorator.
+**Injected dependencies wrap on the same seam.** A capability injected from another module is itself a `Promise`-returning interface, so cross-module calls are observed exactly like local leaves—no extra mechanism, the same decorator.
 
 **Error telemetry is structural.** Because `Promise<T>` carries failure as a typed value rather than throwing, one wrapper records both outcomes at a single point: a success becomes a normal span and a latency metric, a typed `Cause` becomes an error span and an error metric. There is no `try`/`catch` to write and none to forget.
 
-The honest boundary: wrapping for observability is old (proxies, decorators, AOP). What the quarantine discipline adds is the pair of guarantees - **completeness** (no effect escapes a leaf, so none escapes instrumentation) and **cleanliness** (the business body names none of it).
+The honest boundary: wrapping for observability is old (proxies, decorators, AOP). What the quarantine discipline adds is the pair of guarantees—**completeness** (no effect escapes a leaf, so none escapes instrumentation) and **cleanliness** (the business body names none of it).
 
 ---
 
 ## Key Takeaways
 
-1. **Sequencer** - Chain dependent steps (2-5 rule), fail-fast semantics
-2. **Fork-Join** - Parallel independent operations, strict immutability requirement
-3. **Aspects** - Cross-cutting concerns as decorators, tested separately
-4. **Logging Philosophy** - Logging only at leaves and boundaries, composition is transparent
-5. **Instrumentation completeness** - Wrapping every leaf instruments the whole path by construction; no effect outside a leaf to miss
-6. **Independence validation** - Prevents Fork-Join mistakes; use Sequencer if unsure
-7. **Pattern composition** - Sequencers call Fork-Joins, Aspects wrap both
+1. **Sequencer**—Chain dependent steps (2-5 rule), fail-fast semantics
+2. **Fork-Join**—Parallel independent operations, strict immutability requirement
+3. **Aspects**—Cross-cutting concerns as decorators, tested separately
+4. **Logging Philosophy**—Logging only at leaves and boundaries, composition is transparent
+5. **Instrumentation completeness**—Wrapping every leaf instruments the whole path by construction; no effect outside a leaf to miss
+6. **Independence validation**—Prevents Fork-Join mistakes; use Sequencer if unsure
+7. **Pattern composition**—Sequencers call Fork-Joins, Aspects wrap both
 
 ---
 

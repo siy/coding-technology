@@ -223,7 +223,7 @@ public interface PublishArticle {
 
 ### What Condition Does
 
-The Condition pattern performs **routing only** - it selects which execution path to follow based on input data. The switch expression returns a `Promise<PublishResult>` from each branch.
+The Condition pattern performs **routing only**—it selects which execution path to follow based on input data. The switch expression returns a `Promise<PublishResult>` from each branch.
 
 ```java
 return switch (article.authorTier()) {
@@ -254,10 +254,10 @@ return switch (article.authorTier()) {
 
 ### Benefits
 
-1. **Clear routing logic** - One place shows all possible paths
-2. **Testable branches** - Each route method can be tested independently
-3. **Extensible** - Adding new author tiers requires adding one case
-4. **Type-safe** - Compiler warns if switch is non-exhaustive
+1. **Clear routing logic**—One place shows all possible paths
+2. **Testable branches**—Each route method can be tested independently
+3. **Extensible**—Adding new author tiers requires adding one case
+4. **Type-safe**—Compiler warns if switch is non-exhaustive
 
 ---
 
@@ -376,8 +376,8 @@ class PublishArticleTest {
 
 PublishArticle demonstrates:
 
-- **Condition pattern for routing** - Switch expression selects execution path
-- **No transformation in conditions** - Each branch delegates to a method
-- **Pattern matching with enums** - Type-safe, exhaustive routing
-- **Testable branches** - Each route tested independently
-- **Composable with other patterns** - Routes contain Sequencer chains
+- **Condition pattern for routing**—Switch expression selects execution path
+- **No transformation in conditions**—Each branch delegates to a method
+- **Pattern matching with enums**—Type-safe, exhaustive routing
+- **Testable branches**—Each route tested independently
+- **Composable with other patterns**—Routes contain Sequencer chains

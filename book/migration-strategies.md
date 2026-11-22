@@ -427,7 +427,7 @@ public static <T> Promise<T> fromCompletableFuture(
 
 ### Exceptions → Cause Mapping
 
-**In adapters - use Promise.lift:**
+**In adapters—use Promise.lift:**
 ```java
 public Promise<User> findUser(UserId id) {
     return Promise.lift(
@@ -582,7 +582,7 @@ return findUser(id)
 
 ### "Performance overhead?"
 
-**Response:** Negligible for business logic. Pragmatica Core types are lightweight wrappers. The overhead is comparable to Optional. If you're writing code where object allocation matters (tight loops, real-time systems), JBCT isn't the right fit - but neither is typical Java web development.
+**Response:** Negligible for business logic. Pragmatica Core types are lightweight wrappers. The overhead is comparable to Optional. If you're writing code where object allocation matters (tight loops, real-time systems), JBCT isn't the right fit—but neither is typical Java web development.
 
 ---
 
@@ -630,10 +630,10 @@ return findUser(id)
 
 Migration to JBCT is incremental:
 
-1. **Stage 1:** Value objects only - immediate validation benefits
-2. **Stage 2:** Result in new code - stop adding exceptions
-3. **Stage 3:** Extract use cases - separate concerns
-4. **Stage 4:** Adapter isolation - complete the boundary
+1. **Stage 1:** Value objects only—immediate validation benefits
+2. **Stage 2:** Result in new code—stop adding exceptions
+3. **Stage 3:** Extract use cases—separate concerns
+4. **Stage 4:** Adapter isolation—complete the boundary
 
 Key principles:
 - Never big-bang rewrite

@@ -46,11 +46,11 @@ class GenerateTokenTest {
 ```
 
 **Problems:**
-1. **Doesn't test composition** - Steps work individually but fail when chained
-2. **Doesn't test error propagation** - How do failures bubble through the chain?
-3. **Doesn't test actual behavior** - Tests verify components, not use cases
-4. **Brittle** - Interface changes break all tests, even when behavior unchanged
-5. **False confidence** - All tests pass, production fails because integration untested
+1. **Doesn't test composition**—Steps work individually but fail when chained
+2. **Doesn't test error propagation**—How do failures bubble through the chain?
+3. **Doesn't test actual behavior**—Tests verify components, not use cases
+4. **Brittle**—Interface changes break all tests, even when behavior unchanged
+5. **False confidence**—All tests pass, production fails because integration untested
 
 ### What We Actually Want to Test
 
@@ -114,19 +114,19 @@ Count the space instead, and let it choose the shape of the tests:
 | The space | Write | Because |
 |---|---|---|
 | Small and enumerable (a status enum, a three-way branch) | examples | the space *is* the examples |
-| A finite grid (an enum against an enum, banded ranges) | a table -- `@ParameterizedTest` with one row per cell | the cell count is known, so a missing row is a visible hole |
+| A finite grid (an enum against an enum, banded ranges) | a table—`@ParameterizedTest` with one row per cell | the cell count is known, so a missing row is a visible hole |
 | Unbounded (any string, any `BigDecimal`, any timestamp) | state the invariant | examples sample an infinite space arbitrarily, and four are as arbitrary as one |
 
 `Email` is the third kind. Four strings do not cover the space of malformed addresses; they
 cover four of them. The honest form of the test is the property the parser guarantees --
-that normalization is idempotent, that no accepted value fails the invariant -- which is
+that normalization is idempotent, that no accepted value fails the invariant—which is
 what the tools called *property-based testing* libraries exist to check by generating
 inputs rather than listing them. This book does not require one. The obligation for an
 unbounded space has three parts: the test's assertion *is* the invariant, applied to every
 supplied input rather than a hand-computed expected value per example; the input set
 includes the boundaries; and a failure reproduces, so generated inputs run under a fixed or
-reported seed. How the inputs are supplied -- a property library, a hand-rolled generator,
-an enumerated set beyond the boundaries -- is style. Writing the invariant down is still
+reported seed. How the inputs are supplied—a property library, a hand-rolled generator,
+an enumerated set beyond the boundaries—is style. Writing the invariant down is still
 what stops four examples from being mistaken for coverage of the space; written as an
 assertion it also fails when violated, which a comment never does. [Appendix A](appendix-a-api-reference.md)
 shows the invariant realized with a property library.
@@ -134,16 +134,16 @@ shows the invariant realized with a property library.
 `Quantity` (1..100) is the *first* kind wearing the clothes of the third. It has 102
 interesting values including the boundaries, and boundary examples genuinely cover it.
 
-The worked case is `PriceCalculator` in [PlaceOrder](placeorder-example.md) -- eighteen
+The worked case is `PriceCalculator` in [PlaceOrder](placeorder-example.md)—eighteen
 nominal combinations, three of them structurally impossible, fifteen rows in a table.
 
 **2. Business Leaves: The Same Table Chooses**
 
 The space-counting table above is not only for value objects; it assigns the testing obligation for every business leaf. Count the space the leaf decides over:
 
-- **Enumerable from its types** (sealed interfaces, enums, booleans, `Option` presence) or a finite grid -- exhaustive vectors, one row per cell. A missing row is a visible hole.
-- **Computes over an unbounded domain** (numerics, strings, collections) -- state the invariant and add the boundary examples, per the obligation above.
-- **Neither branches nor computes** -- every output value is a verbatim copy or rearrangement of input fields and constants -- no isolated test. The parent composition's vectors pin it.
+- **Enumerable from its types** (sealed interfaces, enums, booleans, `Option` presence) or a finite grid—exhaustive vectors, one row per cell. A missing row is a visible hole.
+- **Computes over an unbounded domain** (numerics, strings, collections)—state the invariant and add the boundary examples, per the obligation above.
+- **Neither branches nor computes**—every output value is a verbatim copy or rearrangement of input fields and constants—no isolated test. The parent composition's vectors pin it.
 
 ```java
 class PricingEngineTest {
@@ -152,7 +152,7 @@ class PricingEngineTest {
 }
 ```
 
-The obligation is derivable before the body exists: the space is determined by the step's input types and the decision it makes, both present in the design. Two implementers of one leaf derive the same tests. A branch count never decides anything here -- a branch-free interest formula still computes over an unbounded domain and still carries the invariant obligation.
+The obligation is derivable before the body exists: the space is determined by the step's input types and the decision it makes, both present in the design. Two implementers of one leaf derive the same tests. A branch count never decides anything here—a branch-free interest formula still computes over an unbounded domain and still carries the invariant obligation.
 
 **3. Use Cases: Integration Tests (Test Vectors)**
 
@@ -193,7 +193,7 @@ All three are visible in the worked examples, and none is obvious enough to leav
 **Assert on the outcome, except when the effect is invisible in it.**
 
 A stub tells you what a step returned. It does not tell you the step was called. Most of
-the time that is fine -- if the outcome is right, the steps ran. But some behavior leaves
+the time that is fine—if the outcome is right, the steps ran. But some behavior leaves
 no trace in the response:
 
 - A transfer that retried twice looks exactly like one that never retried.
@@ -206,7 +206,7 @@ There, capturing the call is the only oracle that can see the behavior under tes
 both do exactly that.
 
 Everywhere else, capturing calls couples the test to the implementation for nothing. The
-rule is not "avoid mocks" and it is not "verify interactions" -- it is **assert on the
+rule is not "avoid mocks" and it is not "verify interactions"—it is **assert on the
 effect where the effect is visible, and on the call only where it is not.** That yields
 far fewer interaction assertions than a mock-first habit produces, and a firmly non-zero
 number, which a no-mocks rule gets wrong.
@@ -216,16 +216,16 @@ number, which a no-mocks rule gets wrong.
 [RegisterUser](registeruser-example.md) tests validation twice: directly against
 `ValidRequest`, and through `execute`. That looks like duplication and is not.
 
-The composition adds exactly one fact -- that a validation failure short-circuits the
-remaining steps -- and one test establishes it. The rest of the input space belongs where
+The composition adds exactly one fact—that a validation failure short-circuits the
+remaining steps—and one test establishes it. The rest of the input space belongs where
 the vectors are cheap, which is the isolated level. Splitting them that way costs one test
 and buys the whole space; testing the space at the composition costs a full assembly per
 vector, and every failure names the use case rather than the rule.
 
 **Four facts live at the composition, and nothing else does.**
 
-The rule above says the composition adds one fact about validation. Asked in general -- which
-facts does a composition establish that no leaf test can? -- the answer is four kinds, and they
+The rule above says the composition adds one fact about validation. Asked in general—which
+facts does a composition establish that no leaf test can?—the answer is four kinds, and they
 were the same four in every use case examined while writing this section:
 
 - **The success path.** The steps are wired in the intended order and the response is assembled
@@ -234,8 +234,8 @@ were the same four in every use case examined while writing this section:
 - **Each I/O failure, separately.** A step that reaches outside the process can be unavailable,
   and each such step is its own case: a use case that loads an account and then persists a
   payment owes two tests, not one.
-- **Each absorbed failure.** Where a step's failure is deliberately dropped -- BER, FER, or
-  design-out, from [The Recovery Triple](null-policy-recovery.md) -- the absorption leaves no
+- **Each absorbed failure.** Where a step's failure is deliberately dropped—BER, FER, or
+  design-out, from [The Recovery Triple](null-policy-recovery.md)—the absorption leaves no
   trace in the response, which by the first rule above is precisely when to assert on the call.
 
 Everything else belongs to the leaf, and two candidates that look like composition obligations
@@ -244,7 +244,7 @@ are worth naming because they are not:
 **Failure propagation, step by step.** It is tempting to test that a failure at step four
 prevents step five, and then to do it for every step. But short-circuiting is `flatMap`'s
 behavior, established once by the library, not a fact about your use case. What the composition
-can get wrong is the wiring -- a step omitted, `map` where `flatMap` was meant -- and the success
+can get wrong is the wiring—a step omitted, `map` where `flatMap` was meant—and the success
 path already catches that.
 
 **The content of a step's failure.** If a step can fail only by delegating to a rule, test the
@@ -253,39 +253,39 @@ rejection travels up the chain.
 
 One shape rules itself out. A step whose every return is `.success(...)` is not fallible at all,
 and its failure test cannot be written. That is a return-kind violation rather than a missing
-test -- the signature claims a contract the body does not have, and the fix is to return the
+test—the signature claims a contract the body does not have, and the fix is to return the
 plain value and chain it with `map`.
 
 **Why the leaf, and not the composition: that is where the branches are.**
 
-The allocation above can be argued from the combinators -- `flatMap` short-circuits, so the
+The allocation above can be argued from the combinators—`flatMap` short-circuits, so the
 composition adds propagation and nothing else. It can also be measured, and the measurement is
 blunter than the argument.
 
-Mutation testing seeds a program with small syntactic faults -- negate a conditional, move a
-boundary by one, change an operator -- and reports which ones a test suite fails to detect. The
+Mutation testing seeds a program with small syntactic faults—negate a conditional, move a
+boundary by one, change an operator—and reports which ones a test suite fails to detect. The
 seeding is mechanical: a mutant can only be planted where the bytecode makes a decision. Run that
 over a JBCT codebase and the mutants map the decidable surface, whatever anyone believes about
 where the logic is.
 
-Across two JBCT codebases of comparable size -- different domains, different structural idioms,
-one of them written before this rule existed -- **441 logic mutants were generated, and not one
+Across two JBCT codebases of comparable size—different domains, different structural idioms,
+one of them written before this rule existed—**441 logic mutants were generated, and not one
 of them landed in a composition.** Every branch a fault could hide in sat in a value-object
 predicate, a rule, a gate, or a classifier. The composition layer is not merely a poor place to
-spend testing effort; there is nothing there to get wrong. Its faults are wiring faults -- a step
-omitted, a step in the wrong order -- and the success path catches those.
+spend testing effort; there is nothing there to get wrong. Its faults are wiring faults—a step
+omitted, a step in the wrong order—and the success path catches those.
 
 That is what makes the four facts a boundary rather than a budget. They are the whole of what a
 composition can establish, because they are the whole of what a composition can do.
 
 **A caution the same measurement raises.** Mutation testing answers the question this chapter
-otherwise leaves open -- whether a test *discharges* an obligation or merely *exercises* it, since
+otherwise leaves open—whether a test *discharges* an obligation or merely *exercises* it, since
 a test asserting only that a call failed will survive a mutant that changes which failure it was.
 It is a diagnostic and not a target. Two thirds of the raw mutants generated over the codebases
 above were replacements of return values with `null` or empty defaults, which in code that forbids
 null is noise rather than signal; filtering the mutation operators to the ones that model real
 faults is a precondition, not a refinement. And a codebase that composes its predicates from a
-tested library rather than writing them inline generates very few mutants indeed -- not because its
+tested library rather than writing them inline generates very few mutants indeed—not because its
 logic is simple, but because its decisions have moved into code the tool does not mutate. A near
 empty mutation report is a question, not a result.
 
@@ -307,7 +307,7 @@ Phase 3-N: Implement Steps Incrementally
 Final: Production-Ready
 ```
 
-At each phase, **all tests remain green**. You're not breaking and fixing - you're growing.
+At each phase, **all tests remain green**. You're not breaking and fixing—you're growing.
 
 ### Phase 1: Stub Everything
 
@@ -459,17 +459,17 @@ public interface TestVectors {
 
 ### Which Form to Use
 
-Any of the three discharges the obligation: which tests exist and what they assert never depends on how inputs are constructed, so the choice is style. The default in this book -- canonical vectors; a factory method when one field varies systematically; a builder when the input type has optional fields. The examples use vectors throughout, so variation in test-data form never carries meaning.
+Any of the three discharges the obligation: which tests exist and what they assert never depends on how inputs are constructed, so the choice is style. The default in this book—canonical vectors; a factory method when one field varies systematically; a builder when the input type has optional fields. The examples use vectors throughout, so variation in test-data form never carries meaning.
 
 ---
 
 ## Key Takeaways
 
-1. **Test composition, not components** - Use case is what matters
-2. **Stub only adapters** - Database, HTTP, external services
-3. **Evolve tests with implementation** - Always green, never break-and-fix
-4. **Three layers** - Value objects (unit), complex leaves (unit), use cases (integration)
-5. **Use test data utilities** - Builders, vectors, factories reduce boilerplate
+1. **Test composition, not components**—Use case is what matters
+2. **Stub only adapters**—Database, HTTP, external services
+3. **Evolve tests with implementation**—Always green, never break-and-fix
+4. **Three layers**—Value objects (unit), complex leaves (unit), use cases (integration)
+5. **Use test data utilities**—Builders, vectors, factories reduce boilerplate
 
 ---
 
@@ -483,4 +483,4 @@ See [Appendix B](appendix-b-exercises.md) for exercises on:
 
 ## What's Next
 
-[Testing in Practice](testing-practice.md) covers testing in practice - organizing large test suites, the complete RegisterUser example, and migrating from traditional unit testing.
+[Testing in Practice](testing-practice.md) covers testing in practice—organizing large test suites, the complete RegisterUser example, and migrating from traditional unit testing.

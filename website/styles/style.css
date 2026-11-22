@@ -286,15 +286,6 @@ footer a:hover { color: var(--ink); }
 .related li a:hover { background: var(--paper-raised); }
 .related li a span { color: var(--ink-soft); font-size: 13.5px; }
 
-.placeholder-note {
-  margin: 24px 0;
-  padding: 14px 18px;
-  border: 1.5px dashed var(--ink-faint);
-  border-radius: 8px;
-  color: var(--ink-soft);
-  font-size: 14px;
-}
-
 /* ---------- Code blocks (shared: landing prose + lesson article) ---------- */
 
 pre {

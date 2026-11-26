@@ -144,6 +144,26 @@ choice, finer-grained metric). Ruling on the book text before that run would be 
 saturated measure. Recorded so the finding is not lost, and so the next release does not restate the
 attribution unexamined.
 
+### 11. Sequencer length becomes a recommendation (2026-11-26) — `ruled`, for 5.3.0
+
+**Owner ruling 2026-11-26.** "A Sequencer should have 2 to 5 steps" stops being a requirement. Real
+business processes can have more steps, and a long linear chain is their natural representation. Forcing
+the chain into groups (and groups of groups) invents a hierarchy the modelled process does not have. The
+recommendation stays, recast as feedback to the business: a long chain is a prompt to ask whether the
+process itself should be restructured, so complexity stays under control at each level.
+
+Scope of the change, as found 2026-11-26:
+- `advanced-patterns.md:32` (the "2-5 steps fits short-term memory" rationale stays as the reason for the
+  recommendation) and `:39` (the rule itself: "needs decomposition").
+- `systematic-application.md:186`, checklist row M2 ("Chain length <= 5 steps? / Split into composed methods").
+- `appendix-d-worksheet.md:71` and `:126`.
+- AI tools: `ai-tools/skills/jbct/patterns/sequencer.md:80`, `ai-tools/skills/jbct/reference/coder-api-patterns.md:166`.
+- Toolchain (pragmatica, ticket requested via the CTO): lint `JBCT-SEQ-01` is already `WARNING` by default
+  (`jbct-core/.../LintConfig.java:91`) and feeds the pattern-purity score; its message and docs say "max 5".
+
+Marked guess, owner to confirm: the lower bound ("fewer than two steps is a Leaf") is a definition, not a
+complexity limit, so it stays a rule.
+
 ## Shipped
 
 - **5.0.0** (2026-08-28): item 11 — *Construction that scales* paragraph in the Introduction's

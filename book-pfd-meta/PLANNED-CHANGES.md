@@ -1422,6 +1422,29 @@ cancel events". That is PFD's moves, reached from a different starting point.
   incommensurables* ("5 of 25 fully solved" counts a court-ordered deletion and a mistyped email as one
   each), which is the trap the AS judgment chapter dissolves for MTTR/MTBF.
 
+## 22. Sequencer length as a recommendation; buy-ticket failure set (2026-11-26) `ruled` + `defect` `[PFD]`
+
+**22.1 Sequencer length — owner ruling 2026-11-26.** Same ruling as JBCT planned change 11: the 2-5 step
+cap becomes a recommendation, framed as feedback to the business about restructuring the process, never
+as a reason to group steps into an invented hierarchy. PFD text that states the cap as a rule:
+`spiral-1-use-case.md:261` ("caps direct chains at four or five steps before extracting named
+sub-Sequencers"; buy ticket "composes named sub-pipelines instead") and `spiral-2-workflow.md:297`
+(same discipline at workflow altitude, `executeCancellation` / `finalizeCancellation`). Both passages
+need rewording; the buy-ticket spine may then stay one chain.
+
+**22.2 Buy ticket's closed failure set is not closed — `defect`, verified 2026-11-26.**
+- Ticket issuance can fail (`spiral-1-use-case.md:407`, "Ticket issuance fails after seat confirmation
+  succeeds"), but no member of the failure set at `:68-73` names that failure.
+- Validation can fail (`:400`, "Return the structured rejection"), but the set has no validation failure.
+  Decide whether parse failures belong to the use case's closed set or to the value objects' own causes,
+  and say so; `:75` claims the set is closed at design time.
+
+**22.3 Compensation order and "residual state" — `candidate`.** `:406` lists "Release the hold; void or
+reverse the authorization" and `:407` "Reverse the confirmation; void the authorization; release any
+residual state". The text does not say whether inverses run in reverse execution order, and "residual
+state" after confirmation is undefined (confirmation converts the hold, so there may be no hold left to
+release). State the order and name the residue.
+
 ## Release scope & versions
 
 **Historical — this block planned the 1.3.0 round and is kept for the record.** Each book's version is
